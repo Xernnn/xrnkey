@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -66,6 +67,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -431,10 +433,19 @@ class SettingsActivity : ComponentActivity() {
             }
         }
 
-        /** A text field; its hint shows while it is empty, and names it for the tests. */
+        /**
+         * A text field; its hint shows while it is empty, and names it for the tests. What the
+         * keyboard sends is kept as it is while it types (changing it would break the word it is
+         * composing); [refused] outlines it in the accent when Save won't take it.
+         */
         @Composable
-        fun Field(text: String, hint: String, change: (String) -> Unit, modifier: Modifier = Modifier) {
-            Box(modifier.clip(RoundedCornerShape(10.dp)).background(look.pill).padding(horizontal = 12.dp, vertical = 12.dp)) {
+        fun Field(text: String, hint: String, change: (String) -> Unit, modifier: Modifier = Modifier, refused: Boolean = false) {
+            val shape = RoundedCornerShape(10.dp)
+            Box(
+                modifier.clip(shape).background(look.pill)
+                    .then(if (refused) Modifier.border(2.dp, look.accent, shape).semantics { error(hint) } else Modifier)
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+            ) {
                 if (text.isEmpty()) Text(hint, style = quiet)
                 BasicTextField(
                     text, change, singleLine = true, textStyle = label, cursorBrush = SolidColor(look.accent),
@@ -555,21 +566,30 @@ class SettingsActivity : ComponentActivity() {
                     // The entry being added or edited, in place above the list.
                     var abbr by remember(oldAbbr) { mutableStateOf(oldAbbr) }
                     var expansion by remember(oldAbbr) { mutableStateOf(oldExpansion) }
+                    var refused by remember(oldAbbr) { mutableStateOf(false) }
                     Column(
                         Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(14.dp)).background(look.card).padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Field(abbr, "Abbreviation", { abbr = it.trim() }, Modifier.fillMaxWidth())
+                        Field(abbr, "Abbreviation", { abbr = it; refused = false }, Modifier.fillMaxWidth(), refused)
                         Field(expansion, "Expansion", { expansion = it }, Modifier.fillMaxWidth())
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Pill("Save", true) {
-                                if (abbr.isNotEmpty() && expansion.isNotBlank()) {
+                                // Trimmed here, not while typing. An abbreviation is one word: one
+                                // with a space in it is refused, and the field says so.
+                                val a = abbr.trim()
+                                val e = expansion.trim()
+                                val ok = a.isNotEmpty() && a.none { it.isWhitespace() } && e.isNotEmpty() &&
                                     withShortcuts {
-                                        if (oldAbbr.isNotEmpty() && oldAbbr != abbr) it.remove(oldAbbr)
-                                        it.set(abbr, expansion)
+                                        val saved = it.set(a, e)
+                                        if (saved && oldAbbr.isNotEmpty() && oldAbbr != a) it.remove(oldAbbr)
+                                        saved
                                     }
+                                if (ok) {
                                     shortcuts = readShortcuts()
                                     editing = null
+                                } else {
+                                    refused = true
                                 }
                             }
                             if (oldAbbr.isNotEmpty()) {
