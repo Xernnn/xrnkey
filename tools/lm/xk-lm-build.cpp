@@ -7,6 +7,9 @@
  *   --prune a,b,c    drop n-grams of order 2, 3, 4 seen this many times or fewer
  *                    (default 0,1,1); each must be >= the one before
  *   --no-shape-index leave out the shape index (an English model needs none)
+ *   --weight W       count the corpora after it W times each (default 1): a
+ *                    small source of everyday speech then weighs against the
+ *                    news ("xin chào bạn" against "chào bán")
  *
  * Each CORPUS line is one sentence of tokens separated by spaces, already
  * normalised (data/lm/build.py writes them). Smoothing is interpolated
@@ -52,6 +55,7 @@ struct Options {
     bool shape_index = true;
     std::string out;
     std::vector<std::string> corpora;
+    std::vector<uint32_t> weights;  /* how many times each corpus counts */
 };
 
 [[noreturn]] void die(const std::string& msg) {
@@ -63,7 +67,9 @@ template <typename F>
 void each_sentence(const Options& o, F f) {
     std::vector<std::string_view> toks;
     std::string line;
-    for (const auto& path : o.corpora) {
+    for (size_t c = 0; c < o.corpora.size(); ++c)
+    for (uint32_t rep = 0; rep < o.weights[c]; ++rep) {
+        const auto& path = o.corpora[c];
         std::ifstream in(path);
         if (!in) die("cannot read " + path);
         while (std::getline(in, line)) {
@@ -525,6 +531,7 @@ void write(const Model& m) {
 
 Options parse(int argc, char** argv) {
     Options o;
+    uint32_t weight = 1;
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         auto next = [&]() -> std::string {
@@ -545,9 +552,17 @@ Options parse(int argc, char** argv) {
             }
             for (; k <= kMaxOrder; ++k) o.prune[k] = o.prune[k - 1];
         } else if (a == "--no-shape-index") o.shape_index = false;
+        else if (a == "--weight") {
+            const long w = std::strtol(next().c_str(), nullptr, 10);
+            if (w < 1 || w > 1000) die("--weight must be 1..1000");
+            weight = static_cast<uint32_t>(w);
+        }
         else if (a == "-o") o.out = next();
         else if (!a.empty() && a[0] == '-') die("unknown option " + a);
-        else o.corpora.push_back(a);
+        else {
+            o.corpora.push_back(a);
+            o.weights.push_back(weight);
+        }
     }
     if (o.order < 1 || o.order > 4) die("--order must be 1..4 (ids are packed 16 bits each in 64)");
     if (o.max_vocab < 4 || o.max_vocab > kMaxVocab) die("--max-vocab must be 4..65536");
