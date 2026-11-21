@@ -16,13 +16,17 @@
         </group>
         <group android:translateX="-2.5" android:translateY="-2.5" android:scaleX="1.05" android:scaleY="1.05">
             <path android:fillColor="#FFFFFF"
-                android:pathData="M38,26 H62 A12,12 0 0 1 74,38 V62 A12,12 0 0 1 62,74 H38 A12,12 0 0 1 26,62 V38 A12,12 0 0 1 38,26 Z" />
-            <path android:strokeColor="#18181B" android:strokeWidth="6" android:strokeLineCap="round"
-                android:pathData="M41,58 A8,8 0 1 0 57,58 A8,8 0 1 0 41,58 Z" />
-            <path android:strokeColor="#18181B" android:strokeWidth="6" android:strokeLineCap="round"
-                android:pathData="M57,50 V66" />
-            <path android:strokeColor="#18181B" android:strokeWidth="6" android:strokeLineCap="round"
-                android:pathData="M42,37 Q49,45 56,37" />
+                android:pathData="M37,24 H63 A13,13 0 0 1 76,37 V63 A13,13 0 0 1 63,76 H37 A13,13 0 0 1 24,63 V37 A13,13 0 0 1 37,24 Z" />
+            <!-- The "ă" at 112% about (49, 51), as in the master. -->
+            <group android:pivotX="49" android:pivotY="51" android:scaleX="1.12" android:scaleY="1.12"
+                android:translateX="1">
+                <path android:strokeColor="@color/xrn_tile" android:strokeWidth="6"
+                    android:pathData="M41,58 A8,8 0 1 0 57,58 A8,8 0 1 0 41,58 Z" />
+                <path android:strokeColor="@color/xrn_tile" android:strokeWidth="6" android:strokeLineCap="round"
+                    android:pathData="M57,50 V66" />
+                <path android:strokeColor="@color/xrn_tile" android:strokeWidth="6" android:strokeLineCap="round"
+                    android:pathData="M42,37 Q49,45 56,37" />
+            </group>
         </group>
     </group>
 </vector>

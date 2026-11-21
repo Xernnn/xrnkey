@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon monochrome layer (themed icons): the keycap in one colour with the "ă" as holes,
+     because the system tints whatever is opaque. The letter's strokes are outlined here, at the
+     master's 112%: the bowl and the breve are holes by even-odd, and the stem, which overlaps the
+     bowl, is cut away by the clip path. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:translateX="18" android:translateY="18" android:scaleX="0.72" android:scaleY="0.72">
+        <group android:translateX="-2.5" android:translateY="-2.5" android:scaleX="1.05" android:scaleY="1.05">
+            <clip-path android:pathData="M0,0 H100 V100 H0 Z M55.6,49.88 V67.8 A3.36,3.36 0 0 0 62.32,67.8 V49.88 A3.36,3.36 0 0 0 55.6,49.88 Z" />
+            <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+                android:pathData="M37,24 H63 A13,13 0 0 1 76,37 V63 A13,13 0 0 1 63,76 H37 A13,13 0 0 1 24,63 V37 A13,13 0 0 1 37,24 Z M37.68,58.84 A12.32,12.32 0 1 1 62.32,58.84 A12.32,12.32 0 1 1 37.68,58.84 Z M44.4,58.84 A5.6,5.6 0 1 1 55.6,58.84 A5.6,5.6 0 1 1 44.4,58.84 Z M39.631,37.533 Q41.963,40.197 44.413,41.597 Q47.148,43.16 50,43.16 Q52.852,43.16 55.587,41.597 Q58.037,40.197 60.369,37.533 A3.36,3.36 0 0 0 55.311,33.107 Q53.723,34.923 52.253,35.763 Q51.068,36.44 50,36.44 Q48.932,36.44 47.747,35.763 Q46.277,34.923 44.689,33.107 A3.36,3.36 0 0 0 39.631,37.533 Z" />
+        </group>
+    </group>
+</vector>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The xrn tile's background, lotus plum: the launcher icon, the in-app tile, and the "ă"
+         cut out of the white keycap, which is painted in it so the swoosh never shows through. -->
+    <color name="xrn_tile">#983A78</color>
+</resources>
