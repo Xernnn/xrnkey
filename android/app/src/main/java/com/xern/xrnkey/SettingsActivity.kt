@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -79,6 +80,7 @@ import androidx.core.view.WindowCompat
 import com.xern.xrnkey.engine.ImportCounts
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
+import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
@@ -103,23 +105,26 @@ private val LightLook = Look(
 )
 
 /** The pages: the main list, a page per section, and the licences under About. */
-enum class Page(val title: String) {
+enum class Page(val title: String, val icon: Icon? = null) {
     MAIN(""),
-    KEYBOARD("Keyboard"),
-    TYPING("Typing"),
-    SUGGESTIONS("Suggestions & auto-correct"),
-    WORDS("Personal words"),
-    SHORTCUTS("Shortcuts"),
-    CLIPBOARD("Clipboard"),
-    THEME("Theme"),
-    ABOUT("About"),
-    LICENCES("Licences");
+    KEYBOARD("Keyboard", Icon.KEYBOARD),
+    TYPING("Typing", Icon.TYPING),
+    SUGGESTIONS("Suggestions & auto-correct", Icon.SUGGEST),
+    WORDS("Personal words", Icon.WORDS),
+    SHORTCUTS("Shortcuts", Icon.SHORTCUTS),
+    CLIPBOARD("Clipboard", Icon.CLIPBOARD),
+    THEME("Theme", Icon.THEME),
+    ABOUT("About", Icon.ABOUT),
+    LICENCES("Licences", Icon.LICENCES);
 
     fun parent(): Page = if (this == LICENCES) ABOUT else MAIN
 
     companion object {
         /** The main list, in order. */
         val sections = listOf(KEYBOARD, TYPING, SUGGESTIONS, WORDS, SHORTCUTS, CLIPBOARD, THEME, ABOUT)
+
+        /** The main list's cards: typing, what the keyboard keeps, and the rest. */
+        val groups = listOf(listOf(KEYBOARD, TYPING, SUGGESTIONS), listOf(WORDS, SHORTCUTS, CLIPBOARD), listOf(THEME, ABOUT))
     }
 }
 
@@ -264,32 +269,81 @@ class SettingsActivity : ComponentActivity() {
         @Composable
         fun MainPage(o: Options, open: (Page) -> Unit) {
             Scrolling {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 Image(painterResource(R.drawable.tile), contentDescription = stringResource(R.string.app_name), Modifier.size(56.dp))
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 val isEnabled = enabled()
                 val isChosen = chosen()
+                // Setting up: only until xrnkey is enabled and is the keyboard in use.
                 if (!isEnabled || !isChosen) {
-                    Step(stringResource(R.string.enable), isEnabled) { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
-                    Step(stringResource(R.string.choose), isChosen) { imm().showInputMethodPicker() }
-                    Spacer(Modifier.height(12.dp))
+                    Card {
+                        Row(Modifier.padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Step(stringResource(R.string.enable), isEnabled) { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
+                            Step(stringResource(R.string.choose), isChosen) { imm().showInputMethodPicker() }
+                        }
+                    }
                 }
+                TryIt()
                 val words = remember { readWords().size }
                 val shortcuts = remember { readShortcuts().size }
-                for (p in Page.sections) {
-                    val summary = when (p) {
-                        Page.TYPING -> if (o.vni) "VNI" else "Telex"
-                        Page.SUGGESTIONS -> listOf("Off", "Flexible", "Strong")[o.correction]
-                        Page.WORDS -> if (o.learn) "$words" else "Off"
-                        Page.SHORTCUTS -> if (o.shortcuts) "$shortcuts" else "Off"
-                        Page.CLIPBOARD -> if (o.clipboard) "On" else "Off"
-                        Page.THEME -> o.theme.replaceFirstChar { it.uppercase() }
-                        Page.ABOUT -> version()
-                        else -> ""
-                    }
-                    NavRow(p.title, summary) { open(p) }
+                fun summary(p: Page) = when (p) {
+                    Page.TYPING -> if (o.vni) "VNI" else "Telex"
+                    Page.SUGGESTIONS -> listOf("Off", "Flexible", "Strong")[o.correction]
+                    Page.WORDS -> if (o.learn) "$words" else "Off"
+                    Page.SHORTCUTS -> if (o.shortcuts) "$shortcuts" else "Off"
+                    Page.CLIPBOARD -> if (o.clipboard) "On" else "Off"
+                    Page.THEME -> o.theme.replaceFirstChar { it.uppercase() }
+                    Page.ABOUT -> version()
+                    else -> ""
+                }
+                for (group in Page.groups) {
+                    Card { for (p in group) NavRow(p.title, summary(p), p.icon) { open(p) } }
                 }
             }
+        }
+
+        /** A field to try the keyboard in, without leaving the settings. */
+        @Composable
+        fun TryIt() {
+            var text by remember { mutableStateOf("") }
+            Card {
+                Row(Modifier.heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RowIcon(Icon.KEYBOARD, look.accent)
+                    Spacer(Modifier.width(14.dp))
+                    Box(Modifier.weight(1f).padding(vertical = 12.dp)) {
+                        if (text.isEmpty()) Text("Try it", style = quiet.copy(fontSize = 17.sp))
+                        BasicTextField(
+                            text, { text = it }, textStyle = label, cursorBrush = SolidColor(look.accent),
+                            modifier = Modifier.fillMaxWidth().testTag("Try it"),
+                        )
+                    }
+                }
+            }
+        }
+
+        /** Rows that belong together, on a rounded card. */
+        @Composable
+        fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+            Column(
+                modifier.fillMaxWidth().padding(vertical = 6.dp).clip(RoundedCornerShape(18.dp)).background(look.card)
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+            ) { content() }
+        }
+
+        /** The keyboard as the settings leave it: its theme, its height, its number row. */
+        @Composable
+        fun Preview(o: Options, modifier: Modifier = Modifier) {
+            val dark = when (o.theme) {
+                "light" -> false
+                "system" -> isSystemInDarkTheme()
+                else -> true
+            }
+            KeyboardPicture(
+                if (dark) Palette.DARK else Palette.LIGHT,
+                modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
+                heightPercent = o.height,
+                numberRow = o.numberRow != "off",
+            )
         }
 
         @Composable
@@ -313,12 +367,16 @@ class SettingsActivity : ComponentActivity() {
         }
 
         @Composable
-        fun NavRow(title: String, summary: String, onClick: () -> Unit) {
+        fun NavRow(title: String, summary: String, icon: Icon? = null, onClick: () -> Unit) {
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick)
+                Modifier.fillMaxWidth().heightIn(min = 60.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick)
                     .padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (icon != null) {
+                    RowIcon(icon, look.accent)
+                    Spacer(Modifier.width(14.dp))
+                }
                 Text(title, style = label, modifier = Modifier.weight(1f))
                 if (summary.isNotEmpty()) Text(summary, style = quiet)
                 Spacer(Modifier.width(10.dp))
@@ -334,18 +392,16 @@ class SettingsActivity : ComponentActivity() {
 
         @Composable
         fun Step(text: String, done: Boolean, onClick: () -> Unit) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text,
-                    color = Color.White,
-                    fontFamily = font,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 17.sp,
-                    modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(look.accent).clickable(onClick = onClick)
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                )
-                Spacer(Modifier.width(16.dp))
-                if (done) Tick(look.accent)
+            Row(
+                Modifier.clip(RoundedCornerShape(24.dp)).background(if (done) look.pill else look.accent).clickable(onClick = onClick)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text, color = if (done) look.glyph else Color.White, fontFamily = font, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+                if (done) {
+                    Spacer(Modifier.width(8.dp))
+                    Tick(look.accent)
+                }
             }
         }
 
@@ -469,38 +525,51 @@ class SettingsActivity : ComponentActivity() {
 
         @Composable
         fun KeyboardPage(o: Options, set: (Options) -> Unit) {
-            Choice("Height", Options.HEIGHT_CHOICES.map { "$it%" }, Options.HEIGHT_CHOICES.indexOf(o.height)) {
-                set(o.copy(height = Options.HEIGHT_CHOICES[it]))
+            Preview(o, Modifier.padding(vertical = 6.dp).testTag("Preview"))
+            Card {
+                Choice("Height", Options.HEIGHT_CHOICES.map { "$it%" }, Options.HEIGHT_CHOICES.indexOf(o.height)) {
+                    set(o.copy(height = Options.HEIGHT_CHOICES[it]))
+                }
+                val rows = listOf("auto", "on", "off")
+                Choice("Number row", listOf("Auto", "On", "Off"), rows.indexOf(o.numberRow)) { set(o.copy(numberRow = rows[it])) }
             }
-            val rows = listOf("auto", "on", "off")
-            Choice("Number row", listOf("Auto", "On", "Off"), rows.indexOf(o.numberRow)) { set(o.copy(numberRow = rows[it])) }
-            Toggle("Hold for digits", o.holdDigits) { set(o.copy(holdDigits = it)) }
-            Choice("Hold delay", Options.HOLD_CHOICES.map { "$it ms" }, Options.HOLD_CHOICES.indexOf(o.holdMillis)) {
-                set(o.copy(holdMillis = Options.HOLD_CHOICES[it]))
+            Card {
+                Toggle("Hold for digits", o.holdDigits) { set(o.copy(holdDigits = it)) }
+                Choice("Hold delay", Options.HOLD_CHOICES.map { "$it ms" }, Options.HOLD_CHOICES.indexOf(o.holdMillis)) {
+                    set(o.copy(holdMillis = Options.HOLD_CHOICES[it]))
+                }
+                Toggle("Key popup", o.keyPopup) { set(o.copy(keyPopup = it)) }
             }
-            Toggle("Swipe space bar", o.spaceSwipe) { set(o.copy(spaceSwipe = it)) }
-            Toggle("Hold space bar", o.spaceHold) { set(o.copy(spaceHold = it)) }
-            Toggle("Hold comma", o.commaHold) { set(o.copy(commaHold = it)) }
-            Toggle("Key popup", o.keyPopup) { set(o.copy(keyPopup = it)) }
+            Card {
+                Toggle("Swipe space bar", o.spaceSwipe) { set(o.copy(spaceSwipe = it)) }
+                Toggle("Hold space bar", o.spaceHold) { set(o.copy(spaceHold = it)) }
+                Toggle("Hold comma", o.commaHold) { set(o.copy(commaHold = it)) }
+            }
         }
 
         @Composable
         fun TypingPage(o: Options, set: (Options) -> Unit) {
-            Choice("Method", listOf("Telex", "VNI"), if (o.vni) 1 else 0) { set(o.copy(vni = it == 1)) }
-            Toggle("Old-style tones", !o.modernTones) { set(o.copy(modernTones = !it)) }
-            Toggle("Tones after the word", o.freeMarking) { set(o.copy(freeMarking = it)) }
-            if (!o.vni) Toggle("W types ư", o.wShortcut) { set(o.copy(wShortcut = it)) }
-            Toggle("Underline the word", o.underline) { set(o.copy(underline = it)) }
+            Card { Choice("Method", listOf("Telex", "VNI"), if (o.vni) 1 else 0) { set(o.copy(vni = it == 1)) } }
+            Card {
+                Toggle("Old-style tones", !o.modernTones) { set(o.copy(modernTones = !it)) }
+                Toggle("Tones after the word", o.freeMarking) { set(o.copy(freeMarking = it)) }
+                if (!o.vni) Toggle("W types ư", o.wShortcut) { set(o.copy(wShortcut = it)) }
+            }
+            Card { Toggle("Underline the word", o.underline) { set(o.copy(underline = it)) } }
         }
 
         @Composable
         fun SuggestionsPage(o: Options, set: (Options) -> Unit) {
-            Toggle("Suggestions", o.suggestions) { set(o.copy(suggestions = it)) }
-            Toggle("Next word", o.nextWord) { set(o.copy(nextWord = it)) }
-            Toggle("Emoji", o.emojiSuggestions) { set(o.copy(emojiSuggestions = it)) }
-            Choice("Auto-correct", listOf("Off", "Flexible", "Strong"), o.correction) { set(o.copy(correction = it)) }
-            Toggle("Non-Vietnamese as typed", o.keepForeign) { set(o.copy(keepForeign = it)) }
-            Toggle("Double space full stop", o.doubleSpace) { set(o.copy(doubleSpace = it)) }
+            Card {
+                Toggle("Suggestions", o.suggestions) { set(o.copy(suggestions = it)) }
+                Toggle("Next word", o.nextWord) { set(o.copy(nextWord = it)) }
+                Toggle("Emoji", o.emojiSuggestions) { set(o.copy(emojiSuggestions = it)) }
+            }
+            Card {
+                Choice("Auto-correct", listOf("Off", "Flexible", "Strong"), o.correction) { set(o.copy(correction = it)) }
+                Toggle("Non-Vietnamese as typed", o.keepForeign) { set(o.copy(keepForeign = it)) }
+                Toggle("Double space full stop", o.doubleSpace) { set(o.copy(doubleSpace = it)) }
+            }
         }
 
         @Composable
@@ -509,11 +578,11 @@ class SettingsActivity : ComponentActivity() {
             var query by remember { mutableStateOf("") }
             var confirmClear by remember { mutableStateOf(false) }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-                Toggle("Learn words", o.learn) { set(o.copy(learn = it)) }
+                Card { Toggle("Learn words", o.learn) { set(o.copy(learn = it)) } }
                 Field(query, "Search", { query = it }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
                 val q = query.trim().lowercase()
                 val shown = if (q.isEmpty()) words else words.filter { it.first.contains(q) }
-                LazyColumn(Modifier.weight(1f)) {
+                LazyColumn(Modifier.weight(1f).padding(vertical = 6.dp).clip(RoundedCornerShape(18.dp)).background(look.card).padding(horizontal = 12.dp)) {
                     items(shown, key = { it.first }) { (word, count) ->
                         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(word, style = label, modifier = Modifier.weight(1f))
@@ -556,7 +625,7 @@ class SettingsActivity : ComponentActivity() {
                 }
             }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-                Toggle("Shortcuts", o.shortcuts) { set(o.copy(shortcuts = it)) }
+                Card { Toggle("Shortcuts", o.shortcuts) { set(o.copy(shortcuts = it)) } }
                 Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pill("Add", true) { editing = "" to "" }
                     Pill("Import", false) { importer.launch(arrayOf("text/*")) }
@@ -603,7 +672,7 @@ class SettingsActivity : ComponentActivity() {
                         }
                     }
                 }
-                LazyColumn(Modifier.weight(1f)) {
+                LazyColumn(Modifier.weight(1f).padding(vertical = 6.dp).clip(RoundedCornerShape(18.dp)).background(look.card).padding(horizontal = 12.dp)) {
                     items(shortcuts, key = { it.first }) { (abbr, expansion) ->
                         Row(
                             Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable { editing = abbr to expansion }.padding(horizontal = 4.dp),
@@ -645,8 +714,10 @@ class SettingsActivity : ComponentActivity() {
         @Composable
         fun ClipboardPage(o: Options, set: (Options) -> Unit) {
             var confirm by remember { mutableStateOf(false) }
-            Toggle("History", o.clipboard) { set(o.copy(clipboard = it)) }
-            Action("Clear history") { confirm = true }
+            Card {
+                Toggle("History", o.clipboard) { set(o.copy(clipboard = it)) }
+                Action("Clear history") { confirm = true }
+            }
             if (confirm) {
                 Confirm("Clear history", "Clear", {
                     File(filesDir, XrnkeyService.CLIPS).delete()
@@ -659,20 +730,28 @@ class SettingsActivity : ComponentActivity() {
         @Composable
         fun ThemePage(o: Options, set: (Options) -> Unit) {
             val themes = listOf("dark" to "Dark", "light" to "Light", "system" to "System")
-            for ((key, name) in themes) {
-                Row(
-                    Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(12.dp))
-                        .clickable { set(o.copy(theme = key)) }.padding(horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(name, style = label, modifier = Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                for ((key, name) in themes) {
                     val on = o.theme == key
-                    val accent = look.accent
-                    val ring = look.dim
-                    Canvas(Modifier.size(22.dp)) {
-                        val r = size.width / 2
-                        drawCircle(if (on) accent else ring, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
-                        if (on) drawCircle(accent, r * 0.5f)
+                    val shape = RoundedCornerShape(18.dp)
+                    Column(
+                        Modifier.weight(1f).clip(shape).background(look.card)
+                            .then(if (on) Modifier.border(2.dp, look.accent, shape) else Modifier)
+                            .clickable { set(o.copy(theme = key)) }.padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        KeyboardPicture(
+                            if (key == "light") Palette.LIGHT else Palette.DARK,
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)),
+                            split = if (key == "system") Palette.LIGHT else null,
+                        )
+                        Row(Modifier.padding(top = 10.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (on) {
+                                Tick(look.accent)
+                                Spacer(Modifier.width(4.dp))
+                            }
+                            Text(name, style = label.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal))
+                        }
                     }
                 }
             }
@@ -680,11 +759,15 @@ class SettingsActivity : ComponentActivity() {
 
         @Composable
         fun AboutPage(licences: () -> Unit) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Version", style = label, modifier = Modifier.weight(1f))
-                Text(version(), style = quiet)
+            Card {
+                Row(Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RowIcon(Icon.ABOUT, look.accent)
+                    Spacer(Modifier.width(14.dp))
+                    Text("Version", style = label, modifier = Modifier.weight(1f))
+                    Text(version(), style = quiet)
+                }
+                NavRow("Licences", "", Icon.LICENCES, licences)
             }
-            NavRow("Licences", "", licences)
         }
 
         @Composable
@@ -697,10 +780,12 @@ class SettingsActivity : ComponentActivity() {
                 "Unicode CLDR" to "Unicode License v3",
                 "MiSans" to "MiSans Font License",
             )
-            for ((what, licence) in entries) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp)) {
-                    Text(what, style = label)
-                    Text(licence, style = quiet)
+            Card {
+                for ((what, licence) in entries) {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp)) {
+                        Text(what, style = label)
+                        Text(licence, style = quiet)
+                    }
                 }
             }
         }

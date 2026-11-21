@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import com.xern.xrnkey.clip.ClipHistory
@@ -57,10 +58,10 @@ class SettingsPagesTest {
 
     @Test
     fun theMainListOpensEachSectionAndBackReturns() {
-        for (p in Page.sections) rule.onNodeWithText(p.title).assertIsDisplayed()
+        for (p in Page.sections) rule.onNodeWithText(p.title).performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Keyboard").performClick()
         rule.onNodeWithText("Height").assertIsDisplayed()
-        rule.onNodeWithText("Hold comma").assertIsDisplayed()
+        rule.onNodeWithText("Hold comma").performScrollTo().assertIsDisplayed()
         back()
         rule.onNodeWithText("Typing").performClick()
         rule.onNodeWithText("Old-style tones").assertIsDisplayed()
@@ -163,12 +164,70 @@ class SettingsPagesTest {
             rule.activity.runOnUiThread { rule.activity.recreate() }
             rule.waitForIdle()
             shot("settings-main-$theme")
-            for ((title, name) in listOf("Keyboard" to "keyboard", "Typing" to "typing", "Personal words" to "words", "Shortcuts" to "shortcuts")) {
-                rule.onNodeWithText(title).performClick()
-                shot("settings-$name-$theme")
+            for (p in Page.sections) {
+                rule.onNodeWithText(p.title).performClick()
+                shot("settings-${p.name.lowercase()}-$theme")
+                if (p == Page.ABOUT) {
+                    rule.onNodeWithText("Licences").performClick()
+                    shot("settings-licences-$theme")
+                    back()
+                }
                 back()
             }
         }
+    }
+
+    @Test
+    fun theSetupCardShowsUntilXrnkeyIsTheKeyboard() {
+        rule.onNodeWithText("Turn on").assertIsDisplayed()
+        val a = rule.activity
+        val imm = a.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        org.robolectric.Shadows.shadowOf(imm).setEnabledInputMethodInfoList(
+            listOf(android.view.inputmethod.InputMethodInfo(a.packageName, "com.xern.xrnkey.ime.XrnkeyService", "xrnkey", null)),
+        )
+        android.provider.Settings.Secure.putString(
+            a.contentResolver, android.provider.Settings.Secure.DEFAULT_INPUT_METHOD, "${a.packageName}/.ime.XrnkeyService",
+        )
+        a.runOnUiThread { a.recreate() }
+        rule.waitForIdle()
+        rule.onNodeWithText("Turn on").assertDoesNotExist()
+        rule.onNodeWithText("Switch to xrnkey").assertDoesNotExist()
+        rule.onNodeWithText("Keyboard").assertIsDisplayed()
+    }
+
+    @Test
+    fun theKeyboardCanBeTriedOnTheMainPage() {
+        rule.onNodeWithTag("Try it").performTextInput("xin chào")
+        rule.onNodeWithTag("Try it").assert(hasText("xin chào"))
+    }
+
+    @Test
+    fun theKeyboardPreviewFollowsTheHeight() {
+        rule.onNodeWithText("Keyboard").performClick()
+        // The preview is the real keyboard, scaled: its shape is the keyboard view's own.
+        val real = com.xern.xrnkey.keyboard.KeyboardView(rule.activity).apply {
+            measure(
+                android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+            )
+        }
+        val shown = rule.onNodeWithTag("Preview").fetchSemanticsNode().size
+        assertEquals(real.measuredHeight / 1080f, shown.height.toFloat() / shown.width, 0.01f)
+        val before = rule.onNodeWithTag("Preview").fetchSemanticsNode().size.height
+        rule.onNodeWithText("120%").performClick()
+        val after = rule.onNodeWithTag("Preview").fetchSemanticsNode().size.height
+        assertTrue("$before -> $after", after > before)
+        rule.onNodeWithText("80%").performClick()
+        assertTrue(rule.onNodeWithTag("Preview").fetchSemanticsNode().size.height < before)
+    }
+
+    @Test
+    fun theThemeIsChosenFromPreviews() {
+        rule.onNodeWithText("Theme").performClick()
+        rule.onNodeWithText("System").performClick()
+        assertEquals("system", Options.load(prefs()).theme)
+        rule.onNodeWithText("Dark").performClick()
+        assertEquals("dark", Options.load(prefs()).theme)
     }
 
     @Test

@@ -3,3 +3,10 @@ __pycache__/
 
 # Local notes, not published
 instructions.txt
+
+# What makepkg leaves in packaging/
+packaging/src/
+packaging/pkg/
+packaging/xrnkey/
+packaging/xrnikey/
+packaging/*.pkg.tar.zst
