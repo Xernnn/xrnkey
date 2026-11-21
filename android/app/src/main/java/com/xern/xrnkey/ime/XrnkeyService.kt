@@ -5,17 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.UserManager
 import android.text.InputType
+import android.text.SpannableString
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
-import android.text.SpannableString
+import androidx.core.view.WindowCompat
 import com.xern.xrnkey.Options
 import com.xern.xrnkey.SettingsActivity
 import com.xern.xrnkey.clip.ClipHistory
@@ -26,6 +28,7 @@ import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EnterAction
+import com.xern.xrnkey.keyboard.KeyboardFrame
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Page
 import com.xern.xrnkey.keyboard.Palette
@@ -58,6 +61,7 @@ class XrnkeyService :
     private var keyboard: KeyboardView? = null
     private var emojiPanel: EmojiPanelView? = null
     private var clipPanel: ClipboardPanelView? = null
+    private var inputFrame: KeyboardFrame? = null
     private var clips: ClipHistory? = null
     private var onDevice: OnDevice? = null
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener { onCopied() }
@@ -136,12 +140,13 @@ class XrnkeyService :
     }
 
     override fun onCreateInputView(): View {
-        val frame = FrameLayout(this)
+        val frame = KeyboardFrame(this).also { inputFrame = it }
         val keys = KeyboardView(this).also {
             it.listener = this
             it.palette = savedPalette()
             keyboard = it
         }
+        frame.palette = keys.palette
         val panel = EmojiPanelView(this).also {
             it.listener = this
             it.palette = keys.palette
@@ -289,6 +294,8 @@ class XrnkeyService :
                 keyboard?.palette = next
                 emojiPanel?.palette = next
                 clipPanel?.palette = next
+                inputFrame?.palette = next
+                navBarButtons(next)
                 prefs().edit().putString("palette", if (next == Palette.LIGHT) "light" else "dark").apply()
             }
             Tool.EMOJI -> showEmoji()
@@ -363,6 +370,16 @@ class XrnkeyService :
     override fun onSearchClose() {
         searchQuery = null
         showEmoji()
+    }
+
+    /**
+     * The navigation bar over the keyboard: no scrim of its own (the keyboard's colour shows
+     * through, as the band below the keys), and buttons that read on that colour.
+     */
+    private fun navBarButtons(palette: Palette) {
+        val w = window?.window ?: return
+        if (Build.VERSION.SDK_INT >= 29) w.isNavigationBarContrastEnforced = false
+        WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightNavigationBars = palette == Palette.LIGHT
     }
 
     // ---- personal words and shortcuts --------------------------------------------------------
@@ -475,6 +492,8 @@ class XrnkeyService :
         }
         emojiPanel?.palette = palette
         clipPanel?.palette = palette
+        inputFrame?.palette = palette
+        navBarButtons(palette)
     }
 
     companion object {
