@@ -330,7 +330,7 @@ class SettingsActivity : ComponentActivity() {
             ) { content() }
         }
 
-        /** The keyboard as the settings leave it, small: the theme, and the rows' height. */
+        /** The keyboard as the settings leave it: its theme, its height, its number row. */
         @Composable
         fun Preview(o: Options, modifier: Modifier = Modifier) {
             val dark = when (o.theme) {
@@ -338,10 +338,11 @@ class SettingsActivity : ComponentActivity() {
                 "system" -> isSystemInDarkTheme()
                 else -> true
             }
-            MiniKeyboard(
+            KeyboardPicture(
                 if (dark) Palette.DARK else Palette.LIGHT,
-                modifier.fillMaxWidth().aspectRatio(1f / miniKeyboardRatio(o.height)).clip(RoundedCornerShape(14.dp)),
+                modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
                 heightPercent = o.height,
+                numberRow = o.numberRow != "off",
             )
         }
 
@@ -739,9 +740,9 @@ class SettingsActivity : ComponentActivity() {
                             .clickable { set(o.copy(theme = key)) }.padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        MiniKeyboard(
+                        KeyboardPicture(
                             if (key == "light") Palette.LIGHT else Palette.DARK,
-                            Modifier.fillMaxWidth().aspectRatio(1f / miniKeyboardRatio(100)).clip(RoundedCornerShape(10.dp)),
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)),
                             split = if (key == "system") Palette.LIGHT else null,
                         )
                         Row(Modifier.padding(top = 10.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {

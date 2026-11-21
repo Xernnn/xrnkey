@@ -179,7 +179,7 @@ class SettingsPagesTest {
 
     @Test
     fun theSetupCardShowsUntilXrnkeyIsTheKeyboard() {
-        rule.onNodeWithText("Enable").assertIsDisplayed()
+        rule.onNodeWithText("Turn on").assertIsDisplayed()
         val a = rule.activity
         val imm = a.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         org.robolectric.Shadows.shadowOf(imm).setEnabledInputMethodInfoList(
@@ -190,8 +190,8 @@ class SettingsPagesTest {
         )
         a.runOnUiThread { a.recreate() }
         rule.waitForIdle()
-        rule.onNodeWithText("Enable").assertDoesNotExist()
-        rule.onNodeWithText("Choose").assertDoesNotExist()
+        rule.onNodeWithText("Turn on").assertDoesNotExist()
+        rule.onNodeWithText("Switch to xrnkey").assertDoesNotExist()
         rule.onNodeWithText("Keyboard").assertIsDisplayed()
     }
 
@@ -204,6 +204,15 @@ class SettingsPagesTest {
     @Test
     fun theKeyboardPreviewFollowsTheHeight() {
         rule.onNodeWithText("Keyboard").performClick()
+        // The preview is the real keyboard, scaled: its shape is the keyboard view's own.
+        val real = com.xern.xrnkey.keyboard.KeyboardView(rule.activity).apply {
+            measure(
+                android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+            )
+        }
+        val shown = rule.onNodeWithTag("Preview").fetchSemanticsNode().size
+        assertEquals(real.measuredHeight / 1080f, shown.height.toFloat() / shown.width, 0.01f)
         val before = rule.onNodeWithTag("Preview").fetchSemanticsNode().size.height
         rule.onNodeWithText("120%").performClick()
         val after = rule.onNodeWithTag("Preview").fetchSemanticsNode().size.height

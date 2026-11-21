@@ -3,9 +3,11 @@ package com.xern.xrnkey
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -13,14 +15,19 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.xern.xrnkey.keyboard.EnterAction
+import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Palette
 
 /** The settings' row icons, drawn like the keyboard's own tool icons. */
@@ -111,59 +118,45 @@ private fun DrawScope.drawIcon(icon: Icon, c: Color) {
 }
 
 /**
- * A small keyboard in a theme's colours: the strip, the number row, three rows of letters and
- * the bottom row with the space bar and Enter. `heightPercent` stretches the rows as the
- * Height setting does; `split` draws the dark one on the left and the light one on the right.
+ * The real keyboard, as a picture: the same view the keyboard shows, drawn off screen at the
+ * phone's width with the settings that change how it looks (the theme, the height, the number
+ * row), then scaled to fit. With [split], the left half is in [palette] and the right half in
+ * [split] (the System theme).
  */
 @Composable
-fun MiniKeyboard(palette: Palette, modifier: Modifier = Modifier, heightPercent: Int = 100, split: Palette? = null) {
-    Canvas(modifier) {
-        if (split == null) {
-            drawMini(palette, heightPercent)
+fun KeyboardPicture(
+    palette: Palette,
+    modifier: Modifier = Modifier,
+    heightPercent: Int = 100,
+    numberRow: Boolean = true,
+    split: Palette? = null,
+) {
+    val context = LocalContext.current
+    fun draw(p: Palette): ImageBitmap {
+        val v = KeyboardView(context)
+        v.palette = p
+        v.heightPercent = heightPercent
+        v.numberRow = numberRow
+        v.enterAction = EnterAction.NEWLINE
+        val width = context.resources.displayMetrics.widthPixels
+        v.measure(
+            android.view.View.MeasureSpec.makeMeasureSpec(width, android.view.View.MeasureSpec.EXACTLY),
+            android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+        )
+        v.layout(0, 0, v.measuredWidth, v.measuredHeight)
+        val bmp = android.graphics.Bitmap.createBitmap(v.width, v.height, android.graphics.Bitmap.Config.ARGB_8888)
+        v.draw(android.graphics.Canvas(bmp))
+        return bmp.asImageBitmap()
+    }
+    val first = remember(palette, heightPercent, numberRow) { draw(palette) }
+    val second = remember(split, heightPercent, numberRow) { split?.let { draw(it) } }
+    Canvas(modifier.aspectRatio(first.width.toFloat() / first.height)) {
+        val dst = IntSize(size.width.toInt(), size.height.toInt())
+        if (second == null) {
+            drawImage(first, dstSize = dst)
         } else {
-            clipRect(right = size.width / 2) { drawMini(palette, heightPercent) }
-            clipRect(left = size.width / 2) { drawMini(split, heightPercent) }
+            clipRect(right = size.width / 2) { drawImage(first, dstSize = dst) }
+            clipRect(left = size.width / 2) { drawImage(second, dstSize = dst) }
         }
     }
-}
-
-/** The mini keyboard's height for a width, at a Height setting: as the real one is. */
-fun miniKeyboardRatio(heightPercent: Int): Float = (48f + 5 * 60f * heightPercent / 100f) / 400f
-
-private fun DrawScope.drawMini(p: Palette, heightPercent: Int) {
-    val w = size.width
-    val h = size.height
-    val unit = w / 400f  // the real keyboard is about 400 dp wide
-    val strip = 48 * unit
-    val row = (h - strip) / 5
-    drawRect(Color(p.background))
-    drawRect(Color(p.strip), size = Size(w, strip))
-    val glyph = Color(p.glyph).copy(alpha = 0.55f)
-    val key = w / 10
-    // The number row and the letters: the letters themselves where there is room, a mark for
-    // each key where there isn't.
-    val rows = listOf("1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm")
-    val letters = key >= 24.dp.toPx()
-    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = android.graphics.Paint.Align.CENTER
-        textSize = minOf(row * 0.42f, key * 0.6f)
-        color = p.glyph
-    }
-    for ((r, keys) in rows.withIndex()) {
-        val inset = (10 - keys.length) * key / 2
-        val cy = strip + row * r + row / 2
-        for ((i, c) in keys.withIndex()) {
-            val cx = inset + key * i + key / 2
-            if (letters) {
-                drawContext.canvas.nativeCanvas.drawText(c.toString(), cx, cy - (paint.ascent() + paint.descent()) / 2, paint)
-            } else {
-                drawRoundRect(glyph, Offset(cx - key * 0.16f, cy - row * 0.14f), Size(key * 0.32f, row * 0.28f), CornerRadius(key * 0.08f))
-            }
-        }
-    }
-    // The bottom row: the space bar pill and the Enter disc.
-    val cy = strip + row * 4 + row / 2
-    val bar = minOf(row * 0.3f, 17 * unit)
-    drawRoundRect(Color(p.space), Offset(key * 2.5f + 4 * unit, cy - bar), Size(key * 5 - 8 * unit, bar * 2), CornerRadius(bar))
-    drawCircle(Color(p.accent), minOf(row, key * 1.5f) * 0.36f, Offset(w - key * 0.75f, cy))
 }
