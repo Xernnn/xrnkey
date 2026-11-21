@@ -79,8 +79,8 @@ class SettingsTest {
         assertFalse(keys.commaHold)
         assertEquals(Palette.LIGHT, keys.palette)
         keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
-        // 48 dp of strip and four rows of 54 dp at 120 %, at 3 px a dp.
-        assertEquals(((48 + 4 * 54 * 1.2) * 3).toInt(), keys.measuredHeight)
+        // 48 dp of strip and four rows of 60 dp at 120 %, at 3 px a dp.
+        assertEquals(((48 + 4 * 60 * 1.2) * 3).toInt(), keys.measuredHeight)
         // The clipboard history is off: nothing copied is kept.
         val cm = app().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("", "kept nowhere"))

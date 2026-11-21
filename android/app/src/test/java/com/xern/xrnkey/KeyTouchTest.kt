@@ -20,7 +20,7 @@ import java.time.Duration
 
 /**
  * Holding and sliding on the keys, through real touch events on a keyboard in a window.
- * At xxhdpi (dp = 3) and 1080 px wide: the strip is 144 px, then five rows of 162 px (the
+ * At xxhdpi (dp = 3) and 1080 px wide: the strip is 144 px, then five rows of 180 px (the
  * number row, qwerty, asdf, zxcv, the bottom row); a letter key is 108 px wide.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -69,8 +69,8 @@ class KeyTouchTest {
         File(dir, "$name.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
-    private val spaceY = 873f
-    private val topRowY = 387f
+    private val spaceY = 954f
+    private val topRowY = 414f
 
     @Test
     fun slidingAlongTheSpaceBarMovesTheCursorAndTypesNoSpace() {
@@ -137,14 +137,14 @@ class KeyTouchTest {
             hold(450)
             touch(v, MotionEvent.ACTION_UP, 270f, topRowY)
             // A letter with one form gives it at once: d -> đ.
-            touch(v, MotionEvent.ACTION_DOWN, 324f, 549f)
+            touch(v, MotionEvent.ACTION_DOWN, 324f, 594f)
             hold(450)
-            touch(v, MotionEvent.ACTION_UP, 324f, 549f)
+            touch(v, MotionEvent.ACTION_UP, 324f, 594f)
             // Slid far right: the last form.
-            touch(v, MotionEvent.ACTION_DOWN, 108f, 549f)     // a
+            touch(v, MotionEvent.ACTION_DOWN, 108f, 594f)     // a
             hold(450)
-            touch(v, MotionEvent.ACTION_MOVE, 1079f, 549f)
-            touch(v, MotionEvent.ACTION_UP, 1079f, 549f)
+            touch(v, MotionEvent.ACTION_MOVE, 1079f, 594f)
+            touch(v, MotionEvent.ACTION_UP, 1079f, 594f)
             assertEquals(listOf("ê", "3", "đ", "ạ"), events)
         }
     }
