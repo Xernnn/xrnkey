@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "lm_internal.h"
 #include "xrnkey.h"
 
 namespace {
@@ -66,7 +67,43 @@ TEST_CASE("everyday speech weighed against the news restores a greeting", "[lm][
     CHECK(restore(train("weights-20b.xklm", 20), {"cong", "ty", "chao", "ban"}) == "công ty chào bán");
 }
 
+TEST_CASE("each order has its own weight", "[lm][weights]") {
+    // One chat sentence, against a pruning that drops what was seen twice or fewer: counted 8
+    // times at every order it keeps its four words; counted twice as four words, it keeps its
+    // pairs and triples only, and so can't decide a four-word phrase on its own
+    // ("cám ơn bạn nhiều" against the common "cảm ơn").
+    write(tmp("news4.tok"), {"cảm ơn bạn", "cảm ơn các bạn"}, 12);
+    write(tmp("chat4.tok"), {"cám ơn bạn nhiều"});
+    auto has = [](const std::string& model, std::vector<const char*> gram) {
+        XKLm* lm = xk_lm_open(model.c_str());
+        REQUIRE(lm != nullptr);
+        const xrnkey::Lm& m = xrnkey::lm_of(lm);
+        std::vector<uint32_t> ids;
+        for (const char* w : gram) ids.push_back(xrnkey::lm_id(m, w));
+        const bool found = xrnkey::lm_find(m, ids.data(), static_cast<int>(ids.size())) >= 0;
+        xk_lm_free(lm);
+        return found;
+    };
+    auto model = [](const std::string& name, const std::string& weight) {
+        const std::string out = tmp(name);
+        const std::string cmd = std::string(XRNKEY_LM_BUILD) + " --order 4 --min-count 1 --prune 0,2,2 -o " + out +
+                                " --weight 1 " + tmp("news4.tok") + " --weight " + weight + " " + tmp("chat4.tok") +
+                                " 2>/dev/null";
+        REQUIRE(std::system(cmd.c_str()) == 0);
+        return out;
+    };
+    const std::string all8 = model("w8.xklm", "8");
+    CHECK(has(all8, {"cám", "ơn", "bạn", "nhiều"}));
+    const std::string m8882 = model("w8882.xklm", "8,8,8,2");
+    CHECK_FALSE(has(m8882, {"cám", "ơn", "bạn", "nhiều"}));
+    CHECK(has(m8882, {"cám", "ơn", "bạn"}));
+    CHECK(has(m8882, {"ơn", "bạn", "nhiều"}));
+}
+
 TEST_CASE("a weight out of range is refused", "[lm][weights]") {
-    const std::string cmd = std::string(XRNKEY_LM_BUILD) + " --weight 0 -o " + tmp("w0.xklm") + " " + tmp("chat.tok") + " 2>/dev/null";
-    CHECK(std::system(cmd.c_str()) != 0);
+    for (const char* w : {"0", "8,0", "2000"}) {
+        const std::string cmd = std::string(XRNKEY_LM_BUILD) + " --weight " + w + " -o " + tmp("w0.xklm") + " " +
+                                tmp("chat.tok") + " 2>/dev/null";
+        CHECK(std::system(cmd.c_str()) != 0);
+    }
 }

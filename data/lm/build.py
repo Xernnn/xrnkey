@@ -208,13 +208,17 @@ MODELS = [
 
 
 def corpora(work, lang):
-    """The training files of a language, each after the weight its source has in sources.json:
-    the everyday speech of Tatoeba and Common Voice counts many times over, or the news
-    would decide every phrase ("xin chào bạn" came out "xin chào bán", from "chào bán")."""
+    """The training files of a language, each after the weight its source has in sources.json
+    (one, or one per n-gram order): the everyday speech of Tatoeba and Common Voice counts
+    many times over, or the news would decide every phrase ("xin chào bạn" came out
+    "xin chào bán", from "chào bán"), but its four-word phrases count only twice, or one odd
+    sentence would decide them ("cám ơn bạn nhiều")."""
     args = []
     for src in load_sources():
         if src["lang"] == lang:
-            args += ["--weight", str(src.get("weight", 1)), os.path.join(work, src["name"] + ".train.txt")]
+            weight = src.get("weight", 1)
+            weight = ",".join(map(str, weight)) if isinstance(weight, list) else str(weight)
+            args += ["--weight", weight, os.path.join(work, src["name"] + ".train.txt")]
     return args
 
 

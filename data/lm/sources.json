@@ -30,7 +30,7 @@
     },
     {
       "name": "tatoeba_vie",
-      "weight": 8,
+      "weight": [8, 8, 8, 2],
       "lang": "vi",
       "url": "https://downloads.tatoeba.org/exports/per_language/vie/vie_sentences.tsv.bz2",
       "sha256": "e9a6451c46c43d9e15b923945325e74c8f28a8bc8e2e9c864801942337dbcb1a",
@@ -40,7 +40,7 @@
     },
     {
       "name": "commonvoice_vi",
-      "weight": 8,
+      "weight": [8, 8, 8, 2],
       "lang": "vi",
       "url": "https://raw.githubusercontent.com/common-voice/common-voice/main/server/data/vi/sentence-collector.txt",
       "sha256": "6e6b9d0c3db850237cc916811951c6536809eeccc15786bb8bdfa5d6b63c2552",

@@ -76,6 +76,7 @@ add_dependencies(test_predict test_lm_models)
 
 add_executable(test_weights test_weights.cpp)
 target_link_libraries(test_weights PRIVATE xrnkey Catch2::Catch2WithMain)
+target_include_directories(test_weights PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
 target_compile_definitions(test_weights PRIVATE
     XRNKEY_LM_BUILD="$<TARGET_FILE:xk-lm-build>"
     XRNKEY_TEST_TMP="${CMAKE_CURRENT_BINARY_DIR}")

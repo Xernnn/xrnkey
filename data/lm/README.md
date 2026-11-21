@@ -91,10 +91,12 @@ builds them is MIT, like the rest of the repo.
   [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 Tatoeba and Common Voice are the everyday speech among these: short sentences people say to
-each other. They are under one percent of the text, so training counts them 8 times
-(`"weight"` in `sources.json`, `xk-lm-build --weight`); otherwise the news decides every
-phrase ("xin chào bạn" came out "xin chào bán", from "chào bán", offering shares). At 8 their
-phrases survive the phone model's pruning (it drops what was seen 6 times or fewer).
+each other. They are under one percent of the text, so training counts their words, pairs
+and triples 8 times (`"weight"` in `sources.json`, `xk-lm-build --weight 8,8,8,2`); otherwise
+the news decides every phrase ("xin chào bạn" came out "xin chào bán", from "chào bán",
+offering shares). At 8 those phrases survive the phone model's pruning (it drops what was
+seen 6 times or fewer). Their four-word phrases count only twice: one sentence of Tatoeba's,
+counted 8 times, was enough to turn "cảm ơn bạn nhiều" into "cám ơn bạn nhiều".
 
 Not used:
 
