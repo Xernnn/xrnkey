@@ -1,0 +1,12 @@
+# Set P: everyday phrases that must come out right, typed without marks. Common phrases, written
+# for this project (MIT, like the code). A model that turns one of them into something else
+# fails the set, so a later model can't silently flip them.
+Xin chào bạn
+Cảm ơn bạn nhiều
+Cảm ơn
+Chúc mừng sinh nhật bạn
+Bạn ơi
+Tạm biệt
+Hẹn gặp lại
+Không sao đâu
+Mình nhớ bạn

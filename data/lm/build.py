@@ -207,12 +207,26 @@ MODELS = [
 ]
 
 
+def corpora(work, lang):
+    """The training files of a language, each after the weight its source has in sources.json
+    (one, or one per n-gram order): the everyday speech of Tatoeba and Common Voice counts
+    many times over, or the news would decide every phrase ("xin chào bạn" came out
+    "xin chào bán", from "chào bán"), but its four-word phrases count only twice, or one odd
+    sentence would decide them ("cám ơn bạn nhiều")."""
+    args = []
+    for src in load_sources():
+        if src["lang"] == lang:
+            weight = src.get("weight", 1)
+            weight = ",".join(map(str, weight)) if isinstance(weight, list) else str(weight)
+            args += ["--weight", weight, os.path.join(work, src["name"] + ".train.txt")]
+    return args
+
+
 def cmd_train(args):
     os.makedirs(args.out, exist_ok=True)
     for name, lang, opts in MODELS:
-        corpus = os.path.join(args.work, f"{lang}.train.txt")
         out = os.path.join(args.out, f"{name}.xklm")
-        subprocess.run([args.tool, *opts, "-o", out, corpus], check=True)
+        subprocess.run([args.tool, *opts, "-o", out, *corpora(args.work, lang)], check=True)
         print(name, out, os.path.getsize(out), sha256(out))
 
 

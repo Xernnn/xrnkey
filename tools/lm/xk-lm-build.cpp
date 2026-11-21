@@ -7,6 +7,13 @@
  *   --prune a,b,c    drop n-grams of order 2, 3, 4 seen this many times or fewer
  *                    (default 0,1,1); each must be >= the one before
  *   --no-shape-index leave out the shape index (an English model needs none)
+ *   --weight W[,W2,W3,W4]
+ *                    count the n-grams of the corpora after it W times each
+ *                    (default 1), or W for words, W2 for pairs, and so on: a
+ *                    small source of everyday speech then weighs against the
+ *                    news ("xin chào bạn" against "chào bán"), while a lower
+ *                    weight for long n-grams keeps one odd sentence from
+ *                    deciding a whole four-word phrase ("cám ơn bạn nhiều")
  *
  * Each CORPUS line is one sentence of tokens separated by spaces, already
  * normalised (data/lm/build.py writes them). Smoothing is interpolated
@@ -52,6 +59,7 @@ struct Options {
     bool shape_index = true;
     std::string out;
     std::vector<std::string> corpora;
+    std::vector<std::array<uint16_t, kMaxOrder + 1>> weights;  /* each corpus's weight, by n-gram order */
 };
 
 [[noreturn]] void die(const std::string& msg) {
@@ -63,7 +71,9 @@ template <typename F>
 void each_sentence(const Options& o, F f) {
     std::vector<std::string_view> toks;
     std::string line;
-    for (const auto& path : o.corpora) {
+    for (size_t c = 0; c < o.corpora.size(); ++c) {
+        const uint32_t weight = o.weights[c][1];  /* words, for the vocabulary */
+        const auto& path = o.corpora[c];
         std::ifstream in(path);
         if (!in) die("cannot read " + path);
         while (std::getline(in, line)) {
@@ -76,7 +86,7 @@ void each_sentence(const Options& o, F f) {
                 if (j > i) toks.emplace_back(line.data() + i, j - i);
                 i = j;
             }
-            if (!toks.empty()) f(toks);
+            if (!toks.empty()) f(toks, weight, c);
         }
     }
 }
@@ -138,13 +148,14 @@ struct Model {
     uint64_t unk_types = 0;                  /* corpus word types left out of `words` */
     std::unordered_map<std::string, uint32_t> id_of;
     std::vector<uint16_t> stream;            /* <s> w.. </s> <s> w.. </s> ... */
+    std::vector<uint16_t> sentence_corpus;   /* each sentence's corpus, in order */
     std::vector<Order> ord;                  /* 1..order */
 };
 
 void build_vocab(Model& m) {
     std::unordered_map<std::string, uint64_t> counts;
-    each_sentence(m.opt, [&](const std::vector<std::string_view>& toks) {
-        for (auto t : toks) ++counts[std::string(t)];
+    each_sentence(m.opt, [&](const std::vector<std::string_view>& toks, uint32_t weight, size_t) {
+        for (auto t : toks) counts[std::string(t)] += weight;
     });
     counts.erase("<s>");
     counts.erase("</s>");
@@ -167,7 +178,8 @@ void build_vocab(Model& m) {
 
 void build_stream(Model& m) {
     uint64_t oov = 0;
-    each_sentence(m.opt, [&](const std::vector<std::string_view>& toks) {
+    each_sentence(m.opt, [&](const std::vector<std::string_view>& toks, uint32_t, size_t corpus) {
+        m.sentence_corpus.push_back(static_cast<uint16_t>(corpus));
         m.stream.push_back(static_cast<uint16_t>(kBos));
         for (auto t : toks) {
             auto it = m.id_of.find(std::string(t));
@@ -187,13 +199,19 @@ void count_order(const Model& m, int k, std::vector<uint64_t>& keys, std::vector
     all.reserve(m.stream.size());
     const auto& s = m.stream;
     size_t start = 0;  /* index of the current sentence's <s> */
+    size_t sentence = SIZE_MAX;
+    uint32_t times = 1;  /* how many times this sentence's n-grams of order k count */
     for (size_t i = 0; i < s.size(); ++i) {
-        if (s[i] == kBos) start = i;
+        if (s[i] == kBos) {
+            start = i;
+            ++sentence;
+            times = m.opt.weights[m.sentence_corpus[sentence]][static_cast<size_t>(k)];
+        }
         if (i + 1 < start + static_cast<size_t>(k)) continue;  /* window would leave the sentence */
         if (k == 1 && s[i] == kBos) continue;
         uint64_t key = 0;
         for (int j = k - 1; j >= 0; --j) key = (key << 16) | s[i - static_cast<size_t>(j)];
-        all.push_back(key);
+        for (uint32_t t = 0; t < times; ++t) all.push_back(key);
     }
     std::sort(all.begin(), all.end());
     keys.clear();
@@ -525,6 +543,8 @@ void write(const Model& m) {
 
 Options parse(int argc, char** argv) {
     Options o;
+    std::array<uint16_t, kMaxOrder + 1> weight;
+    weight.fill(1);
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         auto next = [&]() -> std::string {
@@ -545,9 +565,25 @@ Options parse(int argc, char** argv) {
             }
             for (; k <= kMaxOrder; ++k) o.prune[k] = o.prune[k - 1];
         } else if (a == "--no-shape-index") o.shape_index = false;
+        else if (a == "--weight") {
+            const std::string v = next();
+            size_t k = 1, pos = 0;
+            while (pos <= v.size() && k <= kMaxOrder) {
+                size_t comma = v.find(',', pos);
+                if (comma == std::string::npos) comma = v.size();
+                const long w = std::strtol(v.substr(pos, comma - pos).c_str(), nullptr, 10);
+                if (w < 1 || w > 1000) die("--weight values must be 1..1000");
+                weight[k++] = static_cast<uint16_t>(w);
+                pos = comma + 1;
+            }
+            for (; k <= kMaxOrder; ++k) weight[k] = weight[k - 1];
+        }
         else if (a == "-o") o.out = next();
         else if (!a.empty() && a[0] == '-') die("unknown option " + a);
-        else o.corpora.push_back(a);
+        else {
+            o.corpora.push_back(a);
+            o.weights.push_back(weight);
+        }
     }
     if (o.order < 1 || o.order > 4) die("--order must be 1..4 (ids are packed 16 bits each in 64)");
     if (o.max_vocab < 4 || o.max_vocab > kMaxVocab) die("--max-vocab must be 4..65536");

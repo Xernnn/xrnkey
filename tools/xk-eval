@@ -8,6 +8,7 @@ Sets (feature-spec.md, "Done means"):
   H1    held-out news and web sentences   WORK/H1.txt   (data/lm/build.py prepare)
   H2    held-out short sentences          WORK/H2.txt
   C     made-up chat messages             data/lm/eval/chat.txt
+  P     everyday phrases that must not flip  data/lm/eval/phrases.txt
   E     common English words              core/data/english.txt
   V     attested Vietnamese syllables     core/data/vi-syllables.txt
 
@@ -329,6 +330,22 @@ def restore_unigram(lm, shapes, typed):
     return max(cands, key=lambda c: (lm.unigram(c), c == typed))
 
 
+def eval_phrases(messages, restorer):
+    """Set P: each phrase typed without marks, as the keyboard decodes it (look-back), right
+    only if every word is. Returns (right, total, the wrong ones as "got (want)")."""
+    right, wrong = 0, []
+    for items in messages:
+        r, t, exact, n = eval_lookback([items], restorer)
+        if exact:
+            right += 1
+        else:
+            words = [tok for tok, vi in items if vi is not None]
+            typed = [xklm_text.strip_marks(tok) if vi else tok for tok, vi in items if vi is not None]
+            got = restorer.run(["<s>"], typed, "</s>")
+            wrong.append(f"{' '.join(got)} ({' '.join(words)})")
+    return right, len(messages), wrong
+
+
 def eval_restoration(sentences, restore):
     """Top-1 over the Vietnamese syllables of `sentences`, each typed without
     marks. `restore(context_tokens, typed)` gives the chosen token."""
@@ -516,6 +533,7 @@ def main():
     ap.add_argument("--en")
     ap.add_argument("--work")
     ap.add_argument("--chat", default=os.path.join(ROOT, "data", "lm", "eval", "chat.txt"))
+    ap.add_argument("--phrases", default=os.path.join(ROOT, "data", "lm", "eval", "phrases.txt"))
     ap.add_argument("--english", default=os.path.join(ROOT, "core", "data", "english.txt"))
     ap.add_argument("--syllables", default=os.path.join(ROOT, "core", "data", "vi-syllables.txt"))
     ap.add_argument("--json")
@@ -574,6 +592,11 @@ def main():
         if name == "H1":
             h, t = eval_topk(sentences, restorer)
             row(name, "restoration in the strip (top-3)", pct(h, t), 99.0, detail=f"{h}/{t} syllables")
+
+    phrases = chat_items(engine, args.phrases)
+    k, n, wrong = eval_phrases(phrases, restorer)
+    row("P", "everyday phrases, typed without marks, all right", pct(k, n), 100.0,
+        detail=f"{k}/{n}" + (f"; wrong: {', '.join(wrong)}" if wrong else ""))
 
     english = read_lines(args.english)
     syllables = read_lines(args.syllables)

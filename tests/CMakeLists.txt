@@ -74,6 +74,14 @@ target_link_libraries(test_predict PRIVATE xrnkey Catch2::Catch2WithMain)
 target_compile_definitions(test_predict PRIVATE XRNKEY_TEST_LM_DIR="${CMAKE_BINARY_DIR}/data/lm")
 add_dependencies(test_predict test_lm_models)
 
+add_executable(test_weights test_weights.cpp)
+target_link_libraries(test_weights PRIVATE xrnkey Catch2::Catch2WithMain)
+target_include_directories(test_weights PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
+target_compile_definitions(test_weights PRIVATE
+    XRNKEY_LM_BUILD="$<TARGET_FILE:xk-lm-build>"
+    XRNKEY_TEST_TMP="${CMAKE_CURRENT_BINARY_DIR}")
+add_dependencies(test_weights xk-lm-build)
+
 add_executable(test_shortcuts test_shortcuts.cpp)
 target_link_libraries(test_shortcuts PRIVATE xrnkey Catch2::Catch2WithMain)
 target_compile_definitions(test_shortcuts PRIVATE XRNKEY_TEST_TMP="${CMAKE_CURRENT_BINARY_DIR}")
@@ -99,4 +107,5 @@ catch_discover_tests(test_learn)
 catch_discover_tests(test_typos)
 catch_discover_tests(test_shortcuts)
 catch_discover_tests(test_predict)
+catch_discover_tests(test_weights)
 catch_discover_tests(test_emoji)
