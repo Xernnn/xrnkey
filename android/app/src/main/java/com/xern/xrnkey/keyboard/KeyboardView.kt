@@ -73,7 +73,8 @@ class KeyboardView(context: Context) : View(context) {
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
     private val stripHeight = 48 * dp
-    private val rowHeight get() = 54 * dp * heightPercent / 100f
+    /** As tall as Laban Key's rows on the same phone (152 px at 2.5 px a dp). */
+    private val rowHeight get() = 60 * dp * heightPercent / 100f
     private val font: Typeface = try {
         resources.getFont(R.font.misans_vf)
     } catch (e: Exception) {
@@ -119,6 +120,7 @@ class KeyboardView(context: Context) : View(context) {
             }
         }
         hits = out
+        out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { spaceLabel = spaceLabelFor(spaceBar(it.rect).width()) }
         invalidate()
     }
 
@@ -188,10 +190,27 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
+    /** Letters as large as Laban Key's (their "o" is 41 px tall at 2.5 px a dp, ours 30 sp). */
     private fun textSize(k: Key): Float = when (k.kind) {
-        KeyKind.CHAR -> if (k.label.length > 1) 18 * sp else 26 * sp
-        KeyKind.COMMA, KeyKind.PERIOD -> 28 * sp
-        else -> 17 * sp
+        KeyKind.CHAR -> if (k.label.length > 1) 19 * sp else 30 * sp
+        KeyKind.COMMA, KeyKind.PERIOD -> 32 * sp
+        else -> 18 * sp
+    }
+
+    /** What the space bar says: the language, or its code where the bar is too narrow. */
+    var spaceLabel: String = ""
+        private set
+
+    private fun spaceLabelFor(barWidth: Float): String {
+        val full = resources.getString(R.string.subtype)
+        glyph.textSize = 14 * sp
+        glyph.typeface = font
+        return if (glyph.measureText(full) <= barWidth - 24 * dp) full else "VI"
+    }
+
+    private fun spaceBar(r: RectF): RectF {
+        val half = minOf(17 * dp, r.height() * 0.3f)
+        return RectF(r.left + 4 * dp, r.centerY() - half, r.right - 4 * dp, r.centerY() + half)
     }
 
     private fun drawLabel(canvas: Canvas, text: String, cx: Float, cy: Float, size: Float, color: Int, tf: Typeface = font) {
@@ -221,17 +240,19 @@ class KeyboardView(context: Context) : View(context) {
             }
             KeyKind.PERIOD -> drawLabel(canvas, ".", cx, cy, textSize(k), palette.glyph)
             KeyKind.SPACE -> {
-                fill.color = if (down) palette.pressed else palette.space
-                val bar = RectF(r.left + 4 * dp, cy - 18 * dp, r.right - 4 * dp, cy + 18 * dp)
-                canvas.drawRoundRect(bar, 8 * dp, 8 * dp, fill)
-                drawTile(canvas, cx, cy, 7 * dp)
+                // A pill that reads as the space bar, with the language in a quiet colour.
+                fill.color = if (down) palette.preview else palette.space
+                val bar = spaceBar(r)
+                canvas.drawRoundRect(bar, bar.height() / 2, bar.height() / 2, fill)
+                drawLabel(canvas, spaceLabel, cx, cy, 14 * sp, palette.spaceLabel)
             }
             KeyKind.SHIFT -> drawShift(canvas, cx, cy, 11 * dp)
             KeyKind.BACKSPACE -> drawBackspace(canvas, cx, cy, 12 * dp)
             KeyKind.ENTER -> {
+                // A bright disc in the tile's plum, with the field's action as its icon.
                 fill.color = if (down) palette.accentPressed else palette.accent
                 canvas.drawCircle(cx, cy, minOf(r.height(), r.width()) * 0.36f, fill)
-                drawEnter(canvas, cx, cy, 9 * dp, palette.onAccent)
+                drawEnter(canvas, cx, cy, 10 * dp, palette.onAccent)
             }
         }
     }
@@ -239,13 +260,13 @@ class KeyboardView(context: Context) : View(context) {
     private fun drawPreview(canvas: Canvas, h: Hit) {
         val r = h.rect
         val w = maxOf(r.width() * 1.1f, 44 * dp)
-        val bubble = RectF(r.centerX() - w / 2, r.top - 62 * dp, r.centerX() + w / 2, r.top - 4 * dp)
+        val bubble = RectF(r.centerX() - w / 2, r.top - 66 * dp, r.centerX() + w / 2, r.top - 4 * dp)
         if (bubble.left < 0) bubble.offset(-bubble.left, 0f)
         if (bubble.right > width) bubble.offset(width - bubble.right, 0f)
         if (bubble.top < 0) bubble.offset(0f, -bubble.top)
         fill.color = palette.preview
         canvas.drawRoundRect(bubble, 10 * dp, 10 * dp, fill)
-        drawLabel(canvas, h.key.label, bubble.centerX(), bubble.centerY(), 34 * sp, palette.glyph)
+        drawLabel(canvas, h.key.label, bubble.centerX(), bubble.centerY(), 38 * sp, palette.glyph)
     }
 
     private fun stroke(color: Int, width: Float = 1.8f * dp) {
@@ -264,16 +285,22 @@ class KeyboardView(context: Context) : View(context) {
             lineTo(cx - s, cy)
             close()
         }
-        if (shift == Shift.OFF) {
-            stroke(palette.glyph)
-            canvas.drawPath(p, line)
-        } else {
-            fill.color = palette.glyph
-            canvas.drawPath(p, fill)
-        }
-        if (shift == Shift.LOCKED) {
-            stroke(palette.glyph, 2.2f * dp)
-            canvas.drawLine(cx - s * 0.45f, cy + s * 1.15f, cx + s * 0.45f, cy + s * 1.15f, line)
+        // Off: an outline. Once: filled. Caps lock: filled in the accent, with a bar under it.
+        when (shift) {
+            Shift.OFF -> {
+                stroke(palette.glyph)
+                canvas.drawPath(p, line)
+            }
+            Shift.ONCE -> {
+                fill.color = palette.glyph
+                canvas.drawPath(p, fill)
+            }
+            Shift.LOCKED -> {
+                fill.color = palette.accent
+                canvas.drawPath(p, fill)
+                stroke(palette.accent, 2.4f * dp)
+                canvas.drawLine(cx - s * 0.5f, cy + s * 1.2f, cx + s * 0.5f, cy + s * 1.2f, line)
+            }
         }
     }
 
@@ -303,10 +330,28 @@ class KeyboardView(context: Context) : View(context) {
                 canvas.drawLine(cx - s * 0.8f, cy + s * 0.2f, cx - s * 0.35f, cy - s * 0.25f, line)
                 canvas.drawLine(cx - s * 0.8f, cy + s * 0.2f, cx - s * 0.35f, cy + s * 0.65f, line)
             }
-            EnterAction.SEND, EnterAction.GO, EnterAction.NEXT -> {
+            EnterAction.SEND -> {
+                // A paper plane.
+                val plane = Path().apply {
+                    moveTo(cx - s * 0.85f, cy - s * 0.75f)
+                    lineTo(cx + s * 0.9f, cy)
+                    lineTo(cx - s * 0.85f, cy + s * 0.75f)
+                    lineTo(cx - s * 0.5f, cy)
+                    close()
+                }
+                fill.color = color
+                canvas.drawPath(plane, fill)
+            }
+            EnterAction.GO -> {
                 canvas.drawLine(cx - s * 0.8f, cy, cx + s * 0.8f, cy, line)
                 canvas.drawLine(cx + s * 0.8f, cy, cx + s * 0.25f, cy - s * 0.55f, line)
                 canvas.drawLine(cx + s * 0.8f, cy, cx + s * 0.25f, cy + s * 0.55f, line)
+            }
+            EnterAction.NEXT -> {
+                canvas.drawLine(cx - s * 0.8f, cy, cx + s * 0.5f, cy, line)
+                canvas.drawLine(cx + s * 0.5f, cy, cx - s * 0.05f, cy - s * 0.55f, line)
+                canvas.drawLine(cx + s * 0.5f, cy, cx - s * 0.05f, cy + s * 0.55f, line)
+                canvas.drawLine(cx + s * 0.85f, cy - s * 0.6f, cx + s * 0.85f, cy + s * 0.6f, line)
             }
             EnterAction.SEARCH -> {
                 canvas.drawCircle(cx - s * 0.15f, cy - s * 0.15f, s * 0.55f, line)
@@ -324,12 +369,6 @@ class KeyboardView(context: Context) : View(context) {
         canvas.drawCircle(cx, cy, r, line)
         canvas.drawOval(cx - r * 0.45f, cy - r, cx + r * 0.45f, cy + r, line)
         canvas.drawLine(cx - r, cy, cx + r, cy, line)
-    }
-
-    /** The xrnkey tile, faint, where the reference shows its name. */
-    private fun drawTile(canvas: Canvas, cx: Float, cy: Float, r: Float) {
-        fill.color = Color.argb(90, Color.red(palette.accent), Color.green(palette.accent), Color.blue(palette.accent))
-        canvas.drawRoundRect(RectF(cx - r, cy - r, cx + r, cy + r), r * 0.48f, r * 0.48f, fill)
     }
 
     // The strip -------------------------------------------------------------------------------
@@ -713,13 +752,18 @@ class KeyboardView(context: Context) : View(context) {
     private fun RectF.insetBy(dx: Float, dy: Float) = RectF(left + dx, top + dy, right - dx, bottom - dy)
 }
 
-/** The keyboard's colours. Dark slate is the default; the accent is the xrnkey tile's purple. */
+/**
+ * The keyboard's colours. Dark slate is the default. The accent is the xrnkey tile's plum
+ * (#983A78), lightened on the dark keyboard so Enter stands out from it (3.3:1, and 4:1 for
+ * its icon).
+ */
 data class Palette(
     val background: Int,
     val strip: Int,
     val glyph: Int,
     val dim: Int,
     val space: Int,
+    val spaceLabel: Int,
     val pressed: Int,
     val preview: Int,
     val accent: Int,
@@ -732,11 +776,12 @@ data class Palette(
             strip = 0xFF1E272C.toInt(),
             glyph = 0xFFECEFF1.toInt(),
             dim = 0xFFB0BEC5.toInt(),
-            space = 0xFF37474F.toInt(),
+            space = 0xFF3E4C53.toInt(),
+            spaceLabel = 0xFF95A5A6.toInt(),
             pressed = 0xFF37474F.toInt(),
-            preview = 0xFF455A64.toInt(),
-            accent = 0xFF5F3DC4.toInt(),
-            accentPressed = 0xFF4C2FA3.toInt(),
+            preview = 0xFF4F626B.toInt(),
+            accent = 0xFFC4579D.toInt(),
+            accentPressed = 0xFFA9468A.toInt(),
             onAccent = 0xFFFFFFFF.toInt(),
         )
         val LIGHT = Palette(
@@ -744,11 +789,12 @@ data class Palette(
             strip = 0xFFE3E7EA.toInt(),
             glyph = 0xFF1F2428.toInt(),
             dim = 0xFF5F6B73.toInt(),
-            space = 0xFFFFFFFF.toInt(),
-            pressed = 0xFFD5DBDF.toInt(),
+            space = 0xFFCFD8DC.toInt(),
+            spaceLabel = 0xFF607078.toInt(),
+            pressed = 0xFFC5CED3.toInt(),
             preview = 0xFFFFFFFF.toInt(),
-            accent = 0xFF5F3DC4.toInt(),
-            accentPressed = 0xFF4C2FA3.toInt(),
+            accent = 0xFF983A78.toInt(),
+            accentPressed = 0xFF7E2F63.toInt(),
             onAccent = 0xFFFFFFFF.toInt(),
         )
     }
