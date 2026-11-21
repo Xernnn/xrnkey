@@ -25,12 +25,15 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /** Candidates at all (the settings' "suggestions"); off, the strip keeps its tools. */
     var suggestions = true
 
+    /** The next word after a Space. */
+    var nextWords = true
+
     fun make(t: Typist): Strip {
         val word = t.shown
         if (!suggestions || word.isEmpty()) {
             offered = emptyList()
             centre = null
-            return if (suggestions && models != null && t.afterWord()) next(t) else Strip.Tools
+            return if (suggestions && nextWords && models != null && t.afterWord()) next(t) else Strip.Tools
         }
         val restored = t.preview()
         val c = restored ?: word

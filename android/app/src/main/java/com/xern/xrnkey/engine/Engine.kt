@@ -109,6 +109,8 @@ class TypingState(val mode: Int = TELEX) : AutoCloseable {
         const val RETURN = 0xFF0D
         const val OPT_AUTO_RESTORE = 1
         const val OPT_MODERN_STYLE = 2
+        const val OPT_FREE_MARKING = 3
+        const val OPT_W_SHORTCUT = 4
         const val OPT_LEARN = 5
     }
 }

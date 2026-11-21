@@ -77,7 +77,23 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         /** Forgets every personal word (from the settings screen). */
         fun clearWords(dir: File, prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
             File(dir, WORDS).delete()
-            prefs.edit().putLong(KEY_CLEARED, now).commit()
+            wordsChanged(prefs, now)
         }
+
+        /**
+         * The settings screen changed the personal words' file (a word deleted): the keyboard
+         * reads it again when the next field starts, and drops what it held.
+         */
+        fun wordsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
+            prefs.edit().putLong(KEY_CLEARED, maxOf(now, prefs.getLong(KEY_CLEARED, 0L) + 1)).commit()
+        }
+
+        /** The clipboard history was cleared in the settings: the keyboard reads it again. */
+        fun clipsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
+            prefs.edit().putLong(KEY_CLIPS, maxOf(now, prefs.getLong(KEY_CLIPS, 0L) + 1)).commit()
+        }
+
+        fun clipsStamp(prefs: SharedPreferences) = prefs.getLong(KEY_CLIPS, 0L)
+        private const val KEY_CLIPS = "clips-changed"
     }
 }

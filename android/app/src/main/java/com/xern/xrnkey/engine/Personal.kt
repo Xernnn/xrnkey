@@ -35,7 +35,18 @@ class PersonalWords : AutoCloseable {
     fun count(prev: String?, word: String): Double =
         Native.userCount(handle, prev?.toByteArray(Charsets.UTF_8), word.toByteArray(Charsets.UTF_8))
 
-    fun forget(word: String) = Native.userForget(handle, word.toByteArray(Charsets.UTF_8))
+    fun forget(word: String) {
+        Native.userForget(handle, word.toByteArray(Charsets.UTF_8))
+        unsaved++
+    }
+
+    /** The words learned (not the pairs) and their counts, the most used first. */
+    fun words(): List<Pair<String, Double>> =
+        Native.userList(handle)?.let { String(it, Charsets.UTF_8) }.orEmpty().lineSequence()
+            .mapNotNull { line ->
+                val tab = line.indexOf('\t')
+                if (tab <= 0) null else line.substring(0, tab) to (line.substring(tab + 1).toDoubleOrNull() ?: 0.0)
+            }.toList()
 
     /** Old habits fade: every count times `factor`, dropping what falls below a half. */
     fun decay(factor: Double) = Native.userDecay(handle, factor)

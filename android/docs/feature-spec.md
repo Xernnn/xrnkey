@@ -924,7 +924,9 @@ Steps 1 to 10 are built, with these differences from the text above:
 - **Cursor pad:** the tool row's button turns the keys into a trackpad (drag to move by
   characters and lines, tap to leave), the same pad as holding the space bar. The edit panel
   with Home, End, Select, Copy, Cut and Paste is not built.
-- **Personal words in Settings:** on/off and Clear only. The list, search, add, delete one,
+- **Settings** are a main list with a page per section (Keyboard, Typing, Suggestions &
+  auto-correct, Personal words, Shortcuts, Clipboard, Theme, About and its Licences), in the
+  keyboard's theme. Personal words: the list, search, delete one and clear all; adding a word,
   export and import are not built.
 - **Theme:** dark slate, light and system. True black is not built.
 - **Clipboard:** history size is fixed at 50; no time limit.

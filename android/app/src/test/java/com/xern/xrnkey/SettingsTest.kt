@@ -115,4 +115,44 @@ class SettingsTest {
         dir.mkdirs()
         File(dir, "settings-dark.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
+
+    @Test
+    fun theNewOptionsRoundTripAndDefaultToTheOwners() {
+        val d = Options()
+        assertTrue(d.freeMarking && d.wShortcut && d.nextWord)
+        val p = app().getSharedPreferences("n", Context.MODE_PRIVATE)
+        val changed = d.copy(freeMarking = false, wShortcut = false, nextWord = false)
+        changed.save(p)
+        assertEquals(changed, Options.load(p))
+    }
+
+    @Test
+    fun wTypesUOnlyWhenAsked() {
+        com.xern.xrnkey.engine.TypingState().use { s ->
+            val f = FakeEditor()
+            val t = com.xern.xrnkey.ime.Typist(s, f).also { it.reset() }
+            t.text("tw ")
+            assertEquals("tư ", f.text)
+            s.setOption(com.xern.xrnkey.engine.TypingState.OPT_W_SHORTCUT, false)
+            t.text("tw ")
+            assertEquals("tư tw ", f.text)
+        }
+    }
+
+    @Test
+    fun nextWordsCanBeTurnedOffOnTheirOwn() {
+        TestModels.test().use { m ->
+            com.xern.xrnkey.engine.TypingState().use { s ->
+                s.useModels(m.models)
+                val t = com.xern.xrnkey.ime.Typist(s, FakeEditor(), m.models).also { it.reset() }
+                val strip = com.xern.xrnkey.ime.StripMaker(m.models)
+                t.text("Tooi khoong ")
+                assertTrue(strip.make(t) is com.xern.xrnkey.keyboard.Strip.Candidates)
+                strip.nextWords = false
+                assertEquals(com.xern.xrnkey.keyboard.Strip.Tools, strip.make(t))
+                t.text("ddi")
+                assertTrue(strip.make(t) is com.xern.xrnkey.keyboard.Strip.Candidates)  // a word in progress still is
+            }
+        }
+    }
 }

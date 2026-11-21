@@ -12,9 +12,15 @@ import android.content.SharedPreferences
 data class Options(
     val vni: Boolean = false,
     val modernTones: Boolean = false,
+    /** Telex: tone and mark keys may come after the final consonant (toans). */
+    val freeMarking: Boolean = true,
+    /** Telex: w alone is ư. */
+    val wShortcut: Boolean = true,
     val underline: Boolean = false,
     val suggestions: Boolean = true,
     val emojiSuggestions: Boolean = true,
+    /** The next word in the strip after a Space. */
+    val nextWord: Boolean = true,
     val learn: Boolean = true,
     /** 0 off, 1 flexible, 2 strong (Models.CORRECT_*). */
     val correction: Int = 1,
@@ -39,6 +45,9 @@ data class Options(
         p.edit()
             .putBoolean("vni", vni)
             .putBoolean("modern_tones", modernTones)
+            .putBoolean("free_marking", freeMarking)
+            .putBoolean("w_shortcut", wShortcut)
+            .putBoolean("next_word", nextWord)
             .putBoolean("underline", underline)
             .putBoolean("suggestions", suggestions)
             .putBoolean("emoji_suggestions", emojiSuggestions)
@@ -72,6 +81,9 @@ data class Options(
             return Options(
                 vni = p.getBoolean("vni", d.vni),
                 modernTones = p.getBoolean("modern_tones", d.modernTones),
+                freeMarking = p.getBoolean("free_marking", d.freeMarking),
+                wShortcut = p.getBoolean("w_shortcut", d.wShortcut),
+                nextWord = p.getBoolean("next_word", d.nextWord),
                 underline = p.getBoolean("underline", d.underline),
                 suggestions = p.getBoolean("suggestions", d.suggestions),
                 emojiSuggestions = p.getBoolean("emoji_suggestions", d.emojiSuggestions),

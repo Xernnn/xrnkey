@@ -146,6 +146,25 @@ double xk_user_count(const XKUser* user, const char* prev, const char* word) {
     return it == u->pairs.end() ? 0.0 : it->second;
 }
 
+char* xk_user_list(const XKUser* user) {
+    if (!user) return nullptr;
+    const auto* u = reinterpret_cast<const User*>(user);
+    std::vector<std::pair<std::string, double>> all(u->words.begin(), u->words.end());
+    std::sort(all.begin(), all.end(), [](const auto& a, const auto& b) {
+        return a.second != b.second ? a.second > b.second : a.first < b.first;
+    });
+    std::string out;
+    char num[32];
+    for (const auto& [w, n] : all) {
+        std::snprintf(num, sizeof num, "%g", n);
+        out += w;
+        out += '\t';
+        out += num;
+        out += '\n';
+    }
+    return strdup(out.c_str());
+}
+
 void xk_user_forget(XKUser* user, const char* word) {
     if (!user || !word) return;
     auto* u = reinterpret_cast<User*>(user);
