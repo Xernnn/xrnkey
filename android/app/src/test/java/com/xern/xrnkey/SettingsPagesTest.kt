@@ -2,6 +2,10 @@ package com.xern.xrnkey
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -165,5 +169,30 @@ class SettingsPagesTest {
                 back()
             }
         }
+    }
+
+    @Test
+    fun aSpaceTypedInAShortcutStaysUntilSaveWhichRefusesItInAnAbbreviation() {
+        val file = File(rule.activity.filesDir, OnDevice.SHORTCUTS)
+        rule.onNodeWithText("Shortcuts").performClick()
+        rule.onNodeWithText("Add").performClick()
+        // The keyboard sends a word, a space, then the next word: the space stays put.
+        rule.onNodeWithTag("Abbreviation").performTextInput("tiếng")
+        rule.onNodeWithTag("Abbreviation").performTextInput(" ")
+        rule.onNodeWithTag("Abbreviation").performTextInput("việt")
+        rule.onNodeWithTag("Abbreviation").assert(hasText("tiếng việt"))
+        rule.onNodeWithTag("Expansion").performTextInput("tiếng")
+        rule.onNodeWithTag("Expansion").performTextInput(" ")
+        rule.onNodeWithTag("Expansion").performTextInput("Việt Nam")
+        rule.onNodeWithTag("Expansion").assert(hasText("tiếng Việt Nam"))
+        // Two words are not an abbreviation: Save refuses, keeps the text, marks the field.
+        rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("Abbreviation").assert(hasText("tiếng việt"))
+        rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)).assertExists()
+        assertTrue(!file.exists() || Shortcuts().use { sc -> sc.load(file); sc.all().isEmpty() })
+        // One word, with the space it ended on, is saved trimmed.
+        rule.onNodeWithTag("Abbreviation").performTextReplacement("tv ")
+        rule.onNodeWithText("Save").performClick()
+        Shortcuts().use { sc -> sc.load(file); assertEquals(listOf("tv" to "tiếng Việt Nam"), sc.all()) }
     }
 }
