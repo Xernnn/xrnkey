@@ -148,6 +148,10 @@ int     xk_user_save(const XKUser* user, const char* path);
 void    xk_user_learn(XKUser* user, const char* prev, const char* word);
 /* How often `word` was learned (after `prev`, when not NULL). */
 double  xk_user_count(const XKUser* user, const char* prev, const char* word);
+/* The words learned (not the pairs), the most used first, as
+ * "word<TAB>count" lines; newly allocated (the caller frees it), "" when
+ * there are none, NULL without a user. */
+char*   xk_user_list(const XKUser* user);
 /* Remove `word` and every pair it is in. */
 void    xk_user_forget(XKUser* user, const char* word);
 /* Multiply every count by `factor` (0..1), dropping what falls below 0.5:

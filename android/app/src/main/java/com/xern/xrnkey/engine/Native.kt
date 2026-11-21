@@ -58,4 +58,5 @@ internal object Native {
     external fun shortcutsAll(sc: Long): Array<ByteArray>
     external fun shortcutsExpand(sc: Long, typed: ByteArray): ByteArray?
     external fun predict(models: Long, context: Array<ByteArray>, max: Int): Array<ByteArray>
+    external fun userList(user: Long): ByteArray?
 }

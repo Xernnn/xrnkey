@@ -121,6 +121,19 @@ TEST_CASE("the frontend can teach words directly, as the phone will", "[learn]")
     CHECK(xk_user_count(m.user, "<s>", "vâng") == 0.0);
 }
 
+TEST_CASE("the words learned can be listed, the most used first", "[learn]") {
+    Setup m;
+    char* none = xk_user_list(m.user);
+    CHECK(std::string(none).empty());
+    std::free(none);
+    for (int i = 0; i < 3; ++i) xk_user_learn(m.user, "<s>", "alo");
+    xk_user_learn(m.user, "alo", "Bạn");
+    char* list = xk_user_list(m.user);
+    CHECK(std::string(list) == "alo\t3\nbạn\t1\n");  // words only, not pairs; lowercase
+    std::free(list);
+    CHECK(xk_user_list(nullptr) == nullptr);
+}
+
 TEST_CASE("forgetting a word and fading old counts", "[learn]") {
     Setup m;
     for (int i = 0; i < 3; ++i) xk_user_learn(m.user, "ngắn", "tủn");

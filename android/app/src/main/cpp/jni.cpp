@@ -314,3 +314,11 @@ FN(jobjectArray, predict)(JNIEnv* env, jobject, jlong models, jobjectArray conte
     }
     return byte_arrays(env, out);
 }
+
+FN(jbyteArray, userList)(JNIEnv* env, jobject, jlong u) {
+    char* list = xk_user_list(as<XKUser>(u));
+    if (!list) return nullptr;
+    jbyteArray out = bytes(env, list);
+    std::free(list);
+    return out;
+}

@@ -402,10 +402,15 @@ class XrnkeyService :
     private fun clipboard() = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     /** The history, once the phone has been unlocked (it lives in credential-encrypted storage). */
+    private var clipsStamp = -1L
+
+    /** Read again when the settings cleared it. */
     private fun history(): ClipHistory? {
-        clips?.let { return it }
+        val stamp = OnDevice.clipsStamp(prefs())
+        clips?.let { if (stamp == clipsStamp) return it }
         if (!getSystemService(UserManager::class.java).isUserUnlocked) return null
-        return ClipHistory(File(filesDir, "clips.tsv")).also { clips = it }
+        clipsStamp = stamp
+        return ClipHistory(File(filesDir, CLIPS)).also { clips = it }
     }
 
     private fun onCopied() {
@@ -475,10 +480,13 @@ class XrnkeyService :
         }
         state?.setOption(TypingState.OPT_MODERN_STYLE, o.modernTones)
         state?.setOption(TypingState.OPT_AUTO_RESTORE, o.keepForeign)
+        state?.setOption(TypingState.OPT_FREE_MARKING, o.freeMarking)
+        state?.setOption(TypingState.OPT_W_SHORTCUT, o.wShortcut)
         models?.correction = o.correction
         typist.doubleSpace = o.doubleSpace
         strip.suggestions = o.suggestions
         strip.emojiSuggestions = o.emojiSuggestions
+        strip.nextWords = o.nextWord
         val palette = savedPalette()
         keyboard?.apply {
             this.palette = palette
@@ -499,6 +507,7 @@ class XrnkeyService :
     companion object {
         /** ClipDescription.EXTRA_IS_SENSITIVE (API 33), by name so older phones read it too. */
         const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
+        const val CLIPS = "clips.tsv"
         private const val MAX_CLIP = 20_000
 
         fun isPassword(info: EditorInfo): Boolean {
