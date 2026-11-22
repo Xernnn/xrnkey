@@ -166,6 +166,41 @@ uint32_t lm_id(const Lm& m, std::string_view word) {
     return kUnk;
 }
 
+namespace {
+
+/* [lo, hi): the positions in `n` strings sorted by bytes whose text starts with `prefix`. */
+template <typename TextAt>
+void prefix_range(uint64_t n, std::string_view prefix, TextAt text, uint64_t* lo, uint64_t* hi) {
+    uint64_t a = 0, b = n;
+    while (a < b) {
+        const uint64_t mid = a + (b - a) / 2;
+        if (std::string_view(text(mid)) < prefix) a = mid + 1;
+        else b = mid;
+    }
+    *lo = a;
+    b = n;
+    while (a < b) {
+        const uint64_t mid = a + (b - a) / 2;
+        if (std::string_view(text(mid)).substr(0, prefix.size()) == prefix) a = mid + 1;
+        else b = mid;
+    }
+    *hi = a;
+}
+
+}  // namespace
+
+void lm_prefix_range(const Lm& m, std::string_view prefix, uint32_t* lo, uint32_t* hi) {
+    const auto sorted = at<uint32_t>(m, m.hdr->vocab_sorted);
+    uint64_t a, b;
+    prefix_range(m.hdr->vocab, prefix, [&](uint64_t i) { return lm_word(m, sorted[i]); }, &a, &b);
+    *lo = static_cast<uint32_t>(a);
+    *hi = static_cast<uint32_t>(b);
+}
+
+uint32_t lm_sorted_id(const Lm& m, uint32_t pos) {
+    return pos < m.hdr->vocab ? at<uint32_t>(m, m.hdr->vocab_sorted)[pos] : lmfmt::kUnk;
+}
+
 int64_t lm_find(const Lm& m, const uint32_t* ids, int k) {
     const Header& h = *m.hdr;
     if (k < 1 || static_cast<uint32_t>(k) > h.order || ids[0] >= h.vocab) return -1;
@@ -246,23 +281,26 @@ float lm_logprob(const Lm& m, const uint32_t* ctx, int n, uint32_t w) {
     return backoff + lm_prob_at(m, 1, kUnk);  /* not reached: every id is a unigram */
 }
 
-int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words, uint32_t* ids,
-                        int max_out) {
+bool lm_shape_prefix_range(const Lm& m, std::string_view prefix, uint64_t* lo, uint64_t* hi) {
     const Header& h = *m.hdr;
-    if (h.shape_count == 0 || m.ignore_shape_index) return -1;
-    const auto key = at<uint32_t>(m, h.shape_key);
-    const char* blob = m.base + h.shape_blob;
-    uint64_t lo = 0, hi = h.shape_count;
-    while (lo < hi) {
-        const uint64_t mid = lo + (hi - lo) / 2;
-        if (std::string_view(blob + key[mid]) < shape) lo = mid + 1;
-        else hi = mid;
-    }
-    if (lo >= h.shape_count || std::string_view(blob + key[lo]) != shape) return 0;
+    if (h.shape_count == 0 || m.ignore_shape_index) return false;
+    prefix_range(h.shape_count, prefix, [&](uint64_t i) { return lm_shape_at(m, i); }, lo, hi);
+    return true;
+}
+
+const char* lm_shape_at(const Lm& m, uint64_t pos) {
+    const Header& h = *m.hdr;
+    if (pos >= h.shape_count) return nullptr;
+    return m.base + h.shape_blob + at<uint32_t>(m, h.shape_key)[pos];
+}
+
+int lm_shape_candidates_at(const Lm& m, uint64_t pos, const char** words, uint32_t* ids, int max_out) {
+    const Header& h = *m.hdr;
+    if (pos >= h.shape_count) return 0;
     const auto first = at<uint32_t>(m, h.shape_first);
     const auto cand = at<uint32_t>(m, h.shape_cand);
     int n = 0;
-    for (uint32_t i = first[lo]; i < first[lo + 1] && n < max_out; ++i, ++n) {
+    for (uint32_t i = first[pos]; i < first[pos + 1] && n < max_out; ++i, ++n) {
         const uint32_t c = cand[i];
         if (c < h.vocab) {
             words[n] = lm_word(m, c);
@@ -273,6 +311,16 @@ int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words,
         }
     }
     return n;
+}
+
+int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words, uint32_t* ids,
+                        int max_out) {
+    uint64_t lo, hi;
+    if (!lm_shape_prefix_range(m, shape, &lo, &hi)) return -1;
+    /* The range's first shape is the shape itself, if the index has it: nothing sorts
+     * between a string and the strings it starts. */
+    if (lo >= hi || std::string_view(lm_shape_at(m, lo)) != shape) return 0;
+    return lm_shape_candidates_at(m, lo, words, ids, max_out);
 }
 
 float lm_unk_share(const Lm& m) {

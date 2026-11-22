@@ -47,6 +47,13 @@ double mix_logprob(const Models& m, const Context& c, const std::string& token, 
 double mix_logprob_ids(const Models& m, const Context& c, std::string_view token, uint32_t vi_id,
                        uint32_t en_id, uint8_t* lang = nullptr);
 
+/* How a word was typed, for what is offered for it to keep: "khong", "Khong", "KHONG". */
+enum class Case { Lower, Capital, Upper };
+/* `typed` is ASCII letters only (at most 31): its lowercase and its case. */
+bool typed_word(const char* typed, std::string* lower, Case* cs);
+/* `text` (lowercase, UTF-8) in that case: "không" as "Không" or "KHÔNG". */
+std::string with_case(const std::string& text, Case cs);
+
 bool is_ascii_word(const std::string& t);
 /* Learn `text` as typed after the context's last word (learn.cpp). */
 void learn_word(User& u, const Context& c, const std::string& text);

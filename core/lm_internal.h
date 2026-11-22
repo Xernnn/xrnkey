@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <mutex>
 #include <string_view>
+#include <vector>
 
 namespace xrnkey {
 
@@ -27,6 +28,10 @@ struct Lm {
     /* For models without the shape index in the file: built on first use. */
     mutable std::once_flag shapes_once;
     mutable ShapeIndex* shapes = nullptr;
+    /* The commonest words by unigram, the commonest first: built on first use (predict.cpp),
+     * so the next words don't sort the whole vocabulary on every call. */
+    mutable std::once_flag common_once;
+    mutable std::vector<uint32_t> common;
     /* Tests only: act as if the file had no shape index. */
     bool ignore_shape_index = false;
 };
@@ -41,6 +46,11 @@ void lm_unmap(Lm* m);
  * word (lmfmt::kUnk when the model doesn't know it). */
 const char* lm_word(const Lm& m, uint32_t id);
 uint32_t lm_id(const Lm& m, std::string_view word);
+
+/* The words that start with `prefix` (bytes), as the positions [lo, hi) in the vocabulary's
+ * byte order: lm_sorted_id gives the id at a position (lmfmt::kUnk past the end). */
+void lm_prefix_range(const Lm& m, std::string_view prefix, uint32_t* lo, uint32_t* hi);
+uint32_t lm_sorted_id(const Lm& m, uint32_t pos);
 
 /* Index of the n-gram ids[0..k-1] in order k, or -1. */
 int64_t lm_find(const Lm& m, const uint32_t* ids, int k);
@@ -68,6 +78,13 @@ int lm_followers(const Lm& m, const uint32_t* ctx, int n, uint32_t* ids, float* 
  * 0 when the shape is not in it. */
 int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words, uint32_t* ids,
                         int max_out);
+
+/* The same by position in the index: the shapes that start with `prefix` are the positions
+ * [lo, hi) (false when the model has no index); lm_shape_at is the shape at a position
+ * (nullptr past the end), and lm_shape_candidates_at its syllables. */
+bool lm_shape_prefix_range(const Lm& m, std::string_view prefix, uint64_t* lo, uint64_t* hi);
+const char* lm_shape_at(const Lm& m, uint64_t pos);
+int lm_shape_candidates_at(const Lm& m, uint64_t pos, const char** words, uint32_t* ids, int max_out);
 
 inline const Lm& lm_of(const XKLm* lm) { return *reinterpret_cast<const Lm*>(lm); }
 

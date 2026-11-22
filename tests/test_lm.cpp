@@ -233,3 +233,53 @@ TEST_CASE("a model in the first format is refused", "[lm]") {
     CHECK(xk_lm_open(spit("v1.xklm", model).c_str()) == nullptr);
 }
 
+// Completions (xk_complete) read the words and shapes that start with what was typed as one
+// range of the sorted vocabulary and of the sorted shape index. Each range must hold exactly
+// the entries that start with the prefix, for every prefix the model's own words give.
+TEST_CASE("a prefix's range holds exactly the words and shapes that start with it", "[lm]") {
+    for (const std::string& path : {kVi, std::string(XRNKEY_TEST_LM_DIR) + "/en.xklm"}) {
+        XKLm* lm = xk_lm_open(path.c_str());
+        REQUIRE(lm != nullptr);
+        const auto& m = xrnkey::lm_of(lm);
+        const uint32_t vocab = m.hdr->vocab;
+        std::vector<std::string> prefixes = {"", "zzzz", "\x7f"};
+        for (uint32_t id = 3; id < vocab; ++id) {
+            const std::string w = xrnkey::lm_word(m, id);
+            for (size_t n = 1; n <= std::min<size_t>(w.size(), 3); ++n) prefixes.push_back(w.substr(0, n));
+        }
+        std::sort(prefixes.begin(), prefixes.end());
+        prefixes.erase(std::unique(prefixes.begin(), prefixes.end()), prefixes.end());
+        for (const std::string& p : prefixes) {
+            INFO(path << " prefix '" << p << "'");
+            uint32_t lo, hi;
+            xrnkey::lm_prefix_range(m, p, &lo, &hi);
+            REQUIRE(lo <= hi);
+            REQUIRE(hi <= vocab);
+            uint32_t expected = 0;
+            for (uint32_t id = 0; id < vocab; ++id)
+                if (std::string_view(xrnkey::lm_word(m, id)).substr(0, p.size()) == p) ++expected;
+            REQUIRE(hi - lo == expected);
+            for (uint32_t pos = lo; pos < hi; ++pos)
+                REQUIRE(std::string_view(xrnkey::lm_word(m, xrnkey::lm_sorted_id(m, pos))).substr(0, p.size()) == p);
+        }
+        uint64_t slo, shi;
+        if (m.hdr->shape_count == 0) {
+            CHECK(!xrnkey::lm_shape_prefix_range(m, "kh", &slo, &shi));
+        } else {
+            for (const std::string p : {"kh", "duo", "d", "khong", "q", "zzz"}) {
+                INFO("shape prefix '" << p << "'");
+                REQUIRE(xrnkey::lm_shape_prefix_range(m, p, &slo, &shi));
+                uint64_t expected = 0;
+                for (uint64_t i = 0; i < m.hdr->shape_count; ++i)
+                    if (std::string_view(xrnkey::lm_shape_at(m, i)).substr(0, p.size()) == p) ++expected;
+                REQUIRE(shi - slo == expected);
+                for (uint64_t i = slo; i < shi; ++i)
+                    REQUIRE(std::string_view(xrnkey::lm_shape_at(m, i)).substr(0, p.size()) == p);
+            }
+            REQUIRE(xrnkey::lm_shape_prefix_range(m, "duo", &slo, &shi));
+            REQUIRE(shi > slo);
+            CHECK(xrnkey::lm_shape_at(m, m.hdr->shape_count) == nullptr);
+        }
+        xk_lm_free(lm);
+    }
+}

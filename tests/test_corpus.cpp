@@ -376,6 +376,45 @@ TEST_CASE("xk_state_get_keys gives the word's keys as BackSpace left them", "[co
     CHECK(xk_state_get_keys(nullptr) == nullptr);
 }
 
+// What Space would commit, for the strip to show while the word is still in progress: the same
+// as Space, auto-restore included, and the word stays as it was.
+TEST_CASE("xk_state_preview_final gives what ending the word would commit", "[corpus]") {
+    for (const char* keys : {"terms", "dduowcj", "meet", "tieengs", "xin", "teest", "aa", "cas<"}) {
+        INFO(keys);
+        XKState* s = xk_state_new(XK_MODE_TELEX);
+        for (const char* k = keys; *k; ++k) press(s, keysym_for(*k));
+        char* preview = xk_state_preview_final(s);
+        char* before = xk_state_get_preedit(s);
+        XKResult r = xk_process_key(s, 0x20, 0);
+        std::string committed = r.commit;
+        REQUIRE(!committed.empty());
+        CHECK(std::string(preview) + " " == committed);
+        std::free(preview);
+        std::free(before);
+        xk_state_free(s);
+    }
+    XKState* s = xk_state_new(XK_MODE_TELEX);
+    press(s, keysym_for('t'));
+    press(s, keysym_for('e'));
+    press(s, keysym_for('e'));
+    char* p = xk_state_preview_final(s);
+    char* shown = xk_state_get_preedit(s);
+    CHECK(std::string(shown) == "tê");  // previewing changed nothing
+    press(s, keysym_for('s'));
+    char* after = xk_state_get_preedit(s);
+    CHECK(std::string(after) == "tế");
+    std::free(p);
+    std::free(shown);
+    std::free(after);
+    xk_state_free(s);
+    XKState* empty = xk_state_new(XK_MODE_TELEX);
+    char* none = xk_state_preview_final(empty);
+    CHECK(std::string(none).empty());
+    std::free(none);
+    xk_state_free(empty);
+    CHECK(xk_state_preview_final(nullptr) == nullptr);
+}
+
 TEST_CASE("corpus: VNI does what Telex does", "[corpus]") {
     const std::vector<Opt> strict = {{XK_OPT_FREE_MARKING, 0}};
     run(XK_MODE_VNI, {
