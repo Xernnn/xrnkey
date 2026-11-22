@@ -67,6 +67,9 @@ class XrnkeyService :
     private var onDevice: OnDevice? = null
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener { onCopied() }
 
+    /** Where the word in progress starts in the field, as the editor last said (-1: not known). */
+    private var composingStart = -1
+
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
 
@@ -104,8 +107,8 @@ class XrnkeyService :
 
     override fun onCreate() {
         super.onCreate()
-        vi = openModel("vi.xklm")
-        en = openModel("en.xklm")
+        vi = modelFiles?.let { Model.open(it.first) } ?: openModel("vi.xklm")
+        en = modelFiles?.let { Model.open(it.second) } ?: openModel("en.xklm")
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         emoji = try {
@@ -118,6 +121,9 @@ class XrnkeyService :
         strip = StripMaker(models, emoji)
         clipboard().addPrimaryClipChangedListener(clipListener)
     }
+
+    /** The models opened from the APK (false when an asset was missing). */
+    fun hasModels(): Boolean = vi != null && en != null
 
     private fun openModel(name: String): Model? = try {
         assets.openFd(name).use { Model.open(it.parcelFileDescriptor.fd, it.startOffset, it.length) }
@@ -199,6 +205,12 @@ class XrnkeyService :
         }
     }
 
+    /** The keyboard shows: the band is weighed again (the window's insets may have changed). */
+    override fun onWindowShown() {
+        super.onWindowShown()
+        inputFrame?.claimInsets()
+    }
+
     override fun onFinishInputView(finishingInput: Boolean) {
         typist.finish()
         onDevice?.save()
@@ -211,8 +223,20 @@ class XrnkeyService :
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
         // The cursor left the word in progress (a tap elsewhere): the word ends where it is.
-        val inWord = candidatesStart >= 0 && newSelStart == candidatesEnd && newSelEnd == candidatesEnd
+        // Some editors (Compose's text fields) report an update without the composing region
+        // while the cursor is still at the end of the word: that is not a move, and ending the
+        // word there left Space nothing to fix ("teh" stayed "teh" on the phone).
+        if (candidatesStart >= 0) composingStart = candidatesStart
+        // Where the word ends: as reported, or from where it starts and what it shows now.
+        val at = when {
+            candidatesStart >= 0 -> candidatesEnd
+            composingStart >= 0 -> composingStart + typist.shown.length
+            else -> -1
+        }
+        val inWord = at >= 0 && newSelStart == at && newSelEnd == at
+        if (typist.shown.isEmpty()) composingStart = -1
         if (typist.shown.isNotEmpty() && !inWord) {
+            composingStart = -1
             typist.finish()
             showStrip()
         }
@@ -527,6 +551,9 @@ class XrnkeyService :
     companion object {
         /** ClipDescription.EXTRA_IS_SENSITIVE (API 33), by name so older phones read it too. */
         const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
+
+        /** For the tests: the models' files, in place of the APK's assets (Robolectric can't map those). */
+        internal var modelFiles: Pair<String, String>? = null
         const val CLIPS = "clips.tsv"
         private const val MAX_CLIP = 20_000
 

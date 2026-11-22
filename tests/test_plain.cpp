@@ -44,6 +44,9 @@ TEST_CASE("a word wrong in both languages gets a confident one-edit fix", "[plai
     Setup m;
     CHECK(m.fix("teh") == "the");
     CHECK(m.fix("TEH") == "the");
+    // Typos the web has often enough for a model to know them: fixed from a list.
+    CHECK(m.fix("adn") == "and");
+    CHECK(m.fix("recieve") == "receive");
     // Right words, and Vietnamese typed without marks, are left alone.
     CHECK(m.fix("the") == "");
     CHECK(m.fix("khong") == "");

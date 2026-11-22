@@ -137,4 +137,17 @@ class ImeBandTest {
         assertEquals(keysHeight + 66, w.frame.measuredHeight)
         w.service.onDestroy()
     }
+
+    @Test
+    fun theWindowManagersInsetsGiveTheBandWhenTheViewsGetNone() {
+        // 0.4.0 on the phone: the views were never given the bar, but the window manager knew it.
+        val w = window()
+        (w.frame as com.xern.xrnkey.keyboard.KeyboardFrame).metricsInsets = { androidx.core.graphics.Insets.of(0, 0, 0, band) }
+        w.service.onWindowShown()
+        w.layout(WindowInsetsCompat.Builder().build())
+        assertEquals(((48 + 5 * 60) * dp).toInt() + band, w.frame.measuredHeight)
+        val keys = w.keys
+        assertTrue(keys.bottom <= w.frame.measuredHeight - band)
+        w.service.onDestroy()
+    }
 }
