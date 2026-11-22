@@ -85,7 +85,10 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             if (picks.isEmpty()) return strip
             val words = offered.take(2)
             offered = if (words.any { it != null }) words + picks[0] else fromTheRight(picks)
-            return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
+            // The next words keep what their slots show (a phrase, its typed part grey).
+            val next = (strip as? Strip.Candidates)?.takeIf { words.any { it != null } }
+                ?: return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
+            return Strip.Candidates(next.left, next.centre, picks[0].text, bold = false, grey = next.grey.take(2))
         }
         val m = models
         val commits = t.preview()  // what Space commits, when it isn't what the field shows
@@ -301,12 +304,38 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         return m.predictScored(ctx + word.lowercase(), 1).firstOrNull()?.takeIf { it.second >= COMPLETION }
     }
 
-    /** After a word and a space: the likeliest next words, the likeliest in the middle. */
+    /**
+     * After a word and a space: the likeliest next words in context (the two words before), the
+     * likeliest in the middle. One that goes with the word before as a phrase shows with it, that
+     * word in grey, as Laban Key mixes them: "một" -> một số, một mình, ..., but "tôi" -> về, đi.
+     * A tap adds the next word. A word hidden with the remove mark, alone or as its phrase, is
+     * left out.
+     */
     private fun next(t: Typist): Strip {
-        val words = models!!.predict(t.context(), 3 + HIDDEN_SLACK).filterNot(hidden).take(3)
+        val m = models!!
+        val last = t.wordBefore()?.takeIf { w -> w.any { it.isLetter() } }
+        // Each next word with what its slot shows: the word, or the phrase it makes.
+        val words = m.predict(t.context(), 3 + HIDDEN_SLACK).asSequence().filterNot(hidden)
+            .map { w -> w to if (last != null && goesWith(m, last, w)) "$last $w" else w }
+            .filterNot { hidden(it.second) }.take(3).toList()
         if (words.isEmpty()) return Strip.Tools
-        offered = listOf(words.getOrNull(1), words[0], words.getOrNull(2)).map { w -> w?.let { Pick(it) } }
-        return Strip.Candidates(words.getOrNull(1), words[0], words.getOrNull(2), bold = false)
+        val order = listOf(words.getOrNull(1), words[0], words.getOrNull(2))
+        offered = order.map { w -> w?.let { Pick(it.first) } }
+        val shown = order.map { it?.second }
+        return Strip.Candidates(shown[0], shown[1], shown[2], bold = false, grey = last?.let { greys(it, shown) } ?: emptyList())
+    }
+
+    /**
+     * `next` goes with `last` as a phrase ("một số", "người dùng"): Vietnamese, likely right
+     * after it (1 in 100 or more), and much likelier there than after a comma, so a word that
+     * follows anything ("có", "đã") stays on its own.
+     */
+    private fun goesWith(m: Models, last: String, next: String): Boolean {
+        fun sum(p: Pair<Float, Float>) = log10(10.0.pow(p.first.toDouble()) + 10.0.pow(p.second.toDouble()))
+        val after = m.languages(listOf(last.lowercase()), next)
+        if (after.first < after.second) return false
+        val p = sum(after)
+        return p >= GOES_WITH && p - sum(m.languages(listOf("<p>"), next)) >= GOES_WITH_LIFT
     }
 
     /**
@@ -378,6 +407,13 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         /** Words asked for after a finished word, and how likely each must be to follow it. */
         private const val CONTINUATIONS = 6
         private const val FOLLOWS = -3.0f
+
+        /**
+         * log10: how likely a next word must be after the word before to show with it, and how
+         * much likelier there than after a comma (measured against Laban's after-Space strips).
+         */
+        private const val GOES_WITH = -2.0
+        private const val GOES_WITH_LIFT = 1.0
 
         /** Readings looked at, the best of them that get a next word, completions asked for. */
         private const val READINGS = 6

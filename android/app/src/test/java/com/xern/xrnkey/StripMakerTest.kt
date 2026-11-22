@@ -177,6 +177,41 @@ class StripMakerTest {
         }
     }
 
+    /**
+     * After a Space, a next word that goes with the word before shows with it, that word grey, as
+     * Laban Key mixes them ("một" -> một mình | một số | một cái, but "tôi" -> về | đi | đang); a
+     * tap adds the next word. The next-word strip used to hold single words only.
+     */
+    @Test
+    fun afterASpaceTheNextWordsMixInPhrasesOfTheWordBefore() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            val mot = strip(m, "mootj ")
+            val slots = mot.shown.slots()
+            val phrase = slots.firstOrNull { it != null && it.startsWith("một ") }
+            assertTrue(slots.toString(), phrase != null)
+            slots.forEachIndexed { i, text ->
+                assertEquals(slots.toString(), if (text != null && text.startsWith("một ")) 3 else 0, mot.shown.grey.getOrElse(i) { 0 })
+            }
+            // Hidden with the remove mark, the phrase is offered no more.
+            mot.maker.hidden = { it == phrase }
+            val hid = mot.maker.make(mot.typist) as Strip.Candidates
+            assertTrue(hid.slots().toString(), phrase !in hid.slots() && phrase!!.removePrefix("một ") !in hid.slots())
+            mot.maker.hidden = { false }
+            mot.maker.make(mot.typist)
+            val pick = mot.maker.pick(slots.indexOf(phrase))!!.text
+            assertEquals(phrase!!.removePrefix("một "), pick)
+            mot.typist.pick(pick)
+            assertEquals("$phrase ", mot.field.text)
+            // After "tôi" the likeliest words follow anything: they stand alone.
+            val toi = strip(m, "tooi ").shown
+            assertTrue(toi.slots().toString(), toi.slots().none { it?.startsWith("tôi ") == true })
+            // With a comma between, a phrase would not be what the field shows.
+            val comma = strip(m, "mootj, ").shown
+            assertTrue(comma.slots().toString(), comma.slots().none { it?.startsWith("một ") == true })
+        }
+    }
+
     /** `keys` and Space end as `want`: the strip changes nothing Space does. */
     private fun typedSpace(m: TestModels.Opened, keys: String, want: String) {
         val typed = strip(m, keys)

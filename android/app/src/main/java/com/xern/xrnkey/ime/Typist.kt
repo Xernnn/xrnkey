@@ -175,6 +175,17 @@ class Typist(
         return n >= 2 && tail[n - 1] == ' ' && tail[n - 2] != ' ' && !tail[n - 2].isWhitespace()
     }
 
+    /**
+     * The word right before the cursor when only a space is between ("một" in "tôi có một "),
+     * else null (after "một, " or ". "): what the strip's phrases after a Space start with.
+     */
+    fun wordBefore(): String? {
+        if (!afterWord()) return null
+        var i = tail.length - 1
+        while (i > 0 && tail[i - 1].isLetterOrDigit()) i--
+        return tail.substring(i, tail.length - 1).takeIf { it.isNotEmpty() }
+    }
+
     /** Nothing typed yet in the sentence: the field's start, or after ". ", "! ", "? " or a new line. */
     fun atSentenceStart(): Boolean {
         if (composing.isNotEmpty() || raw) return false
