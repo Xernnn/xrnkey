@@ -26,7 +26,9 @@ import kotlin.math.pow
  *   xinh).
  *
  * Space keeps what was typed unless it fixes a wrong word, so a word typed without marks takes
- * no slot of its own while there is something else to offer. When Space commits something other
+ * no slot of its own while there is something else to offer, unless it reads as English ("the").
+ * Letters that are a common Vietnamese syllable keep the middle Vietnamese, as Laban does: "cam"
+ * is "cảm ơn" there, and English completions go to the sides. When Space commits something other
  * than what the field shows ("teh" -> "the"), that is in the middle. The middle is in bold only
  * when Space commits it. A word typed with Telex marks shows as it is. A tap takes a guess. When
  * the words before were typed without marks too, the left offers the whole run accented ("tôi
@@ -77,9 +79,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val guesses = if (m != null) guesses(t, m, ctx, readings, marked, commits) else emptyList()
 
         // The middle: what Space commits, when that is not what the field shows; for a word
-        // typed without marks, the best guess, unless all there is are slips of it.
-        val other = guesses.any { !it.corrected && it.base != word }
-        val middle = commits ?: if (t.restorable() && other) guesses.first().text else word
+        // typed without marks, as the letters read (bareMiddle); a marked word as it is.
+        val middle = commits ?: if (m != null && t.restorable()) bareMiddle(m, ctx, word, readings, guesses) else word
         val bold = middle == (commits ?: word)
         val rest = guesses.filter { it.text != middle }.toMutableList()
         // The left: the run accented, or the best other reading, alone or with its next word,
@@ -104,6 +105,40 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         if (right?.emoji == false) top?.let { rest.remove(it) }
         offered = listOf(left, Pick(middle), right)
         return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold)
+    }
+
+    /**
+     * The middle for letters typed without marks, which Space keeps, weighed by the models:
+     * - letters that are a Vietnamese syllable with a common reading, likelier as Vietnamese
+     *   than as English ("cam", "ban", "an"): the best Vietnamese reading or reading with its
+     *   next word ("cảm ơn"), or the word itself when that is the likeliest ("em"), never a
+     *   completion ("came" and "camera" go to the sides);
+     * - letters that are an English word Space keeps, likelier as English ("the", "love"): the
+     *   word itself, in bold;
+     * - else the best guess ("hel": hello), or the word when it is as likely or all there is
+     *   are slips of it.
+     */
+    private fun bareMiddle(m: Models, ctx: List<String>, word: String, readings: List<Candidate>, guesses: List<Guess>): String {
+        val (asVietnamese, asEnglish) = m.languages(ctx, word)
+        // The letters are a Vietnamese syllable when some reading of them takes marks; the word
+        // as typed is then one of its readings too ("xin", "anh").
+        val marked = readings.firstOrNull { it.type == Candidate.RESTORED && it.text.any { c -> c.code >= 0x80 } }
+        val vietnamese = if (marked == null) Models.NEVER else maxOf(marked.score, asVietnamese)
+        if (vietnamese >= COMMON && vietnamese >= asEnglish) {
+            val best = guesses.firstOrNull { it.kind != Kind.COMPLETION && !it.corrected }
+            // The word itself, when it is the likeliest Vietnamese and no pair of it stands in
+            // its place ("em", where "êm" is rare; but "xin lỗi" for "xin").
+            val ownPair = guesses.any { it.kind == Kind.PAIR && it.base == word }
+            if (!ownPair && readings.any { it.text == word } && (best == null || asVietnamese > best.score)) return word
+            best?.let { return it.text }
+        }
+        if (asEnglish > vietnamese && m.plainWord(word)) return word
+        // Nothing common either way: the best guess, unless the word itself is as likely ("em"
+        // after "tôi", where "emphasized" was in the middle) or all there is are slips of it.
+        val best = guesses.firstOrNull() ?: return word
+        val itself = readings.firstOrNull { it.text == word }
+        if (itself != null && guesses.none { it.kind == Kind.PAIR && it.base == word } && itself.score >= best.score) return word
+        return if (guesses.any { !it.corrected && it.base != word }) best.text else word
     }
 
     /**
@@ -216,6 +251,13 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         private const val READINGS = 6
         private const val PAIRED = 3
         private const val COMPLETIONS = 3
+
+        /**
+         * log10 P: how likely after the words before a Vietnamese reading must be to hold the
+         * middle against completions (1 in 30,000; the readings of "cam", "an", "di" are about
+         * 1 in 1,500 at a sentence's start).
+         */
+        private const val COMMON = -4.5f
 
         /** log10: how much likelier a completion must be to take the left from a reading. */
         private const val READING_EDGE = 2.0f

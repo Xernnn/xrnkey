@@ -76,14 +76,21 @@ bool is_ascii_word(const std::string& t) {
     return true;
 }
 
-double mix_logprob_ids(const Models& m, const Context& c, std::string_view token, uint32_t vi_id,
-                       uint32_t en_id, uint8_t* lang) {
+void mix_parts(const Models& m, const Context& c, std::string_view token, uint32_t vi_id, uint32_t en_id,
+               double* pv, double* pe) {
     const uint8_t prev = previous_lang(c);
     const bool both = m.vi && m.en;
-    double pv = 0.0, pe = 0.0;
-    if (m.vi) pv = (both ? frame_prob(prev, LANG_VI) : 1.0) * std::pow(10.0, id_logprob(*m.vi, c, vi_id));
+    *pv = 0.0;
+    *pe = 0.0;
+    if (m.vi) *pv = (both ? frame_prob(prev, LANG_VI) : 1.0) * std::pow(10.0, id_logprob(*m.vi, c, vi_id));
     if (m.en && ascii_letters(token))
-        pe = (both ? frame_prob(prev, LANG_EN) : 1.0) * std::pow(10.0, id_logprob(*m.en, c, en_id));
+        *pe = (both ? frame_prob(prev, LANG_EN) : 1.0) * std::pow(10.0, id_logprob(*m.en, c, en_id));
+}
+
+double mix_logprob_ids(const Models& m, const Context& c, std::string_view token, uint32_t vi_id,
+                       uint32_t en_id, uint8_t* lang) {
+    double pv, pe;
+    mix_parts(m, c, token, vi_id, en_id, &pv, &pe);
     if (lang) *lang = pe > pv ? LANG_EN : LANG_VI;
     double p = pv + pe;
     if (m.user) {
@@ -143,3 +150,18 @@ Context context_from(const Models* m, const char* const* words, int n, bool star
 }
 
 }  // namespace xrnkey
+
+extern "C" void xk_word_languages(const XKModels* models, const char* const* context, int n, const char* word,
+                                  float* vi, float* en) {
+    if (vi) *vi = xrnkey::lmfmt::kNever;
+    if (en) *en = xrnkey::lmfmt::kNever;
+    if (!models || !word || !*word) return;
+    const auto& m = *reinterpret_cast<const xrnkey::Models*>(models);
+    const std::string w = xrnkey::context_token(word);
+    const xrnkey::Context c = xrnkey::context_from(&m, context, n, n == 0);
+    double pv, pe;
+    xrnkey::mix_parts(m, c, w, m.vi ? xrnkey::lm_id(*m.vi, w) : xrnkey::lmfmt::kUnk,
+                      m.en ? xrnkey::lm_id(*m.en, w) : xrnkey::lmfmt::kUnk, &pv, &pe);
+    if (vi && pv > 0.0) *vi = static_cast<float>(std::log10(pv));
+    if (en && pe > 0.0) *en = static_cast<float>(std::log10(pe));
+}

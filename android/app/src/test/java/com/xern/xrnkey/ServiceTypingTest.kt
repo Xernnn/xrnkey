@@ -5,6 +5,10 @@ import android.os.ParcelFileDescriptor
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.view.inputmethod.BaseInputConnection
+import com.xern.xrnkey.engine.TypingState
+import com.xern.xrnkey.ime.StripMaker
+import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.ime.XrnkeyService
 import org.junit.Assert.assertEquals
 import org.junit.After
@@ -53,6 +57,70 @@ class ServiceTypingTest {
     }
 
     private fun XrnkeyService.type(text: String) = text.forEach { onText(it.toString()) }
+
+    /** Types `text` and reports each key's selection update, as the editor does, `late` keys late. */
+    private fun XrnkeyService.typeReported(edit: EditText, text: String, late: Int = 0) {
+        val updates = ArrayDeque<IntArray>()
+        for (c in text) {
+            val old = edit.selectionStart
+            onText(c.toString())
+            val e = edit.text
+            updates += intArrayOf(old, edit.selectionStart, BaseInputConnection.getComposingSpanStart(e), BaseInputConnection.getComposingSpanEnd(e))
+            while (updates.size > late) updates.removeFirst().let { onUpdateSelection(it[0], it[0], it[1], it[1], it[2], it[3]) }
+        }
+        while (updates.isNotEmpty()) updates.removeFirst().let { onUpdateSelection(it[0], it[0], it[1], it[1], it[2], it[3]) }
+    }
+
+    /**
+     * An app clears its box (after Send) without starting the input again: the words before are
+     * gone, so "cam" is typed at a sentence's start. The typist kept "meet" as the word before,
+     * and the strip read "cam" after an English word.
+     */
+    @Test
+    fun aFieldClearedUnderTheKeyboardIsReadAgain() {
+        val (s, edit) = field()
+        s.type("meet ")
+        assertEquals(listOf("<s>", "meet"), s.typist.context())
+        edit.setText("")
+        s.onUpdateSelection(5, 5, 0, 0, -1, -1)
+        s.type("cam")
+        assertEquals(listOf("<s>"), s.typist.context())
+        TestModels.best().use { m ->
+            val fresh = Typist(TypingState().also { it.useModels(m.models) }, FakeEditor(), m.models).also { it.reset() }
+            fresh.text("cam")
+            assertEquals(StripMaker(m.models).make(fresh), StripMaker(m.models).make(s.typist))
+        }
+        s.onDestroy()
+    }
+
+    /** The cursor moved to the field's start: no words are before it there. */
+    @Test
+    fun aCursorMovedToTheStartHasNoWordsBeforeIt() {
+        val (s, edit) = field()
+        s.type("toi ")
+        assertEquals(listOf("<s>", "toi"), s.typist.context())
+        edit.setSelection(0)
+        s.onUpdateSelection(4, 4, 0, 0, -1, -1)
+        assertEquals(listOf("<s>"), s.typist.context())
+        assertTrue(s.typist.atSentenceStart())
+        s.onDestroy()
+    }
+
+    /**
+     * The keyboard's own edits, reported on time or late, read nothing again: the words typed
+     * without marks are still one run ("toi khong biet"), which a re-read would have ended.
+     */
+    @Test
+    fun theKeyboardsOwnEditsReadNothingAgain() {
+        for (late in listOf(0, 3)) {
+            val (s, edit) = field()
+            s.typeReported(edit, "toi khong biet", late)
+            assertEquals("toi khong biet", edit.text.toString())
+            assertEquals(listOf("<s>", "toi", "khong"), s.typist.context())
+            assertTrue("late $late", s.typist.phrase() != null)
+            s.onDestroy()
+        }
+    }
 
     @Test
     fun aKnownTypoIsFixedOnSpace() {

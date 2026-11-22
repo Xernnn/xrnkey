@@ -2,6 +2,7 @@
 // the made-up text in data/lm/test.
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -121,4 +122,35 @@ TEST_CASE("completing asks for letters typed without marks", "[complete]") {
     XKModels* none = xk_models_new(nullptr, nullptr);
     CHECK(xk_complete(none, nullptr, 0, "duo", out, nullptr, 2) == 0);
     xk_models_free(none);
+}
+
+// The strip weighs whether letters typed without marks read as Vietnamese or as English with
+// the two parts of the mixture.
+TEST_CASE("a word's score splits into its Vietnamese and English parts", "[complete]") {
+    Setup m;
+    auto parts = [&](std::vector<const char*> ctx, const char* w) {
+        float vi = 0, en = 0;
+        xk_word_languages(m.models, ctx.data(), static_cast<int>(ctx.size()), w, &vi, &en);
+        return std::pair<float, float>(vi, en);
+    };
+    const auto ban = parts({"<s>", "chào"}, "bạn");
+    CHECK(ban.first > -6.0f);
+    CHECK(ban.second == -99.0f);  // marks: never English
+    const auto boost = parts({"<s>", "i", "need", "the"}, "boost");
+    CHECK(boost.second > boost.first);
+    // The parts add up to the mixture xk_predict ranks with (no personal words here).
+    char* out[8];
+    float lp[8];
+    const char* ctx[] = {"<s>", "my"};
+    const int n = xk_predict_scored(m.models, ctx, 2, out, lp, 8);
+    REQUIRE(n > 0);
+    const auto first = parts({"<s>", "my"}, out[0]);
+    const double sum = std::pow(10.0, first.first) + (first.second > -99.0f ? std::pow(10.0, first.second) : 0.0);
+    CHECK(std::abs(std::log10(sum) - lp[0]) < 1e-3);
+    for (int i = 0; i < n; ++i) std::free(out[i]);
+    float vi = 1, en = 1;
+    xk_word_languages(nullptr, nullptr, 0, "ban", &vi, &en);
+    CHECK(vi == -99.0f);
+    CHECK(en == -99.0f);
+    xk_word_languages(m.models, nullptr, 0, "ban", nullptr, nullptr);  // no crash
 }

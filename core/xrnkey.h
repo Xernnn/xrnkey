@@ -309,6 +309,14 @@ int xk_predict_scored(const XKModels* models, const char* const* context, int n,
 int xk_complete(const XKModels* models, const char* const* context, int n, const char* typed, char** out,
                 float* logprobs, int max);
 
+/* How likely `word` is next as Vietnamese and as English: the log10 of each part of the mixture
+ * xk_predict ranks with, P(Vietnamese frame) * P_vi(word | context) and the same for English
+ * (an a-z word only), without the personal words; -99 for a part that is nothing. The strip
+ * weighs with it whether letters typed without marks are read as Vietnamese ("cam") or as
+ * English ("the"). Either out pointer may be NULL. */
+void xk_word_languages(const XKModels* models, const char* const* context, int n, const char* word, float* vi,
+                       float* en);
+
 /* Bilingual switch */
 int  xk_is_english_word(const char* word);
 void xk_bilingual_set_enabled(XKState* state, int enabled);

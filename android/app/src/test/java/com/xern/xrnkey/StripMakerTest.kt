@@ -162,6 +162,55 @@ class StripMakerTest {
         index.close()
     }
 
+    /** The letters a text is typed with, without marks: "cảm ơn" -> "cam on". */
+    private fun bare(s: String) = java.text.Normalizer.normalize(s.replace('đ', 'd').replace('Đ', 'D'), java.text.Normalizer.Form.NFD)
+        .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+
+    /**
+     * Letters that are a common Vietnamese syllable keep the middle Vietnamese: a reading of
+     * them, alone or with its next word, or the word itself; an English completion goes to the
+     * sides. On the phone after an English word, "cam" put "came" in the middle (Laban: "cảm
+     * ơn"). Letters that read as English keep English there; Space is unchanged.
+     */
+    @Test
+    fun vietnameseLettersKeepTheMiddleVietnamese() {
+        assumeTrue(TestModels.realAvailable)
+        val index = EmojiIndex.load(File(System.getProperty("xrnkey.emojiIndex")!!).readBytes())!!
+        val vietnamese = "cam an ban con toi cho den di la ma minh lam hom nha anh em co khong duoc xin".split(" ")
+        TestModels.real().use { m ->
+            for (before in listOf("", "meet ", "tôi ")) {
+                for (w in vietnamese) {
+                    val typed = strip(m, w, before, index)
+                    val first = typed.shown.centre!!.substringBefore(' ')
+                    val why = "'$before$w': ${typed.shown.slots()}"
+                    // Vietnamese: a reading (or the word), or at least a Vietnamese completion
+                    // ("tôi nha": "nhận", where "nhà" is rare); at a sentence's start, a reading.
+                    assertTrue(why, bare(first).startsWith(w) && (first == w || first.any { it.code >= 0x80 }))
+                    if (before.isEmpty()) assertEquals(why, w, bare(first))
+                    typed.typist.text(" ")
+                    assertEquals("$before$w ", typed.field.text)  // Space keeps what was typed
+                }
+                val cam = strip(m, "cam", before, index).shown
+                assertTrue(cam.slots().toString(), cam.centre!!.startsWith("cảm") || cam.centre!!.startsWith("cám"))
+            }
+            assertEquals("cảm ơn", strip(m, "cam", emoji = index).shown.centre)
+            assertEquals("em", strip(m, "em", emoji = index).shown.centre)  // not "êm"
+            assertEquals("em", strip(m, "em", "tôi ", index).shown.centre)  // not "emphasized"
+            // English: the word itself where it reads as English, in bold; completions where the
+            // letters are no word.
+            for (w in listOf("the", "ok", "good", "love")) {
+                val shown = strip(m, w, emoji = index).shown
+                assertEquals(shown.slots().toString(), w, shown.centre)
+                assertTrue(shown.bold)
+            }
+            assertTrue(strip(m, "hel", emoji = index).shown.centre in setOf("hello", "help"))
+            val meet = strip(m, "meet", emoji = index).shown
+            assertEquals("meet", meet.centre)
+            assertTrue(meet.bold)
+        }
+        index.close()
+    }
+
     @Test
     fun spaceKeepsWhatWasTypedAndATapTakesTheCompletion() {
         assumeTrue(TestModels.realAvailable)

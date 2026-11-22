@@ -101,6 +101,9 @@ class Typist(
     /** Whether [tail] reaches back to the field's start (nothing before it was cut off). */
     private var wholeField = true
 
+    /** Where in the field [tail] starts, as a UTF-16 index (-1: not known). */
+    private var anchor = -1
+
     /** A word restoration may still change: its keys, what the field shows, what followed. */
     private data class RunWord(val typed: String, val shown: String, val sep: String)
 
@@ -113,6 +116,17 @@ class Typist(
 
     /** The last key was a Space that ended a word (for the double-Space full stop). */
     private var spaceAfterWord = false
+
+    /**
+     * Where the cursor is after this typist's own edits, as a UTF-16 index (-1: not known). A
+     * selection update elsewhere means the field changed under it, and [reset] reads it again.
+     */
+    fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length
+
+    /** The editor says where the cursor is, and this typist didn't know: it is there now. */
+    fun anchorAt(cursor: Int) {
+        if (anchor < 0 && cursor >= 0) anchor = maxOf(0, cursor - tail.length - composing.length)
+    }
 
     /** The word in progress, as shown. */
     val shown: String get() = composing
@@ -353,8 +367,14 @@ class Typist(
         }
         apply(s.key(TypingState.BACKSPACE)) {
             editor.backspace()
-            if (tail.isNotEmpty()) tail.setLength(tail.length - 1)
-            if (pending.isNotEmpty()) pending.setLength(pending.length - 1)
+            // Backspace takes a character: an emoji is two UTF-16 units.
+            val n = tail.length
+            val units = if (n >= 2 && Character.isSurrogatePair(tail[n - 2], tail[n - 1])) 2 else 1
+            when {
+                n > 0 -> tail.setLength(n - units)
+                !wholeField && anchor > 0 -> anchor -= 1  // a character before what the tail holds
+            }
+            if (pending.isNotEmpty()) pending.setLength(maxOf(0, pending.length - units))
             run.clear()
         }
     }
@@ -409,8 +429,13 @@ class Typist(
         learnSettled(all = true)
     }
 
-    /** A new field: nothing is in progress; what is before the cursor is the field's text. */
-    fun reset() {
+    /**
+     * A new field, or the field changed in a way this typist's edits don't explain (cleared after
+     * Send, select-all and delete, the cursor moved): nothing is in progress, and what is before
+     * the cursor is the field's text, read once. `cursor` is where the editor says the cursor
+     * is (-1: not known).
+     */
+    fun reset(cursor: Int = -1) {
         plain.clear()
         learnSettled(all = true)
         state?.reset()
@@ -422,6 +447,11 @@ class Typist(
         val before = editor.textBefore(TAIL)
         tail.append(before)
         wholeField = before.length < TAIL
+        anchor = when {
+            cursor >= 0 -> maxOf(0, cursor - before.length)
+            wholeField -> 0
+            else -> -1
+        }
         pending.clear()
         pendingPrev = context().lastOrNull()
         state?.setContext(context())
@@ -456,7 +486,9 @@ class Typist(
         editor.commit(text)
         tail.append(text)
         if (tail.length > TAIL) {
-            tail.delete(0, tail.length - TAIL)
+            val cut = tail.length - TAIL
+            tail.delete(0, cut)
+            if (anchor >= 0) anchor += cut
             wholeField = false
         }
         if (learnable) {

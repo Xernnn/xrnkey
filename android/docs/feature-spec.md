@@ -956,6 +956,10 @@ Steps 1 to 10 are built, with these differences from the text above:
   | `cam` | cám ơn \| cảm ơn \| 🍊 | cảm \| cảm ơn \| cám ơn |
 
   xrnkey ends "meet" as the English word, so that is in the middle, in bold.
+- **The middle, since 0.4.3**, is weighed by language for letters typed without marks
+  (`xk_word_languages`): a Vietnamese syllable with a common reading keeps a Vietnamese reading
+  or pair there, and English completions go to the sides ("cam" after an English word had
+  "came"); an English word likelier as English stays itself ("the", "love").
 
 Step 11, the pass on the phone, has not started: nothing has run on a real phone yet.
 
