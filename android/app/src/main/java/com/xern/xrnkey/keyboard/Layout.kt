@@ -95,8 +95,11 @@ object Layouts {
      */
     val PUNCTUATION = ", ? ! ' \" : - ; ( ) / @ & % + #".split(' ')
 
-    /** The number row's second page: ten of the emoticon tab's own, first ten. */
-    val EMOTICON_ROW: List<String> get() = Emoticons.list.take(10)
+    /**
+     * The number row's second page: ten emoji, the ones Laban Key's number row has by default.
+     * The emoticon tab keeps the text emoticons.
+     */
+    val EMOTICON_ROW: List<String> = listOf("😂", "😊", "😍", "😫", "😢", "😞", "😨", "😁", "👌", "👍")
 
     private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false) =
         s.mapIndexed { i, c ->
@@ -296,17 +299,37 @@ object PopupGrid {
 
     /**
      * The column over the key, for a key from [keyLeft] to [keyRight] in a view [width] wide with
-     * cells [cell] wide: the middle one (left of the middle when even) where the grid fits around
-     * the key, else as near it as the edges allow. The grid's left edge is then
-     * `keyLeft - home * cell`.
+     * cells [cell] wide, placed as AOSP's keyboard (and Laban Key, built on it) places it. Room is
+     * counted in whole cells from the key's centre, left of it and right of it with the key's own
+     * column; the grid takes the middle column (left of the middle when even) where it fits, else
+     * as near it as the room allows. A grid that would fill the room to an edge moves one column
+     * off it, unless the key is at that edge: a held o, one key from the right edge, has its other
+     * forms all to its left ("ọ õ ỏ ó ò"), a held a has them all to its right. The grid's left edge
+     * is then `keyLeft - home * cell`.
      */
     fun home(n: Int, keyLeft: Float, keyRight: Float, cell: Float, width: Float): Int {
         val columns = columns(n)
-        val roomLeft = ((keyLeft + 0.5f) / cell).toInt()
-        val roomRight = ((width - keyRight + 0.5f) / cell).toInt()
-        val lowest = maxOf(0, columns - 1 - roomRight)
-        val highest = minOf(columns - 1, roomLeft)
-        return if (lowest > highest) highest else ((columns - 1) / 2).coerceIn(lowest, highest)
+        val centre = (keyLeft + keyRight) / 2
+        val maxLeft = (centre / cell + 1e-3f).toInt()
+        val maxRight = ((width - centre) / cell + 1e-3f).toInt()
+        var left = (columns - 1) / 2
+        var right = columns - left
+        if (left > maxLeft) {
+            left = maxLeft
+            right = columns - left
+        } else if (right > maxRight + 1) {
+            right = maxRight + 1
+            left = columns - right
+        }
+        if (left == maxLeft && left > 0) {
+            left--
+            right++
+        }
+        if (right - 1 == maxRight && right > 1) {
+            left++
+            right--
+        }
+        return left.coerceIn(0, columns - 1)
     }
 
     /**

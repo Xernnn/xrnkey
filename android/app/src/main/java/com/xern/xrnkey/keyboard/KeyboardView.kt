@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Build
@@ -148,6 +149,14 @@ class KeyboardView(context: Context) : View(context) {
             }
         }
         hits = out
+        // A swipe from Backspace deletes a word. Backspace touches the right edge, where the
+        // system's Back gesture would take a swipe that starts on its outer part and close the
+        // keyboard instead.
+        if (Build.VERSION.SDK_INT >= 29) {
+            systemGestureExclusionRects = out.filter { it.key.kind == KeyKind.BACKSPACE }.map { h ->
+                Rect().also { h.rect.roundOut(it) }
+            }
+        }
         out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { spaceLabel = spaceLabelFor(spaceBar(it.rect).width()) }
         invalidate()
     }

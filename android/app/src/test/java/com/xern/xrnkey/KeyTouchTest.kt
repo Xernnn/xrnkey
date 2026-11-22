@@ -254,9 +254,23 @@ class KeyTouchTest {
         assertEquals(listOf("⌫"), events)
     }
 
+    /**
+     * Backspace reaches the right edge, where the system's Back gesture would take a swipe that
+     * starts on its outer part (and close the keyboard): the keyboard keeps that key for itself.
+     */
+    @Test
+    fun theSystemBackGestureLeavesBackspaceAlone() {
+        val v = keyboard()
+        val rects = v.systemGestureExclusionRects
+        assertEquals(1, rects.size)
+        assertTrue(rects[0].contains(deleteX.toInt(), zRowY.toInt()))
+        assertTrue(rects[0].contains(1075, zRowY.toInt()))  // out to the edge
+        assertTrue(!rects[0].contains(1075, (zRowY - 180f).toInt()))  // not the l row above
+    }
+
     private val numberY = 234f
 
-    /** Swiping the number row left shows ten emoticons, each typed whole; right brings the digits back. */
+    /** Swiping the number row left shows ten emoji, each typed whole; right brings the digits back. */
     @Test
     fun swipingTheNumberRowTurnsItToEmoticonsAndBack() {
         val v = keyboard()
@@ -275,7 +289,7 @@ class KeyTouchTest {
         touch(v, MotionEvent.ACTION_DOWN, 54f, numberY)
         touch(v, MotionEvent.ACTION_MOVE, 162f, numberY)  // a short slide: the key it ends on
         touch(v, MotionEvent.ACTION_UP, 162f, numberY)
-        assertEquals(listOf("emoticon :)", "2"), events)
+        assertEquals(listOf("emoticon 😂", "2"), events)
     }
 
     private val hel = Strip.Candidates(
