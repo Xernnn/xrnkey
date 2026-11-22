@@ -127,6 +127,19 @@ TEST_CASE("corpus: a word after punctuation or a digit still gets its marks", "[
     });
 }
 
+// In Telex a digit right after letters makes the word a code or a name, as Laban Key has it:
+// the word goes back to its keys and takes no marks until it ends. BackSpace over the digit
+// gives the Telex word back.
+TEST_CASE("corpus: a digit inside a Telex word keeps the word as typed", "[corpus]") {
+    run(XK_MODE_TELEX, {
+        {"tooi2 ", "tooi2 "}, {"tieeng1 ", "tieeng1 "}, {"vieetj2 ", "vieetj2 "},
+        {"tooi2a ", "tooi2a "}, {"abc123 ", "abc123 "}, {"covid19 ", "covid19 "},
+        {"tooi2<", "tôi"}, {"tooi2< ", "tôi "}, {"tooi23<", "tooi2"},
+        // A digit before the letters is text of its own; the word after it is Telex.
+        {"2tieengs ", "2tiếng "}, {"10k ", "10k "},
+    });
+}
+
 TEST_CASE("corpus: English words come back as typed", "[corpus]") {
     run(XK_MODE_TELEX, {
         {"password ", "password "}, {"user ", "user "}, {"text ", "text "},

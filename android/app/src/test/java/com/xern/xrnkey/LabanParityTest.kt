@@ -85,6 +85,15 @@ class LabanParityTest {
         }
     }
 
+    /** Laban: a digit stops Telex for its word ("tooi2" stays); it used to end as "tôi2". */
+    @Test
+    fun aDigitKeepsTheWordAsTyped() = TestModels.test().use { m ->
+        assertEquals("tooi2 ", typed("tooi2", m))
+        assertEquals("tieeng1 ", typed("tieeng1", m))
+        assertEquals("abc123 ", typed("abc123", m))
+        assertEquals("2tiếng ", typed("2tieengs", m))  // a digit before the word is text of its own
+    }
+
     @Test
     fun onlyWhenNeededTonesTheWordsThatArentWordsAsTheyStand() {
         assumeTrue(TestModels.realAvailable)
