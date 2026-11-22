@@ -3,6 +3,7 @@ package com.xern.xrnkey
 import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.engine.TypingState
 import java.io.File
+import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.keyboard.Strip
@@ -63,6 +64,43 @@ class StripMakerTest {
                     if (shown.extra.isNotEmpty()) some++
                 }
                 assertTrue(some > 0)
+            }
+        }
+    }
+
+    /**
+     * A suggestion the owner hid with the remove mark is offered nowhere, whichever model it came
+     * from: not in a slot, not in the panel, not as a next word. Shown again, it is back.
+     */
+    @Test
+    fun aHiddenSuggestionIsOfferedNoMoreUntilShownAgain() {
+        TestModels.test().use { m ->
+            TypingState().use { s ->
+                s.useModels(m.models)
+                val dir = kotlin.io.path.createTempDirectory().toFile()
+                val hidden = HiddenWords(File(dir, "hidden.txt"))
+                val strip = StripMaker(m.models).also { it.hidden = { t -> t in hidden } }
+                val t = Typist(s, FakeEditor("Tôi không "), m.models).also { it.reset() }
+                t.text("duoc")
+                val before = strip.make(t) as Strip.Candidates
+                fun offered(c: Strip.Candidates) = listOfNotNull(c.left, c.centre, c.right) + c.extra
+                val gone = listOfNotNull(before.left, before.right).first { it.any(Char::isLetter) }
+                hidden.hide(gone)
+                val after = strip.make(t) as Strip.Candidates
+                assertFalse(gone in offered(after))
+                // Kept on disk: read again, still hidden.
+                assertTrue(gone in HiddenWords(File(dir, "hidden.txt")))
+                hidden.show(gone)
+                assertEquals(before, strip.make(t))
+                // The next words after a Space.
+                val after2 = Typist(s, FakeEditor("Tôi không "), m.models).also { it.reset() }
+                val next = strip.make(after2) as Strip.Candidates
+                val word = next.centre!!
+                hidden.hide(word)
+                assertFalse(word in offered(strip.make(after2) as Strip.Candidates))
+                hidden.show(word)
+                assertEquals(next, strip.make(after2))
+                dir.deleteRecursively()
             }
         }
     }

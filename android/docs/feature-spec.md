@@ -255,9 +255,11 @@ What the slots hold, by situation:
   While it stays open, a tap on a candidate commits it and any key closes it (and types).
 - **The dots** under the middle only say there are more: a tap anywhere on the middle slot,
   dots included, commits the middle word.
-- **While the panel is open** each word in the strip has a small remove mark: a tap forgets
-  that word from the personal words, as the settings' list does. Words only the models know
-  come back.
+- **While the panel is open** each word or phrase in the strip has a small remove mark: a tap
+  forgets the word from the personal words, as the settings' list does, and hides it, so that
+  neither the strip nor the next words offer it again, whichever model it came from. Hidden
+  suggestions are kept with the personal words (Settings → Personal words lists them under
+  "Hidden", each with Show; Clear all clears them too) and are never learned from.
 - **Tap ≡**: the tool row replaces the strip until the next key.
 
 The strip never shows a sentence of explanation, only candidates.

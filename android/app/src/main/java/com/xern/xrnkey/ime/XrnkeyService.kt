@@ -385,9 +385,14 @@ class XrnkeyService :
         showStrip()
     }
 
-    /** A strip word's remove mark: forgotten, as the settings' list of personal words does it. */
-    override fun onForget(word: String) {
-        onDevice?.words?.forget(word)
+    /**
+     * A strip slot's remove mark: the word is forgotten from the personal words, as the settings'
+     * list does it, and hidden, so that no model offers it (or the phrase) either.
+     */
+    override fun onRemove(text: String) {
+        val od = onDevice ?: return
+        if (' ' !in text) od.words?.forget(text)
+        od.hidden?.hide(text)
         showStrip()
     }
 
@@ -534,6 +539,7 @@ class XrnkeyService :
         if (!getSystemService(UserManager::class.java).isUserUnlocked) return
         val od = onDevice ?: OnDevice(filesDir, prefs()).also { onDevice = it }
         od.refresh()
+        strip.hidden = od.hidden?.let { h -> { text: String -> text in h } } ?: { false }
         val learning = options.learn
         typist.personal = if (learning) od.words else null
         models?.user = if (learning) od.words else null

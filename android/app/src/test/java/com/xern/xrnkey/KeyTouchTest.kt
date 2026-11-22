@@ -12,6 +12,7 @@ import com.xern.xrnkey.keyboard.Page
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -51,7 +52,7 @@ class KeyTouchTest {
             override fun onEmoticon(text: String) { events += "emoticon $text" }
             override fun onCandidate(slot: Int) { events += "slot $slot" }
             override fun onMorePick(text: String) { events += "more $text" }
-            override fun onForget(word: String) { events += "forget $word" }
+            override fun onRemove(text: String) { events += "remove $text" }
         }
         activity.setContentView(v)
         shadowOf(Looper.getMainLooper()).idle()
@@ -316,11 +317,11 @@ class KeyTouchTest {
     }
 
     /**
-     * Lifted on the strip after a slide, the panel stays: each word in the strip shows a mark
-     * that forgets it, and a tap on a word still takes it.
+     * Lifted on the strip after a slide, the panel stays: each word or phrase in the strip shows
+     * a mark that removes it (no emoji has one).
      */
     @Test
-    fun theOpenPanelsMarksForgetAWord() {
+    fun theOpenPanelsMarksRemoveAWord() {
         val v = keyboard { strip = hel }
         touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
         touch(v, MotionEvent.ACTION_MOVE, 540f, 20f)
@@ -331,9 +332,17 @@ class KeyTouchTest {
         val mark = v.removeMark("hello")!!
         touch(v, MotionEvent.ACTION_DOWN, mark.x, mark.y)
         touch(v, MotionEvent.ACTION_UP, mark.x, mark.y)
-        assertEquals(listOf("forget hello"), events)
+        assertEquals(listOf("remove hello"), events)
         assertEquals(emptyList<String>(), v.moreShown)
         assertEquals(null, v.removeMark("hello"))  // closed: no marks
+        // A phrase has one too; an emoji doesn't.
+        v.strip = Strip.Candidates("cảm ơn", "cảm", "🍊", more = true, extra = listOf("cám"))
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 20f)
+        touch(v, MotionEvent.ACTION_UP, 540f, 20f)
+        assertEquals(listOf("cám"), v.moreShown)
+        assertTrue(v.removeMark("cảm ơn") != null)
+        assertEquals(null, v.removeMark("🍊"))
     }
 
     /**

@@ -46,8 +46,8 @@ class KeyboardView(context: Context) : View(context) {
         fun onEmoticon(text: String) {}
         /** A candidate taken from the more-suggestions panel. */
         fun onMorePick(text: String) {}
-        /** A strip slot's remove mark, while the panel is open: the word is forgotten. */
-        fun onForget(word: String) {}
+        /** A strip slot's remove mark, while the panel is open: the word or phrase is offered no more. */
+        fun onRemove(text: String) {}
     }
 
     var listener: Listener? = null
@@ -561,14 +561,11 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
-    /**
-     * Where each slot's remove mark goes, after its word and a little above: only on words (one
-     * word, not an emoji or a phrase), which are what the personal words can forget.
-     */
+    /** Where each slot's remove mark goes, after its word or phrase and a little above; none on an emoji. */
     private fun removeMarks(s: Strip.Candidates): List<Pair<String, android.graphics.PointF>> {
         val slots = stripSlots()
         return listOf(s.left, s.centre, s.right).mapIndexedNotNull { i, text ->
-            if (text == null || ' ' in text || text.none { it.isLetter() }) return@mapIndexedNotNull null
+            if (text == null || text.none { it.isLetter() }) return@mapIndexedNotNull null
             val r = slots[i]
             val (_, _, w) = fitted(text, r)
             val x = minOf(r.centerX() + w / 2 + 8 * dp, r.right - 7 * dp)
@@ -927,9 +924,9 @@ class KeyboardView(context: Context) : View(context) {
      * The candidates after the strip's three, in a panel over the strip, as the keyboard the
      * owner came from has them. Slide up from the strip to open it ([More.SLIDING]) and lift on a
      * candidate to take it; slide back down past the strip to close it. Lifting anywhere else
-     * leaves it open ([More.OPEN]): then a tap takes a candidate, a word's mark in the strip
-     * forgets that word, and any key closes it. The dots under the middle only say there are
-     * more: a tap there takes the middle word, as anywhere on its slot.
+     * leaves it open ([More.OPEN]): then a tap takes a candidate, a word's mark in the strip hides
+     * that word, and any key closes it. The dots under the middle only say there are more: a tap
+     * there takes the middle word, as anywhere on its slot.
      */
     private enum class More { CLOSED, SLIDING, OPEN }
 
@@ -1071,7 +1068,7 @@ class KeyboardView(context: Context) : View(context) {
                     Math.hypot((stripX - at.x).toDouble(), (stripY - at.y).toDouble()) <= 18 * dp
                 }
                 closeMore()
-                if (mark != null) listener?.onForget(mark.first) else tapStrip(stripX)
+                if (mark != null) listener?.onRemove(mark.first) else tapStrip(stripX)
             }
             More.CLOSED -> if (!stripLeft) tapStrip(stripX)
         }

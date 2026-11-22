@@ -167,15 +167,21 @@ class ServiceTypingTest {
         s.onDestroy()
     }
 
-    /** A strip word's remove mark forgets it from the personal words, as the settings' list does. */
+    /**
+     * A strip slot's remove mark forgets the word from the personal words, as the settings' list
+     * does, and hides it with the personal data, so no model offers it either; a phrase is hidden.
+     */
     @Test
-    fun aRemoveMarkForgetsThePersonalWord() {
+    fun aRemoveMarkForgetsAndHides() {
         val (s, _) = field()
         val words = s.typist.personal!!
         repeat(3) { words.learn("<s>", "quocc") }
         assertTrue(words.count("<s>", "quocc") > 0)
-        s.onForget("quocc")
+        s.onRemove("quocc")
         assertEquals(0.0, words.count("<s>", "quocc"), 0.0)
+        s.onRemove("cảm ơn")
+        val hidden = com.xern.xrnkey.ime.HiddenWords(java.io.File(s.filesDir, com.xern.xrnkey.ime.OnDevice.HIDDEN))
+        assertEquals(listOf("quocc", "cảm ơn"), hidden.all)
         s.onDestroy()
     }
 
