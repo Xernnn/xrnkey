@@ -284,6 +284,8 @@ class Typist(
             return
         }
         val hadWord = composing.isNotEmpty()
+        // A number ends like a word: two spaces after "1" give "1. ", as Laban Key does.
+        val afterNumber = !hadWord && tail.isNotEmpty() && tail.last().isDigit()
         val r = s.key(c.code)
         apply(r) { commit(c.toString()) }
         // A word the core finished (typed with marks), or a key that is not a letter, ends the
@@ -292,7 +294,7 @@ class Typist(
             run.clear()
             plain.clear()
         }
-        spaceAfterWord = c == ' ' && hadWord
+        spaceAfterWord = c == ' ' && (hadWord || afterNumber)
     }
 
     /**

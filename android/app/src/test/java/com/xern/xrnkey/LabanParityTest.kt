@@ -94,6 +94,14 @@ class LabanParityTest {
         assertEquals("2tiếng ", typed("2tieengs", m))  // a digit before the word is text of its own
     }
 
+    /** Laban: two spaces after a number give ". ", as after a word; xrnkey used to keep "1  ". */
+    @Test
+    fun twoSpacesAfterANumberGiveAFullStop() = TestModels.test().use { m ->
+        assertEquals("1. ", typed("1 ", m))
+        assertEquals("Lúc 10. ", typed("Lusc 10 ", m))
+        assertEquals("1 2 ", typed("1 2", m))
+    }
+
     @Test
     fun onlyWhenNeededTonesTheWordsThatArentWordsAsTheyStand() {
         assumeTrue(TestModels.realAvailable)
