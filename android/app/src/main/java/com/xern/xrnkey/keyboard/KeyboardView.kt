@@ -46,6 +46,12 @@ class KeyboardView(context: Context) : View(context) {
         set(value) { field = value; invalidate() }
     var page: Page = Page.LETTERS
         set(value) { if (field != value) { field = value; relayout() } }
+    /** Where the symbols' way back leads: the letters, or the field's pad. */
+    var home: Page = Page.LETTERS
+        set(value) { if (field != value) { field = value; relayout() } }
+    /** What a number pad adds to its digits (a separator, a minus). */
+    var pad: Pad = Pad()
+        set(value) { if (field != value) { field = value; relayout() } }
     var shift: Shift = Shift.OFF
         set(value) { if (field != value) { field = value; relayout() } }
     var numberRow: Boolean = true
@@ -106,14 +112,16 @@ class KeyboardView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
 
     private fun relayout() {
-        val rows = Layouts.rows(page, shift, numberRow, holdDigits)
+        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home)
         val w = width.toFloat()
-        val rowH = (height - stripHeight) / rows.size
+        // A pad has no strip: its rows share the whole height.
+        val first = if (page.isPad) 0f else stripHeight
+        val rowH = (height - first) / rows.size
         val out = ArrayList<Hit>()
         rows.forEachIndexed { r, row ->
             val unit = w / 10f
             var x = row.inset * unit
-            val top = stripHeight + r * rowH
+            val top = first + r * rowH
             for (k in row.keys) {
                 out += Hit(k, RectF(x, top, x + k.width * unit, top + rowH))
                 x += k.width * unit
@@ -128,15 +136,18 @@ class KeyboardView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawColor(palette.background)
-        fill.color = palette.strip
-        canvas.drawRect(0f, 0f, width.toFloat(), stripHeight, fill)
-        when (val s = strip) {
-            Strip.Tools -> drawTools(canvas)
-            is Strip.Candidates -> drawCandidates(canvas, s)
-            is Strip.Search -> drawSearch(canvas, s)
+        if (!page.isPad) {
+            fill.color = palette.strip
+            canvas.drawRect(0f, 0f, width.toFloat(), stripHeight, fill)
+            when (val s = strip) {
+                Strip.Tools -> drawTools(canvas)
+                is Strip.Candidates -> drawCandidates(canvas, s)
+                is Strip.Search -> drawSearch(canvas, s)
+            }
         }
         for (h in hits) drawKey(canvas, h, h === pressed && !holdFired)
-        pressed?.let { if (keyPreview && it.key.kind == KeyKind.CHAR && !holdFired) drawPreview(canvas, it) }
+        // A pad's keys are big enough to need no popup (and a PIN's shouldn't show one).
+        pressed?.let { if (keyPreview && !page.isPad && it.key.kind == KeyKind.CHAR && !holdFired) drawPreview(canvas, it) }
         if (cursor != Cursor.OFF) drawCursorPad(canvas)
         if (variantsOf != null) drawVariants(canvas)
     }
@@ -191,7 +202,13 @@ class KeyboardView(context: Context) : View(context) {
     }
 
     /** Letters as large as Laban Key's (their "o" is 41 px tall at 2.5 px a dp, ours 30 sp). */
-    private fun textSize(k: Key): Float = when (k.kind) {
+    private fun textSize(k: Key): Float = when {
+        page.isPad && k.kind == KeyKind.CHAR -> if (k.label.length > 1) 24 * sp else 36 * sp
+        page.isPad -> 20 * sp
+        else -> keyTextSize(k)
+    }
+
+    private fun keyTextSize(k: Key): Float = when (k.kind) {
         KeyKind.CHAR -> if (k.label.length > 1) 19 * sp else 30 * sp
         KeyKind.COMMA, KeyKind.PERIOD -> 32 * sp
         else -> 18 * sp
@@ -225,12 +242,17 @@ class KeyboardView(context: Context) : View(context) {
         val r = h.rect
         val cx = r.centerX()
         val cy = r.centerY()
-        if (down && h.key.kind != KeyKind.ENTER && h.key.kind != KeyKind.SPACE) {
+        val k = h.key
+        if (page.isPad && k.kind != KeyKind.ENTER && k.kind != KeyKind.BLANK) {
+            // A pad's keys are tiles, as a dialer's are: big targets for a thumb.
+            fill.color = if (down) palette.preview else palette.space
+            canvas.drawRoundRect(r.insetBy(4 * dp, 4 * dp), 12 * dp, 12 * dp, fill)
+        } else if (down && k.kind != KeyKind.ENTER && k.kind != KeyKind.SPACE && k.kind != KeyKind.BLANK) {
             fill.color = palette.pressed
             canvas.drawRoundRect(r.insetBy(3 * dp, 4 * dp), 8 * dp, 8 * dp, fill)
         }
-        val k = h.key
         when (k.kind) {
+            KeyKind.BLANK -> Unit
             KeyKind.CHAR -> drawLabel(canvas, k.label, cx, cy, textSize(k), palette.glyph)
             KeyKind.SYMBOLS, KeyKind.MORE_SYMBOLS, KeyKind.LETTERS ->
                 drawLabel(canvas, k.label, cx, cy, textSize(k), palette.glyph)
@@ -239,7 +261,14 @@ class KeyboardView(context: Context) : View(context) {
                 drawGlobe(canvas, cx, r.top + 13 * dp, 6.5f * dp, palette.dim)
             }
             KeyKind.PERIOD -> drawLabel(canvas, ".", cx, cy, textSize(k), palette.glyph)
-            KeyKind.SPACE -> {
+            KeyKind.SPACE -> if (page.isPad) {
+                // On a pad's tile: the space mark.
+                stroke(palette.glyph, 2f * dp)
+                val s = 10 * dp
+                canvas.drawLine(cx - s, cy - s * 0.2f, cx - s, cy + s * 0.3f, line)
+                canvas.drawLine(cx - s, cy + s * 0.3f, cx + s, cy + s * 0.3f, line)
+                canvas.drawLine(cx + s, cy + s * 0.3f, cx + s, cy - s * 0.2f, line)
+            } else {
                 // A pill that reads as the space bar, with the language in a quiet colour.
                 fill.color = if (down) palette.preview else palette.space
                 val bar = spaceBar(r)
@@ -617,7 +646,7 @@ class KeyboardView(context: Context) : View(context) {
                 val i = e.actionIndex
                 val x = e.getX(i)
                 val y = e.getY(i)
-                if (y < stripHeight) {
+                if (!page.isPad && y < stripHeight) {
                     tapStrip(x)
                     return true
                 }
@@ -699,8 +728,8 @@ class KeyboardView(context: Context) : View(context) {
             KeyKind.COMMA, KeyKind.PERIOD -> l?.onText(k.text)
             KeyKind.SPACE -> {
                 l?.onText(" ")
-                // After a symbol and a space, the letters come back on their own.
-                if (page != Page.LETTERS) page = Page.LETTERS
+                // After a symbol and a space, the letters (or the field's pad) come back on their own.
+                if (page == Page.SYMBOLS || page == Page.MORE_SYMBOLS) page = home
             }
             KeyKind.SHIFT -> {
                 val now = SystemClock.uptimeMillis()
@@ -714,8 +743,9 @@ class KeyboardView(context: Context) : View(context) {
             KeyKind.BACKSPACE -> Unit
             KeyKind.SYMBOLS -> page = Page.SYMBOLS
             KeyKind.MORE_SYMBOLS -> page = Page.MORE_SYMBOLS
-            KeyKind.LETTERS -> page = Page.LETTERS
+            KeyKind.LETTERS -> page = home
             KeyKind.ENTER -> l?.onEnter()
+            KeyKind.BLANK -> Unit
         }
     }
 
