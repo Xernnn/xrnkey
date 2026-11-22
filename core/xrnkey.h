@@ -282,6 +282,19 @@ char*        xk_shortcuts_expand(const XKShortcuts* sc, const char* typed, int m
  * likeliest first, lowercase as the models hold them; returns how many. */
 int xk_predict(const XKModels* models, const char* const* context, int n, char** out, int max);
 
+/* What Space may change (core/plain.cpp), as Laban Key does it. xk_plain_word: `typed`
+ * (ASCII letters, no marks) is a word as it stands: English, or an attested syllable not far
+ * rarer than its best accented reading (log10 ratio at least `min_ratio`): "ong", "ban" yes,
+ * "khong", "duoc" no. xk_fix_wrong_word: the one-edit fix of a word right in neither
+ * language, when one candidate leads the rest by `min_margin` (log10), newly allocated, or
+ * NULL: "teh" -> "the"; "helo" (help, held, hello) -> NULL. */
+int   xk_plain_word(const XKModels* models, const char* typed, float min_ratio);
+char* xk_fix_wrong_word(const XKModels* models, const char* typed, float min_margin);
+
+/* The same as xk_predict, with each word's log10 probability in `logprobs`. */
+int xk_predict_scored(const XKModels* models, const char* const* context, int n, char** out, float* logprobs,
+                      int max);
+
 /* Bilingual switch */
 int  xk_is_english_word(const char* word);
 void xk_bilingual_set_enabled(XKState* state, int enabled);

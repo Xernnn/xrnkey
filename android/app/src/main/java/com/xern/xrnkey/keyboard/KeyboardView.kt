@@ -475,11 +475,16 @@ class KeyboardView(context: Context) : View(context) {
         listOf(s.left, s.centre, s.right).forEachIndexed { i, text ->
             if (text == null) return@forEachIndexed
             val r = slots[i]
-            val size = 18 * sp
+            // A long candidate (a phrase) shrinks to fit before it is cut short.
+            glyph.typeface = font
+            glyph.textSize = 18 * sp
+            val room = r.width() - 8 * dp
+            val wide = glyph.measureText(text)
+            val size = if (wide > room) maxOf(13 * sp, 18 * sp * room / wide) else 18 * sp
             glyph.textSize = size
-            val shown = ellipsize(text, r.width() - 8 * dp)
+            val shown = ellipsize(text, room)
             drawLabel(canvas, shown, r.centerX(), cy - if (i == 1 && s.more) 2 * dp else 0f, size,
-                if (i == 1) palette.glyph else palette.dim, if (i == 1) fontStrong else font)
+                if (i == 1) palette.glyph else palette.dim, if (i == 1 && s.bold) fontStrong else font)
         }
         if (s.more) {
             fill.color = palette.dim

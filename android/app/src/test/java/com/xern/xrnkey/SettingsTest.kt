@@ -144,7 +144,7 @@ class SettingsTest {
         TestModels.test().use { m ->
             com.xern.xrnkey.engine.TypingState().use { s ->
                 s.useModels(m.models)
-                val t = com.xern.xrnkey.ime.Typist(s, FakeEditor(), m.models).also { it.reset() }
+                val t = com.xern.xrnkey.ime.Typist(s, FakeEditor(), m.models).also { it.tonesOnSpace = com.xern.xrnkey.ime.Typist.TONES_ALWAYS; it.reset() }
                 val strip = com.xern.xrnkey.ime.StripMaker(m.models)
                 t.text("Tooi khoong ")
                 assertTrue(strip.make(t) is com.xern.xrnkey.keyboard.Strip.Candidates)
@@ -153,6 +153,34 @@ class SettingsTest {
                 t.text("ddi")
                 assertTrue(strip.make(t) is com.xern.xrnkey.keyboard.Strip.Candidates)  // a word in progress still is
             }
+        }
+    }
+
+    @Test
+    fun spaceAddsNoTonesUntilAsked() {
+        // A new setting: every install, new or updated from 0.3, starts with Laban's behaviour.
+        val p = app().getSharedPreferences("tones", Context.MODE_PRIVATE)
+        assertEquals(com.xern.xrnkey.ime.Typist.TONES_OFF, Options.load(p).tonesOnSpace)
+        assertFalse(Options.load(p).autoCap)
+        Options().copy(tonesOnSpace = 2, autoCap = true).save(p)
+        assertEquals(2, Options.load(p).tonesOnSpace)
+        assertTrue(Options.load(p).autoCap)
+        p.edit().putInt("tones_on_space", 7).commit()
+        assertEquals(2, Options.load(p).tonesOnSpace)
+    }
+
+    @Test
+    fun autoCapitaliseShiftsTheFirstLetterOfASentence() {
+        com.xern.xrnkey.engine.TypingState().use { s ->
+            val f = FakeEditor()
+            val t = com.xern.xrnkey.ime.Typist(s, f).also { it.reset() }
+            assertTrue(t.atSentenceStart())
+            t.text("xin")
+            assertFalse(t.atSentenceStart())
+            t.text(" chao. ")
+            assertTrue(t.atSentenceStart())
+            t.text("ok ")
+            assertFalse(t.atSentenceStart())
         }
     }
 }

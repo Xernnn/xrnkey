@@ -66,6 +66,11 @@ bool offerable(const std::string& w) {
 using xrnkey::Models;
 
 extern "C" int xk_predict(const XKModels* models, const char* const* context, int n, char** out, int max) {
+    return xk_predict_scored(models, context, n, out, nullptr, max);
+}
+
+extern "C" int xk_predict_scored(const XKModels* models, const char* const* context, int n, char** out,
+                                 float* logprobs, int max) {
     if (!models || !out || max <= 0) return 0;
     const auto& m = *reinterpret_cast<const Models*>(models);
     if (!m.vi && !m.en) return 0;
@@ -96,6 +101,7 @@ extern "C" int xk_predict(const XKModels* models, const char* const* context, in
     int k = 0;
     for (const auto& s : scored) {
         if (k >= max) break;
+        if (logprobs) logprobs[k] = static_cast<float>(s.first);
         out[k++] = strdup(s.second.c_str());
     }
     return k;

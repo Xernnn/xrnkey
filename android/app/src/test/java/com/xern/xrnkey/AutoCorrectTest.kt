@@ -20,7 +20,7 @@ class AutoCorrectTest {
             TypingState().use { s ->
                 s.useModels(m.models)
                 val f = FakeEditor(field)
-                val t = Typist(s, f, m.models).also { it.reset() }
+                val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
                 body(t, f, m.models)
             }
         }

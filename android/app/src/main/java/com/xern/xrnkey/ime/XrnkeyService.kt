@@ -255,6 +255,8 @@ class XrnkeyService :
             strip.centre?.let { if (typist.shown.isNotEmpty()) typist.pick(it) }
             typist.insert(pick.text)
             memory.addRecent(pick.text)
+        } else if (pick.phrase != null) {
+            typist.pickPhrase(pick.phrase)
         } else {
             typist.pick(pick.text)
         }
@@ -311,7 +313,16 @@ class XrnkeyService :
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private val stripTask = Runnable { keyboard?.strip = strip.make(typist) }
+    private val stripTask = Runnable {
+        keyboard?.strip = strip.make(typist)
+        autoCapitalise()
+    }
+
+    /** With auto-capitalise on: Shift for the first letter of a sentence. */
+    private fun autoCapitalise() {
+        val k = keyboard ?: return
+        if (options.autoCap && k.page == Page.LETTERS && k.shift == Shift.OFF && typist.atSentenceStart()) k.shift = Shift.ONCE
+    }
 
     /**
      * The strip follows the text, after it: the key's text goes to the field first, and when
@@ -488,7 +499,10 @@ class XrnkeyService :
         state?.setOption(TypingState.OPT_AUTO_RESTORE, o.keepForeign)
         state?.setOption(TypingState.OPT_FREE_MARKING, o.freeMarking)
         state?.setOption(TypingState.OPT_W_SHORTCUT, o.wShortcut)
-        models?.correction = o.correction
+        // The typo channel inside restoration only works where Space restores every word.
+        models?.correction = if (o.tonesOnSpace == Typist.TONES_ALWAYS) o.correction else Models.CORRECT_OFF
+        typist.tonesOnSpace = o.tonesOnSpace
+        typist.correctWrong = o.correction
         typist.doubleSpace = o.doubleSpace
         strip.suggestions = o.suggestions
         strip.emojiSuggestions = o.emojiSuggestions

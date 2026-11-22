@@ -37,7 +37,7 @@ class EngineBenchmarkTest {
         val times = ArrayList<Long>()
         TypingState().use { state ->
             state.useModels(models)
-            val typist = Typist(state, FakeEditor(), models).also { it.reset() }
+            val typist = Typist(state, FakeEditor(), models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
             // As on the phone: emoji in the strip, next words after a Space.
             val strip = StripMaker(models, emoji)
             repeat(rounds) {

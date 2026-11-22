@@ -936,6 +936,13 @@ Steps 1 to 10 are built, with these differences from the text above:
 - **Composing underline:** off by default (the owner's setting), by passing the composing text as
   a span-free `Spannable`; editors that draw their own (Chrome, WebView) may still underline it.
 
+- **Space, since 0.4.0**, works as Laban Key does: it keeps a word typed without marks as it was
+  typed (and fixes only a word wrong in both languages, "teh" -> "the"); the accented reading is
+  the strip's middle slot, bold only when Space will commit it. "Add tones on space" (Off,
+  When needed, Always) brings back restoration: When needed only for words that aren't words as
+  they stand ("khong", never "ong"); Always as before, with look-back. The rules in
+  "Auto-correct" below describe Always.
+
 Step 11, the pass on the phone, has not started: nothing has run on a real phone yet.
 
 ## Risks

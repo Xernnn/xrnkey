@@ -44,6 +44,22 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
         return texts.mapIndexed { i, t -> Candidate(t.text(), types[i]) }
     }
 
+    /**
+     * `typed` (letters without marks) is a word as it stands, so Space keeps it: English, or a
+     * Vietnamese syllable not far rarer than its best reading ("ong", "ban"; not "khong").
+     */
+    fun plainWord(typed: String): Boolean = Native.plainWord(handle, typed.utf8(), PLAIN_RATIO)
+
+    /** The confident one-edit fix of a word wrong in both languages ("teh" -> "the"), or null. */
+    fun fixWrongWord(typed: String, strong: Boolean = false): String? =
+        Native.fixWrongWord(handle, typed.utf8(), if (strong) 0.5f else 1.0f)?.text()
+
+    /** The likeliest next words with their log10 probabilities, likeliest first. */
+    fun predictScored(context: List<String>, max: Int = 3): List<Pair<String, Float>> {
+        val scores = FloatArray(max)
+        return Native.predictScored(handle, context.utf8(), scores).mapIndexed { i, w -> w.text() to scores[i] }
+    }
+
     /** The words likeliest to come next after `context` (as for [restoreRun]), likeliest first. */
     fun predict(context: List<String>, max: Int = 3): List<String> =
         Native.predict(handle, context.utf8(), max).map { it.text() }
@@ -58,6 +74,9 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     override fun close() = Native.modelsFree(handle)
 
     companion object {
+        /** log10 of how much rarer than its best reading a plain form may be and still be a word. */
+        const val PLAIN_RATIO = -1.6f
+
         const val CORRECT_OFF = 0
         const val CORRECT_FLEXIBLE = 1
         const val CORRECT_STRONG = 2
