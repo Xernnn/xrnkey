@@ -105,21 +105,64 @@ class StripMakerTest {
         }
     }
 
+    /**
+     * A word finished with its marks: Space commits it as it stands, so the strip offers what
+     * comes after it, as Laban Key does ("banj" -> bạn gái | bạn bè | bạn ấy), not the word
+     * again. It used to show "được" in the middle, in bold.
+     */
     @Test
-    fun aWordTypedWithMarksShowsAsItIs() {
+    fun aFinishedWordOffersWhatComesAfterItNotItself() {
         TestModels.test().use { m ->
             TypingState().use { s ->
                 val f = FakeEditor()
                 val t = Typist(s, f).also { it.reset() }
                 t.text("dduowcj")
-                val shown = StripMaker(m.models).make(t) as Strip.Candidates
-                assertEquals("được", shown.centre)
-                assertEquals(null, shown.left)
-                assertTrue(shown.bold)
-                // On the right, the word with what likely follows it ("được rồi"), if anything.
-                assertTrue(shown.right == null || shown.right!!.startsWith("được "))
+                val maker = StripMaker(m.models)
+                val shown = maker.make(t) as Strip.Candidates
+                // The test text has "được rồi", "được không", "được việc" ...
+                assertTrue(shown.slots().toString(), shown.slots().none { it == "được" })
+                assertTrue(shown.slots().toString(), shown.centre!!.startsWith("được "))
+                assertFalse(shown.bold)
+                assertEquals("được", maker.centre)  // what an emoji pick puts before the emoji
+                // A continuation the owner hid with the remove mark is offered nowhere.
+                val gone = shown.centre!!
+                maker.hidden = { it == gone }
+                val without = maker.make(t) as Strip.Candidates
+                assertFalse(without.toString(), gone in without.slots() || gone in without.extra)
+                maker.hidden = { false }
+                val pick = maker.pick(1)!!.text
+                t.pick(pick)
+                assertEquals("$pick ", f.text)
             }
         }
+    }
+
+    @Test
+    fun aFinishedWordOffersWhatFollowsItAsLabanDoes() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            // Laban on the owner's phone: banj -> bạn gái | bạn bè | bạn ấy, khoong -> không có |
+            // không thể | không biết, mootj -> một mình | một số | một cái.
+            for ((keys, word) in listOf("banj" to "bạn", "khoong" to "không", "mootj" to "một", "nguowif" to "người", "dduowcj" to "được")) {
+                val shown = strip(m, keys).shown
+                val why = "$keys: ${shown.slots()}"
+                assertTrue(why, shown.slots().all { it != null && it.startsWith("$word ") })
+                typedSpace(m, keys, "$word ")
+            }
+            // A tone typed keeps the longer words to that tone: "gif" (gì) is never "giá" or "gia",
+            // "nos" (nó) never "now".
+            assertTrue(strip(m, "gif").shown.slots().none { it == "giá" || it == "gia" })
+            assertTrue(strip(m, "nos").shown.slots().none { it == "now" || it == "not" })
+            // A word on its way to a longer one still offers it: "khoon" (khôn) has "không".
+            assertTrue(strip(m, "khoon").shown.slots().toString(), "không" in strip(m, "khoon").shown.slots())
+        }
+    }
+
+    /** `keys` and Space end as `want`: the strip changes nothing Space does. */
+    private fun typedSpace(m: TestModels.Opened, keys: String, want: String) {
+        val typed = strip(m, keys)
+        typed.typist.text(" ")
+        assertEquals(want, typed.field.text)
     }
 
     @Test
@@ -133,12 +176,13 @@ class StripMakerTest {
                 val strip = StripMaker(m.models, index)
                 t.text("sinh nhaatj")
                 val shown = strip.make(t) as Strip.Candidates
+                assertTrue(shown.slots().toString(), shown.centre!!.startsWith("nhật"))  // or what follows it
                 assertEquals("🎂", shown.right)  // "chúc mừng sinh nhật"
                 val pick = strip.pick(2)!!
                 assertTrue(pick.emoji)
                 strip.emojiSuggestions = false
                 val plain = strip.make(t) as Strip.Candidates
-                assertEquals("nhật", plain.centre)
+                assertTrue(plain.slots().toString(), plain.centre!!.startsWith("nhật"))
                 assertTrue(plain.right != shown.right)
             }
         }

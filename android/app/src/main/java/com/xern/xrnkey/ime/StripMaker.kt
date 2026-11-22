@@ -31,9 +31,10 @@ import kotlin.math.pow
  * Letters that are a common Vietnamese syllable keep the middle Vietnamese, as Laban does: "cam"
  * is "cảm ơn" there, and English completions go to the sides. When Space commits something other
  * than what the field shows ("teh" -> "the"), that is in the middle. The middle is in bold only
- * when Space commits it. A word typed with Telex marks shows as it is. A tap takes a guess. When
- * the words before were typed without marks too, the left offers the whole run accented ("tôi
- * không biết"). With no word, the next words, or the tool row.
+ * when Space commits it. A word finished with its Telex marks gives way to what may follow it
+ * ("banj": bạn bè | bạn gái | bạn ấy); one on its way to a word shows as it is. A tap takes a
+ * guess. When the words before were typed without marks too, the left offers the whole run
+ * accented ("tôi không biết"). With no word, the next words, or the tool row.
  */
 class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = null) {
     /**
@@ -99,6 +100,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         }
         val readings = if (m != null) readings(t, m, ctx, run, marked) else emptyList()
         val guesses = if (m != null) guesses(t, m, ctx, readings, marked, commits) else emptyList()
+        // A word finished with its marks, which Space commits as it stands ("banj": bạn): the
+        // strip offers what comes after it, as Laban Key does, not the word again.
+        if (m != null && commits == null) finished(t, word, marked)?.let { return continued(t, m, ctx, word, it, guesses) }
 
         // The middle: what Space commits, when that is not what the field shows; for a word
         // typed without marks, as the letters read (bareMiddle); a marked word as it is.
@@ -133,6 +137,43 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         return Strip.Candidates(
             offered[0]?.text, offered[1]?.text, offered[2]?.text, more = rest.isNotEmpty(), bold = bold && !centreEmoji,
             extra = rest.map { it.text },
+        )
+    }
+
+    /**
+     * The score of the word in progress when it is a word finished with its marks, which Space
+     * commits as it stands: a word the models know ("bạn", "không"), not letters on the way to
+     * one ("ngươ"), nor a word typed without marks (its readings wait in the strip).
+     */
+    private fun finished(t: Typist, word: String, marked: List<Candidate>?): Float? {
+        if (t.restorable() || word.all { it.code < 0x80 }) return null
+        return marked?.firstOrNull { it.text == word }?.score?.takeIf { it >= FINISHED }
+    }
+
+    /**
+     * The strip for a word finished with its marks: what may follow it, as phrases that start
+     * with it ("bạn" -> bạn bè, bạn gái, bạn ấy), its other tones and the longer words it may
+     * still become ("khôn" -> không), ranked by how likely the whole text is in context, the best
+     * in the middle. The word itself only when there is nothing else: Space commits it anyway.
+     */
+    private fun continued(t: Typist, m: Models, ctx: List<String>, word: String, score: Float, guesses: List<Guess>): Strip {
+        val follow = m.predictScored(ctx + word.lowercase(), CONTINUATIONS)
+            .filter { (w, p) -> p >= FOLLOWS && w.first().isLetter() && !hidden("$word $w") }
+            .map { (w, p) -> Guess("$word $w", score + p, Kind.PAIR, word, false) }
+        val pool = (follow + guesses).filter { it.text != word }
+            .sortedByDescending { it.score }.distinctBy { it.text }.toMutableList()
+        centre = word
+        val middle = pool.removeFirstOrNull()?.text ?: word
+        val left = pool.removeFirstOrNull()?.text
+        // The right: an emoji when the word is one of their keywords, else the next best.
+        val picks = emojiFor(t, null)
+        val right = picks.firstOrNull() ?: pool.removeFirstOrNull()?.let { Pick(it.text) }
+        // Nothing to offer but the word itself: the emoji fill the strip from the right.
+        offered = if (middle == word && picks.size > 1) fromTheRight(picks) else listOf(left?.let { Pick(it) }, Pick(middle), right)
+        val centreEmoji = offered[1]?.emoji == true
+        return Strip.Candidates(
+            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word && !centreEmoji,
+            extra = pool.map { it.text },
         )
     }
 
@@ -232,7 +273,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /**
      * Longer words that start with what was typed: from the letters, when typed without marks;
      * for a word Telex marked, from its keys as English ("meet", shown "mêt": "meeting") and
-     * from its letters with the marks it has ("ngươ": "người", "ngược", never "nguồn").
+     * from its letters with the marks it has ("ngươ": "người", "ngược", never "nguồn"), and with
+     * its tone once it has one ("gì": "giờ", never "giá"; "nó": never "now").
      */
     private fun completions(t: Typist, m: Models, ctx: List<String>): List<Pair<String, Float>> {
         if (t.restorable()) return m.complete(ctx, t.keys(), COMPLETIONS)
@@ -243,7 +285,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val word = t.shown
         bare(word)?.let { b ->
             val marked = untoned(word)
-            out += m.complete(ctx, b, COMPLETIONS * 4).filter { (w) -> untoned(w).startsWith(marked) }
+            val tone = toneOf(word)
+            out += m.complete(ctx, b, COMPLETIONS * 4).filter { (w) -> untoned(w).startsWith(marked) && (tone == null || toneOf(w) == tone) }
         }
         return out.sortedByDescending { it.second }.distinctBy { it.first }.take(COMPLETIONS)
     }
@@ -325,6 +368,13 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         /** log10: how likely the next word must be to go with a reading ("cảm ơn"). */
         const val COMPLETION = -1.0f
 
+        /** log10: how likely a word must be to count as finished ("khôn" is; "ngươ" is no word). */
+        private const val FINISHED = -6.0f
+
+        /** Words asked for after a finished word, and how likely each must be to follow it. */
+        private const val CONTINUATIONS = 6
+        private const val FOLLOWS = -3.0f
+
         /** Readings looked at, the best of them that get a next word, completions asked for. */
         private const val READINGS = 6
 
@@ -360,6 +410,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
                 .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
             return b.takeIf { it.isNotEmpty() && it.all { c -> c in 'a'..'z' || c in 'A'..'Z' } }
         }
+
+        /** The tone mark of `s`, decomposed, or null for none ("gì": the grave). */
+        private fun toneOf(s: String): Char? = Normalizer.normalize(s, Normalizer.Form.NFD).firstOrNull { it in TONES }
 
         private fun untoned(s: String): String = Normalizer.normalize(
             Normalizer.normalize(s, Normalizer.Form.NFD).filter { it !in TONES },
