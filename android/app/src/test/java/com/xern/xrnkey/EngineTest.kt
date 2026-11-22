@@ -112,6 +112,7 @@ class EngineTest {
                 Models(vi, en).use { m ->
                     assertEquals("the", m.fixWrongWord("teh"))
                     assertEquals("không", m.restoreWord(listOf("<s>", "tôi"), "khong").first().text)
+                    assertTrue(m.complete(listOf("<s>"), "duo").any { it.first == "được" })
                 }
                 vi!!.close()
                 en!!.close()

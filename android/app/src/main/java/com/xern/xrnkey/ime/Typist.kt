@@ -162,10 +162,17 @@ class Typist(
     fun expansion(): String? =
         if (composing.isEmpty() || raw || !autoCorrect) null else shortcuts?.expand(keys())
 
-    /** What Space would commit for the word in progress, when it isn't what was typed. */
+    /**
+     * What Space would commit for the word in progress, when it isn't what the field shows: an
+     * abbreviation's expansion, a restored or fixed word, or what the core makes of a word typed
+     * with marks when it ends ("meet" shows "mêt" and ends "meet").
+     */
     fun preview(): String? {
         expansion()?.let { return it }
-        if (!restorable()) return null
+        if (!restorable()) {
+            if (raw || composing.isEmpty()) return null
+            return state?.previewFinal()?.takeIf { it.isNotEmpty() && it != composing }
+        }
         val typed = keys()
         return when {
             tonesOnSpace == TONES_ALWAYS -> reading()
