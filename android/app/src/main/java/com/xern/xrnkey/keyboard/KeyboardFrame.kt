@@ -2,6 +2,7 @@ package com.xern.xrnkey.keyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.View
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -20,13 +21,54 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
 
     init {
         setBackgroundColor(palette.background)
-        ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.mandatorySystemGestures(),
-            )
-            v.setPadding(bars.left, 0, bars.right, bars.bottom)
+        // Every dispatch, the first and every change after it: on the phone the first show
+        // could come before the window's insets, and the band has to follow when they arrive.
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            setBand(insets)
             WindowInsetsCompat.CONSUMED
         }
+    }
+
+    /**
+     * The keyboard's window puts the input view inside a layout of its own whose top view
+     * fits the system windows: it took the insets and padded itself, so the keyboard got none,
+     * and the bottom row could sit on the gesture bar (0.3.1). The band is the keyboard's, filled
+     * in its colour: those views stop fitting, and the insets come here instead. Called when the
+     * frame joins the window and when a field starts.
+     */
+    fun claimInsets() {
+        var p = parent
+        var changed = false
+        while (p is View) {
+            if (p.fitsSystemWindows) {
+                p.fitsSystemWindows = false
+                p.setPadding(p.paddingLeft, p.paddingTop, p.paddingRight, 0)
+                changed = true
+            }
+            p = p.parent
+        }
+        // What the window has now, in case it came before this frame could take it.
+        ViewCompat.getRootWindowInsets(this)?.let { setBand(it) }
+        if (changed) ViewCompat.requestApplyInsets(this)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        claimInsets()
+    }
+
+    private fun setBand(insets: WindowInsetsCompat) {
+        val bars = insets.getInsets(BAND)
+        if (bars.left != paddingLeft || bars.right != paddingRight || bars.bottom != paddingBottom || paddingTop != 0) {
+            setPadding(bars.left, 0, bars.right, bars.bottom)
+            requestLayout()
+        }
+    }
+
+    private companion object {
+        /** The bar (the hide-keyboard arrow, the pill) and the gesture area: the larger of them. */
+        val BAND = WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.mandatorySystemGestures() or
+            WindowInsetsCompat.Type.tappableElement()
     }
 
     /**

@@ -173,6 +173,7 @@ class XrnkeyService :
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applyOptions(Options.load(prefs()))
+        inputFrame?.claimInsets()
         // Numbers, PINs, phone numbers and dates get a pad; what is typed there goes in as it is.
         val home = Layouts.pageFor(info.inputType)
         typist.raw = isPassword(info) || home.isPad
