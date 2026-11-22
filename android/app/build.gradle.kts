@@ -175,7 +175,9 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             all { test ->
-                test.dependsOn(buildHost)
+                // The engine and the test models are inputs: the tests run again when the core
+                // changes, not only when the Kotlin does.
+                test.inputs.files(buildHost).withPropertyName("hostEngine")
                 test.systemProperty("java.library.path", hostDir.resolve("jni").path)
                 test.systemProperty("xrnkey.testModels", hostDir.resolve("lm").path)
                 test.systemProperty("xrnkey.realModels", modelDir.path)
