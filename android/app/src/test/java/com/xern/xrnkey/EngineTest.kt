@@ -78,7 +78,7 @@ class EngineTest {
         val packed = File.createTempFile("packed", ".bin")
         packed.writeBytes(ByteArray(5000) + model + ByteArray(300))
         RandomAccessFile(packed, "r").use { f ->
-            val fd = fdOf(f)
+            val fd = TestModels.fdOf(f)
             val vi = Model.open(fd, 5000, model.size.toLong())
             assertNotNull(vi)
             Models(vi, null).use { m ->
@@ -90,10 +90,33 @@ class EngineTest {
         assertNull(Model.open("/nonexistent/vi.xklm"))
     }
 
-    /** The descriptor number behind a RandomAccessFile (what AssetFileDescriptor gives on a phone). */
-    private fun fdOf(f: RandomAccessFile): Int {
-        val field = java.io.FileDescriptor::class.java.getDeclaredField("fd")
-        field.isAccessible = true
-        return field.getInt(f.fd)
+    /**
+     * The phone opens each model by descriptor at the offset AGP gave it in the APK, aligned to
+     * 4 bytes only. The reader used to refuse a model that didn't start on a multiple of 8, so
+     * the phone's English model (at 4 mod 8) never loaded and "teh" stayed "teh", while every
+     * test opened the models by path.
+     */
+    @Test
+    fun theModelsOpenWhereAnApkPutsThem() {
+        TestModels.packed().use { p ->
+            RandomAccessFile(p.file, "r").use { f ->
+                val fd = TestModels.fdOf(f)
+                val (viAt, viLength) = p.places.getValue("vi.xklm")
+                val (enAt, enLength) = p.places.getValue("en.xklm")
+                assertEquals(4L, viAt % 8)
+                assertEquals(4L, enAt % 8)
+                val vi = Model.open(fd, viAt, viLength)
+                val en = Model.open(fd, enAt, enLength)
+                assertNotNull(vi)
+                assertNotNull(en)
+                Models(vi, en).use { m ->
+                    assertEquals("the", m.fixWrongWord("teh"))
+                    assertEquals("không", m.restoreWord(listOf("<s>", "tôi"), "khong").first().text)
+                    assertTrue(m.complete(listOf("<s>"), "duo").any { it.first == "được" })
+                }
+                vi!!.close()
+                en!!.close()
+            }
+        }
     }
 }

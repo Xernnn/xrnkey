@@ -12,6 +12,7 @@ internal object Native {
     external fun lmOpenPath(path: ByteArray): Long
     external fun lmOpenFd(fd: Int, offset: Long, length: Long): Long
     external fun lmFree(lm: Long)
+    external fun lmVocabSize(lm: Long): Int
 
     external fun modelsNew(vi: Long, en: Long): Long
     external fun modelsFree(models: Long)
@@ -27,10 +28,11 @@ internal object Native {
     external fun stateKey(state: Long, keysym: Int, out: IntArray): Array<ByteArray>
     external fun stateFlush(state: Long, out: IntArray): Array<ByteArray>
     external fun stateKeys(state: Long): ByteArray
+    external fun statePreviewFinal(state: Long): ByteArray
     external fun stateSetContext(state: Long, words: Array<ByteArray>)
 
     external fun restoreRun(models: Long, context: Array<ByteArray>, typed: Array<ByteArray>, next: ByteArray?): Array<ByteArray>?
-    external fun restoreWord(models: Long, context: Array<ByteArray>, typed: ByteArray, max: Int, types: IntArray): Array<ByteArray>
+    external fun restoreWord(models: Long, context: Array<ByteArray>, typed: ByteArray, max: Int, types: IntArray, scores: FloatArray): Array<ByteArray>
 
     external fun emojiLoad(text: ByteArray): Long
     external fun emojiFree(db: Long)
@@ -62,4 +64,5 @@ internal object Native {
     external fun plainWord(models: Long, typed: ByteArray, ratio: Float): Boolean
     external fun fixWrongWord(models: Long, typed: ByteArray, margin: Float): ByteArray?
     external fun predictScored(models: Long, context: Array<ByteArray>, scores: FloatArray): Array<ByteArray>
+    external fun complete(models: Long, context: Array<ByteArray>, typed: ByteArray, scores: FloatArray): Array<ByteArray>
 }

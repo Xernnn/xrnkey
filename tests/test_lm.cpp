@@ -112,6 +112,52 @@ TEST_CASE("a model inside a larger file opens at its offset", "[lm]") {
     xk_lm_free(whole);
 }
 
+// AGP aligns an uncompressed asset to 4 bytes only: the phone's English model started at an
+// offset of 4 mod 8 in the APK, and was refused for it, so "teh" stayed "teh" on the phone. A
+// model must open, and read the same, wherever in a file it starts.
+TEST_CASE("a model opens at an offset that isn't a multiple of 8", "[lm]") {
+    for (const std::string& path : {kVi, std::string(XRNKEY_TEST_LM_DIR) + "/en.xklm"}) {
+        std::vector<char> model = slurp(path);
+        REQUIRE(model.size() > 1000);
+        XKLm* whole = xk_lm_open(path.c_str());
+        REQUIRE(whole != nullptr);
+        for (int64_t offset : {5004, 4100, 5001, 5002, 5003}) {
+            INFO(path << " at " << offset);
+            std::vector<char> packed(static_cast<size_t>(offset) + model.size() + 300, 'x');
+            std::memcpy(packed.data() + offset, model.data(), model.size());
+            std::string file = spit("packed-" + std::to_string(offset) + ".bin", packed);
+            int fd = open(file.c_str(), O_RDONLY);
+            REQUIRE(fd >= 0);
+            XKLm* inner = xk_lm_open_fd(fd, offset, static_cast<int64_t>(model.size()));
+            close(fd);
+            REQUIRE(inner != nullptr);
+            REQUIRE(xk_lm_vocab_size(inner) == xk_lm_vocab_size(whole));
+            for (int id = 0; id < xk_lm_vocab_size(whole); ++id) {
+                const char* w = xk_lm_word(whole, id);
+                REQUIRE(std::string(xk_lm_word(inner, id)) == w);
+                REQUIRE(xk_lm_id(inner, w) == id);
+                REQUIRE(lp(inner, {"<s>"}, w) == lp(whole, {"<s>"}, w));
+            }
+            CHECK(lp(inner, {"tôi", "không"}, "thể") == lp(whole, {"tôi", "không"}, "thể"));
+            CHECK(lp(inner, {"i", "want"}, "to") == lp(whole, {"i", "want"}, "to"));
+            // The shape index, which accent restoration reads.
+            XKModels* a = xk_models_new(inner, nullptr);
+            XKModels* b = xk_models_new(whole, nullptr);
+            const char* ctx[] = {"<s>", "tôi"};
+            for (const char* shape : {"khong", "duoc", "biet", "ban"}) {
+                XKCandidate ca[16], cb[16];
+                const int na = xk_restore_word(a, ctx, 2, shape, ca, 16);
+                REQUIRE(na == xk_restore_word(b, ctx, 2, shape, cb, 16));
+                for (int i = 0; i < na; ++i) CHECK(std::string(ca[i].text) == cb[i].text);
+            }
+            xk_models_free(a);
+            xk_models_free(b);
+            xk_lm_free(inner);
+        }
+        xk_lm_free(whole);
+    }
+}
+
 TEST_CASE("files that are not whole models are refused", "[lm]") {
     std::vector<char> model = slurp(kVi);
     REQUIRE(model.size() > 1000);
@@ -185,4 +231,55 @@ TEST_CASE("a model in the first format is refused", "[lm]") {
     REQUIRE(model.size() > 1000);
     model[7] = '1';  // "XKLM0001": no shape index, other offsets
     CHECK(xk_lm_open(spit("v1.xklm", model).c_str()) == nullptr);
+}
+
+// Completions (xk_complete) read the words and shapes that start with what was typed as one
+// range of the sorted vocabulary and of the sorted shape index. Each range must hold exactly
+// the entries that start with the prefix, for every prefix the model's own words give.
+TEST_CASE("a prefix's range holds exactly the words and shapes that start with it", "[lm]") {
+    for (const std::string& path : {kVi, std::string(XRNKEY_TEST_LM_DIR) + "/en.xklm"}) {
+        XKLm* lm = xk_lm_open(path.c_str());
+        REQUIRE(lm != nullptr);
+        const auto& m = xrnkey::lm_of(lm);
+        const uint32_t vocab = m.hdr->vocab;
+        std::vector<std::string> prefixes = {"", "zzzz", "\x7f"};
+        for (uint32_t id = 3; id < vocab; ++id) {
+            const std::string w = xrnkey::lm_word(m, id);
+            for (size_t n = 1; n <= std::min<size_t>(w.size(), 3); ++n) prefixes.push_back(w.substr(0, n));
+        }
+        std::sort(prefixes.begin(), prefixes.end());
+        prefixes.erase(std::unique(prefixes.begin(), prefixes.end()), prefixes.end());
+        for (const std::string& p : prefixes) {
+            INFO(path << " prefix '" << p << "'");
+            uint32_t lo, hi;
+            xrnkey::lm_prefix_range(m, p, &lo, &hi);
+            REQUIRE(lo <= hi);
+            REQUIRE(hi <= vocab);
+            uint32_t expected = 0;
+            for (uint32_t id = 0; id < vocab; ++id)
+                if (std::string_view(xrnkey::lm_word(m, id)).substr(0, p.size()) == p) ++expected;
+            REQUIRE(hi - lo == expected);
+            for (uint32_t pos = lo; pos < hi; ++pos)
+                REQUIRE(std::string_view(xrnkey::lm_word(m, xrnkey::lm_sorted_id(m, pos))).substr(0, p.size()) == p);
+        }
+        uint64_t slo, shi;
+        if (m.hdr->shape_count == 0) {
+            CHECK(!xrnkey::lm_shape_prefix_range(m, "kh", &slo, &shi));
+        } else {
+            for (const std::string p : {"kh", "duo", "d", "khong", "q", "zzz"}) {
+                INFO("shape prefix '" << p << "'");
+                REQUIRE(xrnkey::lm_shape_prefix_range(m, p, &slo, &shi));
+                uint64_t expected = 0;
+                for (uint64_t i = 0; i < m.hdr->shape_count; ++i)
+                    if (std::string_view(xrnkey::lm_shape_at(m, i)).substr(0, p.size()) == p) ++expected;
+                REQUIRE(shi - slo == expected);
+                for (uint64_t i = slo; i < shi; ++i)
+                    REQUIRE(std::string_view(xrnkey::lm_shape_at(m, i)).substr(0, p.size()) == p);
+            }
+            REQUIRE(xrnkey::lm_shape_prefix_range(m, "duo", &slo, &shi));
+            REQUIRE(shi > slo);
+            CHECK(xrnkey::lm_shape_at(m, m.hdr->shape_count) == nullptr);
+        }
+        xk_lm_free(lm);
+    }
 }

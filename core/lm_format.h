@@ -22,7 +22,9 @@
  *
  * Everything is little-endian and every section starts 8-byte aligned.
  * Offsets are from the start of the model (which need not be the start of
- * the file: a model can live inside an APK). */
+ * the file: a model can live inside an APK). The model itself may start at
+ * any offset in its file: AGP aligns an APK's stored assets to 4 bytes only,
+ * so the reader copies the header out and reads the arrays by copy. */
 #ifndef XRNKEY_LM_FORMAT_H
 #define XRNKEY_LM_FORMAT_H
 

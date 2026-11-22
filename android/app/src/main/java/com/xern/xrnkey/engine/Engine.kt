@@ -11,6 +11,9 @@ private fun List<String>.utf8() = Array(size) { this[it].utf8() }
 
 /** A language model (.xklm), memory-mapped. */
 class Model private constructor(internal val handle: Long) : AutoCloseable {
+    /** How many words it knows. */
+    val vocabulary: Int get() = Native.lmVocabSize(handle)
+
     override fun close() = Native.lmFree(handle)
 
     companion object {
@@ -40,8 +43,19 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     /** What one word typed without marks may stand for, best first. */
     fun restoreWord(context: List<String>, typed: String, max: Int = 8): List<Candidate> {
         val types = IntArray(max)
-        val texts = Native.restoreWord(handle, context.utf8(), typed.utf8(), max, types)
-        return texts.mapIndexed { i, t -> Candidate(t.text(), types[i]) }
+        val scores = FloatArray(max)
+        val texts = Native.restoreWord(handle, context.utf8(), typed.utf8(), max, types, scores)
+        return texts.mapIndexed { i, t -> Candidate(t.text(), types[i], scores[i]) }
+    }
+
+    /**
+     * The words longer than `typed` (letters without marks) that start with it, with their log10
+     * probabilities in context, best first: English words ("hel": "hello", "help") and
+     * Vietnamese syllables, accented ("xin": "xinh").
+     */
+    fun complete(context: List<String>, typed: String, max: Int = 3): List<Pair<String, Float>> {
+        val scores = FloatArray(max)
+        return Native.complete(handle, context.utf8(), typed.utf8(), scores).mapIndexed { i, w -> w.text() to scores[i] }
     }
 
     /**
@@ -83,8 +97,8 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     }
 }
 
-/** XKCandidate.type: restored, as typed, or corrected. */
-data class Candidate(val text: String, val type: Int) {
+/** XKCandidate.type: restored, as typed, or corrected; the score is log10 P(text | context). */
+data class Candidate(val text: String, val type: Int, val score: Float = 0f) {
     companion object {
         const val CORRECTED = 1
         const val RESTORED = 3
@@ -112,6 +126,9 @@ class TypingState(val mode: Int = TELEX) : AutoCloseable {
 
     /** The keys of the word in progress, as typed. */
     fun keys(): String = Native.stateKeys(handle).text()
+
+    /** What ending the word in progress would commit (the core's auto-restore applied). */
+    fun previewFinal(): String = Native.statePreviewFinal(handle).text()
 
     fun setContext(words: List<String>) = Native.stateSetContext(handle, words.utf8())
 

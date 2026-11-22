@@ -1,17 +1,36 @@
 package com.xern.xrnkey.ime
 
+import com.xern.xrnkey.engine.Candidate
 import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.keyboard.Strip
+import java.text.Normalizer
+import kotlin.math.log10
+import kotlin.math.min
+import kotlin.math.pow
 
 /**
- * What the strip shows for the word in progress, as Laban Key lays it out: an alternative on
- * the left, the best accented reading in the middle, and on the right the word with the word
- * likeliest to follow it ("ông bà", "không có") or an emoji that goes with it. The middle is in
- * bold only when Space will commit it; by default Space keeps what was typed, and a tap takes
- * the reading. When the words before were typed without marks too, the left offers the whole
- * run accented ("tôi không biết"). A word typed with Telex marks shows as it is. With no word,
- * the next words, or the tool row.
+ * What the strip shows for the word in progress, as Laban Key lays it out: the best guess in
+ * the middle, the best other reading on the left, and on the right the middle with the word
+ * likely to follow it, an emoji that goes with the word, or the next best guess. Laban, measured
+ * on the owner's phone: "hel" help | hello | held, "xin" xịn | xin lỗi | xinh, "cam" cám ơn |
+ * cảm ơn | 🍊, "meet" (which Telex shows as "mêt") mệt mỏi | mệt | mệt rồi.
+ *
+ * The guesses, each scored log10 P(text | the words before) by the models:
+ * - the readings of the word: its accented forms when it was typed without marks ("cam": cảm,
+ *   cám), or the tones it may take when typed with marks but none ("mêt": mệt);
+ * - a reading with the word likely to follow it ("cảm ơn"). The reading alone then scores what
+ *   is left of it, "cảm" followed by anything but "ơn": a near-certain pair takes the reading's
+ *   place, a weaker one comes after it;
+ * - completions: longer words that start with the letters typed ("hel": hello, help, "xin":
+ *   xinh).
+ *
+ * Space keeps what was typed unless it fixes a wrong word, so a word typed without marks takes
+ * no slot of its own while there is something else to offer. When Space commits something other
+ * than what the field shows ("teh" -> "the"), that is in the middle. The middle is in bold only
+ * when Space commits it. A word typed with Telex marks shows as it is. A tap takes a guess. When
+ * the words before were typed without marks too, the left offers the whole run accented ("tôi
+ * không biết"). With no word, the next words, or the tool row.
  */
 class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = null) {
     /** What a slot holds: words, an emoji to put after the word in progress, or a phrase. */
@@ -19,7 +38,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
 
     private var offered: List<Pick?> = emptyList()
 
-    /** The middle slot's word, while one is in progress (for an emoji pick). */
+    /** The word in progress as the strip reads it, while there is one (for an emoji pick). */
     var centre: String? = null
         private set
 
@@ -31,6 +50,11 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /** The next word after a Space. */
     var nextWords = true
 
+    private enum class Kind { READING, PAIR, COMPLETION }
+
+    /** A guess: its text and score, what it is, and the reading it is or extends. */
+    private data class Guess(val text: String, val score: Float, val kind: Kind, val base: String?, val corrected: Boolean)
+
     fun make(t: Typist): Strip {
         val word = t.shown
         if (!suggestions || word.isEmpty()) {
@@ -38,33 +62,132 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             centre = null
             return if (suggestions && nextWords && models != null && t.afterWord()) next(t) else Strip.Tools
         }
-        val commits = t.preview()  // what Space commits, when it isn't what was typed
-        val phrase = if (models != null) t.phrase() else null
-        // After words typed without marks, the word reads as the end of their run: the run
-        // itself, typed bare, would read on bare ("toi khong" + "biet" as "biet").
-        val reading = phrase?.second?.substringAfterLast(' ')
-            ?: if (models != null && t.restorable()) t.reading(lookBack = t.tonesOnSpace == Typist.TONES_ALWAYS) else null
-        val c = commits ?: reading ?: word
-        centre = c
-        val bold = c == (commits ?: word)
-        val others = if (models != null && t.restorable()) {
-            models.restoreWord(t.context(), t.keys(), 6).map { it.text }.filter { it != c && it != word }
+        val m = models
+        val commits = t.preview()  // what Space commits, when it isn't what the field shows
+        val run = if (m != null) t.phrase() else null
+        val ctx = t.context()
+        // A word Telex marked, read as its letters without marks: its syllables ("mêt": mệt,
+        // mết, ...), the word itself among them.
+        val marked = if (m != null && !t.restorable() && !t.raw && t.autoCorrect) {
+            bare(word)?.let { m.restoreWord(ctx, it, 16) }
         } else {
-            emptyList()
+            null
         }
-        val left = phrase?.let { Pick(it.second, phrase = it) } ?: others.getOrNull(0)?.let { Pick(it) }
-        val right = completion(t, c)?.let { Pick(it) } ?: emojiFor(t, c)?.let { Pick(it, emoji = true) }
-            ?: others.getOrNull(if (phrase == null) 1 else 0)?.let { Pick(it) }
-        offered = listOf(left, Pick(c), right)
-        return Strip.Candidates(left?.text, c, right?.text, more = others.size > 2, bold = bold)
+        val readings = if (m != null) readings(t, m, ctx, run, marked) else emptyList()
+        val guesses = if (m != null) guesses(t, m, ctx, readings, marked, commits) else emptyList()
+
+        // The middle: what Space commits, when that is not what the field shows; for a word
+        // typed without marks, the best guess, unless all there is are slips of it.
+        val other = guesses.any { !it.corrected && it.base != word }
+        val middle = commits ?: if (t.restorable() && other) guesses.first().text else word
+        val bold = middle == (commits ?: word)
+        val rest = guesses.filter { it.text != middle }.toMutableList()
+        // The left: the run accented, or the best other reading, alone or with its next word,
+        // unless a completion is far likelier; else the best guess that isn't the middle's pair.
+        val leftGuess = if (run != null) null else {
+            val best = rest.firstOrNull { it.base != middle }
+            rest.firstOrNull { it.kind != Kind.COMPLETION && !it.corrected && it.base != middle }
+                ?.takeIf { best == null || it.score >= best.score - READING_EDGE }
+                ?: best
+        }
+        leftGuess?.let { rest.remove(it) }
+        val left = run?.let { Pick(it.second, phrase = it) } ?: leftGuess?.let { Pick(it.text) }
+        // The right: the middle with its next word when that comes next, an emoji for the
+        // word, or the next best guess.
+        val read = commits ?: readings.firstOrNull()?.text ?: word
+        centre = read
+        val top = rest.firstOrNull()
+        val pair = top?.takeIf { it.kind == Kind.PAIR && it.base == middle }
+        val right = pair?.let { Pick(it.text) }
+            ?: emojiFor(t, read)?.let { Pick(it, emoji = true) }
+            ?: top?.let { Pick(it.text) }
+        if (right?.emoji == false) top?.let { rest.remove(it) }
+        offered = listOf(left, Pick(middle), right)
+        return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold)
     }
 
-    /** The word with the word likeliest to follow it, when that one is likely enough. */
-    private fun completion(t: Typist, word: String): String? {
-        val m = models ?: return null
+    /**
+     * The readings of the word in progress, best first: its accented forms when it was typed
+     * without marks, or the tones it may take when typed with marks but no tone ("meet" shows
+     * "mêt": mệt, mết). After words typed without marks, the run's reading of it comes first.
+     */
+    private fun readings(
+        t: Typist,
+        m: Models,
+        ctx: List<String>,
+        run: Pair<String, String>?,
+        marked: List<Candidate>?,
+    ): List<Candidate> {
+        val word = t.shown
+        val all = when {
+            t.restorable() -> m.restoreWord(ctx, t.keys(), READINGS)
+            marked != null && Normalizer.normalize(word, Normalizer.Form.NFD).none { it in TONES } ->
+                marked.filter { it.type == Candidate.RESTORED && untoned(it.text) == word }.take(READINGS)
+            else -> emptyList()
+        }
+        val fromRun = run?.second?.substringAfterLast(' ') ?: return all
+        val i = all.indexOfFirst { it.text == fromRun }
+        if (i <= 0) return all
+        return listOf(all[i].copy(score = all[0].score)) + all.filterIndexed { j, _ -> j != i }
+    }
+
+    /** Everything worth a slot, best first, but the word as the field shows it. */
+    private fun guesses(
+        t: Typist,
+        m: Models,
+        ctx: List<String>,
+        readings: List<Candidate>,
+        marked: List<Candidate>?,
+        commits: String?,
+    ): List<Guess> {
+        val word = t.shown
+        val bases = ArrayList(readings)
+        // A word typed with marks is a reading of its own ("được"): its next word may go with it.
+        if (!t.restorable() && readings.none { it.text == word }) {
+            val score = marked?.firstOrNull { it.text == word }?.score
+            bases += Candidate(word, Candidate.RESTORED, score ?: readings.firstOrNull()?.score ?: 0f)
+        }
+        // What Space commits in its place ("meet" for "mêt"), scored as a word typed as it is.
+        if (commits != null && ' ' !in commits && bases.none { it.text == commits }) {
+            m.restoreWord(ctx, commits, READINGS).firstOrNull { it.text == commits }?.let { bases += it }
+        }
+        val out = ArrayList<Guess>()
+        for ((i, r) in bases.withIndex()) {
+            val corrected = r.type == Candidate.CORRECTED
+            val paired = i < PAIRED || r.text == word || r.text == commits
+            val next = if (paired) nextWord(m, ctx, r.text) else null
+            if (next != null) out += Guess("${r.text} ${next.first}", r.score + next.second, Kind.PAIR, r.text, corrected)
+            // Alone, it scores what is left once its likeliest pair is counted apart.
+            val alone = if (next == null) r.score else r.score + log10(1 - min(10f.pow(next.second), MOST))
+            out += Guess(r.text, alone, Kind.READING, r.text, corrected)
+        }
+        for ((c, score) in completions(t, m, ctx)) out += Guess(c, score, Kind.COMPLETION, null, false)
+        return out.filter { it.text != word }.sortedByDescending { it.score }.distinctBy { it.text }
+    }
+
+    /**
+     * Longer words that start with what was typed: from the letters, when typed without marks;
+     * for a word Telex marked, from its keys as English ("meet", shown "mêt": "meeting") and
+     * from its letters with the marks it has ("ngươ": "người", "ngược", never "nguồn").
+     */
+    private fun completions(t: Typist, m: Models, ctx: List<String>): List<Pair<String, Float>> {
+        if (t.restorable()) return m.complete(ctx, t.keys(), COMPLETIONS)
+        if (t.raw || !t.autoCorrect) return emptyList()
+        val out = ArrayList<Pair<String, Float>>()
+        val keys = t.keys()
+        if (keys.all { it in 'a'..'z' || it in 'A'..'Z' }) out += m.complete(ctx, keys, COMPLETIONS).filter { (w) -> w.all { it.code < 0x80 } }
+        val word = t.shown
+        bare(word)?.let { b ->
+            val marked = untoned(word)
+            out += m.complete(ctx, b, COMPLETIONS * 4).filter { (w) -> untoned(w).startsWith(marked) }
+        }
+        return out.sortedByDescending { it.second }.distinctBy { it.first }.take(COMPLETIONS)
+    }
+
+    /** The word likeliest to follow `word`, with its log10 probability, when likely enough. */
+    private fun nextWord(m: Models, ctx: List<String>, word: String): Pair<String, Float>? {
         if (!word.first().isLetter()) return null
-        val (next, score) = m.predictScored(t.context() + word.lowercase(), 1).firstOrNull() ?: return null
-        return if (score >= COMPLETION) "$word $next" else null
+        return m.predictScored(ctx + word.lowercase(), 1).firstOrNull()?.takeIf { it.second >= COMPLETION }
     }
 
     /** After a word and a space: the likeliest next words, the likeliest in the middle. */
@@ -86,7 +209,33 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     fun pick(slot: Int): Pick? = offered.getOrNull(slot)
 
     companion object {
-        /** log10: how likely the next word must be to complete the word in the right slot. */
+        /** log10: how likely the next word must be to go with a reading ("cảm ơn"). */
         const val COMPLETION = -1.0f
+
+        /** Readings looked at, the best of them that get a next word, completions asked for. */
+        private const val READINGS = 6
+        private const val PAIRED = 3
+        private const val COMPLETIONS = 3
+
+        /** log10: how much likelier a completion must be to take the left from a reading. */
+        private const val READING_EDGE = 2.0f
+
+        /** A pair never takes all of its reading: "cám" alone stays on offer, just low. */
+        private const val MOST = 0.99f
+
+        /** The tone marks, decomposed: grave, acute, tilde, hook above, dot below. */
+        private const val TONES = "̣̀́̃̉"
+
+        /** `s` without its marks or tone, when it is letters ("được": "duoc"), else null. */
+        private fun bare(s: String): String? {
+            val b = Normalizer.normalize(s, Normalizer.Form.NFD).replace('đ', 'd').replace('Đ', 'D')
+                .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+            return b.takeIf { it.isNotEmpty() && it.all { c -> c in 'a'..'z' || c in 'A'..'Z' } }
+        }
+
+        private fun untoned(s: String): String = Normalizer.normalize(
+            Normalizer.normalize(s, Normalizer.Form.NFD).filter { it !in TONES },
+            Normalizer.Form.NFC,
+        )
     }
 }

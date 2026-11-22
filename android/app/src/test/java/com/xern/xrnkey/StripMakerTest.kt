@@ -7,7 +7,9 @@ import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class StripMakerTest {
@@ -24,11 +26,13 @@ class StripMakerTest {
                 t.text("duoc")
                 val shown = strip.make(t) as Strip.Candidates
                 assertEquals("được", shown.centre)
-                // The left is the word's next reading (which one depends on the model: with the
-                // real one "dược"); the right, a likely next word with it, or another reading.
+                // The left is another reading, alone or with its next word (which one depends on
+                // the model: with the real one "dược"); the right, a likely next word with the
+                // middle, or another reading.
                 val readings = m.models.restoreWord(t.context(), "duoc", 6).map { it.text }
-                assertTrue(shown.left in readings && shown.left != shown.centre)
-                assertTrue(shown.right!! in readings || shown.right!!.startsWith("được "))
+                fun reading(s: String?) = s != null && readings.any { s == it || s.startsWith("$it ") }
+                assertTrue(reading(shown.left) && !shown.left!!.startsWith("được"))
+                assertTrue(reading(shown.right))
                 assertEquals(StripMaker.Pick("được"), strip.pick(1))
                 t.pick(strip.pick(1)!!.text)
                 assertEquals("Tôi không được ", f.text)  // Space restored "khong"
@@ -104,6 +108,123 @@ class StripMakerTest {
                 t.raw = true
                 assertEquals(Strip.Tools, strip.make(t))
             }
+        }
+    }
+
+    /** A strip for `keys` typed after `before`, with what made it. */
+    private class Typed(val shown: Strip.Candidates, val maker: StripMaker, val typist: Typist, val field: FakeEditor)
+
+    private fun strip(m: TestModels.Opened, keys: String, before: String = "", emoji: EmojiIndex? = null): Typed {
+        val field = FakeEditor(before)
+        val t = Typist(TypingState().also { it.useModels(m.models) }, field, m.models).also { it.reset() }
+        val maker = StripMaker(m.models, emoji)
+        t.text(keys)
+        return Typed(maker.make(t) as Strip.Candidates, maker, t, field)
+    }
+
+    private fun Strip.Candidates.slots() = listOf(left, centre, right)
+
+    /**
+     * Laban Key 26.09.01 on the owner's phone (Vietnamese + English, Telex, auto-correct
+     * Flexible), [left | middle | right]:
+     *   hel  -> help | hello | held
+     *   xin  -> xịn | xin lỗi | xinh
+     *   meet -> mệt mỏi | mệt | mệt rồi
+     *   cam  -> cám ơn | cảm ơn | 🍊
+     * The same with the real models, as far as they allow: they put "helping" before "held",
+     * have no emoji for "cam" and no "mệt rồi", and xrnkey ends "meet" as the English it is, so
+     * that is in the middle, in bold.
+     */
+    @Test
+    fun theStripCompletesAndPairsWordsAsLabanDoes() {
+        assumeTrue(TestModels.realAvailable)
+        val index = EmojiIndex.load(File(System.getProperty("xrnkey.emojiIndex")!!).readBytes())!!
+        TestModels.real().use { m ->
+            val hel = strip(m, "hel", emoji = index).shown
+            assertEquals("hello", hel.centre)
+            assertEquals("help", hel.left)
+            assertTrue(hel.right!!.startsWith("hel") && hel.right!!.length > 3)
+            assertFalse(hel.bold)
+
+            val xin = strip(m, "xin", emoji = index).shown
+            assertEquals(listOf("xịn", "xin lỗi", "xinh"), xin.slots())
+            assertFalse(xin.bold)
+
+            val meet = strip(m, "meet", emoji = index).shown
+            assertEquals(listOf("mệt mỏi", "meet", "mệt"), meet.slots())
+            assertTrue(meet.bold)  // Space ends it "meet"
+
+            val cam = strip(m, "cam", emoji = index).shown
+            assertEquals("cảm ơn", cam.centre)
+            assertTrue("cám ơn" in cam.slots())
+            assertFalse(cam.bold)
+        }
+        index.close()
+    }
+
+    @Test
+    fun spaceKeepsWhatWasTypedAndATapTakesTheCompletion() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            for (w in listOf("hel", "xin", "cam")) {
+                val typed = strip(m, w)
+                typed.typist.text(" ")
+                assertEquals("$w ", typed.field.text)
+            }
+            for ((w, taken) in listOf("hel" to "hello ", "xin" to "xin lỗi ")) {
+                val typed = strip(m, w)
+                typed.typist.pick(typed.maker.pick(1)!!.text)
+                assertEquals(taken, typed.field.text)
+            }
+            // Space fixes "teh", so "the" is in the middle, in bold.
+            val teh = strip(m, "teh").shown
+            assertEquals("the", teh.centre)
+            assertTrue(teh.bold)
+        }
+    }
+
+    @Test
+    fun aWordTypedInPartIsCompletedInBothLanguages() {
+        TestModels.test().use { m ->
+            // English: "boost" and "boots" in the test corpus.
+            // (Telex shows "boo" as "bô"; the keys are completed as English.)
+            val boo = strip(m, "boo", before = "I need the ").shown
+            assertTrue(boo.slots().toString(), boo.slots().containsAll(listOf("boost", "boots")))
+            val pic = strip(m, "pic", before = "The ").shown
+            assertEquals(pic.slots().toString(), "picture", pic.centre)  // "The picture hangs"
+            assertFalse(pic.bold)
+            // Vietnamese, accented: "công ty dược phẩm" in the test corpus.
+            val duo = strip(m, "duo", before = "Công ty ").shown
+            assertTrue(duo.slots().toString(), duo.slots().any { it == "dược" || it == "dược phẩm" })
+            // What was typed has no slot of its own while there is anything else to offer.
+            for (shown in listOf(pic, duo)) assertTrue(shown.slots().none { it == "pic" || it == "duo" })
+            // Letters that are no word's start leave the word as it is, in bold.
+            val q = strip(m, "qzx").shown
+            assertEquals("qzx", q.centre)
+            assertTrue(q.slots().toString(), q.bold)
+        }
+    }
+
+    @Test
+    fun aWordTypedWithMarksButNoToneOffersItsTones() {
+        TestModels.test().use { m ->
+            // "bieet" shows "biêt", no word without its tone: Space ends it as typed, and the
+            // strip offers its tones ("biết", "biệt": the test model has them alike).
+            val shown = strip(m, "bieet", before = "Tôi không ").shown
+            assertEquals("bieet", shown.centre)
+            assertTrue(shown.bold)
+            val toned = shown.slots().filter { it != null && (it.startsWith("biết") || it.startsWith("biệt")) }
+            assertTrue(shown.slots().toString(), toned.isNotEmpty() && shown.left in toned)
+        }
+    }
+
+    @Test
+    fun aWordTypedWithMarksIsCompletedWithTheMarksItHas() {
+        TestModels.test().use { m ->
+            // "nguwow" shows "ngươ": "người" starts like it, "nguồn" would not.
+            val shown = strip(m, "nguwow").shown
+            assertTrue(shown.slots().toString(), shown.slots().any { it == "người" || it?.startsWith("người ") == true })
+            assertTrue(shown.slots().toString(), shown.slots().none { it?.startsWith("nguồn") == true })
         }
     }
 }

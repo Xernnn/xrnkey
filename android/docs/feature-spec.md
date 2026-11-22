@@ -942,6 +942,20 @@ Steps 1 to 10 are built, with these differences from the text above:
   When needed, Always) brings back restoration: When needed only for words that aren't words as
   they stand ("khong", never "ong"); Always as before, with look-back. The rules in
   "Auto-correct" below describe Always.
+- **The strip, since 0.4.2**, fills its slots as Laban Key does. Its guesses are the readings of
+  the word, a reading with its likely next word ("cảm ơn"), and completions of the letters
+  typed (`xk_complete`: common English words, and Vietnamese syllables, accented: "xin" ->
+  "xinh"), all ranked in context by the models. A word typed without marks takes no slot of its
+  own, since Space keeps it. Laban, measured on the phone, against xrnkey with the real models:
+
+  | Typed | Laban | xrnkey |
+  |---|---|---|
+  | `hel` | help \| hello \| held | help \| hello \| helping |
+  | `xin` | xịn \| xin lỗi \| xinh | xịn \| xin lỗi \| xinh |
+  | `meet` | mệt mỏi \| mệt \| mệt rồi | mệt mỏi \| **meet** \| mệt |
+  | `cam` | cám ơn \| cảm ơn \| 🍊 | cảm \| cảm ơn \| cám ơn |
+
+  xrnkey ends "meet" as the English word, so that is in the middle, in bold.
 
 Step 11, the pass on the phone, has not started: nothing has run on a real phone yet.
 

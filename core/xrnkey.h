@@ -49,6 +49,10 @@ char*    xk_state_get_preedit(XKState* state);
  * those BackSpace took away: deleting a character takes the keys that typed,
  * marked and toned it. Newly allocated; the caller frees it. */
 char*    xk_state_get_keys(XKState* state);
+/* What ending the word in progress now (Space, punctuation) would commit, before the key
+ * that ends it: auto-restore applied ("terms" shows "tém" and ends "terms"). The state is
+ * unchanged. Newly allocated; the caller frees it; "" with no word in progress. */
+char*    xk_state_preview_final(XKState* state);
 
 /* Opt in to Unikey-style instant commit: every keystroke fills
  * commit/delete_before to correct previously committed text in place,
@@ -294,6 +298,16 @@ char* xk_fix_wrong_word(const XKModels* models, const char* typed, float min_mar
 /* The same as xk_predict, with each word's log10 probability in `logprobs`. */
 int xk_predict_scored(const XKModels* models, const char* const* context, int n, char** out, float* logprobs,
                       int max);
+
+/* Completions of a word typed in part, for the suggestion strip as Laban Key fills it: the words
+ * longer than `typed` (a-z and A-Z, no marks) that start with it, best first by log10
+ * P(word | context) under the mixture xk_predict ranks with (the context as for xk_predict).
+ * English words from the English model ("hel" -> "help", "hello"), Vietnamese syllables from
+ * the shape index, accented ("xin" -> "xinh", "duo" -> "được"), and the owner's personal
+ * words. The typed letters' case is kept. Fills out[i] (newly allocated; the caller frees each)
+ * and logprobs[i] (when not NULL); returns how many, at most `max`. */
+int xk_complete(const XKModels* models, const char* const* context, int n, const char* typed, char** out,
+                float* logprobs, int max);
 
 /* Bilingual switch */
 int  xk_is_english_word(const char* word);

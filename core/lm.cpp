@@ -18,12 +18,27 @@ using namespace lmfmt;
 
 namespace {
 
+/* An array of the model read in place. A model inside an APK starts wherever the zip put it:
+ * AGP aligns uncompressed assets to 4 bytes only, and a file may hold a model at any offset.
+ * So nothing is read through a T* (a misaligned one is undefined behaviour); each element is
+ * copied out, which compiles to the same single load on arm64 and x86-64. */
 template <typename T>
-const T* at(const Lm& m, uint64_t off) {
-    return reinterpret_cast<const T*>(m.base + off);
+struct Arr {
+    const char* p;
+    T operator[](uint64_t i) const {
+        T v;
+        std::memcpy(&v, p + i * sizeof(T), sizeof(T));
+        return v;
+    }
+};
+
+template <typename T>
+Arr<T> at(const Lm& m, uint64_t off) {
+    return Arr<T>{m.base + off};
 }
 
-/* [off, off + n * size) lies inside the model and is aligned for T. */
+/* [off, off + n * size) lies inside the model and is aligned for T from the model's start, as
+ * the format lays it out (lm_format.h). The address itself need not be (Arr). */
 template <typename T>
 bool fits(const Header& h, uint64_t off, uint64_t n) {
     if (off % alignof(T) != 0) return false;
@@ -62,7 +77,7 @@ bool check(const Lm& m) {
             m.base[h.shape_blob + h.shape_blob_size - 1] != '\0' ||
             !fits<uint32_t>(h, h.shape_first, h.shape_count + 1))
             return false;
-        const uint32_t* first = at<uint32_t>(m, h.shape_first);
+        const auto first = at<uint32_t>(m, h.shape_first);
         const uint64_t n_cand = first[h.shape_count];
         if (!fits<uint32_t>(h, h.shape_cand, n_cand)) return false;
         if (h.extra_count > 0 &&
@@ -70,9 +85,9 @@ bool check(const Lm& m) {
              !fits<char>(h, h.extra_blob, h.extra_blob_size) || h.extra_blob_size == 0 ||
              m.base[h.extra_blob + h.extra_blob_size - 1] != '\0'))
             return false;
-        const uint32_t* key = at<uint32_t>(m, h.shape_key);
-        const uint32_t* cand = at<uint32_t>(m, h.shape_cand);
-        const uint32_t* extra = h.extra_count ? at<uint32_t>(m, h.extra_key) : nullptr;
+        const auto key = at<uint32_t>(m, h.shape_key);
+        const auto cand = at<uint32_t>(m, h.shape_cand);
+        const auto extra = at<uint32_t>(m, h.extra_key);  // read only when extra_count > 0
         for (uint64_t i = 0; i < h.shape_count; ++i)
             if (key[i] >= h.shape_blob_size || first[i] > first[i + 1]) return false;
         for (uint64_t i = 0; i < n_cand; ++i)
@@ -80,8 +95,8 @@ bool check(const Lm& m) {
         for (uint64_t i = 0; i < h.extra_count; ++i)
             if (extra[i] >= h.extra_blob_size) return false;
     }
-    const uint32_t* index = at<uint32_t>(m, h.vocab_index);
-    const uint32_t* sorted = at<uint32_t>(m, h.vocab_sorted);
+    const auto index = at<uint32_t>(m, h.vocab_index);
+    const auto sorted = at<uint32_t>(m, h.vocab_sorted);
     for (uint32_t i = 0; i < h.vocab; ++i)
         if (index[i] >= h.vocab_blob_size || sorted[i] >= h.vocab) return false;
     return true;
@@ -91,7 +106,7 @@ bool check(const Lm& m) {
  * clamped so a damaged file can never send a read outside the model. */
 void children(const Lm& m, uint32_t k, uint64_t idx, uint64_t* lo, uint64_t* hi) {
     const Header& h = *m.hdr;
-    const uint32_t* child = k == 1 ? at<uint32_t>(m, h.uni_child) : at<uint32_t>(m, h.sec[k].child);
+    const auto child = at<uint32_t>(m, k == 1 ? h.uni_child : h.sec[k].child);
     const uint64_t n = h.count[k + 1];
     *lo = std::min<uint64_t>(child[idx], n);
     *hi = std::min<uint64_t>(child[idx + 1], n);
@@ -114,8 +129,11 @@ Lm* lm_map(int fd, uint64_t offset, uint64_t length) {
     m->map_size = length + lead;
     m->base = static_cast<const char*>(p) + lead;
     m->size = length;
-    m->hdr = reinterpret_cast<const Header*>(m->base);
-    if (reinterpret_cast<uintptr_t>(m->base) % alignof(Header) != 0 || !check(*m)) {
+    /* The header by copy: its 8-byte fields can't be read in place where the model doesn't
+     * start on a multiple of 8, and AGP may put it anywhere 4-byte aligned in an APK. */
+    std::memcpy(&m->header, m->base, sizeof(Header));
+    m->hdr = &m->header;
+    if (!check(*m)) {
         lm_unmap(m);
         return nullptr;
     }
@@ -135,7 +153,7 @@ const char* lm_word(const Lm& m, uint32_t id) {
 }
 
 uint32_t lm_id(const Lm& m, std::string_view word) {
-    const uint32_t* sorted = at<uint32_t>(m, m.hdr->vocab_sorted);
+    const auto sorted = at<uint32_t>(m, m.hdr->vocab_sorted);
     uint32_t lo = 0, hi = m.hdr->vocab;
     while (lo < hi) {
         const uint32_t mid = lo + (hi - lo) / 2;
@@ -148,6 +166,41 @@ uint32_t lm_id(const Lm& m, std::string_view word) {
     return kUnk;
 }
 
+namespace {
+
+/* [lo, hi): the positions in `n` strings sorted by bytes whose text starts with `prefix`. */
+template <typename TextAt>
+void prefix_range(uint64_t n, std::string_view prefix, TextAt text, uint64_t* lo, uint64_t* hi) {
+    uint64_t a = 0, b = n;
+    while (a < b) {
+        const uint64_t mid = a + (b - a) / 2;
+        if (std::string_view(text(mid)) < prefix) a = mid + 1;
+        else b = mid;
+    }
+    *lo = a;
+    b = n;
+    while (a < b) {
+        const uint64_t mid = a + (b - a) / 2;
+        if (std::string_view(text(mid)).substr(0, prefix.size()) == prefix) a = mid + 1;
+        else b = mid;
+    }
+    *hi = a;
+}
+
+}  // namespace
+
+void lm_prefix_range(const Lm& m, std::string_view prefix, uint32_t* lo, uint32_t* hi) {
+    const auto sorted = at<uint32_t>(m, m.hdr->vocab_sorted);
+    uint64_t a, b;
+    prefix_range(m.hdr->vocab, prefix, [&](uint64_t i) { return lm_word(m, sorted[i]); }, &a, &b);
+    *lo = static_cast<uint32_t>(a);
+    *hi = static_cast<uint32_t>(b);
+}
+
+uint32_t lm_sorted_id(const Lm& m, uint32_t pos) {
+    return pos < m.hdr->vocab ? at<uint32_t>(m, m.hdr->vocab_sorted)[pos] : lmfmt::kUnk;
+}
+
 int64_t lm_find(const Lm& m, const uint32_t* ids, int k) {
     const Header& h = *m.hdr;
     if (k < 1 || static_cast<uint32_t>(k) > h.order || ids[0] >= h.vocab) return -1;
@@ -155,7 +208,7 @@ int64_t lm_find(const Lm& m, const uint32_t* ids, int k) {
     for (int j = 2; j <= k; ++j) {
         uint64_t lo, hi;
         children(m, static_cast<uint32_t>(j - 1), idx, &lo, &hi);
-        const uint16_t* word = at<uint16_t>(m, h.sec[j].word);
+        const auto word = at<uint16_t>(m, h.sec[j].word);
         const uint32_t want = ids[j - 1];
         const uint64_t end = hi;
         while (lo < hi) {
@@ -178,7 +231,7 @@ int lm_followers(const Lm& m, const uint32_t* ctx, int n, uint32_t* ids, float* 
     if (node < 0) return 0;
     uint64_t lo, hi;
     children(m, static_cast<uint32_t>(n), static_cast<uint64_t>(node), &lo, &hi);
-    const uint16_t* word = at<uint16_t>(m, h.sec[n + 1].word);
+    const auto word = at<uint16_t>(m, h.sec[n + 1].word);
     std::vector<std::pair<float, uint32_t>> all;
     all.reserve(hi - lo);
     for (uint64_t i = lo; i < hi; ++i) all.emplace_back(lm_prob_at(m, n + 1, i), word[i]);
@@ -228,23 +281,26 @@ float lm_logprob(const Lm& m, const uint32_t* ctx, int n, uint32_t w) {
     return backoff + lm_prob_at(m, 1, kUnk);  /* not reached: every id is a unigram */
 }
 
-int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words, uint32_t* ids,
-                        int max_out) {
+bool lm_shape_prefix_range(const Lm& m, std::string_view prefix, uint64_t* lo, uint64_t* hi) {
     const Header& h = *m.hdr;
-    if (h.shape_count == 0 || m.ignore_shape_index) return -1;
-    const uint32_t* key = at<uint32_t>(m, h.shape_key);
-    const char* blob = m.base + h.shape_blob;
-    uint64_t lo = 0, hi = h.shape_count;
-    while (lo < hi) {
-        const uint64_t mid = lo + (hi - lo) / 2;
-        if (std::string_view(blob + key[mid]) < shape) lo = mid + 1;
-        else hi = mid;
-    }
-    if (lo >= h.shape_count || std::string_view(blob + key[lo]) != shape) return 0;
-    const uint32_t* first = at<uint32_t>(m, h.shape_first);
-    const uint32_t* cand = at<uint32_t>(m, h.shape_cand);
+    if (h.shape_count == 0 || m.ignore_shape_index) return false;
+    prefix_range(h.shape_count, prefix, [&](uint64_t i) { return lm_shape_at(m, i); }, lo, hi);
+    return true;
+}
+
+const char* lm_shape_at(const Lm& m, uint64_t pos) {
+    const Header& h = *m.hdr;
+    if (pos >= h.shape_count) return nullptr;
+    return m.base + h.shape_blob + at<uint32_t>(m, h.shape_key)[pos];
+}
+
+int lm_shape_candidates_at(const Lm& m, uint64_t pos, const char** words, uint32_t* ids, int max_out) {
+    const Header& h = *m.hdr;
+    if (pos >= h.shape_count) return 0;
+    const auto first = at<uint32_t>(m, h.shape_first);
+    const auto cand = at<uint32_t>(m, h.shape_cand);
     int n = 0;
-    for (uint32_t i = first[lo]; i < first[lo + 1] && n < max_out; ++i, ++n) {
+    for (uint32_t i = first[pos]; i < first[pos + 1] && n < max_out; ++i, ++n) {
         const uint32_t c = cand[i];
         if (c < h.vocab) {
             words[n] = lm_word(m, c);
@@ -255,6 +311,16 @@ int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words,
         }
     }
     return n;
+}
+
+int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words, uint32_t* ids,
+                        int max_out) {
+    uint64_t lo, hi;
+    if (!lm_shape_prefix_range(m, shape, &lo, &hi)) return -1;
+    /* The range's first shape is the shape itself, if the index has it: nothing sorts
+     * between a string and the strings it starts. */
+    if (lo >= hi || std::string_view(lm_shape_at(m, lo)) != shape) return 0;
+    return lm_shape_candidates_at(m, lo, words, ids, max_out);
 }
 
 float lm_unk_share(const Lm& m) {

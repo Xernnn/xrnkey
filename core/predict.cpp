@@ -40,16 +40,29 @@ void model_candidates(const Lm& m, const Context& c, std::unordered_set<std::str
     }
 }
 
-/* The model's commonest words, when the context offers too few. */
-void common_words(const Lm& m, std::unordered_set<std::string>& out, size_t n) {
+/* The `n` commonest words of `m` by unigram, the commonest first. */
+std::vector<uint32_t> commonest(const Lm& m, size_t n) {
     std::vector<std::pair<float, uint32_t>> all;
     all.reserve(m.hdr->vocab);
     for (uint32_t id = 0; id < m.hdr->vocab; ++id) all.emplace_back(lm_prob_at(m, 1, id), id);
     const size_t k = std::min(all.size(), n);
     std::partial_sort(all.begin(), all.begin() + static_cast<std::ptrdiff_t>(k), all.end(),
                       [](const auto& a, const auto& b) { return a.first > b.first; });
-    for (size_t i = 0; i < k; ++i)
-        if (const char* w = lm_word(m, all[i].second)) out.insert(w);
+    std::vector<uint32_t> ids;
+    for (size_t i = 0; i < k; ++i) ids.push_back(all[i].second);
+    return ids;
+}
+
+/* The model's commonest words, when the context offers too few. Sorting the whole vocabulary
+ * took a fifth of a millisecond, and the strip asks for next words several times a key: the
+ * commonest are kept from the first call. */
+void common_words(const Lm& m, std::unordered_set<std::string>& out, size_t n) {
+    constexpr size_t kKept = 128;
+    std::call_once(m.common_once, [&] { m.common = commonest(m, kKept); });
+    const std::vector<uint32_t> more = n > kKept ? commonest(m, n) : std::vector<uint32_t>();
+    const std::vector<uint32_t>& ids = n > kKept ? more : m.common;
+    for (size_t i = 0; i < std::min(n, ids.size()); ++i)
+        if (const char* w = lm_word(m, ids[i])) out.insert(w);
 }
 
 /* A word to offer: not a marker, a number or punctuation. */

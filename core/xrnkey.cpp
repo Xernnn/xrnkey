@@ -185,6 +185,15 @@ char* xk_state_get_keys(XKState* state) {
     return out;
 }
 
+char* xk_state_preview_final(XKState* state) {
+    if (!state) return nullptr;
+    const auto* s = reinterpret_cast<const xrnkey::XKStateImpl*>(state);
+    const std::string text = s->word.empty() ? std::string() : xrnkey::word_final(s->word, s->opt, s);
+    char* out = static_cast<char*>(std::malloc(text.size() + 1));
+    if (out) std::memcpy(out, text.c_str(), text.size() + 1);
+    return out;
+}
+
 XKResult xk_process_key(XKState* state, uint32_t keysym, uint32_t modifiers) {
     XKResult r{};
     r.consumed = 0;

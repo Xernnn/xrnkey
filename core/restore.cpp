@@ -95,10 +95,8 @@ const ShapeIndex& shapes(const Lm& m) {
     return *m.shapes;
 }
 
-enum class Case { Lower, Capital, Upper };
+}  // namespace
 
-/* How the word was typed: "khong", "Khong", "KHONG". Only ASCII letters
- * count; anything else means it is not a word restoration handles. */
 bool typed_word(const char* typed, std::string* lower, Case* cs) {
     if (!typed || !*typed) return false;
     size_t n = 0, upper = 0;
@@ -138,6 +136,8 @@ std::string with_case(const std::string& text, Case cs) {
     }
     return out;
 }
+
+namespace {
 
 struct Cand {
     std::string_view text;  /* in the model's mapping, its built index, or the call's store */

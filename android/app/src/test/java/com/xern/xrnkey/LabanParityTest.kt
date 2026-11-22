@@ -95,8 +95,10 @@ class LabanParityTest {
             val strip = StripMaker(m.models)
             t.text("khong")
             val off = strip.make(t) as Strip.Candidates
-            assertEquals("không", off.centre)  // the reading, for a tap
-            assertFalse(off.bold)            // Space keeps "khong"
+            // The reading, for a tap: alone, or with the word that nearly always follows it at a
+            // sentence's start in the test text ("Không được").
+            assertTrue(off.centre == "không" || off.centre!!.startsWith("không "))
+            assertFalse(off.bold)  // Space keeps "khong"
             t.tonesOnSpace = Typist.TONES_ALWAYS
             val always = strip.make(t) as Strip.Candidates
             assertEquals("không", always.centre)

@@ -91,6 +91,8 @@ FN(jlong, lmOpenFd)(JNIEnv*, jobject, jint fd, jlong offset, jlong length) {
 
 FN(void, lmFree)(JNIEnv*, jobject, jlong lm) { xk_lm_free(as<XKLm>(lm)); }
 
+FN(jint, lmVocabSize)(JNIEnv*, jobject, jlong lm) { return xk_lm_vocab_size(as<XKLm>(lm)); }
+
 FN(jlong, modelsNew)(JNIEnv*, jobject, jlong vi, jlong en) {
     return handle(xk_models_new(as<XKLm>(vi), as<XKLm>(en)));
 }
@@ -130,6 +132,13 @@ FN(jbyteArray, stateKeys)(JNIEnv* env, jobject, jlong s) {
     return a;
 }
 
+FN(jbyteArray, statePreviewFinal)(JNIEnv* env, jobject, jlong s) {
+    char* f = xk_state_preview_final(as<XKState>(s));
+    jbyteArray a = bytes(env, f);
+    std::free(f);
+    return a;
+}
+
 FN(void, stateSetContext)(JNIEnv* env, jobject, jlong s, jobjectArray words) {
     const auto w = strings(env, words);
     const auto p = pointers(w);
@@ -153,8 +162,9 @@ FN(jobjectArray, restoreRun)(JNIEnv* env, jobject, jlong m, jobjectArray context
     return byte_arrays(env, out);
 }
 
+/* The candidates' texts; their types in `types` and their log10 scores in `scores`. */
 FN(jobjectArray, restoreWord)(JNIEnv* env, jobject, jlong m, jobjectArray context, jbyteArray typed,
-                              jint max, jintArray types) {
+                              jint max, jintArray types, jfloatArray scores) {
     const auto c = strings(env, context);
     const auto cp = pointers(c);
     const std::string t = text_of(env, typed);
@@ -164,11 +174,14 @@ FN(jobjectArray, restoreWord)(JNIEnv* env, jobject, jlong m, jobjectArray contex
                           : 0;
     std::vector<std::string> out;
     std::vector<jint> kinds;
+    std::vector<jfloat> lp;
     for (int i = 0; i < n; ++i) {
         out.emplace_back(cands[static_cast<size_t>(i)].text);
         kinds.push_back(cands[static_cast<size_t>(i)].type);
+        lp.push_back(cands[static_cast<size_t>(i)].score);
     }
     if (types && env->GetArrayLength(types) >= n && n > 0) env->SetIntArrayRegion(types, 0, n, kinds.data());
+    if (scores && env->GetArrayLength(scores) >= n && n > 0) env->SetFloatArrayRegion(scores, 0, n, lp.data());
     return byte_arrays(env, out);
 }
 
@@ -345,6 +358,27 @@ FN(jobjectArray, predictScored)(JNIEnv* env, jobject, jlong models, jobjectArray
     std::vector<char*> got(static_cast<size_t>(max));
     std::vector<float> lp(static_cast<size_t>(max));
     const int n = max > 0 ? xk_predict_scored(as<XKModels>(models), p.data(), static_cast<int>(p.size()), got.data(), lp.data(), max) : 0;
+    std::vector<std::string> out;
+    for (int i = 0; i < n; ++i) {
+        out.emplace_back(got[static_cast<size_t>(i)]);
+        std::free(got[static_cast<size_t>(i)]);
+    }
+    if (n > 0) env->SetFloatArrayRegion(scores, 0, n, lp.data());
+    return byte_arrays(env, out);
+}
+
+/* Completions of a word typed in part; their log10 probabilities in `scores`. */
+FN(jobjectArray, complete)(JNIEnv* env, jobject, jlong models, jobjectArray context, jbyteArray typed,
+                           jfloatArray scores) {
+    const auto c = strings(env, context);
+    const auto p = pointers(c);
+    const std::string t = text_of(env, typed);
+    const int max = scores ? env->GetArrayLength(scores) : 0;
+    std::vector<char*> got(static_cast<size_t>(max));
+    std::vector<float> lp(static_cast<size_t>(max));
+    const int n = max > 0 ? xk_complete(as<XKModels>(models), p.data(), static_cast<int>(p.size()), t.c_str(), got.data(),
+                                        lp.data(), max)
+                          : 0;
     std::vector<std::string> out;
     for (int i = 0; i < n; ++i) {
         out.emplace_back(got[static_cast<size_t>(i)]);

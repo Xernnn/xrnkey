@@ -1,4 +1,8 @@
+import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.variant.BuiltArtifactsLoader
 import java.util.Properties
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 
 plugins {
     // Kotlin is built into AGP 9: no kotlin-android plugin.
@@ -80,6 +84,29 @@ abstract class BundleModels : DefaultTask() {
     }
 }
 
+// Every model in the built APK opens where it lies, as the keyboard opens it on the phone (by
+// descriptor, at the offset AGP gave it), with the engine built for this machine: see
+// host/check_apk_models.py. Assembling an APK runs it; a refused model fails the build.
+abstract class CheckApkModels : DefaultTask() {
+    @get:InputFiles abstract val apkDir: DirectoryProperty
+    @get:Internal abstract val loader: Property<BuiltArtifactsLoader>
+    @get:InputFile abstract val script: RegularFileProperty
+    @get:InputFile abstract val engine: RegularFileProperty
+    @get:OutputFile abstract val report: RegularFileProperty
+    @get:Inject abstract val exec: ExecOperations
+
+    @TaskAction
+    fun check() {
+        val apks = loader.get().load(apkDir.get())?.elements?.map { File(it.outputFile) }.orEmpty()
+        if (apks.isEmpty()) throw GradleException("xrnkey: no APK in ${apkDir.get()}")
+        for (apk in apks) {
+            exec.exec {
+                commandLine("python3", "-I", script.get().asFile, apk, engine.get().asFile, report.get().asFile)
+            }
+        }
+    }
+}
+
 android {
     namespace = "com.xern.xrnkey"
     compileSdk = 35
@@ -89,8 +116,8 @@ android {
         applicationId = "com.xern.xrnkey"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 8
+        versionName = "0.4.2"
         ndk { abiFilters += "arm64-v8a" }
         externalNativeBuild {
             cmake {
@@ -148,7 +175,9 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             all { test ->
-                test.dependsOn(buildHost)
+                // The engine and the test models are inputs: the tests run again when the core
+                // changes, not only when the Kotlin does.
+                test.inputs.files(buildHost).withPropertyName("hostEngine")
                 test.systemProperty("java.library.path", hostDir.resolve("jni").path)
                 test.systemProperty("xrnkey.testModels", hostDir.resolve("lm").path)
                 test.systemProperty("xrnkey.realModels", modelDir.path)
@@ -176,6 +205,15 @@ androidComponents {
             if (!release && !modelDir.resolve("vi-phone.xklm").isFile) dependsOn(buildHost)
         }
         variant.sources.assets?.addGeneratedSourceDirectory(bundle, BundleModels::outputDir)
+        val check = tasks.register<CheckApkModels>("check${name}ApkModels") {
+            dependsOn(buildHost)
+            apkDir.set(variant.artifacts.get(SingleArtifact.APK))
+            loader.set(variant.artifacts.getBuiltArtifactsLoader())
+            script.set(hostSrc.resolve("check_apk_models.py"))
+            engine.set(hostDir.resolve("jni/libxrnkey.so"))
+            report.set(layout.buildDirectory.file("reports/apk-models-${variant.name}.txt"))
+        }
+        tasks.matching { it.name == "assemble$name" }.configureEach { dependsOn(check) }
     }
 }
 

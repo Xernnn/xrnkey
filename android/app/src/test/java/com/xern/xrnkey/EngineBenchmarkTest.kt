@@ -12,7 +12,8 @@ import java.io.File
  * What a keystroke costs on the JVM, through the JNI bridge, without any instrumentation: all
  * the keyboard does for one key (the core's Telex step, the strip's centre and readings for the
  * word in progress, and, when Space or punctuation ends a word, its restoration with look-back
- * and correction), and the restoration run alone. With the real models when this machine has
+ * and correction), the strip alone (readings, pairs with next words, completions, emoji), and
+ * the restoration run alone. With the real models when this machine has
  * them. Prints p50/p95/p99 and writes build/reports/engine-bench.txt.
  */
 class EngineBenchmarkTest {
@@ -44,6 +45,26 @@ class EngineBenchmarkTest {
                 for (c in text) {
                     val t0 = System.nanoTime()
                     typist.text(c.toString())
+                    strip.make(typist)
+                    times += System.nanoTime() - t0
+                }
+            }
+        }
+        return times
+    }
+
+    /** The strip alone, for each word in progress: readings, pairs, completions, emoji. */
+    private fun strips(models: Models, rounds: Int): List<Long> {
+        val times = ArrayList<Long>()
+        TypingState().use { state ->
+            state.useModels(models)
+            val typist = Typist(state, FakeEditor(), models).also { it.reset() }
+            val strip = StripMaker(models, emoji)
+            repeat(rounds) {
+                for (c in text) {
+                    typist.text(c.toString())
+                    if (typist.shown.isEmpty()) continue
+                    val t0 = System.nanoTime()
                     strip.make(typist)
                     times += System.nanoTime() - t0
                 }
@@ -96,6 +117,8 @@ class EngineBenchmarkTest {
             lines += percentiles("word end: run of up to 3, correction off", wordEnds(m.models, 20))
             m.models.correction = Models.CORRECT_FLEXIBLE
             lines += percentiles("word end: run of up to 3, correction on", wordEnds(m.models, 20))
+            strips(m.models, 3)
+            lines += percentiles("strip for a word in progress (Space keeps it)", strips(m.models, 20))
             nextWords(m.models, 3)
             lines += percentiles("next words after Space (3)", nextWords(m.models, 20))
             assertTrue(keys.isNotEmpty())
