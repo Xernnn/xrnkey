@@ -68,6 +68,16 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     fun fixWrongWord(typed: String, strong: Boolean = false): String? =
         Native.fixWrongWord(handle, typed.utf8(), if (strong) 0.5f else 1.0f)?.text()
 
+    /**
+     * How likely `word` is next as Vietnamese and as English: the log10 of each part of the
+     * mixture the next words are ranked with ([NEVER] for a part that is nothing).
+     */
+    fun languages(context: List<String>, word: String): Pair<Float, Float> {
+        val out = FloatArray(2)
+        Native.wordLanguages(handle, context.utf8(), word.utf8(), out)
+        return out[0] to out[1]
+    }
+
     /** The likeliest next words with their log10 probabilities, likeliest first. */
     fun predictScored(context: List<String>, max: Int = 3): List<Pair<String, Float>> {
         val scores = FloatArray(max)
@@ -90,6 +100,9 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     companion object {
         /** log10 of how much rarer than its best reading a plain form may be and still be a word. */
         const val PLAIN_RATIO = -1.6f
+
+        /** log10 of what can't happen (lmfmt::kNever). */
+        const val NEVER = -99f
 
         const val CORRECT_OFF = 0
         const val CORRECT_FLEXIBLE = 1

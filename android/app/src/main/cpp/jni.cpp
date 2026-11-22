@@ -387,3 +387,13 @@ FN(jobjectArray, complete)(JNIEnv* env, jobject, jlong models, jobjectArray cont
     if (n > 0) env->SetFloatArrayRegion(scores, 0, n, lp.data());
     return byte_arrays(env, out);
 }
+
+/* out[0], out[1]: log10 of the word's Vietnamese and English parts of the mixture. */
+FN(void, wordLanguages)(JNIEnv* env, jobject, jlong models, jobjectArray context, jbyteArray word, jfloatArray out) {
+    const auto c = strings(env, context);
+    const auto p = pointers(c);
+    float parts[2];
+    xk_word_languages(as<XKModels>(models), p.data(), static_cast<int>(p.size()), text_of(env, word).c_str(), &parts[0],
+                      &parts[1]);
+    if (out && env->GetArrayLength(out) >= 2) env->SetFloatArrayRegion(out, 0, 2, parts);
+}

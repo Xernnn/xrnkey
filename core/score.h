@@ -42,6 +42,10 @@ float token_logprob(const Lm& m, const Context& c, const std::string& token);
  * when there are any, are mixed in on top (learn.cpp). `lang`, when given,
  * gets the frame that explains the token better. */
 double mix_logprob(const Models& m, const Context& c, const std::string& token, uint8_t* lang = nullptr);
+/* The two parts of that mixture, before the personal words: the Vietnamese frame's
+ * P(vi frame | prev) * P_vi(token) and the English frame's (0 when a part has nothing). */
+void mix_parts(const Models& m, const Context& c, std::string_view token, uint32_t vi_id, uint32_t en_id,
+               double* pv, double* pe);
 /* The same, for a token whose ids in each model are known already
  * (lmfmt::kUnk where a model lacks it). */
 double mix_logprob_ids(const Models& m, const Context& c, std::string_view token, uint32_t vi_id,
