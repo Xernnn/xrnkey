@@ -1,10 +1,14 @@
 package com.xern.xrnkey
 
+import android.content.res.AssetFileDescriptor
+import android.os.ParcelFileDescriptor
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import com.xern.xrnkey.ime.XrnkeyService
 import org.junit.Assert.assertEquals
+import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,6 +16,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
 
 /**
  * The keyboard service end to end, as on the phone: its own models (the ones the APK bundles),
@@ -20,12 +25,21 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class ServiceTypingTest {
+    private val packed = TestModels.packed()
+
+    @After
+    fun removePack() = packed.close()
+
     private fun field(): Pair<XrnkeyService, EditText> {
-        // The models the APK bundles (the release build copies them from this folder).
-        XrnkeyService.modelFiles = java.io.File(TestModels.realDir, "vi-phone.xklm").path to
-            java.io.File(TestModels.realDir, "en.xklm").path
+        // The models the APK bundles (the release build copies them from this folder), opened
+        // as on the phone: by descriptor, each at its offset in a file laid out as AGP lays out
+        // the APK's assets.
+        XrnkeyService.modelAssets = { name ->
+            val (at, length) = packed.places[name] ?: throw java.io.FileNotFoundException(name)
+            AssetFileDescriptor(ParcelFileDescriptor.open(packed.file, ParcelFileDescriptor.MODE_READ_ONLY), at, length)
+        }
         val s = Robolectric.setupService(XrnkeyService::class.java)
-        XrnkeyService.modelFiles = null
+        XrnkeyService.modelAssets = null
         val edit = EditText(RuntimeEnvironment.getApplication())
         val info = EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }
         val ic = edit.onCreateInputConnection(info)!!
@@ -50,6 +64,34 @@ class ServiceTypingTest {
         assertEquals("the ", edit.text.toString())
         s.type("ong ")
         assertEquals("the ong ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /**
+     * Both models open the way the phone opens them, and the log says so. The English one, at an
+     * offset of 4 mod 8 in the APK, used to be refused without a word: "teh" stayed "teh".
+     */
+    @Test
+    fun bothModelsOpenFromTheApkAndTheLogSaysSo() {
+        ShadowLog.clear()
+        val (s, edit) = field()
+        assertEquals(true, s.hasModels())
+        val line = ShadowLog.getLogsForTag("xrnkey").map { it.msg }.single { it.startsWith("models: ") }
+        assertTrue(line, Regex("vi\\.xklm \\d+ words at \\d+ \\(\\d+ bytes\\); en\\.xklm \\d+ words at").containsMatchIn(line))
+        s.type("teh ")
+        assertEquals("the ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    @Test
+    fun aModelThatIsntThereIsLogged() {
+        ShadowLog.clear()
+        XrnkeyService.modelAssets = { name -> throw java.io.FileNotFoundException(name) }
+        val s = Robolectric.setupService(XrnkeyService::class.java)
+        XrnkeyService.modelAssets = null
+        assertEquals(false, s.hasModels())
+        val line = ShadowLog.getLogsForTag("xrnkey").map { it.msg }.single { it.startsWith("models: ") }
+        assertEquals("models: vi.xklm MISSING (vi.xklm); en.xklm MISSING (en.xklm)", line)
         s.onDestroy()
     }
 

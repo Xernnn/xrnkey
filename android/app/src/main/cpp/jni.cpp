@@ -91,6 +91,8 @@ FN(jlong, lmOpenFd)(JNIEnv*, jobject, jint fd, jlong offset, jlong length) {
 
 FN(void, lmFree)(JNIEnv*, jobject, jlong lm) { xk_lm_free(as<XKLm>(lm)); }
 
+FN(jint, lmVocabSize)(JNIEnv*, jobject, jlong lm) { return xk_lm_vocab_size(as<XKLm>(lm)); }
+
 FN(jlong, modelsNew)(JNIEnv*, jobject, jlong vi, jlong en) {
     return handle(xk_models_new(as<XKLm>(vi), as<XKLm>(en)));
 }

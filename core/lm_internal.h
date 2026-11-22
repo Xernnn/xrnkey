@@ -22,7 +22,8 @@ struct Lm {
     uint64_t map_size = 0;
     const char* base = nullptr;  /* the model's first byte */
     uint64_t size = 0;
-    const lmfmt::Header* hdr = nullptr;
+    lmfmt::Header header{};       /* copied from the file, where it may sit at any offset */
+    const lmfmt::Header* hdr = nullptr;  /* &header */
     /* For models without the shape index in the file: built on first use. */
     mutable std::once_flag shapes_once;
     mutable ShapeIndex* shapes = nullptr;

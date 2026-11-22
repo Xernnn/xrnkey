@@ -3,6 +3,7 @@ package com.xern.xrnkey.ime
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.AssetFileDescriptor
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.os.Build
@@ -11,6 +12,7 @@ import android.os.Looper
 import android.os.UserManager
 import android.text.InputType
 import android.text.SpannableString
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -107,8 +109,12 @@ class XrnkeyService :
 
     override fun onCreate() {
         super.onCreate()
-        vi = modelFiles?.let { Model.open(it.first) } ?: openModel("vi.xklm")
-        en = modelFiles?.let { Model.open(it.second) } ?: openModel("en.xklm")
+        val loaded = ArrayList<String>()
+        vi = openModel("vi.xklm", loaded)
+        en = openModel("en.xklm", loaded)
+        // One line, so a model that didn't load shows in logcat (the English one once didn't, and
+        // nothing said so: "teh" just stayed "teh").
+        Log.i("xrnkey", "models: " + loaded.joinToString("; "))
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         emoji = try {
@@ -125,9 +131,16 @@ class XrnkeyService :
     /** The models opened from the APK (false when an asset was missing). */
     fun hasModels(): Boolean = vi != null && en != null
 
-    private fun openModel(name: String): Model? = try {
-        assets.openFd(name).use { Model.open(it.parcelFileDescriptor.fd, it.startOffset, it.length) }
+    /** A model mapped in place from the APK, and how that went in `loaded`. */
+    private fun openModel(name: String, loaded: MutableList<String>): Model? = try {
+        (modelAssets?.invoke(name) ?: assets.openFd(name)).use { a ->
+            val model = Model.open(a.parcelFileDescriptor.fd, a.startOffset, a.length)
+            loaded += "$name " + (model?.let { "${it.vocabulary} words" } ?: "REFUSED") +
+                " at ${a.startOffset} (${a.length} bytes)"
+            model
+        }
     } catch (e: IOException) {
+        loaded += "$name MISSING (${e.message})"
         null
     }
 
@@ -552,8 +565,12 @@ class XrnkeyService :
         /** ClipDescription.EXTRA_IS_SENSITIVE (API 33), by name so older phones read it too. */
         const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
 
-        /** For the tests: the models' files, in place of the APK's assets (Robolectric can't map those). */
-        internal var modelFiles: Pair<String, String>? = null
+        /**
+         * For the tests: each model asset by name, as AssetManager.openFd gives it on the phone (a
+         * descriptor, an offset and a length), from a file the test lays out. Robolectric's own
+         * assets can't be opened that way.
+         */
+        internal var modelAssets: ((String) -> AssetFileDescriptor)? = null
         const val CLIPS = "clips.tsv"
         private const val MAX_CLIP = 20_000
 

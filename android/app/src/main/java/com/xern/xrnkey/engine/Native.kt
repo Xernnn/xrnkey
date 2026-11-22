@@ -12,6 +12,7 @@ internal object Native {
     external fun lmOpenPath(path: ByteArray): Long
     external fun lmOpenFd(fd: Int, offset: Long, length: Long): Long
     external fun lmFree(lm: Long)
+    external fun lmVocabSize(lm: Long): Int
 
     external fun modelsNew(vi: Long, en: Long): Long
     external fun modelsFree(models: Long)

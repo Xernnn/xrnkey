@@ -1,4 +1,8 @@
+import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.variant.BuiltArtifactsLoader
 import java.util.Properties
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 
 plugins {
     // Kotlin is built into AGP 9: no kotlin-android plugin.
@@ -77,6 +81,29 @@ abstract class BundleModels : DefaultTask() {
         val test = testDir.get().asFile
         test.resolve("vi.xklm").copyTo(out.resolve("vi.xklm"))
         test.resolve("en.xklm").copyTo(out.resolve("en.xklm"))
+    }
+}
+
+// Every model in the built APK opens where it lies, as the keyboard opens it on the phone (by
+// descriptor, at the offset AGP gave it), with the engine built for this machine: see
+// host/check_apk_models.py. Assembling an APK runs it; a refused model fails the build.
+abstract class CheckApkModels : DefaultTask() {
+    @get:InputFiles abstract val apkDir: DirectoryProperty
+    @get:Internal abstract val loader: Property<BuiltArtifactsLoader>
+    @get:InputFile abstract val script: RegularFileProperty
+    @get:InputFile abstract val engine: RegularFileProperty
+    @get:OutputFile abstract val report: RegularFileProperty
+    @get:Inject abstract val exec: ExecOperations
+
+    @TaskAction
+    fun check() {
+        val apks = loader.get().load(apkDir.get())?.elements?.map { File(it.outputFile) }.orEmpty()
+        if (apks.isEmpty()) throw GradleException("xrnkey: no APK in ${apkDir.get()}")
+        for (apk in apks) {
+            exec.exec {
+                commandLine("python3", "-I", script.get().asFile, apk, engine.get().asFile, report.get().asFile)
+            }
+        }
     }
 }
 
@@ -176,6 +203,15 @@ androidComponents {
             if (!release && !modelDir.resolve("vi-phone.xklm").isFile) dependsOn(buildHost)
         }
         variant.sources.assets?.addGeneratedSourceDirectory(bundle, BundleModels::outputDir)
+        val check = tasks.register<CheckApkModels>("check${name}ApkModels") {
+            dependsOn(buildHost)
+            apkDir.set(variant.artifacts.get(SingleArtifact.APK))
+            loader.set(variant.artifacts.getBuiltArtifactsLoader())
+            script.set(hostSrc.resolve("check_apk_models.py"))
+            engine.set(hostDir.resolve("jni/libxrnkey.so"))
+            report.set(layout.buildDirectory.file("reports/apk-models-${variant.name}.txt"))
+        }
+        tasks.matching { it.name == "assemble$name" }.configureEach { dependsOn(check) }
     }
 }
 

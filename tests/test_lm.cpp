@@ -112,6 +112,52 @@ TEST_CASE("a model inside a larger file opens at its offset", "[lm]") {
     xk_lm_free(whole);
 }
 
+// AGP aligns an uncompressed asset to 4 bytes only: the phone's English model started at an
+// offset of 4 mod 8 in the APK, and was refused for it, so "teh" stayed "teh" on the phone. A
+// model must open, and read the same, wherever in a file it starts.
+TEST_CASE("a model opens at an offset that isn't a multiple of 8", "[lm]") {
+    for (const std::string& path : {kVi, std::string(XRNKEY_TEST_LM_DIR) + "/en.xklm"}) {
+        std::vector<char> model = slurp(path);
+        REQUIRE(model.size() > 1000);
+        XKLm* whole = xk_lm_open(path.c_str());
+        REQUIRE(whole != nullptr);
+        for (int64_t offset : {5004, 4100, 5001, 5002, 5003}) {
+            INFO(path << " at " << offset);
+            std::vector<char> packed(static_cast<size_t>(offset) + model.size() + 300, 'x');
+            std::memcpy(packed.data() + offset, model.data(), model.size());
+            std::string file = spit("packed-" + std::to_string(offset) + ".bin", packed);
+            int fd = open(file.c_str(), O_RDONLY);
+            REQUIRE(fd >= 0);
+            XKLm* inner = xk_lm_open_fd(fd, offset, static_cast<int64_t>(model.size()));
+            close(fd);
+            REQUIRE(inner != nullptr);
+            REQUIRE(xk_lm_vocab_size(inner) == xk_lm_vocab_size(whole));
+            for (int id = 0; id < xk_lm_vocab_size(whole); ++id) {
+                const char* w = xk_lm_word(whole, id);
+                REQUIRE(std::string(xk_lm_word(inner, id)) == w);
+                REQUIRE(xk_lm_id(inner, w) == id);
+                REQUIRE(lp(inner, {"<s>"}, w) == lp(whole, {"<s>"}, w));
+            }
+            CHECK(lp(inner, {"tôi", "không"}, "thể") == lp(whole, {"tôi", "không"}, "thể"));
+            CHECK(lp(inner, {"i", "want"}, "to") == lp(whole, {"i", "want"}, "to"));
+            // The shape index, which accent restoration reads.
+            XKModels* a = xk_models_new(inner, nullptr);
+            XKModels* b = xk_models_new(whole, nullptr);
+            const char* ctx[] = {"<s>", "tôi"};
+            for (const char* shape : {"khong", "duoc", "biet", "ban"}) {
+                XKCandidate ca[16], cb[16];
+                const int na = xk_restore_word(a, ctx, 2, shape, ca, 16);
+                REQUIRE(na == xk_restore_word(b, ctx, 2, shape, cb, 16));
+                for (int i = 0; i < na; ++i) CHECK(std::string(ca[i].text) == cb[i].text);
+            }
+            xk_models_free(a);
+            xk_models_free(b);
+            xk_lm_free(inner);
+        }
+        xk_lm_free(whole);
+    }
+}
+
 TEST_CASE("files that are not whole models are refused", "[lm]") {
     std::vector<char> model = slurp(kVi);
     REQUIRE(model.size() > 1000);
@@ -186,3 +232,4 @@ TEST_CASE("a model in the first format is refused", "[lm]") {
     model[7] = '1';  // "XKLM0001": no shape index, other offsets
     CHECK(xk_lm_open(spit("v1.xklm", model).c_str()) == nullptr);
 }
+

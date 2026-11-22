@@ -11,6 +11,9 @@ private fun List<String>.utf8() = Array(size) { this[it].utf8() }
 
 /** A language model (.xklm), memory-mapped. */
 class Model private constructor(internal val handle: Long) : AutoCloseable {
+    /** How many words it knows. */
+    val vocabulary: Int get() = Native.lmVocabSize(handle)
+
     override fun close() = Native.lmFree(handle)
 
     companion object {
