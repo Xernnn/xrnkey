@@ -157,14 +157,18 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /**
      * The strip for a word finished with its marks: what may follow it, as phrases that start
      * with it ("bạn" -> bạn bè, bạn gái, bạn ấy), its other tones and the longer words it may
-     * still become ("khôn" -> không), ranked by how likely the whole text is in context, the best
-     * in the middle. The word itself only when there is nothing else: Space commits it anyway.
+     * still become ("khôn" -> không), ranked by how likely the whole text is in context (a
+     * sentence's start counting little: [following]), the best in the middle. The word itself
+     * only when there is nothing else: Space commits it anyway.
      */
     private fun continued(t: Typist, m: Models, ctx: List<String>, word: String, score: Float, guesses: List<Guess>): Strip {
-        val follow = m.predictScored(ctx + word.lowercase(), CONTINUATIONS)
+        val follow = following(m, ctx + word.lowercase(), CONTINUATIONS)
             .filter { (w, p) -> p >= FOLLOWS && w.first().isLetter() && !hidden("$word $w") }
             .map { (w, p) -> Guess("$word $w", score + p, Kind.PAIR, word, false) }
-        val pool = (follow + guesses).filter { it.text != word }
+        // The guesses pair the word with the word likeliest after it with the sentence's start in
+        // full; `follow` has that pair, ranked as the others are.
+        val own = guesses.filterNot { it.kind == Kind.PAIR && it.base == word }
+        val pool = (follow + own).filter { it.text != word }
             .sortedByDescending { it.score }.distinctBy { it.text }.toMutableList()
         centre = word
         val middle = pool.removeFirstOrNull()?.text ?: word
@@ -179,6 +183,29 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word && !centreEmoji,
             extra = pool.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
+    }
+
+    /**
+     * The words likeliest to follow `ctx`, with their log10 probabilities, likeliest first: as
+     * [Models.predictScored] ranks them, but at a sentence's start ("<s>" first) a word's chance
+     * there counts for [START_WEIGHT] of it, the rest its chance after the same words anywhere.
+     * The models learnt how sentences start from written text, where "Làm thế nào", "Ngày nay"
+     * and "Bạn có thể" open them, and in full that continued the first word typed that way
+     * ("làm thế", "ngày nay", "nhà máy") before the phrases it makes anywhere ("làm việc",
+     * "ngày càng", "nhà nước").
+     */
+    private fun following(m: Models, ctx: List<String>, max: Int): List<Pair<String, Float>> {
+        val here = m.predictScored(ctx, max)
+        if (ctx.size < 2 || ctx[0] != "<s>") return here
+        val anywhere = ctx.drop(1)
+        val there = m.predictScored(anywhere, max)
+        // A word one list leaves out is scored there as the models score it (without the owner's
+        // own words, which lift a word after the same word before in both lists alike).
+        fun chance(list: List<Pair<String, Float>>, c: List<String>, w: String): Double =
+            10.0.pow(list.firstOrNull { it.first == w }?.second?.toDouble() ?: both(m.languages(c, w)))
+        return (here + there).map { it.first }.distinct().map { w ->
+            w to log10(START_WEIGHT * chance(here, ctx, w) + (1 - START_WEIGHT) * chance(there, anywhere, w)).toFloat()
+        }.sortedByDescending { it.second }.take(max)
     }
 
     /** For each slot, how much of it is the word in the field: "bạn" of "bạn bè" while "bạn" is typed. */
@@ -333,11 +360,10 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
      * follows anything ("có", "đã") stays on its own.
      */
     private fun goesWith(m: Models, last: String, next: String): Boolean {
-        fun sum(p: Pair<Float, Float>) = log10(10.0.pow(p.first.toDouble()) + 10.0.pow(p.second.toDouble()))
         val after = m.languages(listOf(last.lowercase()), next)
         if (after.first < after.second) return false
-        val p = sum(after)
-        return p >= GOES_WITH && p - sum(m.languages(listOf("<p>"), next)) >= GOES_WITH_LIFT
+        val p = both(after)
+        return p >= GOES_WITH && p - both(m.languages(listOf("<p>"), next)) >= GOES_WITH_LIFT
     }
 
     /**
@@ -413,8 +439,17 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         private const val FINISHED = -6.0f
 
         /** Words asked for after a finished word, and how likely each must be to follow it. */
-        private const val CONTINUATIONS = 6
+        private const val CONTINUATIONS = 10
         private const val FOLLOWS = -3.0f
+
+        /**
+         * How much a sentence's start counts in what follows a word finished there ([following]).
+         * Chosen against Laban Key's continuations on half of the study's words and checked on
+         * the other half: 0.05 to 0.15 did about as well, the start in full (1) or not at all (0)
+         * worse. The next words after a Space keep the start in full: there it helped after
+         * Vietnamese words but not after English ones.
+         */
+        private const val START_WEIGHT = 0.075
 
         /**
          * log10: how likely a next word must be after the word before to show with it, and how
@@ -430,6 +465,10 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         private const val PHRASE = 4
 
         private fun words(line: String): List<String> = line.split(' ').filter { it.isNotEmpty() }
+
+        /** log10 of a word's chance as Vietnamese and as English together ([Models.languages]). */
+        private fun both(p: Pair<Float, Float>): Double = log10(10.0.pow(p.first.toDouble()) + 10.0.pow(p.second.toDouble()))
+
         private const val PAIRED = 3
         private const val COMPLETIONS = 3
 

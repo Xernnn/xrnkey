@@ -250,7 +250,7 @@ What the slots hold, by situation:
 | `meeting` typed | `meetings` | `meeting` | `meet` |
 | `ko` typed, with shortcut `ko` → `không` | `ko` | `không` | — |
 | `list` typed after `the` | `lít` | `list` | `lists` |
-| `banj` typed (`bạn`, finished with its marks; Space commits `bạn`) | `bạn đã` | `bạn có` (`bạn` grey) | another `bạn …` |
+| `banj` typed (`bạn`, finished with its marks; Space commits `bạn`) | `bạn sẽ` | `bạn có` (`bạn` grey) | another `bạn …` |
 | just after Space, following `không` | `có` | `được` | `phải` |
 | just after Space, following `một` | `trong` | `một số` (`một` grey) | `người` |
 | field empty, nothing typed | the tool row instead |  |  |
