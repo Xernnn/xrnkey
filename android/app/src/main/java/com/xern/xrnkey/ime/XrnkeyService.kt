@@ -30,6 +30,7 @@ import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EnterAction
 import com.xern.xrnkey.keyboard.KeyboardFrame
 import com.xern.xrnkey.keyboard.KeyboardView
+import com.xern.xrnkey.keyboard.Layouts
 import com.xern.xrnkey.keyboard.Page
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.keyboard.Shift
@@ -172,7 +173,9 @@ class XrnkeyService :
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applyOptions(Options.load(prefs()))
-        typist.raw = isPassword(info)
+        // Numbers, PINs, phone numbers and dates get a pad; what is typed there goes in as it is.
+        val home = Layouts.pageFor(info.inputType)
+        typist.raw = isPassword(info) || home.isPad
         // No auto-correct where words are addresses, not language.
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
@@ -180,7 +183,9 @@ class XrnkeyService :
         searchQuery = null
         showKeys()
         keyboard?.apply {
-            page = Page.LETTERS
+            this.home = home
+            pad = Layouts.padFor(info.inputType, resources.configuration.locales[0])
+            page = home
             shift = Shift.OFF
             enterAction = enterActionOf(info)
             // The number row on Auto: shown in portrait, left out in landscape.

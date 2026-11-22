@@ -84,6 +84,16 @@ class PanelHeightTest {
             k.page = page
             assertEquals("$page", letters, height(frame))
         }
+        // The pads of number, PIN, phone and date fields.
+        for (type in listOf(
+            InputType.TYPE_CLASS_NUMBER,
+            InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD,
+            InputType.TYPE_CLASS_PHONE,
+            InputType.TYPE_CLASS_DATETIME,
+        )) {
+            s.onStartInputView(EditorInfo().apply { inputType = type }, false)
+            assertEquals("pad for $type", letters, height(frame))
+        }
         s.onDestroy()
     }
 
