@@ -54,6 +54,7 @@ abstract class BundleModels : DefaultTask() {
     @get:Internal abstract val realDir: DirectoryProperty
     @get:Internal abstract val testDir: DirectoryProperty
     @get:InputFile abstract val emojiIndex: RegularFileProperty
+    @get:InputFile abstract val emojiKeywords: RegularFileProperty
     @get:Input abstract val release: Property<Boolean>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
@@ -63,6 +64,7 @@ abstract class BundleModels : DefaultTask() {
         out.deleteRecursively()
         out.mkdirs()
         emojiIndex.get().asFile.copyTo(out.resolve("emoji-index.tsv"))
+        emojiKeywords.get().asFile.copyTo(out.resolve("emoji-keywords.tsv"))
         val real = realDir.get().asFile
         val vi = real.resolve("vi-phone.xklm")
         val en = real.resolve("en.xklm")
@@ -175,13 +177,16 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             all { test ->
-                // The engine and the test models are inputs: the tests run again when the core
-                // changes, not only when the Kotlin does.
+                // The engine, the test models and the emoji data are inputs: the tests run again
+                // when the core or its data change, not only when the Kotlin does.
                 test.inputs.files(buildHost).withPropertyName("hostEngine")
+                test.inputs.files(repoDir.resolve("data/emoji/emoji-index.tsv"), repoDir.resolve("data/emoji/keywords.tsv"))
+                    .withPropertyName("emojiData")
                 test.systemProperty("java.library.path", hostDir.resolve("jni").path)
                 test.systemProperty("xrnkey.testModels", hostDir.resolve("lm").path)
                 test.systemProperty("xrnkey.realModels", modelDir.path)
                 test.systemProperty("xrnkey.emojiIndex", repoDir.resolve("data/emoji/emoji-index.tsv").path)
+                test.systemProperty("xrnkey.emojiKeywords", repoDir.resolve("data/emoji/keywords.tsv").path)
                 (findProperty("xrnkey.shots") as String?)?.let { test.systemProperty("xrnkey.shots", it) }
                 test.maxHeapSize = "1536m"
                 // A native library binds to one class loader: the Robolectric tests and the plain
@@ -200,6 +205,7 @@ androidComponents {
         val bundle = tasks.register<BundleModels>("bundle${name}Models") {
             realDir.set(modelDir)
             emojiIndex.set(repoDir.resolve("data/emoji/emoji-index.tsv"))
+            emojiKeywords.set(repoDir.resolve("data/emoji/keywords.tsv"))
             testDir.set(hostDir.resolve("lm"))
             this.release.set(release)
             if (!release && !modelDir.resolve("vi-phone.xklm").isFile) dependsOn(buildHost)
