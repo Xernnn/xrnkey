@@ -158,6 +158,25 @@ class StripMakerTest {
         }
     }
 
+    /** The part of a slot already in the field is drawn grey, as Laban Key draws it. */
+    @Test
+    fun thePartAlreadyTypedIsGrey() {
+        TestModels.test().use { m ->
+            val shown = strip(m, "dduowcj").shown
+            shown.slots().forEachIndexed { i, text ->
+                assertEquals(shown.slots().toString(), if (text != null && text.startsWith("được ")) 4 else 0, shown.grey.getOrElse(i) { 0 })
+            }
+            assertTrue(shown.grey.contains(4))
+        }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            // xịn | xin lỗi | xinh: the "xin" of "xin lỗi" is what was typed; "cảm ơn" for "cam" is
+            // a reading, none of it typed.
+            assertEquals(listOf(0, 3, 0), strip(m, "xin").shown.grey)
+            assertEquals(0, strip(m, "cam").shown.grey.getOrElse(1) { 0 })
+        }
+    }
+
     /** `keys` and Space end as `want`: the strip changes nothing Space does. */
     private fun typedSpace(m: TestModels.Opened, keys: String, want: String) {
         val typed = strip(m, keys)

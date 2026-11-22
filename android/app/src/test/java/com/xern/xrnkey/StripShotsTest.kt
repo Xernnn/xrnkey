@@ -33,6 +33,7 @@ class StripShotsTest {
             Triple("off-biet", "biet", Typist.TONES_OFF),
             Triple("phrase-toi-khong-biet", "toi khong biet", Typist.TONES_OFF),
             Triple("always-khong", "khong", Typist.TONES_ALWAYS),
+            Triple("finished-ban", "banj", Typist.TONES_OFF),
         )
         TestModels.best().use { m ->
             for ((name, keys, mode) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {

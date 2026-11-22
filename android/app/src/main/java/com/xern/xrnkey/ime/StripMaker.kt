@@ -136,7 +136,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val centreEmoji = offered[1]?.emoji == true
         return Strip.Candidates(
             offered[0]?.text, offered[1]?.text, offered[2]?.text, more = rest.isNotEmpty(), bold = bold && !centreEmoji,
-            extra = rest.map { it.text },
+            extra = rest.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
     }
 
@@ -173,9 +173,13 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val centreEmoji = offered[1]?.emoji == true
         return Strip.Candidates(
             offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word && !centreEmoji,
-            extra = pool.map { it.text },
+            extra = pool.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
     }
+
+    /** For each slot, how much of it is the word in the field: "bạn" of "bạn bè" while "bạn" is typed. */
+    private fun greys(word: String, slots: List<String?>): List<Int> =
+        slots.map { if (it != null && it.length > word.length + 1 && it.startsWith("$word ")) word.length else 0 }
 
     /**
      * The middle for letters typed without marks, which Space keeps, weighed by the models:
