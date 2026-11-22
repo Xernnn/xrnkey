@@ -1,6 +1,5 @@
 package com.xern.xrnkey
 
-import com.xern.xrnkey.keyboard.Emoticons
 import com.xern.xrnkey.keyboard.KeyKind
 import com.xern.xrnkey.keyboard.Layouts
 import com.xern.xrnkey.keyboard.Page
@@ -261,11 +260,11 @@ class LayoutTest {
     }
 
     @Test
-    fun theNumberRowsSecondPageIsTenEmoticons() {
+    fun theNumberRowsSecondPageIsTenEmoji() {
         val row = Layouts.rows(Page.LETTERS, emoticons = true)[0].keys
         assertEquals(10, row.size)
         assertTrue(row.all { it.kind == KeyKind.EMOTICON })
-        assertEquals(Emoticons.list.take(10), row.map { it.label })
+        assertEquals("😂 😊 😍 😫 😢 😞 😨 😁 👌 👍", row.joinToString(" ") { it.label })
         assertEquals("qwertyuiop", Layouts.rows(Page.LETTERS, emoticons = true)[1].keys.joinToString("") { it.label })
         // Without the number row there is no second page to show.
         assertEquals("qwertyuiop", Layouts.rows(Page.LETTERS, numberRow = false, emoticons = true)[0].keys.joinToString("") { it.label })

@@ -95,8 +95,11 @@ object Layouts {
      */
     val PUNCTUATION = ", ? ! ' \" : - ; ( ) / @ & % + #".split(' ')
 
-    /** The number row's second page: ten of the emoticon tab's own, first ten. */
-    val EMOTICON_ROW: List<String> get() = Emoticons.list.take(10)
+    /**
+     * The number row's second page: ten emoji, the ones Laban Key's number row has by default.
+     * The emoticon tab keeps the text emoticons.
+     */
+    val EMOTICON_ROW: List<String> = listOf("😂", "😊", "😍", "😫", "😢", "😞", "😨", "😁", "👌", "👍")
 
     private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false) =
         s.mapIndexed { i, c ->
