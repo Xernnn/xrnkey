@@ -110,9 +110,22 @@ class Typist(
     /** The words restored since the last pause, oldest first; look-back may rewrite them. */
     private val run = ArrayList<RunWord>()
 
-    /** What the last restoration changed, for Backspace right after it. */
-    private data class Undo(val before: String, val after: String)
+    /**
+     * What the last restoration changed, for Backspace right after it: `after` goes, `before`
+     * comes back. After a Space, `reopen` holds the keys of the word Space changed: Backspace
+     * takes the change and the space back and opens the word again, as typed.
+     */
+    private data class Undo(val before: String, val after: String, val reopen: String? = null)
     private var undo: Undo? = null
+
+    /**
+     * The keys of a word Backspace opened again after Space changed it: Space keeps it as typed,
+     * until the word changes.
+     */
+    private var refused: String? = null
+
+    /** The word in progress is one Backspace opened again: Space and Enter keep it as typed. */
+    private fun keptAsTyped(): Boolean = refused != null && refused == keys()
 
     /** The last key was a Space that ended a word (for the double-Space full stop). */
     private var spaceAfterWord = false
@@ -182,6 +195,7 @@ class Typist(
      * with marks when it ends ("meet" shows "mêt" and ends "meet").
      */
     fun preview(): String? {
+        if (keptAsTyped()) return null
         expansion()?.let { return it }
         if (!restorable()) {
             if (raw || composing.isEmpty()) return null
@@ -250,6 +264,7 @@ class Typist(
         val wasSpaceAfterWord = spaceAfterWord
         spaceAfterWord = false
         undo = null
+        if (!isSeparator(c)) refused = null  // the word changes: Space may change it again
         val s = state
         if (raw || s == null) {
             commit(c.toString())
@@ -261,14 +276,15 @@ class Typist(
             s.setContext(context())
             return
         }
-        if (isSeparator(c) && expansion() != null) {
+        if (isSeparator(c) && !keptAsTyped() && expansion() != null) {
             val shown = composing
+            val typed = keys()
             val e = expansion()!!
             commit(e + c)
             composing = ""
             s.reset()
             run.clear()
-            undo = Undo(shown + c, e + c)
+            undo = if (c == ' ') Undo("", e + c, reopen = typed) else Undo(shown + c, e + c)
             spaceAfterWord = c == ' '
             s.setContext(context())
             return
@@ -276,6 +292,7 @@ class Typist(
         if (isSeparator(c) && restorable()) {
             val typed = keys()
             when {
+                keptAsTyped() -> endAsTyped(c, null)
                 tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
                 tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> endRestored(c, lookBack = false)
                 else -> endAsTyped(c, wrongWordFix(typed))
@@ -308,7 +325,7 @@ class Typist(
         state?.reset()
         run.clear()
         if (fix != null) {
-            undo = Undo(shown + c, fix + c)
+            undo = if (c == ' ') Undo("", fix + c, reopen = shown) else Undo(shown + c, fix + c)
             plain.clear()
         } else {
             plain += shown
@@ -344,7 +361,11 @@ class Typist(
         }
         val before = oldPrior + typed + sep
         val after = priorNow + word + sep
-        undo = if (before != after) Undo(before, after) else null
+        undo = when {
+            before == after -> null
+            c == ' ' -> Undo(oldPrior, after, reopen = typed)
+            else -> Undo(before, after)
+        }
         run += RunWord(typed, word, sep)
         while (run.size > 2) run.removeAt(0)
         if (c != ' ' || !lookBack) run.clear()  // a pause or a sentence end: what came before stays
@@ -355,16 +376,23 @@ class Typist(
         spaceAfterWord = false
         val u = undo
         undo = null
+        refused = null
         val s = state
         if (raw || s == null) {
             editor.backspace()
             return
         }
         if (composing.isEmpty()) plain.clear()
-        // Right after a restoration: put back what was there.
+        // Right after a restoration: put back what was there. After a Space, the space goes too
+        // and the word is open again as it was typed ("teh␣" Backspace is "teh"), as Laban Key
+        // does; the next Space keeps it.
         if (u != null && composing.isEmpty() && replaceBefore(u.after, u.before)) {
             run.clear()
             s.setContext(context())
+            u.reopen?.let { keys ->
+                for (k in keys) apply(s.key(k.code))
+                refused = keys
+            }
             return
         }
         apply(s.key(TypingState.BACKSPACE)) {
@@ -423,8 +451,11 @@ class Typist(
                 val typed = keys()
                 val restore = tonesOnSpace == TONES_ALWAYS ||
                     tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed)
-                val r = if (restore) models!!.restoreRun(context(), listOf(typed), "</s>")?.last() ?: composing
-                else wrongWordFix(typed) ?: composing
+                val r = when {
+                    keptAsTyped() -> composing
+                    restore -> models!!.restoreRun(context(), listOf(typed), "</s>")?.last() ?: composing
+                    else -> wrongWordFix(typed) ?: composing
+                }
                 commit(r)
                 composing = ""
                 s.reset()
@@ -434,6 +465,7 @@ class Typist(
         }
         run.clear()
         plain.clear()
+        refused = null
         editor.enter()
         tail.append('\n')
         pending.append('\n')
@@ -459,6 +491,7 @@ class Typist(
         s.reset()
         run.clear()
         undo = null
+        refused = null
         spaceAfterWord = false
         learnSettled(all = true)
     }
@@ -476,6 +509,7 @@ class Typist(
         composing = ""
         run.clear()
         undo = null
+        refused = null
         spaceAfterWord = false
         tail.clear()
         val before = editor.textBefore(TAIL)
@@ -541,6 +575,7 @@ class Typist(
     }
 
     private fun commit(text: String, learnable: Boolean = true) {
+        refused = null
         editor.commit(text)
         tail.append(text)
         if (tail.length > TAIL) {
@@ -597,7 +632,7 @@ class Typist(
         editor.deleteBefore(old.codePointCount(0, old.length))
         if (tail.endsWith(old)) tail.setLength(tail.length - old.length)
         if (pending.endsWith(old)) pending.setLength(pending.length - old.length)
-        commit(new)
+        if (new.isNotEmpty()) commit(new)
         return true
     }
 

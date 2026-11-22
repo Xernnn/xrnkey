@@ -102,6 +102,28 @@ class LabanParityTest {
         assertEquals("1 2 ", typed("1 2", m))
     }
 
+    /** Laban: "teh␣⌫" takes the fix and the space back, and the word is open as typed. */
+    @Test
+    fun backspaceAfterASpaceFixOpensTheWordAgain() = TestModels.test().use { m ->
+        TypingState().use { s ->
+            s.useModels(m.models)
+            val f = FakeEditor("ok ")
+            val t = Typist(s, f, m.models).also { it.reset() }
+            t.text("teh ")
+            assertEquals("ok the ", f.text)
+            t.backspace()
+            assertEquals("ok teh", f.text)
+            assertEquals("teh", f.composing)
+            t.backspace()
+            assertEquals("ok te", f.text)  // the word in progress loses a letter
+            t.text("h ")
+            assertEquals("ok the ", f.text)  // typed again, it is fixed again
+            t.backspace()
+            t.text(" ")
+            assertEquals("ok teh ", f.text)  // Space after the undo keeps what was typed
+        }
+    }
+
     @Test
     fun onlyWhenNeededTonesTheWordsThatArentWordsAsTheyStand() {
         assumeTrue(TestModels.realAvailable)
