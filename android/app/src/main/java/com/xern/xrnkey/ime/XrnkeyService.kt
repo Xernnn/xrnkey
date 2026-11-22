@@ -58,7 +58,9 @@ class XrnkeyService :
     private var models: Models? = null
     private var emoji: EmojiIndex? = null
     private var state: TypingState? = null
-    private lateinit var typist: Typist
+    /** Internal: the tests read its context. */
+    internal lateinit var typist: Typist
+        private set
     private var options = Options()
     private lateinit var strip: StripMaker
     private var keyboard: KeyboardView? = null
@@ -71,6 +73,13 @@ class XrnkeyService :
 
     /** Where the word in progress starts in the field, as the editor last said (-1: not known). */
     private var composingStart = -1
+
+    /**
+     * Where this keyboard's own edits put the cursor, oldest first, until the editor reports
+     * them. Any other selection update means the field changed under the typist (an app clears
+     * its box after Send, select-all and delete, a tap elsewhere): it reads the field again.
+     */
+    private val expected = ArrayDeque<Int>()
 
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
@@ -199,7 +208,8 @@ class XrnkeyService :
         // No auto-correct where words are addresses, not language.
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
-        typist.reset()
+        expected.clear()
+        typist.reset(info.initialSelStart)
         searchQuery = null
         showKeys()
         keyboard?.apply {
@@ -235,6 +245,20 @@ class XrnkeyService :
         candidatesStart: Int, candidatesEnd: Int,
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        // A report of this keyboard's own edits, on time or late: nothing else moved.
+        val cursor = typist.cursor()
+        if (newSelStart == newSelEnd && cursor >= 0) {
+            if (newSelStart == cursor) {
+                expected.clear()
+                if (candidatesStart >= 0) composingStart = candidatesStart
+                return
+            }
+            val ours = expected.indexOf(newSelStart)
+            if (ours >= 0) {
+                repeat(ours + 1) { expected.removeFirst() }
+                return
+            }
+        }
         // The cursor left the word in progress (a tap elsewhere): the word ends where it is.
         // Some editors (Compose's text fields) report an update without the composing region
         // while the cursor is still at the end of the word: that is not a move, and ending the
@@ -251,7 +275,38 @@ class XrnkeyService :
         if (typist.shown.isNotEmpty() && !inWord) {
             composingStart = -1
             typist.finish()
-            showStrip()
+            refresh(newSelStart)  // the context is what is before the cursor there
+            return
+        }
+        if (typist.shown.isNotEmpty()) return
+        // No word in progress, and the field changed in a way this keyboard's edits don't
+        // explain (an app cleared it after Send, select-all and delete, a tap elsewhere): what is
+        // before the cursor is read again, once.
+        if (cursor < 0 && newSelStart == newSelEnd) typist.anchorAt(newSelStart) else refresh(newSelStart)
+    }
+
+    /** The field changed under the typist: it reads what is before the cursor again. */
+    private fun refresh(cursor: Int) {
+        expected.clear()
+        typist.reset(cursor)
+        showStrip()
+    }
+
+    /**
+     * One edit of the field by this keyboard: one selection update from the editor, at the
+     * position the typist expects.
+     */
+    private inline fun edit(block: () -> Unit) {
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        try {
+            block()
+        } finally {
+            ic?.endBatchEdit()
+        }
+        typist.cursor().takeIf { it >= 0 }?.let {
+            expected.addLast(it)
+            while (expected.size > EXPECTED) expected.removeFirst()
         }
     }
 
@@ -263,7 +318,7 @@ class XrnkeyService :
             search(q + text)
             return
         }
-        typist.text(text)
+        edit { typist.text(text) }
         showStrip()
     }
 
@@ -273,7 +328,7 @@ class XrnkeyService :
             search(q.dropLast(1))
             return
         }
-        typist.backspace()
+        edit { typist.backspace() }
         showStrip()
     }
 
@@ -282,20 +337,22 @@ class XrnkeyService :
             onSearchClose()
             return
         }
-        typist.enter()
+        edit { typist.enter() }
         showStrip()
     }
 
     override fun onCandidate(slot: Int) {
         val pick = strip.pick(slot) ?: return
-        if (pick.emoji) {
-            strip.centre?.let { if (typist.shown.isNotEmpty()) typist.pick(it) }
-            typist.insert(pick.text)
-            memory.addRecent(pick.text)
-        } else if (pick.phrase != null) {
-            typist.pickPhrase(pick.phrase)
-        } else {
-            typist.pick(pick.text)
+        edit {
+            if (pick.emoji) {
+                strip.centre?.let { if (typist.shown.isNotEmpty()) typist.pick(it) }
+                typist.insert(pick.text)
+                memory.addRecent(pick.text)
+            } else if (pick.phrase != null) {
+                typist.pickPhrase(pick.phrase)
+            } else {
+                typist.pick(pick.text)
+            }
         }
         showStrip()
     }
@@ -391,7 +448,7 @@ class XrnkeyService :
     }
 
     override fun onEmoji(text: String) {
-        typist.insert(text)
+        edit { typist.insert(text) }
         memory.addRecent(text)
         emojiPanel?.recents = memory.recents()
     }
@@ -488,7 +545,7 @@ class XrnkeyService :
     }
 
     override fun onPaste(text: String) {
-        typist.insert(text)
+        edit { typist.insert(text) }
     }
 
     override fun onPin(text: String, pinned: Boolean) {
@@ -572,6 +629,9 @@ class XrnkeyService :
          */
         internal var modelAssets: ((String) -> AssetFileDescriptor)? = null
         const val CLIPS = "clips.tsv"
+
+        /** Edits whose selection updates may still be on their way. */
+        private const val EXPECTED = 32
         private const val MAX_CLIP = 20_000
 
         fun isPassword(info: EditorInfo): Boolean {
