@@ -2,8 +2,13 @@ package com.xern.xrnkey.keyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
+import android.util.Log
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.widget.FrameLayout
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -19,12 +24,34 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
     var palette: Palette = Palette.DARK
         set(value) { field = value; setBackgroundColor(value.background) }
 
+    /**
+     * The window's own insets, from the window manager rather than the views: they don't
+     * depend on the views being given them. Swappable for the tests.
+     */
+    var metricsInsets: () -> Insets? = {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                val wm = context.getSystemService(WindowManager::class.java)
+                val types = WindowInsets.Type.navigationBars() or WindowInsets.Type.tappableElement() or
+                    WindowInsets.Type.mandatorySystemGestures()
+                wm?.currentWindowMetrics?.windowInsets?.getInsetsIgnoringVisibility(types)?.let { Insets.toCompatInsets(it) }
+            } catch (e: RuntimeException) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    /** The last insets the views were given, so a refresh can weigh them again. */
+    private var viewInsets: Insets = Insets.NONE
+
     init {
         setBackgroundColor(palette.background)
-        // Every dispatch, the first and every change after it: on the phone the first show
-        // could come before the window's insets, and the band has to follow when they arrive.
+        // Every dispatch, the first and every change after it.
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
-            setBand(insets)
+            viewInsets = insets.getInsets(BAND)
+            refreshBand()
             WindowInsetsCompat.CONSUMED
         }
     }
@@ -34,7 +61,7 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
      * fits the system windows: it took the insets and padded itself, so the keyboard got none,
      * and the bottom row could sit on the gesture bar (0.3.1). The band is the keyboard's, filled
      * in its colour: those views stop fitting, and the insets come here instead. Called when the
-     * frame joins the window and when a field starts.
+     * frame joins the window, when a field starts and when the keyboard shows.
      */
     fun claimInsets() {
         var p = parent
@@ -47,9 +74,10 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
             }
             p = p.parent
         }
-        // What the window has now, in case it came before this frame could take it.
-        ViewCompat.getRootWindowInsets(this)?.let { setBand(it) }
+        refreshBand()
         if (changed) ViewCompat.requestApplyInsets(this)
+        // Once more after the next layout, when the window has settled.
+        post { refreshBand() }
     }
 
     override fun onAttachedToWindow() {
@@ -57,10 +85,23 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
         claimInsets()
     }
 
-    private fun setBand(insets: WindowInsetsCompat) {
-        val bars = insets.getInsets(BAND)
-        if (bars.left != paddingLeft || bars.right != paddingRight || bars.bottom != paddingBottom || paddingTop != 0) {
-            setPadding(bars.left, 0, bars.right, bars.bottom)
+    /**
+     * The band, from everything that knows it: the insets the views were given, the window's
+     * own (root) insets and the window manager's. On the phone the views' could be missing
+     * (0.4.0: no band until the keyboard was switched away and back); the largest wins.
+     */
+    fun refreshBand() {
+        val root = ViewCompat.getRootWindowInsets(this)?.getInsets(BAND) ?: Insets.NONE
+        val metrics = metricsInsets() ?: Insets.NONE
+        val band = Insets.max(Insets.max(viewInsets, root), metrics)
+        if (band.left != paddingLeft || band.right != paddingRight || band.bottom != paddingBottom || paddingTop != 0) {
+            val from = when (band.bottom) {
+                viewInsets.bottom -> "view"
+                root.bottom -> "root"
+                else -> "metrics"
+            }
+            Log.i("xrnkey", "band ${paddingBottom} -> ${band.bottom} px (view ${viewInsets.bottom}, root ${root.bottom}, metrics ${metrics.bottom}: $from)")
+            setPadding(band.left, 0, band.right, band.bottom)
             requestLayout()
         }
     }
