@@ -59,6 +59,24 @@ class Typist(
     var doubleSpace = true
 
     /**
+     * What Space and punctuation do to a word typed without marks. [TONES_OFF] keeps it as it
+     * was typed, as Laban Key does: the accented reading is in the strip for a tap.
+     * [TONES_WHEN_NEEDED] adds the tones only to a word that isn't one as it stands ("khong",
+     * "duoc"; never "ong", "ban", or an English word). [TONES_ALWAYS] restores every word,
+     * and may rewrite the two before it (look-back).
+     */
+    var tonesOnSpace = TONES_OFF
+
+    /**
+     * Auto-correct of words wrong in both languages ("teh" -> "the"): 0 off, 1 flexible
+     * (a confident fix only), 2 strong (a likelier fix will do).
+     */
+    var correctWrong = 1
+
+    /** The words of this sentence committed as typed without marks since the last pause. */
+    private val plain = ArrayList<String>()
+
+    /**
      * Where the words typed are learned (null: nowhere). Only settled words are: a word is
      * learned once look-back can no longer change it, with the word before it. Never in
      * password, address or incognito fields ([learnHere]), never from pasted text.
@@ -130,16 +148,72 @@ class Typist(
         return n >= 2 && tail[n - 1] == ' ' && tail[n - 2] != ' ' && !tail[n - 2].isWhitespace()
     }
 
+    /** Nothing typed yet in the sentence: the field's start, or after ". ", "! ", "? " or a new line. */
+    fun atSentenceStart(): Boolean {
+        if (composing.isNotEmpty() || raw) return false
+        val t = tail.toString()
+        if (t.isBlank()) return wholeField
+        if (t.last() == '\n') return true
+        val trimmed = t.trimEnd()
+        return t.length > trimmed.length && trimmed.last() in ".!?"
+    }
+
     /** The expansion of the word in progress, if it is an abbreviation. */
     fun expansion(): String? =
         if (composing.isEmpty() || raw || !autoCorrect) null else shortcuts?.expand(keys())
 
-    /** What Space would commit for the word in progress: its expansion, or its restoration. */
+    /** What Space would commit for the word in progress, when it isn't what was typed. */
     fun preview(): String? {
         expansion()?.let { return it }
         if (!restorable()) return null
-        val prior = run.takeLast(2)
+        val typed = keys()
+        return when {
+            tonesOnSpace == TONES_ALWAYS -> reading()
+            tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> reading(lookBack = false)
+            else -> wrongWordFix(typed)
+        }
+    }
+
+    /** The best accented reading of the word in progress, in context (and with look-back). */
+    fun reading(lookBack: Boolean = true): String? {
+        if (!restorable()) return null
+        val prior = if (lookBack) run.takeLast(2) else emptyList()
         return models!!.restoreRun(context(prior.size), prior.map { it.typed } + keys())?.last()
+    }
+
+    /**
+     * The words typed without marks before the word in progress, and with it, accented as one
+     * run: ("toi khong biet", "tôi không biết"). Null when there is no such run, or it reads
+     * the same.
+     */
+    fun phrase(): Pair<String, String>? {
+        if (plain.isEmpty() || !restorable()) return null
+        val typed = plain + keys()
+        val restored = models!!.restoreRun(context(plain.size), typed) ?: return null
+        if (restored == typed) return null
+        return (plain.joinToString(" ") + " " + composing) to restored.joinToString(" ")
+    }
+
+    /** The phrase in place of the run it was read from, and a space. Backspace puts the run back. */
+    fun pickPhrase(phrase: Pair<String, String>) {
+        val (old, new) = phrase
+        commit(composing, learnable = false)
+        composing = ""
+        state?.reset()
+        if (replaceBefore(old, new)) {
+            commit(" ")
+            undo = Undo("$old ", "$new ")
+        }
+        plain.clear()
+        run.clear()
+        spaceAfterWord = true
+        state?.setContext(context())
+    }
+
+    private fun wrongWordFix(typed: String): String? {
+        if (correctWrong <= 0 || !autoCorrect) return null
+        val fix = models?.fixWrongWord(typed, strong = correctWrong >= 2) ?: return null
+        return if (typed.firstOrNull()?.isUpperCase() == true) fix.replaceFirstChar { it.uppercase() } else fix
     }
 
     /** Typed text: each character is a key. */
@@ -179,7 +253,12 @@ class Typist(
             return
         }
         if (isSeparator(c) && restorable()) {
-            endRestored(c)
+            val typed = keys()
+            when {
+                tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
+                tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> endRestored(c, lookBack = false)
+                else -> endAsTyped(c, wrongWordFix(typed))
+            }
             spaceAfterWord = c == ' '
             return
         }
@@ -188,14 +267,38 @@ class Typist(
         apply(r) { commit(c.toString()) }
         // A word the core finished (typed with marks), or a key that is not a letter, ends the
         // run; the letters of the next word do not.
-        if (r.commit.isNotEmpty() || !r.consumed || !c.isLetter()) run.clear()
+        if (r.commit.isNotEmpty() || !r.consumed || !c.isLetter()) {
+            run.clear()
+            plain.clear()
+        }
         spaceAfterWord = c == ' ' && hadWord
     }
 
+    /**
+     * Space or punctuation ends a word typed without marks and kept: as typed, or as the fix
+     * of a word wrong in both languages (Backspace right after puts back what was typed).
+     */
+    private fun endAsTyped(c: Char, fix: String?) {
+        val shown = composing
+        commit((fix ?: shown) + c)
+        composing = ""
+        state?.reset()
+        run.clear()
+        if (fix != null) {
+            undo = Undo(shown + c, fix + c)
+            plain.clear()
+        } else {
+            plain += shown
+        }
+        if (c != ' ') plain.clear()
+        state?.setContext(context())
+    }
+
     /** Space or punctuation ends a word typed without marks: restore it, with look-back. */
-    private fun endRestored(c: Char) {
+    private fun endRestored(c: Char, lookBack: Boolean = true) {
+        plain.clear()
         val typed = keys()
-        val prior = run.takeLast(2)
+        val prior = if (lookBack) run.takeLast(2) else emptyList()
         val next = when (c) {
             ',', ';', ':' -> "<p>"
             '.', '!', '?' -> "</s>"
@@ -221,7 +324,7 @@ class Typist(
         undo = if (before != after) Undo(before, after) else null
         run += RunWord(typed, word, sep)
         while (run.size > 2) run.removeAt(0)
-        if (c != ' ') run.clear()  // a pause or a sentence end: what came before stays
+        if (c != ' ' || !lookBack) run.clear()  // a pause or a sentence end: what came before stays
         state?.setContext(context())
     }
 
@@ -234,6 +337,7 @@ class Typist(
             editor.backspace()
             return
         }
+        if (composing.isEmpty()) plain.clear()
         // Right after a restoration: put back what was there.
         if (u != null && composing.isEmpty() && replaceBefore(u.after, u.before)) {
             run.clear()
@@ -255,7 +359,11 @@ class Typist(
         val s = state
         if (!raw && s != null) {
             if (restorable()) {
-                val r = models!!.restoreRun(context(), listOf(keys()), "</s>")?.last() ?: composing
+                val typed = keys()
+                val restore = tonesOnSpace == TONES_ALWAYS ||
+                    tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed)
+                val r = if (restore) models!!.restoreRun(context(), listOf(typed), "</s>")?.last() ?: composing
+                else wrongWordFix(typed) ?: composing
                 commit(r)
                 composing = ""
                 s.reset()
@@ -264,6 +372,7 @@ class Typist(
             }
         }
         run.clear()
+        plain.clear()
         editor.enter()
         tail.append('\n')
         pending.append('\n')
@@ -295,6 +404,7 @@ class Typist(
 
     /** A new field: nothing is in progress; what is before the cursor is the field's text. */
     fun reset() {
+        plain.clear()
         learnSettled(all = true)
         state?.reset()
         composing = ""
@@ -312,6 +422,7 @@ class Typist(
 
     /** Text from a panel (an emoji, a clip): the word in progress ends as it is, then the text. */
     fun insert(text: String) {
+        plain.clear()
         if (composing.isNotEmpty()) finish()
         undo = null
         spaceAfterWord = false
@@ -324,6 +435,7 @@ class Typist(
 
     /** A candidate from the strip, in place of the word in progress, and a space. */
     fun pick(word: String) {
+        plain.clear()
         commit("$word ")
         composing = ""
         state?.reset()
@@ -404,16 +516,20 @@ class Typist(
         if (!r.consumed) passThrough()
     }
 
-    private companion object {
+    companion object {
         /** How much committed text is kept: enough for three words and where the sentence began. */
-        const val TAIL = 120
-        val WORD = Regex("[\\p{L}\\p{N}]+")
+        private const val TAIL = 120
+        private val WORD = Regex("[\\p{L}\\p{N}]+")
 
-        fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
+        private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
 
-        const val SENTENCE_END = ".!?\n"
+        private const val SENTENCE_END = ".!?\n"
+
+        const val TONES_OFF = 0
+        const val TONES_WHEN_NEEDED = 1
+        const val TONES_ALWAYS = 2
 
         /** Words kept back from learning: the look-back window (two) and the newest. */
-        const val SETTLE = 3
+        private const val SETTLE = 3
     }
 }

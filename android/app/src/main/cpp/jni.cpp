@@ -322,3 +322,34 @@ FN(jbyteArray, userList)(JNIEnv* env, jobject, jlong u) {
     std::free(list);
     return out;
 }
+
+// ---- what Space may change (core/plain.cpp) ------------------------------------------------------
+
+FN(jboolean, plainWord)(JNIEnv* env, jobject, jlong models, jbyteArray typed, jfloat ratio) {
+    return xk_plain_word(as<XKModels>(models), text_of(env, typed).c_str(), ratio) ? JNI_TRUE : JNI_FALSE;
+}
+
+FN(jbyteArray, fixWrongWord)(JNIEnv* env, jobject, jlong models, jbyteArray typed, jfloat margin) {
+    char* f = xk_fix_wrong_word(as<XKModels>(models), text_of(env, typed).c_str(), margin);
+    if (!f) return nullptr;
+    jbyteArray out = bytes(env, f);
+    std::free(f);
+    return out;
+}
+
+/* The words, and their log10 probabilities in `scores`. */
+FN(jobjectArray, predictScored)(JNIEnv* env, jobject, jlong models, jobjectArray context, jfloatArray scores) {
+    const auto c = strings(env, context);
+    const auto p = pointers(c);
+    const int max = scores ? env->GetArrayLength(scores) : 0;
+    std::vector<char*> got(static_cast<size_t>(max));
+    std::vector<float> lp(static_cast<size_t>(max));
+    const int n = max > 0 ? xk_predict_scored(as<XKModels>(models), p.data(), static_cast<int>(p.size()), got.data(), lp.data(), max) : 0;
+    std::vector<std::string> out;
+    for (int i = 0; i < n; ++i) {
+        out.emplace_back(got[static_cast<size_t>(i)]);
+        std::free(got[static_cast<size_t>(i)]);
+    }
+    if (n > 0) env->SetFloatArrayRegion(scores, 0, n, lp.data());
+    return byte_arrays(env, out);
+}

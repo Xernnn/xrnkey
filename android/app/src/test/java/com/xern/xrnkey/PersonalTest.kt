@@ -35,6 +35,7 @@ class PersonalTest {
                 s.useModels(m.models)
                 val f = FakeEditor()
                 val t = Typist(s, f, m.models)
+                t.tonesOnSpace = Typist.TONES_ALWAYS
                 PersonalWords().use { p ->
                     t.personal = p
                     t.reset()
@@ -62,6 +63,7 @@ class PersonalTest {
                 s.useModels(m.models)
                 PersonalWords().use { p ->
                     val t = Typist(s, FakeEditor(), m.models)
+                    t.tonesOnSpace = Typist.TONES_ALWAYS
                     t.personal = p
                     t.reset()
                     t.insert("chuyển khoản số tiền lớn")
@@ -146,6 +148,7 @@ class PersonalTest {
                     sc.import(sample, apply = true)
                     val f = FakeEditor()
                     val t = Typist(s, f, m.models)
+                    t.tonesOnSpace = Typist.TONES_ALWAYS
                     t.shortcuts = sc
                     t.reset()
                     t.text("Ko")

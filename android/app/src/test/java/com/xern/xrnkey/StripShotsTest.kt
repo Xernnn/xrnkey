@@ -1,0 +1,58 @@
+package com.xern.xrnkey
+
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.view.View.MeasureSpec
+import com.xern.xrnkey.engine.EmojiIndex
+import com.xern.xrnkey.engine.TypingState
+import com.xern.xrnkey.ime.StripMaker
+import com.xern.xrnkey.ime.Typist
+import com.xern.xrnkey.keyboard.KeyboardView
+import com.xern.xrnkey.keyboard.Palette
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import java.io.File
+
+/** The strip's states as the owner meets them: rendered from the real strip maker. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], qualifiers = "w432dp-h960dp-400dpi")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class StripShotsTest {
+    @Test
+    fun theStrips() {
+        val dir = File(System.getProperty("xrnkey.shots") ?: return)
+        dir.mkdirs()
+        val index = EmojiIndex.load(File(System.getProperty("xrnkey.emojiIndex")!!).readBytes())
+        val cases = listOf(
+            Triple("off-ong", "ong", Typist.TONES_OFF),
+            Triple("off-khong", "khong", Typist.TONES_OFF),
+            Triple("off-biet", "biet", Typist.TONES_OFF),
+            Triple("phrase-toi-khong-biet", "toi khong biet", Typist.TONES_OFF),
+            Triple("always-khong", "khong", Typist.TONES_ALWAYS),
+        )
+        TestModels.best().use { m ->
+            for ((name, keys, mode) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+                TypingState().use { s ->
+                    s.useModels(m.models)
+                    val t = Typist(s, FakeEditor(), m.models).also { it.tonesOnSpace = mode; it.reset() }
+                    t.text(keys)
+                    val v = KeyboardView(RuntimeEnvironment.getApplication())
+                    v.palette = palette
+                    v.strip = StripMaker(m.models, index).make(t)
+                    v.measure(MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+                    v.layout(0, 0, v.measuredWidth, v.measuredHeight)
+                    val bmp = Bitmap.createBitmap(v.width, v.height, Bitmap.Config.ARGB_8888)
+                    v.draw(Canvas(bmp))
+                    // The strip, and the top row of keys under it.
+                    val top = Bitmap.createBitmap(bmp, 0, 0, bmp.width, (bmp.height * 0.28f).toInt())
+                    File(dir, "strip-$name-$theme.png").outputStream().use { top.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                }
+            }
+        }
+        index?.close()
+    }
+}

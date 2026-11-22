@@ -17,20 +17,18 @@ class StripMakerTest {
             TypingState().use { s ->
                 s.useModels(m.models)
                 val f = FakeEditor("Tôi ")
-                val t = Typist(s, f, m.models).also { it.reset() }
+                val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
                 val strip = StripMaker(m.models)
                 assertTrue(strip.make(t) is Strip.Candidates)  // after "Tôi ": the next word
                 t.text("khong ")
                 t.text("duoc")
                 val shown = strip.make(t) as Strip.Candidates
                 assertEquals("được", shown.centre)
-                // The sides are the word's next readings (which ones depends on the model:
-                // with the real one "dược" is next).
+                // The left is the word's next reading (which one depends on the model: with the
+                // real one "dược"); the right, a likely next word with it, or another reading.
                 val readings = m.models.restoreWord(t.context(), "duoc", 6).map { it.text }
-                for (side in listOf(shown.left, shown.right)) {
-                    assertTrue(side in readings)
-                    assertTrue(side != shown.centre)
-                }
+                assertTrue(shown.left in readings && shown.left != shown.centre)
+                assertTrue(shown.right!! in readings || shown.right!!.startsWith("được "))
                 assertEquals(StripMaker.Pick("được"), strip.pick(1))
                 t.pick(strip.pick(1)!!.text)
                 assertEquals("Tôi không được ", f.text)  // Space restored "khong"
@@ -46,7 +44,12 @@ class StripMakerTest {
                 val f = FakeEditor()
                 val t = Typist(s, f).also { it.reset() }
                 t.text("dduowcj")
-                assertEquals(Strip.Candidates(null, "được", null), StripMaker(m.models).make(t))
+                val shown = StripMaker(m.models).make(t) as Strip.Candidates
+                assertEquals("được", shown.centre)
+                assertEquals(null, shown.left)
+                assertTrue(shown.bold)
+                // On the right, the word with what likely follows it ("được rồi"), if anything.
+                assertTrue(shown.right == null || shown.right!!.startsWith("được "))
             }
         }
     }
@@ -58,7 +61,7 @@ class StripMakerTest {
             TypingState().use { s ->
                 s.useModels(m.models)
                 val f = FakeEditor("Chúc mừng ")
-                val t = Typist(s, f, m.models).also { it.reset() }
+                val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
                 val strip = StripMaker(m.models, index)
                 t.text("sinh nhaatj")
                 val shown = strip.make(t) as Strip.Candidates
@@ -79,7 +82,7 @@ class StripMakerTest {
             TypingState().use { s ->
                 s.useModels(m.models)
                 val f = FakeEditor()
-                val t = Typist(s, f, m.models).also { it.reset() }
+                val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
                 val strip = StripMaker(m.models)
                 assertEquals(Strip.Tools, strip.make(t))  // an empty field: the tools
                 t.text("Tooi khoong ")

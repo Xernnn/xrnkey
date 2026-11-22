@@ -185,7 +185,14 @@ sealed interface Strip {
     data object Tools : Strip
 
     /** Up to three candidates; [centre] is what Space would commit. */
-    data class Candidates(val left: String?, val centre: String?, val right: String?, val more: Boolean = false) : Strip
+    data class Candidates(
+        val left: String?,
+        val centre: String?,
+        val right: String?,
+        val more: Boolean = false,
+        /** The centre is what Space will commit: drawn in bold. */
+        val bold: Boolean = true,
+    ) : Strip
 
     /** Emoji search: the query typed so far and the emoji it finds. */
     data class Search(val query: String, val results: List<String>) : Strip

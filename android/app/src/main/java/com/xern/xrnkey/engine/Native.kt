@@ -59,4 +59,7 @@ internal object Native {
     external fun shortcutsExpand(sc: Long, typed: ByteArray): ByteArray?
     external fun predict(models: Long, context: Array<ByteArray>, max: Int): Array<ByteArray>
     external fun userList(user: Long): ByteArray?
+    external fun plainWord(models: Long, typed: ByteArray, ratio: Float): Boolean
+    external fun fixWrongWord(models: Long, typed: ByteArray, margin: Float): ByteArray?
+    external fun predictScored(models: Long, context: Array<ByteArray>, scores: FloatArray): Array<ByteArray>
 }

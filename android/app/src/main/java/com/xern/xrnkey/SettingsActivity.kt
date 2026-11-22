@@ -566,9 +566,15 @@ class SettingsActivity : ComponentActivity() {
                 Toggle("Emoji", o.emojiSuggestions) { set(o.copy(emojiSuggestions = it)) }
             }
             Card {
-                Choice("Auto-correct", listOf("Off", "Flexible", "Strong"), o.correction) { set(o.copy(correction = it)) }
+                Choice("Add tones on space", listOf("Off", "When needed", "Always"), o.tonesOnSpace) {
+                    set(o.copy(tonesOnSpace = it))
+                }
+                Choice("Fix typos", listOf("Off", "Flexible", "Strong"), o.correction) { set(o.copy(correction = it)) }
+            }
+            Card {
                 Toggle("Non-Vietnamese as typed", o.keepForeign) { set(o.copy(keepForeign = it)) }
                 Toggle("Double space full stop", o.doubleSpace) { set(o.copy(doubleSpace = it)) }
+                Toggle("Auto-capitalise", o.autoCap) { set(o.copy(autoCap = it)) }
             }
         }
 

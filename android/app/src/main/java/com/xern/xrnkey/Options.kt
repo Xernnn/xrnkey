@@ -19,6 +19,13 @@ data class Options(
     val underline: Boolean = false,
     val suggestions: Boolean = true,
     val emojiSuggestions: Boolean = true,
+    /**
+     * What Space does to a word typed without marks (Typist.TONES_*): off by default, as Laban
+     * Key does. A new setting, so every install starts off (0.3 restored every word).
+     */
+    val tonesOnSpace: Int = 0,
+    /** Shift for a sentence's first letter. */
+    val autoCap: Boolean = false,
     /** The next word in the strip after a Space. */
     val nextWord: Boolean = true,
     val learn: Boolean = true,
@@ -51,6 +58,8 @@ data class Options(
             .putBoolean("underline", underline)
             .putBoolean("suggestions", suggestions)
             .putBoolean("emoji_suggestions", emojiSuggestions)
+            .putInt("tones_on_space", tonesOnSpace)
+            .putBoolean("auto_cap", autoCap)
             .putBoolean("learn", learn)
             .putInt("correction", correction)
             .putBoolean("keep_foreign", keepForeign)
@@ -87,6 +96,8 @@ data class Options(
                 underline = p.getBoolean("underline", d.underline),
                 suggestions = p.getBoolean("suggestions", d.suggestions),
                 emojiSuggestions = p.getBoolean("emoji_suggestions", d.emojiSuggestions),
+                tonesOnSpace = p.getInt("tones_on_space", d.tonesOnSpace).coerceIn(0, 2),
+                autoCap = p.getBoolean("auto_cap", d.autoCap),
                 learn = p.getBoolean("learn", d.learn),
                 correction = p.getInt("correction", d.correction).coerceIn(0, 2),
                 keepForeign = p.getBoolean("keep_foreign", d.keepForeign),
