@@ -65,6 +65,65 @@ class LabanParityTest {
         }
     }
 
+    /**
+     * Laban keeps chat abbreviations, letters with no vowel and contractions typed without the
+     * apostrophe as they were typed; xrnkey's English typo fix used to turn "thx" into "the",
+     * "fff" into "off", "strs" into "stars", "youre" into "your", "theyre" into "there" and
+     * "isnt" into "isn". They stay as typed, as on Laban, rather than gaining an apostrophe:
+     * "cant", "wont", "ill" and "well" are words too, so the apostrophe could not be added
+     * everywhere, and adding it to some would be a surprise.
+     */
+    private val chat = listOf("thx", "fff", "strs", "pls", "youre", "theyre", "isnt", "dont", "didnt", "weve", "rofl")
+
+    @Test
+    fun spaceKeepsChatAndContractionsAsTyped() {
+        TestModels.test().use { m -> for (w in chat) assertEquals(w, "$w ", typed(w, m)) }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            for (w in chat) assertEquals(w, "$w ", typed(w, m))
+            assertEquals("the ", typed("teh", m))  // a slip in a word is still fixed
+        }
+    }
+
+    /** Laban: a digit stops Telex for its word ("tooi2" stays); it used to end as "tôi2". */
+    @Test
+    fun aDigitKeepsTheWordAsTyped() = TestModels.test().use { m ->
+        assertEquals("tooi2 ", typed("tooi2", m))
+        assertEquals("tieeng1 ", typed("tieeng1", m))
+        assertEquals("abc123 ", typed("abc123", m))
+        assertEquals("2tiếng ", typed("2tieengs", m))  // a digit before the word is text of its own
+    }
+
+    /** Laban: two spaces after a number give ". ", as after a word; xrnkey used to keep "1  ". */
+    @Test
+    fun twoSpacesAfterANumberGiveAFullStop() = TestModels.test().use { m ->
+        assertEquals("1. ", typed("1 ", m))
+        assertEquals("Lúc 10. ", typed("Lusc 10 ", m))
+        assertEquals("1 2 ", typed("1 2", m))
+    }
+
+    /** Laban: "teh␣⌫" takes the fix and the space back, and the word is open as typed. */
+    @Test
+    fun backspaceAfterASpaceFixOpensTheWordAgain() = TestModels.test().use { m ->
+        TypingState().use { s ->
+            s.useModels(m.models)
+            val f = FakeEditor("ok ")
+            val t = Typist(s, f, m.models).also { it.reset() }
+            t.text("teh ")
+            assertEquals("ok the ", f.text)
+            t.backspace()
+            assertEquals("ok teh", f.text)
+            assertEquals("teh", f.composing)
+            t.backspace()
+            assertEquals("ok te", f.text)  // the word in progress loses a letter
+            t.text("h ")
+            assertEquals("ok the ", f.text)  // typed again, it is fixed again
+            t.backspace()
+            t.text(" ")
+            assertEquals("ok teh ", f.text)  // Space after the undo keeps what was typed
+        }
+    }
+
     @Test
     fun onlyWhenNeededTonesTheWordsThatArentWordsAsTheyStand() {
         assumeTrue(TestModels.realAvailable)

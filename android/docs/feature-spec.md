@@ -44,7 +44,8 @@ Swipe typing is not used.
 - **Strip**: the row above the keys with three suggestion slots.
 - **Centre pick**: the strip's middle slot. It is always what Space would commit.
 - **Auto-correct**: Space or punctuation committing the centre pick instead of the keys as typed.
-- **Revert**: Backspace right after an auto-correct, which puts back what was typed.
+- **Revert**: Backspace right after an auto-correct, which puts back what was typed (after Space,
+  as the word in progress).
 - **Tool row**: the strip's other face, a row of buttons: theme, settings, clipboard, cursor pad
   and emoji.
 - **Panel**: a full-keyboard-height view in place of the keys: emoji, clipboard, cursor pad or
@@ -164,7 +165,8 @@ keyboard's hide button.
   trackpad. Dragging moves the cursor in two dimensions, with lines as up and down. Lifting the
   finger leaves it.
 - **Double Space**: replaces "␠␠" after a word with ". ". This happens only straight after a
-  word or closing punctuation, and never in password, URL or email fields.
+  word, a number (`1␠␠` → `1. `) or closing punctuation, and never in password, URL or email
+  fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
   comma** opens Android's keyboard picker, so the owner can switch to another keyboard and back.
 - **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
@@ -235,6 +237,8 @@ Key for key as the reference has them.
     nhat` → 🎂). It takes the right slot. When there are no words to offer, the emoji fill the
     slots from the right (`hpbd`: 🥳 | 🎉 | 🎂). After Space, the next words keep the left and the
     centre and the emoji takes the right; an emoticon just typed (`:)`, `=))`) shows its emoji too.
+  - The part of a candidate already in the field is drawn grey, the rest in the slot's colour
+    (`bạn` of `bạn bè` while `bạn` is typed).
 - On the right, an **emoji button**.
 
 What the slots hold, by situation:
@@ -246,12 +250,15 @@ What the slots hold, by situation:
 | `meeting` typed | `meetings` | `meeting` | `meet` |
 | `ko` typed, with shortcut `ko` → `không` | `ko` | `không` | — |
 | `list` typed after `the` | `lít` | `list` | `lists` |
+| `banj` typed (`bạn`, finished with its marks; Space commits `bạn`) | `bạn đã` | `bạn có` (`bạn` grey) | another `bạn …` |
 | just after Space, following `không` | `có` | `được` | `phải` |
+| just after Space, following `một` | `trong` | `một số` (`một` grey) | `người` |
 | field empty, nothing typed | the tool row instead |  |  |
 
 ### What you can do
 
-- **Tap a slot**: commits that candidate and a space. A phrase commits both words. An emoji does
+- **Tap a slot**: commits that candidate and a space. A phrase commits both words; after Space,
+  a phrase that starts with the word just typed adds its next word. An emoji does
   what its keyword says, with no space after it: most go after the word, with one space (`ok` →
   `ok 👌`); laughs, emoticons and a lone food, drink or animal take the word's place (`cam` → `🍊`,
   `haha` → `😂`, `:)` → `🙂`, `cà phê` → `☕`). After Space, the emoji goes at the cursor.
@@ -303,6 +310,8 @@ unless Settings says otherwise.
      Vietnamese"): the keys are committed as typed (`list`, not `lít`, after `the`).
    - The word can't be Vietnamese at all (`tẽt` from `text`): the keys as typed, as on the
      laptop today.
+   - A digit typed right after the letters makes the word a code or a name: it shows and ends
+     as the keys typed (`tooi2`, `abc123`), as on Laban Key.
 3. **The keys used no Telex effect** (all ASCII, such as `khong`, `ban`, `can`, `meeting`):
    - Candidates are:
      - every attested syllable with that ASCII shape;
@@ -315,8 +324,10 @@ unless Settings says otherwise.
    - A typo correction (a different ASCII shape) is committed only if it beats the keys as typed
      by the level's margin. Otherwise the keys stay.
 4. **Neither a syllable nor a known word, and no close correction** (`dc`, `ns`, `vs`, a name):
-   commit as typed. Short chat abbreviations are never "corrected" into words. A hand-written
-   list of them is part of the project.
+   commit as typed. Short chat abbreviations are never "corrected" into words: letters with no
+   vowel (`thx`, `fff`, `strs`) never are, and a hand-written list in the core's lexicon holds
+   the ones with a vowel (`idk`, `rofl`) and the contractions typed without the apostrophe
+   (`youre`, `isnt`, `dont`), which stay as typed rather than gaining one.
 
 Levels:
 
@@ -326,8 +337,10 @@ Levels:
 | Flexible (default) | yes | edit distance 1, words of 3 or more letters, wide margin |
 | Strong | yes | edit distance 2 for words of 7 or more letters, smaller margin |
 
-- **Revert**: Backspace as the very next key after an auto-correct puts back what was typed and
-  the separator (`không␠` → `khong␠`). A second Backspace deletes as usual. When the owner
+- **Revert**: Backspace as the very next key after an auto-correct on Space takes it back with
+  the space, and the word is in progress again as it was typed (`không␠` → `khong`, as Laban
+  Key does); the next Space keeps it as typed. After punctuation it puts back what was typed and
+  the punctuation (`không,` → `khong,`). A second Backspace deletes as usual. When the owner
   reverts the same typed form twice in a similar context, it is learned: that form is committed
   as typed from then on, and its auto-correct moves to the left slot.
 - **Look-back** (decided: on, as the reference does it): after Space, the engine re-ranks the

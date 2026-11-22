@@ -105,21 +105,118 @@ class StripMakerTest {
         }
     }
 
+    /**
+     * A word finished with its marks: Space commits it as it stands, so the strip offers what
+     * comes after it, as Laban Key does ("banj" -> bạn gái | bạn bè | bạn ấy), not the word
+     * again. It used to show "được" in the middle, in bold.
+     */
     @Test
-    fun aWordTypedWithMarksShowsAsItIs() {
+    fun aFinishedWordOffersWhatComesAfterItNotItself() {
         TestModels.test().use { m ->
             TypingState().use { s ->
                 val f = FakeEditor()
                 val t = Typist(s, f).also { it.reset() }
                 t.text("dduowcj")
-                val shown = StripMaker(m.models).make(t) as Strip.Candidates
-                assertEquals("được", shown.centre)
-                assertEquals(null, shown.left)
-                assertTrue(shown.bold)
-                // On the right, the word with what likely follows it ("được rồi"), if anything.
-                assertTrue(shown.right == null || shown.right!!.startsWith("được "))
+                val maker = StripMaker(m.models)
+                val shown = maker.make(t) as Strip.Candidates
+                // The test text has "được rồi", "được không", "được việc" ...
+                assertTrue(shown.slots().toString(), shown.slots().none { it == "được" })
+                assertTrue(shown.slots().toString(), shown.centre!!.startsWith("được "))
+                assertFalse(shown.bold)
+                assertEquals("được", maker.centre)  // what an emoji pick puts before the emoji
+                // A continuation the owner hid with the remove mark is offered nowhere.
+                val gone = shown.centre!!
+                maker.hidden = { it == gone }
+                val without = maker.make(t) as Strip.Candidates
+                assertFalse(without.toString(), gone in without.slots() || gone in without.extra)
+                maker.hidden = { false }
+                val pick = maker.pick(1)!!.text
+                t.pick(pick)
+                assertEquals("$pick ", f.text)
             }
         }
+    }
+
+    @Test
+    fun aFinishedWordOffersWhatFollowsItAsLabanDoes() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            // Laban on the owner's phone: banj -> bạn gái | bạn bè | bạn ấy, khoong -> không có |
+            // không thể | không biết, mootj -> một mình | một số | một cái.
+            for ((keys, word) in listOf("banj" to "bạn", "khoong" to "không", "mootj" to "một", "nguowif" to "người", "dduowcj" to "được")) {
+                val shown = strip(m, keys).shown
+                val why = "$keys: ${shown.slots()}"
+                assertTrue(why, shown.slots().all { it != null && it.startsWith("$word ") })
+                typedSpace(m, keys, "$word ")
+            }
+            // A tone typed keeps the longer words to that tone: "gif" (gì) is never "giá" or "gia",
+            // "nos" (nó) never "now".
+            assertTrue(strip(m, "gif").shown.slots().none { it == "giá" || it == "gia" })
+            assertTrue(strip(m, "nos").shown.slots().none { it == "now" || it == "not" })
+            // A word on its way to a longer one still offers it: "khoon" (khôn) has "không".
+            assertTrue(strip(m, "khoon").shown.slots().toString(), "không" in strip(m, "khoon").shown.slots())
+        }
+    }
+
+    /** The part of a slot already in the field is drawn grey, as Laban Key draws it. */
+    @Test
+    fun thePartAlreadyTypedIsGrey() {
+        TestModels.test().use { m ->
+            val shown = strip(m, "dduowcj").shown
+            shown.slots().forEachIndexed { i, text ->
+                assertEquals(shown.slots().toString(), if (text != null && text.startsWith("được ")) 4 else 0, shown.grey.getOrElse(i) { 0 })
+            }
+            assertTrue(shown.grey.contains(4))
+        }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            // xịn | xin lỗi | xinh: the "xin" of "xin lỗi" is what was typed; "cảm ơn" for "cam" is
+            // a reading, none of it typed.
+            assertEquals(listOf(0, 3, 0), strip(m, "xin").shown.grey)
+            assertEquals(0, strip(m, "cam").shown.grey.getOrElse(1) { 0 })
+        }
+    }
+
+    /**
+     * After a Space, a next word that goes with the word before shows with it, that word grey, as
+     * Laban Key mixes them ("một" -> một mình | một số | một cái, but "tôi" -> về | đi | đang); a
+     * tap adds the next word. The next-word strip used to hold single words only.
+     */
+    @Test
+    fun afterASpaceTheNextWordsMixInPhrasesOfTheWordBefore() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            val mot = strip(m, "mootj ")
+            val slots = mot.shown.slots()
+            val phrase = slots.firstOrNull { it != null && it.startsWith("một ") }
+            assertTrue(slots.toString(), phrase != null)
+            slots.forEachIndexed { i, text ->
+                assertEquals(slots.toString(), if (text != null && text.startsWith("một ")) 3 else 0, mot.shown.grey.getOrElse(i) { 0 })
+            }
+            // Hidden with the remove mark, the phrase is offered no more.
+            mot.maker.hidden = { it == phrase }
+            val hid = mot.maker.make(mot.typist) as Strip.Candidates
+            assertTrue(hid.slots().toString(), phrase !in hid.slots() && phrase!!.removePrefix("một ") !in hid.slots())
+            mot.maker.hidden = { false }
+            mot.maker.make(mot.typist)
+            val pick = mot.maker.pick(slots.indexOf(phrase))!!.text
+            assertEquals(phrase!!.removePrefix("một "), pick)
+            mot.typist.pick(pick)
+            assertEquals("$phrase ", mot.field.text)
+            // After "tôi" the likeliest words follow anything: they stand alone.
+            val toi = strip(m, "tooi ").shown
+            assertTrue(toi.slots().toString(), toi.slots().none { it?.startsWith("tôi ") == true })
+            // With a comma between, a phrase would not be what the field shows.
+            val comma = strip(m, "mootj, ").shown
+            assertTrue(comma.slots().toString(), comma.slots().none { it?.startsWith("một ") == true })
+        }
+    }
+
+    /** `keys` and Space end as `want`: the strip changes nothing Space does. */
+    private fun typedSpace(m: TestModels.Opened, keys: String, want: String) {
+        val typed = strip(m, keys)
+        typed.typist.text(" ")
+        assertEquals(want, typed.field.text)
     }
 
     @Test
@@ -133,12 +230,13 @@ class StripMakerTest {
                 val strip = StripMaker(m.models, index)
                 t.text("sinh nhaatj")
                 val shown = strip.make(t) as Strip.Candidates
+                assertTrue(shown.slots().toString(), shown.centre!!.startsWith("nhật"))  // or what follows it
                 assertEquals("🎂", shown.right)  // "chúc mừng sinh nhật"
                 val pick = strip.pick(2)!!
                 assertTrue(pick.emoji)
                 strip.emojiSuggestions = false
                 val plain = strip.make(t) as Strip.Candidates
-                assertEquals("nhật", plain.centre)
+                assertTrue(plain.slots().toString(), plain.centre!!.startsWith("nhật"))
                 assertTrue(plain.right != shown.right)
             }
         }
@@ -248,10 +346,10 @@ class StripMakerTest {
                     val typed = strip(m, w, before, index)
                     val first = typed.shown.centre!!.substringBefore(' ')
                     val why = "'$before$w': ${typed.shown.slots()}"
-                    // Vietnamese: a reading (or the word), or at least a Vietnamese completion
-                    // ("tôi nha": "nhận", where "nhà" is rare); at a sentence's start, a reading.
+                    // Vietnamese: a reading (or the word), or a longer Vietnamese word when that is
+                    // likelier ("tôi nha": "nhận", where "nhà" is rare; "an": "ảnh", where Laban
+                    // has "anh"), never English.
                     assertTrue(why, bare(first).startsWith(w) && (first == w || first.any { it.code >= 0x80 }))
-                    if (before.isEmpty()) assertEquals(why, w, bare(first))
                     typed.typist.text(" ")
                     assertEquals("$before$w ", typed.field.text)  // Space keeps what was typed
                 }
@@ -274,6 +372,27 @@ class StripMakerTest {
             assertTrue(meet.bold)
         }
         index.close()
+    }
+
+    /**
+     * Laban's middle for letters typed without marks is mostly a reading alone, with the reading
+     * and its next word at a side, and a longer Vietnamese word when that is likelier: "toan" ->
+     * toàn (xrnkey had "toàn bộ"), "vi" -> việc (xrnkey had "vì"), "ngu" -> người (had "ngủ").
+     * A pair nearly always said together keeps the middle ("cảm ơn").
+     */
+    @Test
+    fun theMiddleIsTheReadingOrALongerWordAsOnLaban() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            val toan = strip(m, "toan").shown
+            assertEquals(toan.slots().toString(), "toàn", toan.centre)
+            assertTrue(toan.slots().toString(), "toàn bộ" in toan.slots())
+            assertEquals(strip(m, "vi").shown.slots().toString(), "việc", strip(m, "vi").shown.centre)
+            assertEquals(strip(m, "ngu").shown.slots().toString(), "người", strip(m, "ngu").shown.centre)
+            assertEquals("cảm ơn", strip(m, "cam").shown.centre)
+            // Never an English completion there for Vietnamese letters, and Space is unchanged.
+            for (w in listOf("toan", "vi", "ngu")) typedSpace(m, w, "$w ")
+        }
     }
 
     @Test

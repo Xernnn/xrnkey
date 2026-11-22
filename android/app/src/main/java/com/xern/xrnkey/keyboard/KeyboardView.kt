@@ -542,8 +542,12 @@ class KeyboardView(context: Context) : View(context) {
             if (text == null) return@forEachIndexed
             val r = slots[i]
             val (shown, size) = fitted(text, r)
-            drawLabel(canvas, shown, r.centerX(), cy - if (i == 1 && s.more) 2 * dp else 0f, size,
-                if (i == 1) palette.glyph else palette.dim, if (i == 1 && s.bold) fontStrong else font)
+            val y = cy - if (i == 1 && s.more) 2 * dp else 0f
+            val colour = if (i == 1) palette.glyph else palette.dim
+            val tf = if (i == 1 && s.bold) fontStrong else font
+            val grey = minOf(s.grey.getOrElse(i) { 0 }, shown.length)
+            if (grey > 0) drawTwoTone(canvas, shown, grey, r.centerX(), y, size, colour, tf)
+            else drawLabel(canvas, shown, r.centerX(), y, size, colour, tf)
         }
         if (s.more) {
             fill.color = palette.dim
@@ -571,6 +575,24 @@ class KeyboardView(context: Context) : View(context) {
             val x = minOf(r.centerX() + w / 2 + 8 * dp, r.right - 7 * dp)
             text to android.graphics.PointF(x, stripHeight / 2 - 9 * dp)
         }
+    }
+
+    /**
+     * A candidate whose first `grey` characters are already in the field ("bạn" of "bạn bè"):
+     * those in grey, the rest in the slot's colour, the whole centred on `cx`.
+     */
+    private fun drawTwoTone(canvas: Canvas, text: String, grey: Int, cx: Float, cy: Float, size: Float, colour: Int, tf: Typeface) {
+        glyph.typeface = tf
+        glyph.textSize = size
+        val head = text.substring(0, grey)
+        val tail = text.substring(grey)
+        val wHead = glyph.measureText(head)
+        val wTail = glyph.measureText(tail)
+        val x0 = cx - (wHead + wTail) / 2
+        // The side slots are dim already: their typed part is fainter still (dim at 70 %).
+        val faint = if (colour == palette.glyph) palette.dim else (palette.dim and 0x00FFFFFF) or (0xB3 shl 24)
+        drawLabel(canvas, head, x0 + wHead / 2, cy, size, faint, tf)
+        if (tail.isNotEmpty()) drawLabel(canvas, tail, x0 + wHead + wTail / 2, cy, size, colour, tf)
     }
 
     /** The emoji search: a back arrow, the query with its cursor, then what it finds. */

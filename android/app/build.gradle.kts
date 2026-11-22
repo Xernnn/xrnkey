@@ -118,8 +118,8 @@ android {
         applicationId = "com.xern.xrnkey"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.4.3"
+        versionCode = 10
+        versionName = "0.5.0"
         ndk { abiFilters += "arm64-v8a" }
         externalNativeBuild {
             cmake {

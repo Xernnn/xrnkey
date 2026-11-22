@@ -90,6 +90,21 @@ class TypistTest {
     }
 
     @Test
+    fun theWordBeforeTheCursorIsTheOneASpaceFollows() {
+        val f = FakeEditor("Tôi có ")
+        val t = typist(f)
+        assertEquals("có", t.wordBefore())
+        t.text("mootj")
+        assertEquals(null, t.wordBefore())  // a word in progress
+        t.text(", ")
+        assertEquals(null, t.wordBefore())  // a comma between
+        t.text("hai ")
+        assertEquals("hai", t.wordBefore())
+        t.text(" ")
+        assertEquals(null, t.wordBefore())  // two spaces
+    }
+
+    @Test
     fun aHeldLettersFormJoinsTheWordInProgress() {
         val f = FakeEditor()
         val t = typist(f)

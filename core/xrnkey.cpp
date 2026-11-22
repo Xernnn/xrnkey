@@ -106,7 +106,15 @@ static void backspace(XKStateImpl* s, XKResult* r) {
         s->ctx.clear();     /* ... text the context may have held */
         return;
     }
+    /* A word a digit made literal is Telex again once BackSpace has taken every digit out
+     * ("tooi2" BackSpace is "tôi"). */
+    const auto has_digit = [](const std::string& k) { return k.find_first_of("0123456789") != std::string::npos; };
+    const bool by_digit = s->mode == XK_MODE_TELEX && s->word.literal && has_digit(s->word.keys);
     word_backspace(s->word, s->mode, s->opt);
+    if (by_digit && !s->word.empty() && !has_digit(s->word.keys)) {
+        s->word.literal = false;
+        word_replay(s->word, s->mode, s->opt);
+    }
     show_word(s, r);
 }
 
@@ -249,6 +257,15 @@ XKResult xk_process_key(XKState* state, uint32_t keysym, uint32_t modifiers) {
          * itself, matching how real IMEs treat any non-letter as a word
          * boundary (e.g. "cõi," must not stay stuck mid-composition). */
         bool is_vni_digit = s->mode == XK_MODE_VNI && c >= '0' && c <= '9';
+        /* In Telex a digit right after letters makes the word a code or a name ("tooi2",
+         * "abc123", "h2o"), as Laban Key has it: the word goes back to the keys typed, digit and
+         * all, and takes no marks until it ends. It used to end the word, so "tooi2" became
+         * "tôi2". */
+        if (s->mode == XK_MODE_TELEX && c >= '0' && c <= '9' && !s->word.empty()) {
+            s->word.literal = true;
+            xrnkey::word_key(s, &r, c);
+            return r;
+        }
         if (!is_letter && !is_vni_digit && !s->word.empty()) {
             xrnkey::finalize_word(s, &r, c);
             return r;

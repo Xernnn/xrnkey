@@ -343,6 +343,12 @@ sealed interface Strip {
         val bold: Boolean = true,
         /** The candidates after these three, best first: the panel slid up from the strip. */
         val extra: List<String> = emptyList(),
+        /**
+         * How many first characters of each slot (left, centre, right) are already in the field,
+         * drawn grey as Laban Key draws them: "bạn" of "bạn bè" while "bạn" is typed, "một" of
+         * "một số" after "một ". Missing: none.
+         */
+        val grey: List<Int> = emptyList(),
     ) : Strip
 
     /** Emoji search: the query typed so far and the emoji it finds. */

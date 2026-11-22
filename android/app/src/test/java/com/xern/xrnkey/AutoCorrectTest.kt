@@ -37,9 +37,23 @@ class AutoCorrectTest {
     fun backspaceRightAfterPutsBackWhatWasTyped() = typing { t, f, _ ->
         t.text("khong ")
         t.backspace()
-        assertEquals("khong ", f.text)
+        // The restoration and the space go, and the word is open again as typed (Laban Key's
+        // "teh␣⌫" is "teh"); it used to come back as "khong " with its space.
+        assertEquals("khong", f.text)
+        assertEquals("khong", f.composing)
+        t.text(" ")
+        assertEquals("khong ", f.text)  // the next Space keeps it as typed
         t.backspace()
         assertEquals("khong", f.text)  // then Backspace deletes as usual
+        assertEquals("", f.composing)
+    }
+
+    @Test
+    fun backspaceAfterPunctuationKeepsThePunctuation() = typing { t, f, _ ->
+        t.text("khong,")
+        assertEquals("không,", f.text)
+        t.backspace()
+        assertEquals("khong,", f.text)
     }
 
     @Test
@@ -49,7 +63,8 @@ class AutoCorrectTest {
         t.text("gang ")
         assertEquals("cố gắng ", f.text)
         t.backspace()
-        assertEquals("có gang ", f.text)  // as it was before that Space
+        assertEquals("có gang", f.text)  // as it was before that Space, the word open again
+        assertEquals("gang", f.composing)
     }
 
     @Test

@@ -21,8 +21,9 @@ import kotlin.math.pow
  * - the readings of the word: its accented forms when it was typed without marks ("cam": cảm,
  *   cám), or the tones it may take when typed with marks but none ("mêt": mệt);
  * - a reading with the word likely to follow it ("cảm ơn"). The reading alone then scores what
- *   is left of it, "cảm" followed by anything but "ơn": a near-certain pair takes the reading's
- *   place, a weaker one comes after it;
+ *   is left of it, "cảm" followed by anything but "ơn": a pair takes the reading's place only
+ *   when it is clearly likelier, as Laban keeps the reading in the middle and the pair at the
+ *   side more often than the odds alone would ("toàn" | "toàn bộ"); a weaker one comes after;
  * - completions: longer words that start with the letters typed ("hel": hello, help, "xin":
  *   xinh).
  *
@@ -31,9 +32,10 @@ import kotlin.math.pow
  * Letters that are a common Vietnamese syllable keep the middle Vietnamese, as Laban does: "cam"
  * is "cảm ơn" there, and English completions go to the sides. When Space commits something other
  * than what the field shows ("teh" -> "the"), that is in the middle. The middle is in bold only
- * when Space commits it. A word typed with Telex marks shows as it is. A tap takes a guess. When
- * the words before were typed without marks too, the left offers the whole run accented ("tôi
- * không biết"). With no word, the next words, or the tool row.
+ * when Space commits it. A word finished with its Telex marks gives way to what may follow it
+ * ("banj": bạn bè | bạn gái | bạn ấy); one on its way to a word shows as it is. A tap takes a
+ * guess. When the words before were typed without marks too, the left offers the whole run
+ * accented ("tôi không biết"). With no word, the next words, or the tool row.
  */
 class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = null) {
     /**
@@ -84,7 +86,10 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             if (picks.isEmpty()) return strip
             val words = offered.take(2)
             offered = if (words.any { it != null }) words + picks[0] else fromTheRight(picks)
-            return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
+            // The next words keep what their slots show (a phrase, its typed part grey).
+            val next = (strip as? Strip.Candidates)?.takeIf { words.any { it != null } }
+                ?: return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
+            return Strip.Candidates(next.left, next.centre, picks[0].text, bold = false, grey = next.grey.take(2))
         }
         val m = models
         val commits = t.preview()  // what Space commits, when it isn't what the field shows
@@ -99,6 +104,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         }
         val readings = if (m != null) readings(t, m, ctx, run, marked) else emptyList()
         val guesses = if (m != null) guesses(t, m, ctx, readings, marked, commits) else emptyList()
+        // A word finished with its marks, which Space commits as it stands ("banj": bạn): the
+        // strip offers what comes after it, as Laban Key does, not the word again.
+        if (m != null && commits == null) finished(t, word, marked)?.let { return continued(t, m, ctx, word, it, guesses) }
 
         // The middle: what Space commits, when that is not what the field shows; for a word
         // typed without marks, as the letters read (bareMiddle); a marked word as it is.
@@ -132,16 +140,58 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val centreEmoji = offered[1]?.emoji == true
         return Strip.Candidates(
             offered[0]?.text, offered[1]?.text, offered[2]?.text, more = rest.isNotEmpty(), bold = bold && !centreEmoji,
-            extra = rest.map { it.text },
+            extra = rest.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
     }
+
+    /**
+     * The score of the word in progress when it is a word finished with its marks, which Space
+     * commits as it stands: a word the models know ("bạn", "không"), not letters on the way to
+     * one ("ngươ"), nor a word typed without marks (its readings wait in the strip).
+     */
+    private fun finished(t: Typist, word: String, marked: List<Candidate>?): Float? {
+        if (t.restorable() || word.all { it.code < 0x80 }) return null
+        return marked?.firstOrNull { it.text == word }?.score?.takeIf { it >= FINISHED }
+    }
+
+    /**
+     * The strip for a word finished with its marks: what may follow it, as phrases that start
+     * with it ("bạn" -> bạn bè, bạn gái, bạn ấy), its other tones and the longer words it may
+     * still become ("khôn" -> không), ranked by how likely the whole text is in context, the best
+     * in the middle. The word itself only when there is nothing else: Space commits it anyway.
+     */
+    private fun continued(t: Typist, m: Models, ctx: List<String>, word: String, score: Float, guesses: List<Guess>): Strip {
+        val follow = m.predictScored(ctx + word.lowercase(), CONTINUATIONS)
+            .filter { (w, p) -> p >= FOLLOWS && w.first().isLetter() && !hidden("$word $w") }
+            .map { (w, p) -> Guess("$word $w", score + p, Kind.PAIR, word, false) }
+        val pool = (follow + guesses).filter { it.text != word }
+            .sortedByDescending { it.score }.distinctBy { it.text }.toMutableList()
+        centre = word
+        val middle = pool.removeFirstOrNull()?.text ?: word
+        val left = pool.removeFirstOrNull()?.text
+        // The right: an emoji when the word is one of their keywords, else the next best.
+        val picks = emojiFor(t, null)
+        val right = picks.firstOrNull() ?: pool.removeFirstOrNull()?.let { Pick(it.text) }
+        // Nothing to offer but the word itself: the emoji fill the strip from the right.
+        offered = if (middle == word && picks.size > 1) fromTheRight(picks) else listOf(left?.let { Pick(it) }, Pick(middle), right)
+        val centreEmoji = offered[1]?.emoji == true
+        return Strip.Candidates(
+            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word && !centreEmoji,
+            extra = pool.map { it.text }, grey = greys(word, offered.map { it?.text }),
+        )
+    }
+
+    /** For each slot, how much of it is the word in the field: "bạn" of "bạn bè" while "bạn" is typed. */
+    private fun greys(word: String, slots: List<String?>): List<Int> =
+        slots.map { if (it != null && it.length > word.length + 1 && it.startsWith("$word ")) word.length else 0 }
 
     /**
      * The middle for letters typed without marks, which Space keeps, weighed by the models:
      * - letters that are a Vietnamese syllable with a common reading, likelier as Vietnamese
      *   than as English ("cam", "ban", "an"): the best Vietnamese reading or reading with its
-     *   next word ("cảm ơn"), or the word itself when that is the likeliest ("em"), never a
-     *   completion ("came" and "camera" go to the sides);
+     *   next word ("cảm ơn"), a longer Vietnamese word when that is likelier ("vi": việc, "ngu":
+     *   người, as on Laban), or the word itself when that is the likeliest ("em"), never an
+     *   English completion ("came" and "camera" go to the sides);
      * - letters that are an English word Space keeps, likelier as English ("the", "love"): the
      *   word itself, in bold;
      * - else the best guess ("hel": hello), or the word when it is as likely or all there is
@@ -154,7 +204,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val marked = readings.firstOrNull { it.type == Candidate.RESTORED && it.text.any { c -> c.code >= 0x80 } }
         val vietnamese = if (marked == null) Models.NEVER else maxOf(marked.score, asVietnamese)
         if (vietnamese >= COMMON && vietnamese >= asEnglish) {
-            val best = guesses.firstOrNull { it.kind != Kind.COMPLETION && !it.corrected }
+            val best = guesses.firstOrNull { (it.kind != Kind.COMPLETION || it.text.any { c -> c.code >= 0x80 }) && !it.corrected }
             // The word itself, when it is the likeliest Vietnamese and no pair of it stands in
             // its place ("em", where "êm" is rare; but "xin lỗi" for "xin").
             val ownPair = guesses.any { it.kind == Kind.PAIR && it.base == word }
@@ -220,7 +270,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             val corrected = r.type == Candidate.CORRECTED
             val paired = i < PAIRED || r.text == word || r.text == commits
             val next = if (paired) nextWord(m, ctx, r.text) else null
-            if (next != null) out += Guess("${r.text} ${next.first}", r.score + next.second, Kind.PAIR, r.text, corrected)
+            if (next != null) out += Guess("${r.text} ${next.first}", r.score + next.second - PAIR_MARGIN, Kind.PAIR, r.text, corrected)
             // Alone, it scores what is left once its likeliest pair is counted apart.
             val alone = if (next == null) r.score else r.score + log10(1 - min(10f.pow(next.second), MOST))
             out += Guess(r.text, alone, Kind.READING, r.text, corrected)
@@ -232,7 +282,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /**
      * Longer words that start with what was typed: from the letters, when typed without marks;
      * for a word Telex marked, from its keys as English ("meet", shown "mêt": "meeting") and
-     * from its letters with the marks it has ("ngươ": "người", "ngược", never "nguồn").
+     * from its letters with the marks it has ("ngươ": "người", "ngược", never "nguồn"), and with
+     * its tone once it has one ("gì": "giờ", never "giá"; "nó": never "now").
      */
     private fun completions(t: Typist, m: Models, ctx: List<String>): List<Pair<String, Float>> {
         if (t.restorable()) return m.complete(ctx, t.keys(), COMPLETIONS)
@@ -243,7 +294,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val word = t.shown
         bare(word)?.let { b ->
             val marked = untoned(word)
-            out += m.complete(ctx, b, COMPLETIONS * 4).filter { (w) -> untoned(w).startsWith(marked) }
+            val tone = toneOf(word)
+            out += m.complete(ctx, b, COMPLETIONS * 4).filter { (w) -> untoned(w).startsWith(marked) && (tone == null || toneOf(w) == tone) }
         }
         return out.sortedByDescending { it.second }.distinctBy { it.first }.take(COMPLETIONS)
     }
@@ -254,12 +306,38 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         return m.predictScored(ctx + word.lowercase(), 1).firstOrNull()?.takeIf { it.second >= COMPLETION }
     }
 
-    /** After a word and a space: the likeliest next words, the likeliest in the middle. */
+    /**
+     * After a word and a space: the likeliest next words in context (the two words before), the
+     * likeliest in the middle. One that goes with the word before as a phrase shows with it, that
+     * word in grey, as Laban Key mixes them: "một" -> một số, một mình, ..., but "tôi" -> về, đi.
+     * A tap adds the next word. A word hidden with the remove mark, alone or as its phrase, is
+     * left out.
+     */
     private fun next(t: Typist): Strip {
-        val words = models!!.predict(t.context(), 3 + HIDDEN_SLACK).filterNot(hidden).take(3)
+        val m = models!!
+        val last = t.wordBefore()?.takeIf { w -> w.any { it.isLetter() } }
+        // Each next word with what its slot shows: the word, or the phrase it makes.
+        val words = m.predict(t.context(), 3 + HIDDEN_SLACK).asSequence().filterNot(hidden)
+            .map { w -> w to if (last != null && goesWith(m, last, w)) "$last $w" else w }
+            .filterNot { hidden(it.second) }.take(3).toList()
         if (words.isEmpty()) return Strip.Tools
-        offered = listOf(words.getOrNull(1), words[0], words.getOrNull(2)).map { w -> w?.let { Pick(it) } }
-        return Strip.Candidates(words.getOrNull(1), words[0], words.getOrNull(2), bold = false)
+        val order = listOf(words.getOrNull(1), words[0], words.getOrNull(2))
+        offered = order.map { w -> w?.let { Pick(it.first) } }
+        val shown = order.map { it?.second }
+        return Strip.Candidates(shown[0], shown[1], shown[2], bold = false, grey = last?.let { greys(it, shown) } ?: emptyList())
+    }
+
+    /**
+     * `next` goes with `last` as a phrase ("một số", "người dùng"): Vietnamese, likely right
+     * after it (1 in 100 or more), and much likelier there than after a comma, so a word that
+     * follows anything ("có", "đã") stays on its own.
+     */
+    private fun goesWith(m: Models, last: String, next: String): Boolean {
+        fun sum(p: Pair<Float, Float>) = log10(10.0.pow(p.first.toDouble()) + 10.0.pow(p.second.toDouble()))
+        val after = m.languages(listOf(last.lowercase()), next)
+        if (after.first < after.second) return false
+        val p = sum(after)
+        return p >= GOES_WITH && p - sum(m.languages(listOf("<p>"), next)) >= GOES_WITH_LIFT
     }
 
     /**
@@ -322,8 +400,28 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     fun pick(slot: Int): Pick? = offered.getOrNull(slot)
 
     companion object {
-        /** log10: how likely the next word must be to go with a reading ("cảm ơn"). */
-        const val COMPLETION = -1.0f
+        /** log10: how likely the next word must be to go with a reading ("cảm ơn"): 1 in 20. */
+        const val COMPLETION = -1.3f
+
+        /**
+         * log10: how much likelier than its reading alone a reading with its next word must be to
+         * rank above it (a quarter): "cảm ơn" still does, "toàn bộ" no longer takes "toàn"'s place.
+         */
+        private const val PAIR_MARGIN = 0.1f
+
+        /** log10: how likely a word must be to count as finished ("khôn" is; "ngươ" is no word). */
+        private const val FINISHED = -6.0f
+
+        /** Words asked for after a finished word, and how likely each must be to follow it. */
+        private const val CONTINUATIONS = 6
+        private const val FOLLOWS = -3.0f
+
+        /**
+         * log10: how likely a next word must be after the word before to show with it, and how
+         * much likelier there than after a comma (measured against Laban's after-Space strips).
+         */
+        private const val GOES_WITH = -2.0
+        private const val GOES_WITH_LIFT = 1.0
 
         /** Readings looked at, the best of them that get a next word, completions asked for. */
         private const val READINGS = 6
@@ -360,6 +458,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
                 .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
             return b.takeIf { it.isNotEmpty() && it.all { c -> c in 'a'..'z' || c in 'A'..'Z' } }
         }
+
+        /** The tone mark of `s`, decomposed, or null for none ("gì": the grave). */
+        private fun toneOf(s: String): Char? = Normalizer.normalize(s, Normalizer.Form.NFD).firstOrNull { it in TONES }
 
         private fun untoned(s: String): String = Normalizer.normalize(
             Normalizer.normalize(s, Normalizer.Form.NFD).filter { it !in TONES },
