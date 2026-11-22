@@ -229,7 +229,12 @@ Key for key as the reference has them.
   - The left and right slots hold the next-best candidates. A slot can hold an accented word, a
     two-word phrase (`không thể`, `dược phẩm`), the keys as typed, a shortcut's expansion, or an
     emoji.
-  - The emoji suggestion takes the right slot when there is one and nothing better.
+  - An emoji shows only when the word as it stands is one of the strip's emoji keywords
+    (`data/emoji/keywords.tsv`): typed bare or with Telex marks, exactly (`cam` → 🍊, `khóc` → 😢,
+    never bare `khoc`), or as the last word of a phrase, with or without marks (`chuc mung sinh
+    nhat` → 🎂). It takes the right slot. When there are no words to offer, the emoji fill the
+    slots from the right (`hpbd`: 🥳 | 🎉 | 🎂). After Space, the next words keep the left and the
+    centre and the emoji takes the right; an emoticon just typed (`:)`, `=))`) shows its emoji too.
 - On the right, an **emoji button**.
 
 What the slots hold, by situation:
@@ -237,7 +242,7 @@ What the slots hold, by situation:
 | Situation | Left | Centre (Space commits it) | Right |
 |---|---|---|---|
 | `khong` typed | `không thể` | `không` | `không có` |
-| `duoc` typed after `không` | `dược phẩm` | `được` | 🙅 |
+| `cam` typed | `cảm` | `cảm ơn` | 🍊 |
 | `meeting` typed | `meetings` | `meeting` | `meet` |
 | `ko` typed, with shortcut `ko` → `không` | `ko` | `không` | — |
 | `list` typed after `the` | `lít` | `list` | `lists` |
@@ -246,8 +251,10 @@ What the slots hold, by situation:
 
 ### What you can do
 
-- **Tap a slot**: commits that candidate and a space. A phrase commits both words. An emoji is
-  inserted after the word, with one space.
+- **Tap a slot**: commits that candidate and a space. A phrase commits both words. An emoji does
+  what its keyword says, with no space after it: most go after the word, with one space (`ok` →
+  `ok 👌`); laughs, emoticons and a lone food, drink or animal take the word's place (`cam` → `🍊`,
+  `haha` → `😂`, `:)` → `🙂`, `cà phê` → `☕`). After Space, the emoji goes at the cursor.
 - **Slide up from the strip**: the **more-suggestions panel** opens over it, up to 7 more
   candidates three to a row under the strip's slots, the best nearest the strip and in the
   middle. Lift on one to commit it with a space; slide back down past the strip to close it
@@ -517,8 +524,8 @@ The panel replaces the strip and the keys.
 1. **A tab row**: back to the keyboard (`ABC`), emoji, emoticons `:-)` and symbols `Ω`. Fancy
    text `Aa` comes later. A messaging app's sticker tab is left out: its stickers are another
    company's artwork.
-2. **An emoji suggestion row**: emoji that match the last words typed, from the Unicode CLDR
-   keywords in Vietnamese and English (`không được` → 🙅 ❌).
+2. **An emoji suggestion row**: emoji that match the last words typed: the strip's emoji
+   keyword first, then the Unicode CLDR keywords in Vietnamese and English (`không được` → 🙅 ❌).
 3. **A grid**, 8 per row, scrolling vertically. It opens on recents (up to 48), or on smileys
    when recents are empty.
 4. **A round search button**, floating at the bottom right of the grid.
@@ -532,8 +539,9 @@ The panel replaces the strip and the keys.
   remembered for that emoji.
 - **Tap a category**: jumps the grid to it. The bar follows as the grid scrolls.
 - **Search**: a search field replaces the suggestion row, and the letter keys come back below it.
-  Typing goes into the search field, not the app. Results match CLDR keywords in Vietnamese
-  (with or without accents) and English, best first. Back closes the search.
+  Typing goes into the search field, not the app. Results: the strip's emoji keyword for what is
+  typed first (`haha` → 😂), then CLDR keywords in Vietnamese (with or without accents) and
+  English, best first. Back closes the search.
 - **Backspace** on the category bar deletes before the cursor in the app, one grapheme at a
   time, so a whole emoji goes at once.
 - **Emoticons tab**: a grid of text emoticons and kaomoji. A hand-written list, part of the
@@ -545,8 +553,13 @@ The panel replaces the strip and the keys.
   - It holds 1,914 emoji from Unicode Emoji 17.0, in Unicode's order and groups, each with its
     CLDR 48 names and keywords in Vietnamese and English (Unicode License v3).
   - Skin-tone variants are folded into the base, which is flagged as taking them.
-  - Suggestions match the last three, two or one words as a keyword (`sinh nhật` → 🎂, `cà phê` →
-    ☕). Keywords that over 24 emoji share (`mặt`) are left out.
+  - The panel's suggestions match the last three, two or one words as a keyword (`sinh nhật` →
+    🎂, `cà phê` → ☕). Keywords that over 24 emoji share (`mặt`) are left out.
+- **The strip's emoji keywords**: `data/emoji/keywords.tsv`, read into the same index. About
+  1,900 keywords, each `append` or `replace`: CLDR's names of things and countries, and a hand
+  list of chat words, abbreviations, emoticons, feelings and wishes (`data/emoji/README.md`). Of
+  1,445 Vietnamese syllables typed bare, 15 are keywords (Laban Key, measured: 34; the CLDR
+  index used before: 164).
 
 ## The clipboard panel
 
@@ -740,6 +753,7 @@ All of it ships in the APK and is never downloaded.
 | Unihan readings (already a source) | the syllable inventory | Unicode License v3 |
 | SCOWL (already the source of `english.txt`) | the English vocabulary | SCOWL's permissive notice |
 | Unicode CLDR annotations, `vi` and `en`, and `emoji-test.txt` | emoji names, keywords, order and groups | Unicode License v3 |
+| A hand list of Vietnamese and English chat words, abbreviations and emoticons, written for this project (`data/emoji/keywords-hand.tsv`) | the strip's emoji keywords | MIT, with the code |
 | A made-up chat and test set, written for this project | tuning the switch cost and abbreviations; the eval set C | MIT, with the code |
 
 Rules:

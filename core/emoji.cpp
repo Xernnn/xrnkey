@@ -1,7 +1,9 @@
 /* The emoji index (data/emoji/emoji-index.tsv: Unicode's list with CLDR's
  * English and Vietnamese names and keywords): the panel's emoji in order,
  * search by keyword in either language with or without accents, and the
- * emoji that go with the words just typed, for the suggestion strip. */
+ * emoji that go with the words just typed. The suggestion strip's emoji
+ * come from a smaller table of exact keywords (data/emoji/keywords.tsv), read
+ * into the same index: a word as it stands, or a phrase. */
 #include "xrnkey.h"
 #include "xrnkey_internal.h"
 
@@ -91,13 +93,108 @@ std::vector<std::string> split(const std::string& s, char sep) {
     return out;
 }
 
+/* A word as the keyword table compares it: lowercase, a Vietnamese syllable
+ * with the engine's tone placement ("Hoà" and "hòa" alike), anything else
+ * ("ok", ":)", "hpbd") lowercase as it is. */
+std::string canon(const std::string& word) {
+    std::u32string letters;
+    int tone;
+    if (syllable_split(word, &letters, &tone) && syllable_valid(letters, tone))
+        return apply_tone_to_syllable(utf8_of(letters), tone);
+    return lower_vi(word);
+}
+
+/* The word has no Vietnamese marks (đ counts as one): typed bare. */
+bool bare(const std::string& word) { return fold(word) == lower_vi(word); }
+
 }  // namespace
+
+/* The most words a keyword has ("chúc mừng sinh nhật"). */
+constexpr int kPhraseWords = 4;
+
+/* A line of the strip's keyword table: its words (canon), its emoji, best
+ * first, and whether they take the words' place or go after them. */
+struct Keyword {
+    std::vector<std::string> words;
+    std::vector<std::string> emoji;
+    bool replace = false;
+};
 
 struct EmojiDB {
     std::vector<Entry> entries;
     /* keyword (lowercase, accents kept) -> entries, for suggestions */
     std::unordered_map<std::string, std::vector<int>> by_keyword;
+    std::vector<Keyword> keywords;
+    /* one word (canon) -> its keyword */
+    std::unordered_map<std::string, int> by_word;
+    /* several words, without marks ("chuc mung") -> the keywords they may be */
+    std::unordered_map<std::string, std::vector<int>> by_phrase;
+    /* a keyword's words joined (canon) -> the keyword, for search */
+    std::unordered_map<std::string, int> by_text;
 };
+
+namespace {
+
+/* The keyword of the table that the last `len` of `words` are, or -1. One
+ * word must be the keyword as it stands; in a phrase, each word as the
+ * keyword has it, or typed bare ("chuc mung sinh nhật"). */
+int keyword_at(const EmojiDB& d, const char* const* words, int n, int len) {
+    std::vector<std::string> typed;
+    for (int i = n - len; i < n; ++i) {
+        if (!words[i] || !*words[i]) return -1;
+        typed.emplace_back(words[i]);
+    }
+    if (len == 1) {
+        auto it = d.by_word.find(canon(typed[0]));
+        return it == d.by_word.end() ? -1 : it->second;
+    }
+    std::string key;
+    for (const auto& w : typed) key += (key.empty() ? "" : " ") + fold(w);
+    auto it = d.by_phrase.find(key);
+    if (it == d.by_phrase.end()) return -1;
+    for (int k : it->second) {
+        const auto& kw = d.keywords[static_cast<size_t>(k)];
+        bool ok = true;
+        for (size_t i = 0; ok && i < typed.size(); ++i)
+            ok = canon(typed[i]) == kw.words[i] || bare(typed[i]);
+        if (ok) return k;
+    }
+    return -1;
+}
+
+int load_keywords(EmojiDB* d, std::istream& f) {
+    d->keywords.clear();
+    d->by_word.clear();
+    d->by_phrase.clear();
+    d->by_text.clear();
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.empty() || (line[0] == '#' && (line.size() == 1 || line[1] == ' '))) continue;
+        std::vector<std::string> col;
+        std::string cur;
+        std::istringstream in(line);
+        while (std::getline(in, cur, '\t')) col.push_back(cur);
+        if (col.size() < 3 || col[0].empty() || (col[1] != "append" && col[1] != "replace")) continue;
+        Keyword kw;
+        kw.replace = col[1] == "replace";
+        kw.emoji = split(col[2], ' ');
+        std::string text, folded;
+        for (const auto& w : split(col[0], ' ')) {
+            kw.words.push_back(canon(w));
+            text += (text.empty() ? "" : " ") + kw.words.back();
+            folded += (folded.empty() ? "" : " ") + fold(w);
+        }
+        if (kw.words.empty() || kw.emoji.empty() || d->by_text.count(text)) continue;
+        const int idx = static_cast<int>(d->keywords.size());
+        d->by_text[text] = idx;
+        if (kw.words.size() == 1) d->by_word[text] = idx;
+        else d->by_phrase[folded].push_back(idx);
+        d->keywords.push_back(std::move(kw));
+    }
+    return static_cast<int>(d->keywords.size());
+}
+
+}  // namespace
 
 }  // namespace xrnkey
 
@@ -183,6 +280,16 @@ int xk_emoji_search(XKEmojiDB* db, const char* query, char** chars, char** names
     if (q.empty()) return 0;
     struct Match { int idx; int score; };
     std::vector<Match> matches;
+    /* The strip's keyword for the query, as typed, first ("haha": 😂). */
+    std::string text;
+    for (const auto& w : xrnkey::split(query, ' ')) text += (text.empty() ? "" : " ") + xrnkey::canon(w);
+    if (auto it = d->by_text.find(text); it != d->by_text.end()) {
+        int rank = 0;
+        for (const auto& e : d->keywords[static_cast<size_t>(it->second)].emoji)
+            for (size_t i = 0; i < d->entries.size(); ++i)
+                if (d->entries[i].emoji == e) matches.push_back({static_cast<int>(i), 1000 - rank++});
+    }
+    const size_t from_table = matches.size();
     for (size_t i = 0; i < d->entries.size(); ++i) {
         const auto& e = d->entries[i];
         int best = 0;
@@ -196,7 +303,9 @@ int xk_emoji_search(XKEmojiDB* db, const char* query, char** chars, char** names
         consider(e.en_name, 95, 55, 25);
         for (const auto& k : e.vi_kw) consider(k, 90, 50, 20);
         for (const auto& k : e.en_kw) consider(k, 85, 45, 15);
-        if (best > 0) matches.push_back({static_cast<int>(i), best});
+        const bool listed = std::any_of(matches.begin(), matches.begin() + static_cast<long>(from_table),
+                                        [&](const Match& m) { return m.idx == static_cast<int>(i); });
+        if (best > 0 && !listed) matches.push_back({static_cast<int>(i), best});
     }
     std::stable_sort(matches.begin(), matches.end(),
                      [](const Match& a, const Match& b) { return a.score > b.score; });
@@ -236,6 +345,38 @@ int xk_emoji_suggest(const XKEmojiDB* db, const char* const* words, int n, char*
     const int k = std::min(max_out, static_cast<int>(picked.size()));
     for (int i = 0; i < k; ++i) out[i] = strdup(d->entries[static_cast<size_t>(picked[static_cast<size_t>(i)])].emoji.c_str());
     return k;
+}
+
+int xk_emoji_load_keywords(XKEmojiDB* db, const char* path) {
+    if (!db || !path) return 0;
+    std::ifstream f(path);
+    return f ? xrnkey::load_keywords(reinterpret_cast<EmojiDB*>(db), f) : 0;
+}
+
+int xk_emoji_load_keywords_text(XKEmojiDB* db, const char* text, size_t length) {
+    if (!db || !text) return 0;
+    std::istringstream in(std::string(text, length));
+    return xrnkey::load_keywords(reinterpret_cast<EmojiDB*>(db), in);
+}
+
+int xk_emoji_keyword(const XKEmojiDB* db, const char* const* words, int n, char** out, int max_out,
+                     int* replace, int* span) {
+    if (replace) *replace = 0;
+    if (span) *span = 0;
+    if (!db || !words || n <= 0 || !out || max_out <= 0) return 0;
+    const auto* d = reinterpret_cast<const EmojiDB*>(db);
+    /* The longest keyword first: "buồn ngủ" before "ngủ". */
+    for (int len = std::min(n, xrnkey::kPhraseWords); len >= 1; --len) {
+        const int k = xrnkey::keyword_at(*d, words, n, len);
+        if (k < 0) continue;
+        const auto& kw = d->keywords[static_cast<size_t>(k)];
+        const int m = std::min(max_out, static_cast<int>(kw.emoji.size()));
+        for (int i = 0; i < m; ++i) out[i] = strdup(kw.emoji[static_cast<size_t>(i)].c_str());
+        if (replace) *replace = kw.replace ? 1 : 0;
+        if (span) *span = len;
+        return m;
+    }
+    return 0;
 }
 
 }  /* extern "C" */

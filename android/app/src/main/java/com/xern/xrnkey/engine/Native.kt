@@ -40,6 +40,8 @@ internal object Native {
     external fun emojiAt(db: Long, index: Int, skin: IntArray): Array<ByteArray>?
     external fun emojiSearch(db: Long, query: ByteArray, max: Int): Array<ByteArray>
     external fun emojiSuggest(db: Long, words: Array<ByteArray>, max: Int): Array<ByteArray>
+    external fun emojiLoadKeywords(db: Long, text: ByteArray): Int
+    external fun emojiKeyword(db: Long, words: Array<ByteArray>, max: Int, info: IntArray): Array<ByteArray>
 
     external fun userNew(): Long
     external fun userFree(user: Long)

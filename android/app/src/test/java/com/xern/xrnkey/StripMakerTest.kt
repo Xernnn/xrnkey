@@ -124,7 +124,7 @@ class StripMakerTest {
 
     @Test
     fun anEmojiThatGoesWithTheWordsTakesTheRightSlot() {
-        val index = EmojiIndex.load(File(System.getProperty("xrnkey.emojiIndex")!!).readBytes())!!
+        val index = testEmojiIndex()  // with the strip's keyword table (EmojiStripTest)
         TestModels.test().use { m ->
             TypingState().use { s ->
                 s.useModels(m.models)
@@ -133,12 +133,13 @@ class StripMakerTest {
                 val strip = StripMaker(m.models, index)
                 t.text("sinh nhaatj")
                 val shown = strip.make(t) as Strip.Candidates
-                assertEquals("nhật", shown.centre)
-                assertTrue(shown.right in setOf("🎂", "🥳", "🎉", "🎁"))
+                assertEquals("🎂", shown.right)  // "chúc mừng sinh nhật"
                 val pick = strip.pick(2)!!
                 assertTrue(pick.emoji)
                 strip.emojiSuggestions = false
-                assertTrue((strip.make(t) as Strip.Candidates).right != shown.right)
+                val plain = strip.make(t) as Strip.Candidates
+                assertEquals("nhật", plain.centre)
+                assertTrue(plain.right != shown.right)
             }
         }
         index.close()
@@ -195,9 +196,9 @@ class StripMakerTest {
      *   xin  -> xịn | xin lỗi | xinh
      *   meet -> mệt mỏi | mệt | mệt rồi
      *   cam  -> cám ơn | cảm ơn | 🍊
-     * The same with the real models, as far as they allow: they put "helping" before "held",
-     * have no emoji for "cam" and no "mệt rồi", and xrnkey ends "meet" as the English it is, so
-     * that is in the middle, in bold.
+     * The same with the real models, as far as they allow: they put "helping" before "held"
+     * and have no "mệt rồi", and xrnkey ends "meet" as the English it is, so that is in the
+     * middle, in bold. (The emoji come from the keyword table, not loaded here: EmojiStripTest.)
      */
     @Test
     fun theStripCompletesAndPairsWordsAsLabanDoes() {

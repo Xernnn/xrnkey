@@ -338,17 +338,35 @@ int        xk_emoji_count(const XKEmojiDB* db);
 int        xk_emoji_at(const XKEmojiDB* db, int i, const char** emoji, const char** group,
                        const char** name, int* skin_tones);
 /* Emoji whose name or keyword matches `query`, in Vietnamese or English,
- * with or without accents ("cuoi" finds "cười"), best first: exact before
- * prefix before inside, names before keywords. chars[i] and names[i] are
- * newly allocated (the caller frees them). */
+ * with or without accents ("cuoi" finds "cười"), best first: the strip's
+ * keyword for the query as typed ("haha": 😂), then exact before prefix
+ * before inside, names before keywords. chars[i] and names[i] are newly
+ * allocated (the caller frees them). */
 int        xk_emoji_search(XKEmojiDB* db, const char* query,
                            char** chars, char** names, int max_results);
-/* Emoji for the words just typed (oldest first), for the suggestion strip:
- * those with the last three, two, then one words as a keyword ("không
- * đời nào", "trái tim", "yêu"), leaving out keywords that over 24 emoji
- * share ("mặt"). out[i] is newly allocated. */
+/* Emoji for the words just typed (oldest first), for the emoji panel's
+ * suggestion row: those with the last three, two, then one words as a CLDR
+ * keyword ("không đời nào", "trái tim", "yêu"), leaving out keywords that
+ * over 24 emoji share ("mặt"). out[i] is newly allocated. */
 int        xk_emoji_suggest(const XKEmojiDB* db, const char* const* words, int n,
                             char** out, int max_out);
+/* The suggestion strip's emoji keywords (data/emoji/keywords.tsv; lines
+ * "keyword TAB append|replace TAB emoji ..."), read into the index in place
+ * of any read before: how many keywords. */
+int        xk_emoji_load_keywords(XKEmojiDB* db, const char* path);
+int        xk_emoji_load_keywords_text(XKEmojiDB* db, const char* text, size_t length);
+/* The strip's emoji for what was just typed: `words` are the words before
+ * the cursor, oldest first, the last one as it stands (the word in
+ * progress, or what was typed last). A keyword of one word matches only as
+ * it is written, ignoring case and where the tone sits: "cam" (🍊), "khóc"
+ * (😢), never "khoc" for "khóc". A keyword of up to four words matches the
+ * last words each as it is written or typed without marks ("chuc mung sinh
+ * nhat": 🎂). The longest keyword wins. out[i] is newly allocated; *replace
+ * is 1 when the emoji take the place of the words, 0 when they go after
+ * them; *span is how many words they stand for. Returns how many emoji, 0
+ * when the words are no keyword. */
+int        xk_emoji_keyword(const XKEmojiDB* db, const char* const* words, int n,
+                            char** out, int max_out, int* replace, int* span);
 
 #ifdef __cplusplus
 }

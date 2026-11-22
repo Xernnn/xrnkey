@@ -218,6 +218,33 @@ FN(jobjectArray, emojiSearch)(JNIEnv* env, jobject, jlong db, jbyteArray query, 
     return byte_arrays(env, out);
 }
 
+FN(jint, emojiLoadKeywords)(JNIEnv* env, jobject, jlong db, jbyteArray text) {
+    const std::string t = text_of(env, text);
+    return xk_emoji_load_keywords_text(as<XKEmojiDB>(db), t.data(), t.size());
+}
+
+/* The strip's emoji for the words just typed; info[0] = 1 when they take the words' place,
+ * info[1] = how many words they stand for. */
+FN(jobjectArray, emojiKeyword)(JNIEnv* env, jobject, jlong db, jobjectArray words, jint max, jintArray info) {
+    const auto w = strings(env, words);
+    const auto p = pointers(w);
+    std::vector<char*> got(static_cast<size_t>(max > 0 ? max : 0));
+    int replace = 0, span = 0;
+    const int n = max > 0 ? xk_emoji_keyword(as<XKEmojiDB>(db), p.data(), static_cast<int>(p.size()), got.data(),
+                                             max, &replace, &span)
+                          : 0;
+    if (info && env->GetArrayLength(info) >= 2) {
+        const jint v[2] = {replace, span};
+        env->SetIntArrayRegion(info, 0, 2, v);
+    }
+    std::vector<std::string> out;
+    for (int i = 0; i < n; ++i) {
+        out.emplace_back(got[static_cast<size_t>(i)]);
+        std::free(got[static_cast<size_t>(i)]);
+    }
+    return byte_arrays(env, out);
+}
+
 FN(jobjectArray, emojiSuggest)(JNIEnv* env, jobject, jlong db, jobjectArray words, jint max) {
     const auto w = strings(env, words);
     const auto p = pointers(w);
