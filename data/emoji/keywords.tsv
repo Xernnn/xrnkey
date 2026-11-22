@@ -1,0 +1,1911 @@
+# xrnkey's emoji keywords for the suggestion strip: CLDR 48 names (Unicode License v3) and this project's hand list (data/emoji/README.md). Built by keywords.py.
+-.-	replace	😒	hand
+-_-	replace	😑 😒	hand
+:'(	replace	😢	hand
+:')	replace	🥲	hand
+:(	replace	🙁 😞	hand
+:((	replace	😢 😭	hand
+:)	replace	🙂 😊	hand
+:))	replace	😆 😂	hand
+:)))	replace	😂 🤣	hand
+:*	replace	😘	hand
+:-(	replace	🙁	hand
+:-)	replace	🙂	hand
+:-d	replace	😃	hand
+:-p	replace	😛	hand
+:/	replace	😕	hand
+:3	replace	😺 🥰	hand
+:d	replace	😃 😄	hand
+:o	replace	😮 😲	hand
+:p	replace	😛 😜	hand
+:|	replace	😐	hand
+;)	replace	😉	hand
+;-)	replace	😉	hand
+</3	replace	💔	hand
+<3	replace	❤️ 😍	hand
+=(	replace	🙁	hand
+=((	replace	😭	hand
+=)	replace	🙂 😊	hand
+=))	replace	🤣 😂	hand
+=)))	replace	🤣	hand
+=d	replace	😃	hand
+>.<	replace	😣	hand
+>_<	replace	😣 😆	hand
+^^	replace	😊 😄	hand
+^_^	replace	😊	hand
+abacus	append	🧮	cldr
+accordion	append	🪗	cldr
+adhesive bandage	append	🩹	cldr
+admission tickets	append	🎟️	cldr
+adn	append	🧬	cldr
+aerial tramway	append	🚡	cldr
+afghanistan	append	🇦🇫	cldr
+ahihi	replace	😁 🤭	hand
+ai cập	append	🇪🇬	cldr
+airplane	append	✈️	cldr
+airplane arrival	append	🛬	cldr
+airplane departure	append	🛫	cldr
+alarm clock	append	⏰	cldr
+albania	append	🇦🇱	cldr
+alembic	append	⚗️	cldr
+algeria	append	🇩🇿	cldr
+ambulance	append	🚑	cldr
+american football	append	🏈	cldr
+american samoa	append	🇦🇸	cldr
+amphora	replace	🏺	cldr
+anchor	append	⚓	cldr
+andorra	append	🇦🇩	cldr
+angola	append	🇦🇴	cldr
+angry	append	😠	hand
+anguilla	append	🇦🇮	cldr
+anh quốc	append	🏴󠁧󠁢󠁥󠁮󠁧󠁿	cldr
+anh yêu em	append	❤️ 😘 🥰	hand
+anh đào	replace	🍒	cldr
+ant	replace	🐜	cldr
+antarctica	append	🇦🇶	cldr
+antigua và barbuda	append	🇦🇬	cldr
+argentina	append	🇦🇷	cldr
+armenia	append	🇦🇲	cldr
+articulated lorry	append	🚛	cldr
+artist palette	append	🎨	cldr
+aruba	append	🇦🇼	cldr
+ascension island	append	🇦🇨	cldr
+australia	append	🇦🇺	cldr
+austria	append	🇦🇹	cldr
+auto rickshaw	append	🛺	cldr
+automobile	append	🚗	cldr
+avocado	replace	🥑	cldr
+axe	append	🪓	cldr
+azerbaijan	append	🇦🇿	cldr
+ba lan	append	🇵🇱	cldr
+baby bottle	append	🍼	cldr
+baby chick	append	🐤	cldr
+backpack	append	🎒	cldr
+bacon	replace	🥓	cldr
+badger	replace	🦡	cldr
+badminton	append	🏸	cldr
+bagel	replace	🥯	cldr
+baguette bread	append	🥖	cldr
+bahamas	append	🇧🇸	cldr
+bahrain	append	🇧🇭	cldr
+bai bai	append	👋	hand
+balance scale	append	⚖️	cldr
+ballet shoes	append	🩰	cldr
+balloon	append	🎈	cldr
+banana	replace	🍌	cldr
+bangladesh	append	🇧🇩	cldr
+banjo	append	🪕	cldr
+bank	append	🏦	cldr
+bao lì xì	append	🧧	cldr
+bar chart	append	📊	cldr
+barbados	append	🇧🇧	cldr
+barber pole	append	💈	cldr
+baseball	append	⚾	cldr
+basket	append	🧺	cldr
+basketball	append	🏀	cldr
+bathtub	append	🛁	cldr
+battery	append	🔋	cldr
+beans	replace	🫘	cldr
+beaver	replace	🦫	cldr
+bed	append	🛏️	cldr
+beer	replace	🍺	hand
+beer mug	append	🍺	cldr
+beetle	replace	🪲	cldr
+belarus	append	🇧🇾	cldr
+belgium	append	🇧🇪	cldr
+belize	append	🇧🇿	cldr
+bell	append	🔔	cldr
+bell pepper	append	🫑	cldr
+bellhop bell	append	🛎️	cldr
+benin	append	🇧🇯	cldr
+bento box	append	🍱	cldr
+bermuda	append	🇧🇲	cldr
+beverage box	append	🧃	cldr
+bhutan	append	🇧🇹	cldr
+bi xoay	append	🖲️	cldr
+bia	replace	🍺 🍻	hand
+bia mộ	append	🪦	cldr
+bicycle	append	🚲	cldr
+bikini	append	👙	cldr
+billed cap	append	🧢	cldr
+bird	replace	🐦	cldr
+birthday cake	append	🎂	cldr
+bison	replace	🦬	cldr
+biên nhận	append	🧾	cldr
+biển	append	🏖️ 🌊	hand
+biểu đồ giảm	append	📉	cldr
+biểu đồ thanh	append	📊	cldr
+biểu đồ tăng	append	📈	cldr
+black bird	append	🐦‍⬛	cldr
+black cat	append	🐈‍⬛	cldr
+black nib	append	✒️	cldr
+blossom	replace	🌼	cldr
+blowfish	replace	🐡	cldr
+blue book	append	📘	cldr
+blueberries	replace	🫐	cldr
+boar	replace	🐗	cldr
+bolivia	append	🇧🇴	cldr
+bomb	append	💣	cldr
+bong bóng	append	🫧	cldr
+bookmark	append	🔖	cldr
+bookmark tabs	append	📑	cldr
+books	append	📚	cldr
+boomerang	append	🪃	cldr
+bosnia và herzegovina	append	🇧🇦	cldr
+botswana	append	🇧🇼	cldr
+bouquet	replace	💐	cldr
+bouvet island	append	🇧🇻	cldr
+bowling	append	🎳	cldr
+boxing glove	append	🥊	cldr
+brazil	append	🇧🇷	cldr
+bread	replace	🍞	cldr
+brick	append	🧱	cldr
+briefcase	append	💼	cldr
+briefs	append	🩲	cldr
+british virgin islands	append	🇻🇬	cldr
+broccoli	replace	🥦	cldr
+broken chain	append	⛓️‍💥	cldr
+broom	append	🧹	cldr
+brown mushroom	append	🍄‍🟫	cldr
+brunei	append	🇧🇳	cldr
+bubble tea	append	🧋	cldr
+bubbles	append	🫧	cldr
+bucket	append	🪣	cldr
+bug	replace	🐛	cldr
+building construction	append	🏗️	cldr
+bulgaria	append	🇧🇬	cldr
+bullet train	append	🚅	cldr
+bullseye	append	🎯	cldr
+bumơrang	append	🪃	cldr
+burkina faso	append	🇧🇫	cldr
+burrito	replace	🌯	cldr
+burundi	append	🇧🇮	cldr
+bus	append	🚌	cldr
+bus stop	append	🚏	cldr
+butter	replace	🧈	cldr
+butterfly	replace	🦋	cldr
+buồn	append	😞 😢	hand
+buồn cười	append	😂 🤣	hand
+buồn ngủ	append	😴 🥱	hand
+buồn quá	append	😢 😞	hand
+bye	append	👋	hand
+bye bye	append	👋	hand
+bàn chải răng	append	🪥	cldr
+bàn phím	append	⌨️	cldr
+bàn tính	append	🧮	cldr
+bánh bao	replace	🥟	cldr
+bánh burrito	replace	🌯	cldr
+bánh gạo	replace	🍘	cldr
+bánh hamburger	replace	🍔	cldr
+bánh kếp	replace	🥞	cldr
+bánh mì	replace	🥖 🥪	hand
+bánh mì que	append	🥖	cldr
+bánh mỳ kẹp	append	🥪	cldr
+bánh mỳ vòng	append	🥯	cldr
+bánh ngọt	replace	🍰	cldr
+bánh nướng	replace	🥧	cldr
+bánh nướng nhỏ	append	🧁	cldr
+bánh pizza	replace	🍕	cldr
+bánh quy	replace	🍪	cldr
+bánh quy xoắn	append	🥨	cldr
+bánh quế	replace	🧇	cldr
+bánh rán vòng	append	🍩	cldr
+bánh răng	append	⚙️	cldr
+bánh sinh nhật	append	🎂	cldr
+bánh sừng bò	append	🥐	cldr
+bánh taco	replace	🌮	cldr
+bánh tamale	replace	🫔	cldr
+bánh trung thu	append	🥮	cldr
+bánh trứng	replace	🍮	cldr
+bánh xe	append	🛞	cldr
+báo hoa mai	append	🐆	cldr
+bát mì	replace	🍜	cldr
+bát và thìa	append	🥣	cldr
+bình chưng cất	append	⚗️	cldr
+bình chữa cháy	append	🧯	cldr
+bình minh	append	🌅	cldr
+bình đựng	replace	🫙	cldr
+bò cái	replace	🐄	cldr
+bò rừng	replace	🦬	cldr
+bò đực	replace	🐂	cldr
+bó hoa	replace	💐	cldr
+bó lúa	replace	🌾	cldr
+bó tay	append	🤦 🤷	hand
+bó tay luôn	append	🤦	hand
+bóng bay	append	🎈	cldr
+bóng bàn	append	🏓	cldr
+bóng bầu dục	append	🏉	cldr
+bóng chuyền	append	🏐	cldr
+bóng chày	append	⚾	cldr
+bóng hoa giấy	append	🎊	cldr
+bóng mềm	append	🥎	cldr
+bóng rổ	append	🏀	cldr
+bóng vợt	append	🥍	cldr
+bóng đá	append	⚽	cldr
+bóng đèn	append	💡	cldr
+bông tuyết	append	❄️	cldr
+búa	append	🔨	cldr
+búa chim	append	⛏️	cldr
+bún	replace	🍜	hand
+búp bê matryoshka	append	🪆	cldr
+bút	append	🖊️	cldr
+bút chì	append	✏️	cldr
+bút máy	append	🖋️	cldr
+bút sáp màu	append	🖍️	cldr
+băng dính	append	🩹	cldr
+băng video	append	📼	cldr
+bơ	replace	🧈	cldr
+bơm nhiên liệu	append	⛽	cldr
+bưu điện	append	🏤	cldr
+bướm	replace	🦋	cldr
+bạch tuộc	replace	🐙	cldr
+bảng clapper	append	🎬	cldr
+bảng ghi nhớ	append	📋	cldr
+bảng hiệu	append	🪧	cldr
+bảng màu	append	🎨	cldr
+bẫy chuột	append	🪤	cldr
+bắc macedonia	append	🇲🇰	cldr
+bắp ngô	replace	🌽	cldr
+bắt tay	append	🤝	hand
+bệnh viện	append	🏥	cldr
+bọ cánh cứng	append	🪲	cldr
+bọ cạp	replace	🦂	cldr
+bọ rùa	replace	🐞	cldr
+bọt biển	append	🧽	cldr
+bỏng ngô	replace	🍿	cldr
+bồ câu	replace	🕊️	cldr
+bồ đào nha	append	🇵🇹	cldr
+bồn cầu	append	🚽	cldr
+bồn tắm	append	🛁	cldr
+bộ bích	append	♠️	cldr
+bộ cơ	append	♥️	cldr
+bộ nhép	append	♣️	cldr
+bộ rô	append	♦️	cldr
+bực	append	😤	hand
+bực mình	append	😤 😒	hand
+cactus	replace	🌵	cldr
+cafe	replace	☕	hand
+calendar	append	📅	cldr
+cam	replace	🍊	hand
+cambodia	append	🇰🇭	cldr
+camel	replace	🐪	cldr
+camera	append	📷	cldr
+cameroon	append	🇨🇲	cldr
+camon	append	🙏 ❤️	hand
+camping	append	🏕️	cldr
+canada	append	🇨🇦	cldr
+canary islands	append	🇮🇨	cldr
+candle	append	🕯️	cldr
+candy	replace	🍬	cldr
+canned food	append	🥫	cldr
+canoe	append	🛶	cldr
+cape verde	append	🇨🇻	cldr
+card index	append	📇	cldr
+caribbean netherlands	append	🇧🇶	cldr
+carousel horse	append	🎠	cldr
+carp streamer	append	🎏	cldr
+carpentry saw	append	🪚	cldr
+carrot	replace	🥕	cldr
+castle	append	🏰	cldr
+cat face	append	🐱	cldr
+cayman islands	append	🇰🇾	cldr
+central african republic	append	🇨🇫	cldr
+ceuta và melilla	append	🇪🇦	cldr
+chains	append	⛓️	cldr
+chair	append	🪑	cldr
+chanh	replace	🍋	hand
+chanh ta	replace	🍋‍🟩	cldr
+chanh tây	replace	🍋	cldr
+chart decreasing	append	📉	cldr
+chart increasing	append	📈	cldr
+cheers	append	🍻 🥂	hand
+cheese wedge	append	🧀	cldr
+cherries	replace	🍒	cldr
+cherry blossom	append	🌸	cldr
+chess pawn	append	♟️	cldr
+chestnut	replace	🌰	cldr
+chicken	replace	🐔	cldr
+chile	append	🇨🇱	cldr
+chim cánh cụt	append	🐧	cldr
+chim cưu	replace	🦤	cldr
+chim hoét đen	append	🐦‍⬛	cldr
+china	append	🇨🇳	cldr
+chipmunk	replace	🐿️	cldr
+chocolate bar	append	🍫	cldr
+chopsticks	replace	🥢	cldr
+christmas island	append	🇨🇽	cldr
+christmas tree	append	🎄	cldr
+church	append	⛪	cldr
+chuông gió	append	🎐	cldr
+chuối	replace	🍌	cldr
+chuột	replace	🐁	cldr
+chuột cống	replace	🐀	cldr
+chuột máy tính	append	🖱️	cldr
+chuột túi	replace	🦘	cldr
+chào	append	👋	hand
+chào buổi sáng	append	☀️ 😊	hand
+chán	append	😒 😑	hand
+chán quá	append	😩 😒	hand
+cháy	append	🔥	hand
+chìa khóa	append	🔑	cldr
+chìa khóa cũ	append	🗝️	cldr
+chó	replace	🐶 🐕	hand
+chó biển	replace	🦭	cldr
+chó dẫn đường	append	🦮	cldr
+chó hỗ trợ	append	🐕‍🦺	cldr
+chó sói	replace	🐺	cldr
+chó xù	replace	🐩	cldr
+chùm nho	replace	🍇	cldr
+chúc may mắn	append	🍀	hand
+chúc mừng	append	🎉 👏	hand
+chúc mừng năm mới	append	🎆 🧧 🎉	hand
+chúc mừng sinh nhật	append	🎂 🎉 🥳	hand
+chúc ngủ ngon	append	😴 🌙 💤	hand
+chạm cốc	replace	🥂	cldr
+chạm cốc bia	append	🍻	cldr
+chắp tay	append	🙏	hand
+chết rồi	append	😱	hand
+chỉ mục thẻ	append	📇	cldr
+chồn hôi mỹ	append	🦨	cldr
+chụp ảnh	append	📸	hand
+chụt	replace	😘	hand
+cigarette	append	🚬	cldr
+circus tent	append	🎪	cldr
+cityscape	append	🏙️	cldr
+clamp	append	🗜️	cldr
+clapper board	append	🎬	cldr
+classical building	append	🏛️	cldr
+clinking glasses	append	🥂	cldr
+clipboard	append	📋	cldr
+clipperton island	append	🇨🇵	cldr
+closed book	append	📕	cldr
+closed umbrella	append	🌂	cldr
+cloud	append	☁️	cldr
+club suit	append	♣️	cldr
+clutch bag	append	👝	cldr
+cmnm	append	🎆 🧧	hand
+cmsn	append	🎂 🎉 🥳	hand
+coat	append	🧥	cldr
+cockroach	replace	🪳	cldr
+cocktail glass	append	🍸	cldr
+coconut	replace	🥥	cldr
+coffee	replace	☕	hand
+coffin	append	⚰️	cldr
+coin	append	🪙	cldr
+colombia	append	🇨🇴	cldr
+comet	append	☄️	cldr
+comoros	append	🇰🇲	cldr
+compass	append	🧭	cldr
+computer disk	append	💽	cldr
+computer mouse	append	🖱️	cldr
+con bọ	replace	🐛	cldr
+con công	replace	🦚	cldr
+con gián	replace	🪳	cldr
+con lười	replace	🦥	cldr
+con lừa	replace	🫏	cldr
+con lửng	replace	🦡	cldr
+con muỗi	replace	🦟	cldr
+con ngỗng	replace	🪿	cldr
+con ruồi	replace	🪰	cldr
+con vẹt	replace	🦜	cldr
+confetti ball	append	🎊	cldr
+congrats	append	🎉 👏	hand
+congratulations	append	🎉 👏	hand
+construction	append	🚧	cldr
+control knobs	append	🎛️	cldr
+convenience store	append	🏪	cldr
+cook islands	append	🇨🇰	cldr
+cooked rice	append	🍚	cldr
+cookie	replace	🍪	cldr
+cooking	replace	🍳	cldr
+cool	append	😎	hand
+coral	replace	🪸	cldr
+costa rica	append	🇨🇷	cldr
+cow	replace	🐄	cldr
+cow face	append	🐮	cldr
+crab	replace	🦀	cldr
+crayon	append	🖍️	cldr
+credit card	append	💳	cldr
+crescent moon	append	🌙	cldr
+cricket	replace	🦗	cldr
+cricket game	append	🏏	cldr
+croatia	append	🇭🇷	cldr
+crocodile	replace	🐊	cldr
+croissant	replace	🥐	cldr
+crossed swords	append	⚔️	cldr
+crown	append	👑	cldr
+crush	append	😍	hand
+crutch	append	🩼	cldr
+cry	append	😢	hand
+crystal ball	append	🔮	cldr
+cuba	append	🇨🇺	cldr
+cucumber	replace	🥒	cldr
+cung tên	append	🏹	cldr
+cupcake	replace	🧁	cldr
+curaçao	append	🇨🇼	cldr
+curling stone	append	🥌	cldr
+curry rice	append	🍛	cldr
+custard	replace	🍮	cldr
+cute	append	🥰	hand
+cuộn giấy	append	🧻	cldr
+cuộn sách	append	📜	cldr
+cyclone	append	🌀	cldr
+cyprus	append	🇨🇾	cldr
+czechia	append	🇨🇿	cldr
+cà chua	replace	🍅	cldr
+cà phê	replace	☕	hand
+cà rốt	replace	🥕	cldr
+cà tím	replace	🍆	cldr
+cà vạt	append	👔	cldr
+cá	replace	🐟	cldr
+cá heo	replace	🐬	cldr
+cá mập	replace	🦈	cldr
+cá nhiệt đới	append	🐠	cldr
+cá nóc	replace	🐡	cldr
+cá sấu	replace	🐊	cldr
+cá voi	replace	🐋	cldr
+các nốt nhạc	append	🎶	cldr
+cái chuông	append	🔔	cldr
+cái ghế	append	💺	cldr
+cái giỏ	append	🧺	cldr
+cái khiên	append	🛡️	cldr
+cái kẹp	append	🗜️	cldr
+cái ô	append	☂️	cldr
+cám ơn	append	🙏	hand
+cám ơn nhiều	append	🙏	hand
+cáp treo	append	🚡	cldr
+cân thăng bằng	append	⚖️	cldr
+cây chổi	append	🧹	cldr
+cây cọ	replace	🌴	cldr
+cây non	replace	🌱	cldr
+cây rụng lá	append	🌳	cldr
+cây tanabata	append	🎋	cldr
+cây thông noel	append	🎄	cldr
+cây thường xanh	append	🌲	cldr
+cây trụi lá	append	🪾	cldr
+cây xương rồng	append	🌵	cldr
+có sương	append	🌁	cldr
+cô đơn	append	😔	hand
+công trường	append	🚧	cldr
+cú	replace	🦉	cldr
+cún	replace	🐶	hand
+cúp	append	🏆	cldr
+cơm	replace	🍚	cldr
+cơm cà ri	append	🍛	cldr
+cơm nắm	replace	🍙	cldr
+cưa mộc	append	🪚	cldr
+cưới	append	💍 💒	hand
+cười	append	😄 😆	hand
+cười đau bụng	append	🤣	hand
+cảm ơn	append	🙏 ❤️	hand
+cảm ơn nhiều	append	🙏 ❤️	hand
+cần câu cá	append	🎣	cldr
+cần điều khiển	append	🕹️	cldr
+cầu lông	append	🏸	cldr
+cầu nguyện	append	🙏	hand
+cầu trượt	append	🛝	cldr
+cầu vồng	append	🌈	cldr
+cắm trại	append	🏕️	cldr
+cặp tài liệu	append	💼	cldr
+cọ vẽ tranh	append	🖌️	cldr
+cỏ ba lá	append	☘️	cldr
+cỏ bốn lá	append	🍀	cldr
+cố gắng	append	💪	hand
+cố lên	append	💪	hand
+cốc bia	replace	🍺	cldr
+cốc sữa	replace	🥛	cldr
+cộng hòa dominica	append	🇩🇴	cldr
+cộng hòa trung phi	append	🇨🇫	cldr
+cờ cá chép	append	🎏	cldr
+cờ lê	append	🔧	cldr
+cờ trong lỗ	append	⛳	cldr
+củ gừng	replace	🫚	cldr
+cừu cái	replace	🐑	cldr
+cừu đực	replace	🐏	cldr
+cửa sổ	append	🪟	cldr
+dagger	append	🗡️	cldr
+dango	replace	🍡	cldr
+dao cạo	append	🪒	cldr
+dao găm	append	🗡️	cldr
+dao làm bếp	append	🔪	cldr
+deciduous tree	append	🌳	cldr
+deer	replace	🦌	cldr
+delicious	append	😋	hand
+delivery truck	append	🚚	cldr
+denmark	append	🇩🇰	cldr
+department store	append	🏬	cldr
+derelict house	append	🏚️	cldr
+desert	append	🏜️	cldr
+desert island	append	🏝️	cldr
+desktop computer	append	🖥️	cldr
+diamond suit	append	♦️	cldr
+diego garcia	append	🇩🇬	cldr
+diving mask	append	🤿	cldr
+diya lamp	append	🪔	cldr
+diều	append	🪁	cldr
+djibouti	append	🇩🇯	cldr
+dna	append	🧬	cldr
+dodo	replace	🦤	cldr
+dog	replace	🐕	cldr
+dog face	append	🐶	cldr
+dollar banknote	append	💵	cldr
+dolphin	replace	🐬	cldr
+dominica	append	🇩🇲	cldr
+dominican republic	append	🇩🇴	cldr
+donkey	replace	🫏	cldr
+door	append	🚪	cldr
+doughnut	replace	🍩	cldr
+dove	replace	🕊️	cldr
+dragon	replace	🐉	cldr
+dragon face	append	🐲	cldr
+dress	append	👗	cldr
+droplet	append	💧	cldr
+drum	append	🥁	cldr
+du lịch	append	✈️ 🏖️	hand
+dumpling	replace	🥟	cldr
+dvd	append	📀	cldr
+dzô	append	🍻	hand
+dâu tây	replace	🍓	cldr
+dây xích	append	⛓️	cldr
+dép xỏ ngón	append	🩴	cldr
+dê	replace	🐐	cldr
+dĩa và dao	append	🍴	cldr
+dơi	replace	🦇	cldr
+dưa	replace	🍈	cldr
+dưa chuột	replace	🥒	cldr
+dưa hấu	replace	🍉	cldr
+dải ngân hà	append	🌌	cldr
+dế	replace	🦗	cldr
+dễ thương	append	🥰 😊	hand
+dứa	replace	🍍	cldr
+dừa	replace	🥥	cldr
+eagle	replace	🦅	cldr
+ecuador	append	🇪🇨	cldr
+egg	replace	🥚	cldr
+eggplant	replace	🍆	cldr
+egypt	append	🇪🇬	cldr
+el salvador	append	🇸🇻	cldr
+electric plug	append	🔌	cldr
+elephant	replace	🐘	cldr
+elevator	append	🛗	cldr
+em yêu anh	append	❤️ 😘 🥰	hand
+email	append	📧	cldr
+empty nest	append	🪹	cldr
+england	append	🏴󠁧󠁢󠁥󠁮󠁧󠁿	cldr
+envelope	append	✉️	cldr
+equatorial guinea	append	🇬🇶	cldr
+eritrea	append	🇪🇷	cldr
+estonia	append	🇪🇪	cldr
+eswatini	append	🇸🇿	cldr
+ethiopia	append	🇪🇹	cldr
+euro banknote	append	💶	cldr
+european union	append	🇪🇺	cldr
+evergreen tree	append	🌲	cldr
+ewe	replace	🐑	cldr
+factory	append	🏭	cldr
+falafel	replace	🧆	cldr
+falkland islands	append	🇫🇰	cldr
+fallen leaf	append	🍂	cldr
+faroe islands	append	🇫🇴	cldr
+fax machine	append	📠	cldr
+feather	replace	🪶	cldr
+ferris wheel	append	🎡	cldr
+ferry	append	⛴️	cldr
+field hockey	append	🏑	cldr
+fighting	append	💪	hand
+fiji	append	🇫🇯	cldr
+file cabinet	append	🗄️	cldr
+file folder	append	📁	cldr
+film frames	append	🎞️	cldr
+film projector	append	📽️	cldr
+finland	append	🇫🇮	cldr
+fire	append	🔥	cldr
+fire engine	append	🚒	cldr
+fire extinguisher	append	🧯	cldr
+firecracker	append	🧨	cldr
+fireworks	append	🎆	cldr
+fish	replace	🐟	cldr
+fishing pole	append	🎣	cldr
+flamingo	replace	🦩	cldr
+flashlight	append	🔦	cldr
+flat shoe	append	🥿	cldr
+flatbread	replace	🫓	cldr
+floppy disk	append	💾	cldr
+flute	append	🪈	cldr
+flying disc	append	🥏	cldr
+flying saucer	append	🛸	cldr
+fog	append	🌫️	cldr
+foggy	append	🌁	cldr
+fondue	replace	🫕	cldr
+fortune cookie	append	🥠	cldr
+fountain	append	⛲	cldr
+fountain pen	append	🖋️	cldr
+fox	replace	🦊	cldr
+framed picture	append	🖼️	cldr
+france	append	🇫🇷	cldr
+french fries	append	🍟	cldr
+french guiana	append	🇬🇫	cldr
+french polynesia	append	🇵🇫	cldr
+french southern territories	append	🇹🇫	cldr
+fried shrimp	append	🍤	cldr
+frog	replace	🐸	cldr
+fuel pump	append	⛽	cldr
+full moon	append	🌕	cldr
+funeral urn	append	⚱️	cldr
+g9	append	😴 🌙	hand
+ga tàu	append	🚉	cldr
+gabon	append	🇬🇦	cldr
+gambia	append	🇬🇲	cldr
+game	append	🎮	hand
+game die	append	🎲	cldr
+garlic	replace	🧄	cldr
+gear	append	⚙️	cldr
+gem stone	append	💎	cldr
+georgia	append	🇬🇪	cldr
+germany	append	🇩🇪	cldr
+ghana	append	🇬🇭	cldr
+ghim băng	append	🧷	cldr
+ghép hình	append	🧩	cldr
+ghế	append	🪑	cldr
+gibraltar	append	🇬🇮	cldr
+ginger root	append	🫚	cldr
+giraffe	replace	🦒	cldr
+giàu	append	🤑 💰	hand
+giày bệt	append	🥿	cldr
+giày bốt nữ	append	👢	cldr
+giày cao gót	append	👠	cldr
+giày chạy	append	👟	cldr
+giày leo núi	append	🥾	cldr
+giày múa balê	append	🩰	cldr
+giày nam	append	👞	cldr
+giày trượt băng	append	⛸️	cldr
+giày trượt patin	append	🛼	cldr
+giáng sinh	append	🎄 🎅	hand
+giường	append	🛏️	cldr
+giận	append	😠 😡	hand
+giọt máu	append	🩸	cldr
+giọt nước	append	💧	cldr
+giỏi	append	👍 👏	hand
+giỏi quá	append	👏 👍	hand
+glasses	append	👓	cldr
+gloves	append	🧤	cldr
+glowing star	append	🌟	cldr
+goal net	append	🥅	cldr
+goat	replace	🐐	cldr
+goggles	append	🥽	cldr
+good morning	append	☀️ 😊	hand
+good night	append	😴 🌙	hand
+goose	replace	🪿	cldr
+gorilla	replace	🦍	cldr
+graduation cap	append	🎓	cldr
+grapes	replace	🍇	cldr
+greece	append	🇬🇷	cldr
+green apple	append	🍏	cldr
+green book	append	📗	cldr
+green salad	append	🥗	cldr
+greenland	append	🇬🇱	cldr
+grenada	append	🇬🇩	cldr
+guadeloupe	append	🇬🇵	cldr
+guam	append	🇬🇺	cldr
+guatemala	append	🇬🇹	cldr
+guernsey	append	🇬🇬	cldr
+guiana thuộc pháp	append	🇬🇫	cldr
+guide dog	append	🦮	cldr
+guinea	append	🇬🇳	cldr
+guinea xích đạo	append	🇬🇶	cldr
+guitar	append	🎸	cldr
+guyana	append	🇬🇾	cldr
+gà	replace	🐔	cldr
+gà con	replace	🐤	cldr
+gà mới nở	append	🐣	cldr
+gà trống	replace	🐓	cldr
+gà tây	replace	🦃	cldr
+gói	append	📦	cldr
+gói quà	append	🎁	cldr
+găng tay	append	🧤	cldr
+gương	append	🪞	cldr
+gạch	append	🧱	cldr
+gấu	replace	🐻	cldr
+gấu bông	append	🧸	cldr
+gấu trúc	replace	🦝	cldr
+gấu túi	replace	🐨	cldr
+gậy dò đường	append	🦯	cldr
+gậy thần	append	🪄	cldr
+gỗ	append	🪵	cldr
+haha	replace	😂 🤣 😆	hand
+hahaha	replace	🤣 😂	hand
+hair pick	append	🪮	cldr
+haiti	append	🇭🇹	cldr
+haiz	replace	😮‍💨	hand
+haizz	replace	😮‍💨 😩	hand
+hamburger	replace	🍔	cldr
+hammer	append	🔨	cldr
+hamsa	append	🪬	cldr
+hamster	replace	🐹	cldr
+handbag	append	👜	cldr
+happy	append	😊	hand
+happy birthday	append	🎂 🎉 🥳	hand
+happy new year	append	🎆 🎉	hand
+harp	append	🪉	cldr
+hatching chick	append	🐣	cldr
+hay quá	append	👏 👍	hand
+hbd	append	🎂 🎉	hand
+headphone	append	🎧	cldr
+headstone	append	🪦	cldr
+heart suit	append	♥️	cldr
+hedgehog	replace	🦔	cldr
+hehe	replace	😁 😆	hand
+helicopter	append	🚁	cldr
+hello	append	👋	hand
+heo	replace	🐷 🐖	hand
+herb	replace	🌿	cldr
+hi	append	👋	hand
+hibiscus	replace	🌺	cldr
+hic	replace	😢 😥	hand
+hichic	replace	😭	hand
+high voltage	append	⚡	cldr
+hihi	replace	😁 😊	hand
+hiking boot	append	🥾	cldr
+hindu temple	append	🛕	cldr
+hippopotamus	replace	🦛	cldr
+hix	replace	😢 😥	hand
+hjhj	replace	😁 😊	hand
+hmm	replace	🤔	hand
+hmmm	replace	🤔	hand
+hoa	append	🌸 💐 🌹	hand
+hoa anh đào	append	🌸	cldr
+hoa dâm bụt	append	🌺	cldr
+hoa héo	replace	🥀	cldr
+hoa hướng dương	append	🌻	cldr
+hoa hồng	replace	🌹	cldr
+hoa kỳ	append	🇺🇸	cldr
+hoa sen	replace	🪷	cldr
+hoa trắng	replace	💮	cldr
+hoa tulip	replace	🌷	cldr
+honduras	append	🇭🇳	cldr
+honey pot	append	🍯	cldr
+honeybee	replace	🐝	cldr
+hook	append	🪝	cldr
+horse	replace	🐎	cldr
+horse face	append	🐴	cldr
+hospital	append	🏥	cldr
+hot	append	🔥	hand
+hot beverage	append	☕	cldr
+hot dog	append	🌭	cldr
+hot pepper	append	🌶️	cldr
+hot springs	append	♨️	cldr
+hotel	append	🏨	cldr
+hourglass done	append	⌛	cldr
+house	append	🏠	cldr
+houses	append	🏘️	cldr
+hoàng hôn	append	🌇	cldr
+hpbd	append	🎂 🎉 🥳	hand
+hpny	append	🎆 🧧 🎉	hand
+hug	append	🤗	hand
+huhu	replace	😭 😢	hand
+huhuhu	replace	😭	hand
+hungary	append	🇭🇺	cldr
+hungry	append	🤤	hand
+huy chương bạc	append	🥈	cldr
+huy chương vàng	append	🥇	cldr
+huy chương đồng	append	🥉	cldr
+hy lạp	append	🇬🇷	cldr
+hyacinth	replace	🪻	cldr
+hà lan	append	🇳🇱	cldr
+hà mã	replace	🦛	cldr
+hài	append	😂	hand
+hài hước	append	😂	hand
+hàn quốc	append	🇰🇷	cldr
+hành lý	append	🧳	cldr
+hàu	replace	🦪	cldr
+hát	append	🎤	hand
+hình lốc xoáy	append	🌀	cldr
+hòm thư	append	📮	cldr
+hôn	append	😘 💋	hand
+hũ mật ong	append	🍯	cldr
+hươu	replace	🦌	cldr
+hươu cao cổ	append	🦒	cldr
+hạnh phúc	append	🥰 😊	hand
+hạt dẻ	replace	🌰	cldr
+hạt đậu	replace	🫘	cldr
+hải ly	replace	🦫	cldr
+hẹn gặp lại	append	👋	hand
+hồng hạc	replace	🦩	cldr
+hổ	replace	🐅	cldr
+hộp cơm bento	append	🍱	cldr
+hộp dụng cụ	append	🧰	cldr
+hộp đồ uống	append	🧃	cldr
+i love you	append	❤️ 😍	hand
+ib	append	📩	hand
+ice	replace	🧊	cldr
+ice cream	append	🍨	cldr
+ice hockey	append	🏒	cldr
+ice skate	append	⛸️	cldr
+iceland	append	🇮🇸	cldr
+identification card	append	🪪	cldr
+im đi	append	🤫	hand
+inbox tray	append	📥	cldr
+incoming envelope	append	📨	cldr
+india	append	🇮🇳	cldr
+indonesia	append	🇮🇩	cldr
+iran	append	🇮🇷	cldr
+iraq	append	🇮🇶	cldr
+ireland	append	🇮🇪	cldr
+isle of man	append	🇮🇲	cldr
+israel	append	🇮🇱	cldr
+italy	append	🇮🇹	cldr
+iu	append	❤️ 🥰	hand
+jamaica	append	🇯🇲	cldr
+japan	append	🇯🇵	cldr
+japanese castle	append	🏯	cldr
+japanese dolls	append	🎎	cldr
+jar	replace	🫙	cldr
+jeans	append	👖	cldr
+jellyfish	replace	🪼	cldr
+joker	append	🃏	cldr
+jordan	append	🇯🇴	cldr
+joystick	append	🕹️	cldr
+kaaba	append	🕋	cldr
+kaka	replace	😆 😂	hand
+kangaroo	replace	🦘	cldr
+kazakhstan	append	🇰🇿	cldr
+kem mềm	replace	🍦	cldr
+kenya	append	🇰🇪	cldr
+key	append	🔑	cldr
+keyboard	append	⌨️	cldr
+khay thư đi	append	📤	cldr
+khay thư đến	append	📥	cldr
+khoai lang nướng	append	🍠	cldr
+khoai tây	replace	🥔	cldr
+khoai tây chiên	append	🍟	cldr
+khung hình phim	append	🎞️	cldr
+khung thành	append	🥅	cldr
+khuôn mặt gió	append	🌬️	cldr
+khuông nhạc	append	🎼	cldr
+khách sạn	append	🏨	cldr
+khóa với bút	append	🔏	cldr
+khóa với chìa	append	🔐	cldr
+khóc	append	😢 😭	hand
+khăn quàng	append	🧣	cldr
+khỉ	replace	🐒	cldr
+khỉ đột	replace	🦍	cldr
+kick scooter	append	🛴	cldr
+kim may	append	🪡	cldr
+kimono	append	👘	cldr
+kiribati	append	🇰🇮	cldr
+kiss	append	😘	hand
+kitchen knife	append	🔪	cldr
+kite	append	🪁	cldr
+kiwi fruit	append	🥝	cldr
+kiếm bắt chéo	append	⚔️	cldr
+kk	replace	😂	hand
+kkk	replace	😂 🤣	hand
+knot	append	🪢	cldr
+koala	replace	🐨	cldr
+kosovo	append	🇽🇰	cldr
+kuwait	append	🇰🇼	cldr
+kyrgyzstan	append	🇰🇬	cldr
+kèn bưu chính	append	📯	cldr
+kèn saxophone	append	🎷	cldr
+kèn trombone	append	🪊	cldr
+kèn trumpet	append	🎺	cldr
+kính bảo hộ	append	🥽	cldr
+kính hiển vi	append	🔬	cldr
+kính mắt	append	👓	cldr
+kính râm	append	🕶️	cldr
+kính viễn vọng	append	🔭	cldr
+ký hiệu dừng	append	🛑	cldr
+kẹo	replace	🍬	cldr
+kẹo mút	replace	🍭	cldr
+kẹp giấy	append	📎	cldr
+kết hôn	append	💍 💒	hand
+kệ	append	🤷	hand
+kỳ lân	replace	🦄	cldr
+la bàn	append	🧭	cldr
+lab coat	append	🥼	cldr
+label	append	🏷️	cldr
+lacrosse	append	🥍	cldr
+ladder	append	🪜	cldr
+lady beetle	append	🐞	cldr
+landslide	append	🛘	cldr
+laos	append	🇱🇦	cldr
+laptop	append	💻	cldr
+latvia	append	🇱🇻	cldr
+leafless tree	append	🪾	cldr
+leafy green	append	🥬	cldr
+lebanon	append	🇱🇧	cldr
+ledger	append	📒	cldr
+lemon	replace	🍋	cldr
+leopard	replace	🐆	cldr
+lesotho	append	🇱🇸	cldr
+level slider	append	🎚️	cldr
+liberia	append	🇱🇷	cldr
+libya	append	🇱🇾	cldr
+liechtenstein	append	🇱🇮	cldr
+light bulb	append	💡	cldr
+light rail	append	🚈	cldr
+lime	replace	🍋‍🟩	cldr
+link	append	🔗	cldr
+linked paperclips	append	🖇️	cldr
+lion	replace	🦁	cldr
+lipstick	append	💄	cldr
+lithuania	append	🇱🇹	cldr
+lizard	replace	🦎	cldr
+liên hợp quốc	append	🇺🇳	cldr
+liên minh châu âu	append	🇪🇺	cldr
+llama	replace	🦙	cldr
+lmao	replace	🤣 😂	hand
+lo lắng	append	😟	hand
+loa phát thanh	append	📢	cldr
+loa phóng thanh	append	📣	cldr
+lobster	replace	🦞	cldr
+locked	append	🔒	cldr
+locomotive	append	🚂	cldr
+lol	replace	😂 🤣	hand
+lollipop	replace	🍭	cldr
+long drum	append	🪘	cldr
+lotion bottle	append	🧴	cldr
+lotus	replace	🪷	cldr
+loudspeaker	append	📢	cldr
+love	replace	❤️	hand
+love hotel	append	🏩	cldr
+love you	append	❤️ 😘	hand
+low battery	append	🪫	cldr
+luggage	append	🧳	cldr
+luxembourg	append	🇱🇺	cldr
+ly cocktail	replace	🍸	cldr
+ly rượu vang	append	🍷	cldr
+ly đáy phẳng	append	🥃	cldr
+làm ơn	append	🙏	hand
+lá phong	replace	🍁	cldr
+lá rụng	replace	🍂	cldr
+lâu đài	append	🏰	cldr
+lãnh thổ palestine	append	🇵🇸	cldr
+lãnh thổ phía nam thuộc pháp	append	🇹🇫	cldr
+lì xì	append	🧧	hand
+lông chim	replace	🪶	cldr
+lười	append	🦥 😴	hand
+lược afro pick	append	🪮	cldr
+lạc đà	replace	🐪	cldr
+lạnh	append	🥶	hand
+lẩu	replace	🍲	hand
+lẩu pho mai	append	🫕	cldr
+lều	append	⛺	cldr
+lều rạp xiếc	append	🎪	cldr
+lễ ngắm trăng	append	🎑	cldr
+lịch gáy xoắn	append	🗓️	cldr
+lốc xoáy	append	🌪️	cldr
+lở đất	append	🛘	cldr
+lợn	replace	🐖	cldr
+lợn rừng	replace	🐗	cldr
+lục bình	replace	🪻	cldr
+lửa	append	🔥	cldr
+macao sar china	append	🇲🇴	cldr
+madagascar	append	🇲🇬	cldr
+magic wand	append	🪄	cldr
+magnet	append	🧲	cldr
+malawi	append	🇲🇼	cldr
+malaysia	append	🇲🇾	cldr
+maldives	append	🇲🇻	cldr
+mali	append	🇲🇱	cldr
+malta	append	🇲🇹	cldr
+mammoth	replace	🦣	cldr
+mango	replace	🥭	cldr
+mantelpiece clock	append	🕰️	cldr
+manual wheelchair	append	🦽	cldr
+maple leaf	append	🍁	cldr
+maraca	append	🪇	cldr
+maracas	append	🪇	cldr
+marshall islands	append	🇲🇭	cldr
+martinique	append	🇲🇶	cldr
+mauritania	append	🇲🇷	cldr
+mauritius	append	🇲🇺	cldr
+may mắn	append	🍀	hand
+mayotte	append	🇾🇹	cldr
+megaphone	append	📣	cldr
+melon	replace	🍈	cldr
+memo	append	📝	cldr
+meo	append	🐱	hand
+merry christmas	append	🎄 🎅	hand
+metro	append	🚇	cldr
+mexico	append	🇲🇽	cldr
+microbe	replace	🦠	cldr
+micronesia	append	🇫🇲	cldr
+microphone	append	🎤	cldr
+microscope	append	🔬	cldr
+micrô	append	🎤	cldr
+military helmet	append	🪖	cldr
+military medal	append	🎖️	cldr
+milky way	append	🌌	cldr
+minibus	append	🚐	cldr
+mirror	append	🪞	cldr
+mirror ball	append	🪩	cldr
+miss you	append	🥺 ❤️	hand
+miếng pho mát	append	🧀	cldr
+moai	append	🗿	cldr
+mobile phone	append	📱	cldr
+moldova	append	🇲🇩	cldr
+monaco	append	🇲🇨	cldr
+money bag	append	💰	cldr
+mongolia	append	🇲🇳	cldr
+monkey	replace	🐒	cldr
+monkey face	append	🐵	cldr
+monorail	append	🚝	cldr
+montenegro	append	🇲🇪	cldr
+montserrat	append	🇲🇸	cldr
+moon cake	append	🥮	cldr
+moose	replace	🫎	cldr
+morocco	append	🇲🇦	cldr
+mosque	append	🕌	cldr
+mosquito	replace	🦟	cldr
+motor boat	append	🛥️	cldr
+motor scooter	append	🛵	cldr
+motorcycle	append	🏍️	cldr
+motorized wheelchair	append	🦼	cldr
+motorway	append	🛣️	cldr
+mount fuji	append	🗻	cldr
+mountain	append	⛰️	cldr
+mountain cableway	append	🚠	cldr
+mountain railway	append	🚞	cldr
+mouse	replace	🐁	cldr
+mouse face	append	🐭	cldr
+mouse trap	append	🪤	cldr
+movie camera	append	🎥	cldr
+mozambique	append	🇲🇿	cldr
+muah	replace	😘 💋	hand
+mushroom	replace	🍄	cldr
+musical keyboard	append	🎹	cldr
+musical note	append	🎵	cldr
+musical notes	append	🎶	cldr
+musical score	append	🎼	cldr
+muted speaker	append	🔇	cldr
+muối	replace	🧂	cldr
+má ơi	append	😱	hand
+máy bay	append	✈️	cldr
+máy bay nhỏ	append	🛩️	cldr
+máy chiếu phim	append	📽️	cldr
+máy fax	append	📠	cldr
+máy giật xèng	append	🎰	cldr
+máy in	append	🖨️	cldr
+máy kéo	append	🚜	cldr
+máy nhắn tin	append	📟	cldr
+máy quay phim	append	🎥	cldr
+máy quay video	append	📹	cldr
+máy ảnh	append	📷	cldr
+mây và mưa	append	🌧️	cldr
+mèo	replace	🐱 🐈	hand
+mèo đen	replace	🐈‍⬛	cldr
+mì	replace	🍜	hand
+món oden	replace	🍢	cldr
+mông cổ	append	🇲🇳	cldr
+mũ chóp cao	append	🎩	cldr
+mũ lưỡi trai	append	🧢	cldr
+mũ phụ nữ	append	👒	cldr
+mũ tốt nghiệp	append	🎓	cldr
+mũi lợn	replace	🐽	cldr
+mưa	append	🌧️ ☔	hand
+mạng nhện	replace	🕸️	cldr
+mắt xích	append	🔗	cldr
+mặt bò	replace	🐮	cldr
+mặt chuột	replace	🐭	cldr
+mặt cún	replace	🐶	cldr
+mặt gấu trúc	append	🐼	cldr
+mặt hamster	replace	🐹	cldr
+mặt hổ	replace	🐯	cldr
+mặt khỉ	replace	🐵	cldr
+mặt lợn	replace	🐷	cldr
+mặt mèo	replace	🐱	cldr
+mặt ngựa	replace	🐴	cldr
+mặt nạ lặn	append	🤿	cldr
+mặt rồng	replace	🐲	cldr
+mặt thỏ	replace	🐰	cldr
+mặt trăng non	append	🌚	cldr
+mặt trời	append	☀️	cldr
+mệt	append	😩 😫	hand
+mệt quá	append	😩 😫	hand
+mỏ neo	append	⚓	cldr
+mở khóa	append	🔓	cldr
+mực ống	replace	🦑	cldr
+na uy	append	🇳🇴	cldr
+nam châm	append	🧲	cldr
+nam cực	append	🇦🇶	cldr
+nam phi	append	🇿🇦	cldr
+nam sudan	append	🇸🇸	cldr
+namibia	append	🇳🇦	cldr
+national park	append	🏞️	cldr
+nauru	append	🇳🇷	cldr
+nazar amulet	append	🧿	cldr
+necktie	append	👔	cldr
+nepal	append	🇳🇵	cldr
+nesting dolls	append	🪆	cldr
+netherlands	append	🇳🇱	cldr
+new caledonia	append	🇳🇨	cldr
+new moon	append	🌑	cldr
+new zealand	append	🇳🇿	cldr
+newspaper	append	📰	cldr
+ngon	append	😋 🤤	hand
+ngon quá	append	😋	hand
+ngân hàng	append	🏦	cldr
+ngòi bút đen	append	✒️	cldr
+ngôi nhà	append	🏠	cldr
+ngôi sao	append	⭐	cldr
+người tuyết	append	☃️	cldr
+người yêu	append	💑 ❤️	hand
+ngượng	append	😳	hand
+ngại	append	😳	hand
+ngầu	append	😎	hand
+ngủ	append	😴 💤	hand
+ngủ ngon	append	😴 🌙	hand
+ngựa	replace	🐎	cldr
+ngựa vằn	replace	🦓	cldr
+ngựa đu quay	append	🎠	cldr
+nhiệt kế	append	🌡️	cldr
+nhà có vườn	append	🏡	cldr
+nhà máy	append	🏭	cldr
+nhà thờ	append	⛪	cldr
+nhãn	append	🏷️	cldr
+nhím	replace	🦔	cldr
+nhạc	append	🎵 🎶	hand
+nhẫn	append	💍	cldr
+nhật bản	append	🇯🇵	cldr
+nhậu	append	🍻	hand
+nhện	replace	🕷️	cldr
+nhớ anh	append	🥺 ❤️	hand
+nhớ em	append	🥺 ❤️	hand
+nhớ quá	append	🥺	hand
+những ngôi nhà	append	🏘️	cldr
+nicaragua	append	🇳🇮	cldr
+nigeria	append	🇳🇬	cldr
+niue	append	🇳🇺	cldr
+noel	append	🎄 🎅	hand
+norfolk island	append	🇳🇫	cldr
+north korea	append	🇰🇵	cldr
+north macedonia	append	🇲🇰	cldr
+northern mariana islands	append	🇲🇵	cldr
+norway	append	🇳🇴	cldr
+notebook	append	📓	cldr
+ny	append	💑 ❤️	hand
+nóng	append	🥵	hand
+núi	append	⛰️	cldr
+núi lửa	append	🌋	cldr
+núi phú sĩ	append	🗻	cldr
+núm điều khiển	append	🎛️	cldr
+nút thắt	append	🪢	cldr
+năm mới	append	🎆 🧧	hand
+năm mới vui vẻ	append	🎆 🧧	hand
+nơ hoa hồng	append	🏵️	cldr
+nạng	append	🩼	cldr
+nấm	replace	🍄	cldr
+nấm màu nâu	append	🍄‍🟫	cldr
+nấu ăn	replace	🍳	cldr
+nắng	append	☀️	hand
+nến	append	🕯️	cldr
+nốt nhạc	append	🎵	cldr
+nồi thức ăn	append	🍲	cldr
+octopus	replace	🐙	cldr
+oden	replace	🍢	cldr
+office building	append	🏢	cldr
+oil drum	append	🛢️	cldr
+ok	append	👌 👍	hand
+okay	append	👌 👍	hand
+oke	append	👌 👍	hand
+okela	append	👌 👍	hand
+oki	append	👌	hand
+okie	append	👌	hand
+old key	append	🗝️	cldr
+olive	replace	🫒	cldr
+oman	append	🇴🇲	cldr
+omg	append	😱 😲	hand
+oncoming automobile	append	🚘	cldr
+oncoming bus	append	🚍	cldr
+oncoming taxi	append	🚖	cldr
+ong mật	replace	🐝	cldr
+onion	replace	🧅	cldr
+open book	append	📖	cldr
+optical disk	append	💿	cldr
+orange book	append	📙	cldr
+orangutan	replace	🦧	cldr
+orca	replace	🫍	cldr
+otter	replace	🦦	cldr
+outbox tray	append	📤	cldr
+owl	replace	🦉	cldr
+ox	replace	🐂	cldr
+oyster	replace	🦪	cldr
+package	append	📦	cldr
+pager	append	📟	cldr
+paintbrush	append	🖌️	cldr
+pakistan	append	🇵🇰	cldr
+palau	append	🇵🇼	cldr
+palestinian territories	append	🇵🇸	cldr
+palm tree	append	🌴	cldr
+panama	append	🇵🇦	cldr
+pancakes	replace	🥞	cldr
+panda	replace	🐼	cldr
+paperclip	append	📎	cldr
+papua new guinea	append	🇵🇬	cldr
+parachute	append	🪂	cldr
+paraguay	append	🇵🇾	cldr
+parrot	replace	🦜	cldr
+party	append	🎉 🥳	hand
+party popper	append	🎉	cldr
+passenger ship	append	🛳️	cldr
+paw prints	append	🐾	cldr
+pea pod	append	🫛	cldr
+peach	replace	🍑	cldr
+peacock	replace	🦚	cldr
+peanuts	replace	🥜	cldr
+pear	replace	🍐	cldr
+pen	append	🖊️	cldr
+pencil	append	✏️	cldr
+penguin	replace	🐧	cldr
+performing arts	append	🎭	cldr
+peru	append	🇵🇪	cldr
+petri dish	append	🧫	cldr
+phao cứu sinh	append	🛟	cldr
+philippines	append	🇵🇭	cldr
+phim	append	🎬 🍿	hand
+phoenix	replace	🐦‍🔥	cldr
+phong bì	append	✉️	cldr
+phong cầm	append	🪗	cldr
+phà	append	⛴️	cldr
+pháo	append	🧨	cldr
+pháo bông	append	🎇	cldr
+pháo hoa	append	🎆	cldr
+phích cắm điện	append	🔌	cldr
+phím đàn	append	🎹	cldr
+phượng hoàng	replace	🐦‍🔥	cldr
+phần lan	append	🇫🇮	cldr
+phở	replace	🍜	hand
+pickup truck	append	🛻	cldr
+pie	replace	🥧	cldr
+pig	replace	🐖	cldr
+pig face	append	🐷	cldr
+pig nose	append	🐽	cldr
+pill	append	💊	cldr
+pin	append	🔋	hand
+pin yếu	append	🪫	cldr
+pine decoration	append	🎍	cldr
+pineapple	replace	🍍	cldr
+ping pong	append	🏓	cldr
+pitcairn islands	append	🇵🇳	cldr
+pizza	replace	🍕	cldr
+piñata	append	🪅	cldr
+placard	append	🪧	cldr
+playground slide	append	🛝	cldr
+please	append	🙏	hand
+pls	append	🙏	hand
+plunger	append	🪠	cldr
+plz	append	🙏	hand
+poland	append	🇵🇱	cldr
+polar bear	append	🐻‍❄️	cldr
+police car	append	🚓	cldr
+polynesia thuộc pháp	append	🇵🇫	cldr
+poodle	replace	🐩	cldr
+popcorn	replace	🍿	cldr
+portugal	append	🇵🇹	cldr
+post office	append	🏤	cldr
+postal horn	append	📯	cldr
+postbox	append	📮	cldr
+potato	replace	🥔	cldr
+potted plant	append	🪴	cldr
+poultry leg	append	🍗	cldr
+pound banknote	append	💷	cldr
+pouring liquid	append	🫗	cldr
+prayer beads	append	📿	cldr
+pretzel	replace	🥨	cldr
+printer	append	🖨️	cldr
+puerto rico	append	🇵🇷	cldr
+purse	append	👛	cldr
+pushpin	append	📌	cldr
+puzzle piece	append	🧩	cldr
+qatar	append	🇶🇦	cldr
+quan tài	append	⚰️	cldr
+quyển lịch bloc	append	📆	cldr
+quà	append	🎁	hand
+quân phăng teo	append	🃏	cldr
+quân tốt	append	♟️	cldr
+quýt	replace	🍊	cldr
+quạt giấy	append	🪭	cldr
+quả bơ	replace	🥑	cldr
+quả cầu gương	append	🪩	cldr
+quả kiwi	replace	🥝	cldr
+quả việt quất	append	🫐	cldr
+quả ớt	replace	🌶️	cldr
+quần bò	append	👖	cldr
+quần lót	append	🩲	cldr
+quần soóc	append	🩳	cldr
+quần vợt	append	🎾	cldr
+quần áo nữ	append	👚	cldr
+quần đảo bắc mariana	append	🇲🇵	cldr
+quần đảo canary	append	🇮🇨	cldr
+quần đảo cayman	append	🇰🇾	cldr
+quần đảo cook	append	🇨🇰	cldr
+quần đảo falkland	append	🇫🇰	cldr
+quần đảo faroe	append	🇫🇴	cldr
+quần đảo heard và mcdonald	append	🇭🇲	cldr
+quần đảo marshall	append	🇲🇭	cldr
+quần đảo pitcairn	append	🇵🇳	cldr
+quần đảo solomon	append	🇸🇧	cldr
+quần đảo turks và caicos	append	🇹🇨	cldr
+quần đảo virgin thuộc anh	append	🇻🇬	cldr
+quần đảo virgin thuộc hoa kỳ	append	🇻🇮	cldr
+quần đảo åland	append	🇦🇽	cldr
+rabbit	replace	🐇	cldr
+rabbit face	append	🐰	cldr
+raccoon	replace	🦝	cldr
+racing car	append	🏎️	cldr
+radio	append	📻	cldr
+railway car	append	🚃	cldr
+railway track	append	🛤️	cldr
+rainbow	append	🌈	cldr
+razor	append	🪒	cldr
+receipt	append	🧾	cldr
+red apple	append	🍎	cldr
+red envelope	append	🧧	cldr
+reminder ribbon	append	🎗️	cldr
+rhinoceros	replace	🦏	cldr
+ribbon	append	🎀	cldr
+rice ball	append	🍙	cldr
+rice cracker	append	🍘	cldr
+ring buoy	append	🛟	cldr
+ringed planet	append	🪐	cldr
+rocket	append	🚀	cldr
+roller coaster	append	🎢	cldr
+roller skate	append	🛼	cldr
+romania	append	🇷🇴	cldr
+rooster	replace	🐓	cldr
+root vegetable	append	🫜	cldr
+rose	replace	🌹	cldr
+rosette	replace	🏵️	cldr
+round pushpin	append	📍	cldr
+rugby football	append	🏉	cldr
+running shirt	append	🎽	cldr
+running shoe	append	👟	cldr
+russia	append	🇷🇺	cldr
+ruy băng	append	🎀	cldr
+rwanda	append	🇷🇼	cldr
+rái cá	replace	🦦	cldr
+réunion	append	🇷🇪	cldr
+rìu	append	🪓	cldr
+rùa	replace	🐢	cldr
+rương báu	append	🪎	cldr
+rượu	replace	🍶 🍷	hand
+rượu sake	replace	🍶	cldr
+rắn	replace	🐍	cldr
+rồng	replace	🐉	cldr
+sa mạc	append	🏜️	cldr
+sad	append	😢	hand
+safety pin	append	🧷	cldr
+safety vest	append	🦺	cldr
+sailboat	append	⛵	cldr
+saint pierre và miquelon	append	🇵🇲	cldr
+sake	replace	🍶	cldr
+salad rau xanh	append	🥗	cldr
+salt	replace	🧂	cldr
+samoa	append	🇼🇸	cldr
+samoa thuộc mỹ	append	🇦🇸	cldr
+san hô	replace	🪸	cldr
+san marino	append	🇸🇲	cldr
+sandwich	replace	🥪	cldr
+sao băng	append	🌠	cldr
+sao chổi	append	☄️	cldr
+sari	append	🥻	cldr
+sark	append	🇨🇶	cldr
+satellite	append	🛰️	cldr
+satellite antenna	append	📡	cldr
+saudi arabia	append	🇸🇦	cldr
+sauropod	replace	🦕	cldr
+saxophone	append	🎷	cldr
+scared	append	😱	hand
+scarf	append	🧣	cldr
+school	append	🏫	cldr
+scissors	append	✂️	cldr
+scorpion	replace	🦂	cldr
+scotland	append	🏴󠁧󠁢󠁳󠁣󠁴󠁿	cldr
+screwdriver	append	🪛	cldr
+scroll	append	📜	cldr
+seat	append	💺	cldr
+seedling	replace	🌱	cldr
+senegal	append	🇸🇳	cldr
+serbia	append	🇷🇸	cldr
+service dog	append	🐕‍🦺	cldr
+sewing needle	append	🪡	cldr
+seychelles	append	🇸🇨	cldr
+shamrock	replace	☘️	cldr
+shark	replace	🦈	cldr
+shaved ice	append	🍧	cldr
+shield	append	🛡️	cldr
+shinto shrine	append	⛩️	cldr
+ship	append	🚚 📦	hand
+shooting star	append	🌠	cldr
+shopping bags	append	🛍️	cldr
+shopping cart	append	🛒	cldr
+shortcake	replace	🍰	cldr
+shorts	append	🩳	cldr
+shovel	append	🪏	cldr
+shower	append	🚿	cldr
+shrimp	replace	🦐	cldr
+sierra leone	append	🇸🇱	cldr
+singapore	append	🇸🇬	cldr
+sinh nhật	append	🎂 🎉	hand
+sinh nhật vui vẻ	append	🎂 🥳	hand
+sint maarten	append	🇸🇽	cldr
+skateboard	append	🛹	cldr
+skis	append	🎿	cldr
+skunk	replace	🦨	cldr
+sled	append	🛷	cldr
+sleepy	append	😴	hand
+slot machine	append	🎰	cldr
+sloth	replace	🦥	cldr
+slovakia	append	🇸🇰	cldr
+slovenia	append	🇸🇮	cldr
+small airplane	append	🛩️	cldr
+snail	replace	🐌	cldr
+snake	replace	🐍	cldr
+snowflake	append	❄️	cldr
+snowman	append	☃️	cldr
+snvv	append	🎂 🥳	hand
+soap	append	🧼	cldr
+soccer ball	append	⚽	cldr
+socks	append	🧦	cldr
+softball	append	🥎	cldr
+solomon islands	append	🇸🇧	cldr
+somalia	append	🇸🇴	cldr
+son môi	append	💄	cldr
+sorry	append	😔 🙏	hand
+south africa	append	🇿🇦	cldr
+south korea	append	🇰🇷	cldr
+south sudan	append	🇸🇸	cldr
+spade suit	append	♠️	cldr
+spaghetti	replace	🍝	cldr
+spain	append	🇪🇸	cldr
+sparkler	append	🎇	cldr
+sparkles	append	✨	cldr
+speedboat	append	🚤	cldr
+spider	replace	🕷️	cldr
+spider web	append	🕸️	cldr
+spiral calendar	append	🗓️	cldr
+spiral notepad	append	🗒️	cldr
+spiral shell	append	🐚	cldr
+sponge	append	🧽	cldr
+spoon	replace	🥄	cldr
+sports medal	append	🏅	cldr
+spouting whale	append	🐳	cldr
+squid	replace	🦑	cldr
+sr	append	🙏 😔	hand
+sri lanka	append	🇱🇰	cldr
+stadium	append	🏟️	cldr
+star	append	⭐	cldr
+station	append	🚉	cldr
+steaming bowl	append	🍜	cldr
+stethoscope	append	🩺	cldr
+stop sign	append	🛑	cldr
+stopwatch	append	⏱️	cldr
+straight ruler	append	📏	cldr
+strawberry	replace	🍓	cldr
+studio microphone	append	🎙️	cldr
+stuffed flatbread	append	🥙	cldr
+sudan	append	🇸🇩	cldr
+sunflower	replace	🌻	cldr
+sunglasses	append	🕶️	cldr
+sunrise	append	🌅	cldr
+sunset	append	🌇	cldr
+suriname	append	🇸🇷	cldr
+sushi	replace	🍣	cldr
+suspension railway	append	🚟	cldr
+suối nước nóng	append	♨️	cldr
+suỵt	replace	🤫	hand
+svalbard và jan mayen	append	🇸🇯	cldr
+swan	replace	🦢	cldr
+sweden	append	🇸🇪	cldr
+switzerland	append	🇨🇭	cldr
+synagogue	append	🕍	cldr
+syria	append	🇸🇾	cldr
+syringe	append	💉	cldr
+sách	append	📚	cldr
+sách màu cam	append	📙	cldr
+sách màu lam	append	📘	cldr
+sách màu lục	append	📗	cldr
+sách đang mở	append	📖	cldr
+sách đóng	append	📕	cldr
+sáo	append	🪈	cldr
+sân vận động	append	🏟️	cldr
+são tomé và príncipe	append	🇸🇹	cldr
+sóc chuột	replace	🐿️	cldr
+sóng nước	append	🌊	cldr
+súng nước	append	🔫	cldr
+sư tử	replace	🦁	cldr
+sương mù	append	🌫️	cldr
+sọt rác	append	🗑️	cldr
+sổ cái	append	📒	cldr
+sổ ghi chép	append	📓	cldr
+sổ ghi nhớ	append	📝	cldr
+sợ	append	😨 😱	hand
+sợ quá	append	😱	hand
+sợi	append	🧶	cldr
+sợi chỉ	append	🧵	cldr
+sứa	replace	🪼	cldr
+sữa	replace	🥛	hand
+t_t	replace	😭 😢	hand
+tab dấu trang	append	📑	cldr
+taco	replace	🌮	cldr
+tai nghe	append	🎧	cldr
+taiwan	append	🇹🇼	cldr
+tajikistan	append	🇹🇯	cldr
+takeout box	append	🥡	cldr
+tamale	replace	🫔	cldr
+tan vỡ	append	💔	hand
+tanabata tree	append	🎋	cldr
+tangerine	replace	🍊	cldr
+tanzania	append	🇹🇿	cldr
+taxi	append	🚕	cldr
+taxi đang tới	append	🚖	cldr
+tea	replace	🍵	hand
+teapot	replace	🫖	cldr
+teddy bear	append	🧸	cldr
+telephone	append	☎️	cldr
+telephone receiver	append	📞	cldr
+telescope	append	🔭	cldr
+television	append	📺	cldr
+tennis	append	🎾	cldr
+tent	append	⛺	cldr
+test tube	append	🧪	cldr
+thailand	append	🇹🇭	cldr
+thang máy	append	🛗	cldr
+thanh trượt mức	append	🎚️	cldr
+thank you	append	🙏	hand
+thanks	append	🙏	hand
+thermometer	append	🌡️	cldr
+thiên nga	replace	🦢	cldr
+thong sandal	append	🩴	cldr
+thread	append	🧵	cldr
+thuyền buồm	append	⛵	cldr
+thuyền máy	append	🛥️	cldr
+thuốc lá	append	🚬	cldr
+thx	append	🙏	hand
+thành vatican	append	🇻🇦	cldr
+thái lan	append	🇹🇭	cldr
+tháp tokyo	append	🗼	cldr
+thìa	replace	🥄	cldr
+thích	append	😍 👍	hand
+thùng dầu	append	🛢️	cldr
+thư mục tệp	append	📁	cldr
+thương	append	🥰 ❤️	hand
+thương quá	append	🥰	hand
+thước tam giác	append	📐	cldr
+thước thẳng	append	📏	cldr
+thả like	append	👍	hand
+thả tim	append	❤️	hand
+thảo mộc	replace	🌿	cldr
+thất tình	append	💔 😢	hand
+thằn lằn	replace	🦎	cldr
+thẻ nhận dạng	append	🪪	cldr
+thẻ tín dụng	append	💳	cldr
+thịt bám xương	append	🍖	cldr
+thịt xông khói	append	🥓	cldr
+thỏ	replace	🐇	cldr
+thổ nhĩ kỳ	append	🇹🇷	cldr
+thụy sĩ	append	🇨🇭	cldr
+thụy điển	append	🇸🇪	cldr
+ticket	append	🎫	cldr
+tiger	replace	🐅	cldr
+tiger face	append	🐯	cldr
+tim	append	❤️	hand
+timer clock	append	⏲️	cldr
+tired	append	😩	hand
+tivi	append	📺	cldr
+tiền	append	💰 💵	hand
+tiền có cánh	append	💸	cldr
+tiền giấy bảng	append	💷	cldr
+tiền giấy euro	append	💶	cldr
+tiền giấy yên	append	💴	cldr
+tiệc	append	🎉 🥳	hand
+tks	append	🙏	hand
+toa tàu	append	🚃	cldr
+togo	append	🇹🇬	cldr
+toilet	append	🚽	cldr
+tokelau	append	🇹🇰	cldr
+tokyo tower	append	🗼	cldr
+tomato	replace	🍅	cldr
+tonga	append	🇹🇴	cldr
+toolbox	append	🧰	cldr
+toothbrush	append	🪥	cldr
+top hat	append	🎩	cldr
+tornado	append	🌪️	cldr
+trackball	append	🖲️	cldr
+tractor	append	🚜	cldr
+tram car	append	🚋	cldr
+trang bị quăn	append	📃	cldr
+tranh trong khung	append	🖼️	cldr
+treasure chest	append	🪎	cldr
+triangular ruler	append	📐	cldr
+trinidad và tobago	append	🇹🇹	cldr
+tristan da cunha	append	🇹🇦	cldr
+triều tiên	append	🇰🇵	cldr
+trolleybus	append	🚎	cldr
+trombone	append	🪊	cldr
+trophy	append	🏆	cldr
+tropical drink	append	🍹	cldr
+tropical fish	append	🐠	cldr
+trumpet	append	🎺	cldr
+trung quốc	append	🇨🇳	cldr
+trung thu	append	🥮 🏮	hand
+trà	replace	🍵	hand
+trà nhựa ruồi	append	🧉	cldr
+trà sữa	replace	🧋	hand
+tràng hạt	append	📿	cldr
+trái tim	append	❤️	hand
+trâu nước	replace	🐃	cldr
+trò chơi cricket	append	🏏	cldr
+trò xúc xắc	append	🎲	cldr
+trúng đích	append	🎯	cldr
+trăng hạ huyền	append	🌗	cldr
+trăng khuyết	append	🌔	cldr
+trăng lưỡi liềm	append	🌙	cldr
+trăng non	append	🌑	cldr
+trăng thượng huyền	append	🌓	cldr
+trăng tròn	append	🌕	cldr
+trường học	append	🏫	cldr
+trống dài	append	🪘	cldr
+trời ơi	append	😱 😩	hand
+trứng	replace	🥚	cldr
+tua vít	append	🪛	cldr
+tulip	replace	🌷	cldr
+tumbler glass	append	🥃	cldr
+tunisia	append	🇹🇳	cldr
+turkey	replace	🦃	cldr
+turkmenistan	append	🇹🇲	cldr
+turtle	replace	🐢	cldr
+tuvalu	append	🇹🇻	cldr
+tuyệt	append	👍 👌	hand
+tuyệt vời	append	👍 🤩	hand
+tàu cao tốc	append	🚄	cldr
+tàu chở khách	append	🛳️	cldr
+tàu hỏa	append	🚆	cldr
+tàu thủy	append	🚢	cldr
+tàu viên đạn	append	🚅	cldr
+tàu điện	append	🚋	cldr
+tàu điện ngầm	append	🚇	cldr
+tàu điện nhẹ	append	🚈	cldr
+táo xanh	replace	🍏	cldr
+táo đỏ	replace	🍎	cldr
+tây ban nha	append	🇪🇸	cldr
+tây sahara	append	🇪🇭	cldr
+tê giác	replace	🦏	cldr
+tên lửa	append	🚀	cldr
+tôm	replace	🦐	cldr
+tôm chiên	replace	🍤	cldr
+tôm hùm	replace	🦞	cldr
+túi cắp nách	append	👝	cldr
+túi mua sắm	append	🛍️	cldr
+túi tiền	append	💰	cldr
+túi xách	append	👜	cldr
+túp lều	append	🛖	cldr
+türkiye	append	🇹🇷	cldr
+tượng moai	append	🗿	cldr
+tạm biệt	append	👋	hand
+tảng thịt	replace	🥩	cldr
+tắt loa	append	🔇	cldr
+tết	append	🧧 🌸 🎆	hand
+tỏi	replace	🧄	cldr
+tổ có trứng	append	🪺	cldr
+tổ trống rỗng	append	🪹	cldr
+tủ hồ sơ	append	🗄️	cldr
+tức giận	append	😠 😡	hand
+tức quá	append	😤 😡	hand
+uganda	append	🇺🇬	cldr
+ukraine	append	🇺🇦	cldr
+umbrella	append	☂️	cldr
+unicorn	replace	🦄	cldr
+united arab emirates	append	🇦🇪	cldr
+united kingdom	append	🇬🇧	cldr
+united nations	append	🇺🇳	cldr
+united states	append	🇺🇸	cldr
+unlocked	append	🔓	cldr
+uruguay	append	🇺🇾	cldr
+uzbekistan	append	🇺🇿	cldr
+valentine	append	❤️ 🌹	hand
+vanuatu	append	🇻🇺	cldr
+vatican city	append	🇻🇦	cldr
+venezuela	append	🇻🇪	cldr
+vi trùng	replace	🦠	cldr
+video camera	append	📹	cldr
+video game	append	🎮	cldr
+videocassette	append	📼	cldr
+vietnam	append	🇻🇳	cldr
+violin	append	🎻	cldr
+viên thuốc	append	💊	cldr
+viên đá	replace	🧊	cldr
+việt nam	append	🇻🇳	cldr
+voi ma mút	append	🦣	cldr
+volcano	append	🌋	cldr
+volleyball	append	🏐	cldr
+vui	append	😄 😊	hand
+vui quá	append	😄 🥳	hand
+vui vẻ	append	😊 😄	hand
+ván trượt	append	🛹	cldr
+ván trượt tuyết	append	🎿	cldr
+váy	append	👗	cldr
+vé	append	🎫	cldr
+vé vào cửa	append	🎟️	cldr
+vò hai quai	append	🏺	cldr
+vòi hoa sen	append	🚿	cldr
+vòng đu quay	append	🎡	cldr
+vương miện	append	👑	cldr
+vương quốc anh	append	🇬🇧	cldr
+vẫy tay	append	👋	hand
+vệ tinh	append	🛰️	cldr
+vịt	replace	🦆	cldr
+vỏ xoắn ốc	append	🐚	cldr
+vỗ tay	append	👏	hand
+waffle	replace	🧇	cldr
+wales	append	🏴󠁧󠁢󠁷󠁬󠁳󠁿	cldr
+wallis và futuna	append	🇼🇫	cldr
+wastebasket	append	🗑️	cldr
+water buffalo	append	🐃	cldr
+water pistol	append	🔫	cldr
+water wave	append	🌊	cldr
+watermelon	replace	🍉	cldr
+wedding	append	💒	cldr
+western sahara	append	🇪🇭	cldr
+whale	replace	🐋	cldr
+wheel	append	🛞	cldr
+white cane	append	🦯	cldr
+white flower	append	💮	cldr
+wilted flower	append	🥀	cldr
+wind chime	append	🎐	cldr
+wind face	append	🌬️	cldr
+window	append	🪟	cldr
+wine glass	append	🍷	cldr
+wing	replace	🪽	cldr
+wolf	replace	🐺	cldr
+wood	append	🪵	cldr
+world map	append	🗺️	cldr
+worm	replace	🪱	cldr
+wow	append	😮 🤩	hand
+wrapped gift	append	🎁	cldr
+wrench	append	🔧	cldr
+xari	append	🥻	cldr
+xd	replace	😆	hand
+xe buýt	append	🚌	cldr
+xe buýt nhỏ	append	🚐	cldr
+xe bán tải	append	🛻	cldr
+xe cảnh sát	append	🚓	cldr
+xe cứu hỏa	append	🚒	cldr
+xe cứu thương	append	🚑	cldr
+xe hẩy	append	🛴	cldr
+xe lam	append	🛺	cldr
+xe lăn tay	append	🦽	cldr
+xe mua hàng	append	🛒	cldr
+xe máy	append	🏍️	cldr
+xe tay ga	append	🛵	cldr
+xe trượt tuyết	append	🛷	cldr
+xe điện	append	🚊	cldr
+xe đua	append	🏎️	cldr
+xe đạp	append	🚲	cldr
+xin chào	append	👋 😊	hand
+xin lỗi	append	🙏 😔	hand
+xinh	append	😍 🥰	hand
+xinh quá	append	😍	hand
+xinloi	append	🙏 😔	hand
+xoài	replace	🥭	cldr
+xuồng	append	🛶	cldr
+xuồng cao tốc	append	🚤	cldr
+xà phòng	append	🧼	cldr
+xích bị đứt	append	⛓️‍💥	cldr
+xô	append	🪣	cldr
+xúp lơ xanh	append	🥦	cldr
+xăng đan nữ	append	👡	cldr
+xấu hổ	append	😳	hand
+xẻng	append	🪏	cldr
+xỉu	append	😵	hand
+xứ wales	append	🏴󠁧󠁢󠁷󠁬󠁳󠁿	cldr
+yarn	append	🧶	cldr
+yay	append	🥳 🎉	hand
+yemen	append	🇾🇪	cldr
+yen banknote	append	💴	cldr
+yummy	append	😋	hand
+yêu	append	❤️ 😍 🥰	hand
+yêu anh	append	❤️ 😘	hand
+yêu em	append	❤️ 😘	hand
+yêu quá	append	😍 ❤️	hand
+zambia	append	🇿🇲	cldr
+zebra	replace	🦓	cldr
+zimbabwe	append	🇿🇼	cldr
+zzz	replace	😴 💤	hand
+zô	append	🍻	hand
+ánh lấp lánh	append	✨	cldr
+áo bảo hộ	append	🦺	cldr
+áo chạy bộ	append	🎽	cldr
+áo khoác	append	🧥	cldr
+áo phông	append	👕	cldr
+åland islands	append	🇦🇽	cldr
+ô tô	append	🚗	cldr
+ô tô điện	append	🚎	cldr
+ô đã đóng	append	🌂	cldr
+ôi trời	append	😱	hand
+ôliu	replace	🫒	cldr
+ôm	append	🤗	hand
+đan mạch	append	🇩🇰	cldr
+đau	append	😣	hand
+đau đầu	append	🤕	hand
+đi học	append	🎒 📚	hand
+đi làm	append	💼	hand
+đinh ghim	append	📌	cldr
+điện cao thế	append	⚡	cldr
+điện thoại bàn	append	☎️	cldr
+đài loan	append	🇹🇼	cldr
+đài phun nước	append	⛲	cldr
+đàn banjo	append	🪕	cldr
+đàn hạc	append	🪉	cldr
+đàn violin	append	🎻	cldr
+đá bào	replace	🍧	cldr
+đá quý	append	💎	cldr
+đám cưới	append	💒	cldr
+đám mây	append	☁️	cldr
+đánh dấu trang	append	🔖	cldr
+đèn diya	append	🪔	cldr
+đèn pin	append	🔦	cldr
+đêm có sao	append	🌃	cldr
+đói	append	🤤	hand
+đói quá	append	🤤	hand
+đùi gia cầm	append	🍗	cldr
+đĩa bay	append	🛸	cldr
+đĩa máy tính	append	💽	cldr
+đĩa mềm	append	💾	cldr
+đĩa petri	append	🧫	cldr
+đĩa quang	append	💿	cldr
+đũa	replace	🥢	cldr
+đười ươi	replace	🦧	cldr
+đường cao tốc	append	🛣️	cldr
+đường một ray	append	🚝	cldr
+đường ray	append	🛤️	cldr
+đại bàng	replace	🦅	cldr
+đảo ascension	append	🇦🇨	cldr
+đảo bouvet	append	🇧🇻	cldr
+đảo clipperton	append	🇨🇵	cldr
+đảo giáng sinh	append	🇨🇽	cldr
+đảo hoang	append	🏝️	cldr
+đảo man	append	🇮🇲	cldr
+đảo norfolk	append	🇳🇫	cldr
+đậu hà lan	append	🫛	cldr
+đậu phộng	replace	🥜	cldr
+đẹp	append	😍	hand
+đẹp quá	append	😍	hand
+đẹp trai	append	😎	hand
+đền hindu	append	🛕	cldr
+đỉnh	append	🔥 👍	hand
+đồ uống nóng	append	☕	cldr
+đồng tiền	append	🪙	cldr
+đồng ý	append	👍 👌	hand
+đổ chất lỏng	append	🫗	cldr
+ấm trà	replace	🫖	cldr
+ấn độ	append	🇮🇳	cldr
+ếch	replace	🐸	cldr
+ốc sên	replace	🐌	cldr
+ối giời ơi	append	😱 🤦	hand
+ốm	append	🤒	hand
+ống nghe	append	🩺	cldr
+ống nghiệm	append	🧪	cldr
+ống tiêm	append	💉	cldr
+ớt chuông	replace	🫑	cldr

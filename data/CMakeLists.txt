@@ -23,6 +23,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ngram/
         FILES_MATCHING PATTERN "*.arpa")
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/emoji/emoji-index.tsv
+              ${CMAKE_CURRENT_SOURCE_DIR}/emoji/keywords.tsv
         DESTINATION share/xrnkey/emoji)
 
 install(FILES dict/build_dict.sh dict/seed_wordlist.txt

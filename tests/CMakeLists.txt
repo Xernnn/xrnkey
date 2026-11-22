@@ -100,7 +100,8 @@ target_compile_definitions(test_shortcuts PRIVATE XRNKEY_TEST_TMP="${CMAKE_CURRE
 add_executable(test_emoji test_emoji.cpp)
 target_link_libraries(test_emoji PRIVATE xrnkey Catch2::Catch2WithMain)
 target_compile_definitions(test_emoji PRIVATE
-    XRNKEY_EMOJI_INDEX="${CMAKE_CURRENT_SOURCE_DIR}/../data/emoji/emoji-index.tsv")
+    XRNKEY_EMOJI_INDEX="${CMAKE_CURRENT_SOURCE_DIR}/../data/emoji/emoji-index.tsv"
+    XRNKEY_EMOJI_KEYWORDS="${CMAKE_CURRENT_SOURCE_DIR}/../data/emoji/keywords.tsv")
 
 include(CTest)
 include(Catch)
