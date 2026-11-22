@@ -357,6 +357,40 @@ class XrnkeyService :
         showStrip()
     }
 
+    /** A swipe left from Backspace: through the typist, so the words before the cursor stay right. */
+    override fun onDeleteWord() {
+        val q = searchQuery
+        if (q != null) {
+            search(q.trimEnd().dropLastWhile { !it.isWhitespace() })
+            return
+        }
+        edit { typist.deleteWord() }
+        showStrip()
+    }
+
+    /** An emoticon from the number row's second page: whole, as the emoji panel puts one in. */
+    override fun onEmoticon(text: String) {
+        val q = searchQuery
+        if (q != null) {
+            search(q + text)
+            return
+        }
+        edit { typist.insert(text) }
+        showStrip()
+    }
+
+    /** A candidate from the more-suggestions panel, as a tap on a slot takes one. */
+    override fun onMorePick(text: String) {
+        edit { typist.pick(text) }
+        showStrip()
+    }
+
+    /** A strip word's remove mark: forgotten, as the settings' list of personal words does it. */
+    override fun onForget(word: String) {
+        onDevice?.words?.forget(word)
+        showStrip()
+    }
+
     override fun onCursorStart() {
         typist.finish()
         keyboard?.strip = Strip.Tools

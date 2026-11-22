@@ -67,7 +67,7 @@ Swipe typing is not used.
    Vietnamese is decided in context, which fixes the laptop's 19 English words that now type
    Vietnamese (`list` → `lít`, `turn` → `tủn`).
 4. A strip with three slots: the centre pick, and alternatives, two-word phrases and an emoji
-   suggestion. Next-word predictions appear after Space. An expanded list holds more.
+   suggestion. Next-word predictions appear after Space. A panel slid up from the strip holds more.
 5. Auto-correct on Space and punctuation at the "flexible" level, Revert on Backspace, and a full
    stop from a double Space.
 6. Keys and gestures as the owner set them up: the number row, long-press on the top letter row
@@ -85,7 +85,6 @@ Swipe typing is not used.
 - Haptics and key sound. The owner has both off.
 - Clipboard images, and a chip in the strip for a just-copied item.
 - The fancy-text tab (`Aa`): typed text shown in Unicode styles (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉).
-- Swipe on Backspace to delete a word.
 - Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
   owner has these off in the reference.
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
@@ -115,7 +114,9 @@ large, in MiSans Latin.
 
 1. **Strip or tool row**, one row high (see "The strip" and "The tool row").
 2. **Number row**: `1 2 3 4 5 6 7 8 9 0`, always shown in portrait. In landscape it follows the
-   "Number row" setting (on, off or auto, where auto hides it in landscape).
+   "Number row" setting (on, off or auto, where auto hides it in landscape). Swiped left it shows
+   ten emoticons (the emoticon tab's first ten, `:) :)) =)) :D :v ;) :( :(( :'( :P`), each typed
+   whole; swiped right, the digits again.
 3. **Letters**: QWERTY.
    - `q w e r t y u i o p`.
    - `a s d f g h j k l`, inset by half a key.
@@ -137,18 +138,26 @@ keyboard's hide button.
 - **Tap a letter**: the key goes to the engine, and the word in progress is shown as composing
   text, without an underline where the app allows it. With "Key-press popup" on, a magnified
   copy of the key shows above the finger for as long as it is down.
-- **Long-press a top-row letter** (400 ms): types its digit (`q` → 1 … `p` → 0). The popup also
-  offers the letter's Vietnamese forms where it has any.
-- **Long-press another letter**: a popup of its Vietnamese forms, `a` → â ă, `e` → ê, `o` → ô ơ,
-  `u` → ư, `d` → đ. Slide to one and lift to type it. These go to the engine as finished
-  letters, so the Telex rules still place the tone.
+- **Long-press a letter** (400 ms): a popup over the key. A vowel's holds every toned form of
+  it and of its marked letters, then the capital: `a` à á ả ã ạ, ă ằ ắ ẳ ẵ ặ, â ầ ấ ẩ ẫ ậ, A (18),
+  `o` 18, `e` and `u` 12, `i` and `y` 6. `d` gives đ and D, any other letter its capital (with
+  Shift on, the capitals, and the small letter last). The first form (the grave one for a vowel)
+  is under the finger and typed if it lifts there; the rest sit around it in a grid as square
+  as they allow (5 by 4 for 18), so no slide is long. Where the grid doesn't fit above the key,
+  it moves and the finger still starts on the first form. Forms go to the engine as the Telex
+  keys that make them, so the word goes on taking marks. With the number row on, no digit is in
+  the popup (the row is right there); without it, a top-row letter's digit comes first (`q` →
+  1 … `p` → 0, the "Long-press top row for digits" setting).
 - **Shift**: one tap gives one capital, and a double tap locks capitals, which a third tap
   undoes. Capitals follow the keys that typed them (`Vieetj` → `Việt`), as on the laptop.
 - **Backspace**:
   - with a word in progress, the engine deletes one character (`toán` → `tóa`, `được` → `đượ`);
   - otherwise it deletes before the cursor, or the selection;
   - right after an auto-correct, it reverts (see "Auto-correct");
-  - holding it repeats after 400 ms, every 50 ms, and after 2 s it deletes a word at a time.
+  - holding it repeats after 400 ms, every 50 ms, and after 2 s it deletes a word at a time;
+  - **swiping left** from it (a key and a half) deletes the word before the cursor, with the
+    spaces after it, one word a swipe however far ("xin chao ban" → "xin chao "): the word in
+    progress if there is one, a run of punctuation or emoji as one word, a new line alone.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
 - **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a
@@ -158,8 +167,8 @@ keyboard's hide button.
   word or closing punctuation, and never in password, URL or email fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
   comma** opens Android's keyboard picker, so the owner can switch to another keyboard and back.
-- **Full stop**: types `.` and ends the word. **Holding it** gives `! ? ; : ' " - … ( )` in a
-  popup.
+- **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
+  `, ? ! ' " : - ; ( ) / @ & % + #`, the comma under the finger, as on the reference.
 - **Enter**: ends the word, then sends the field's action or a newline.
 - **`?123`**: opens the symbols layout.
 - **Rotate or resize**: the layout is never full-screen in landscape (no extract mode).
@@ -227,11 +236,15 @@ What the slots hold, by situation:
 
 - **Tap a slot**: commits that candidate and a space. A phrase commits both words. An emoji is
   inserted after the word, with one space.
-- **Tap the dots, or swipe up on the strip**: opens the **expanded list**, a panel of up to 30
-  candidates in a grid, in rank order. Tap one to commit it. Back, or the keyboard button,
-  closes it.
-- **Long-press a personal word in any slot**: a popup offers "remove". It is gone from the
-  suggestions and from personal words.
+- **Slide up from the strip**: the **more-suggestions panel** opens over it, up to 7 more
+  candidates three to a row under the strip's slots, the best nearest the strip and in the
+  middle. Lift on one to commit it with a space; slide back down past the strip to close it
+  with nothing taken, as on the reference. Lifted anywhere else, it stays open.
+- **Tap the dots**: opens the same panel, which stays open. A tap on a candidate commits it;
+  any key closes it (and types).
+- **While the panel is open** each word in the strip has a small remove mark: a tap forgets
+  that word from the personal words, as the settings' list does. Words only the models know
+  come back.
 - **Tap ≡**: the tool row replaces the strip until the next key.
 
 The strip never shows a sentence of explanation, only candidates.

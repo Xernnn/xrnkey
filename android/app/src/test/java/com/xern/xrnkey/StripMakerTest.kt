@@ -41,6 +41,32 @@ class StripMakerTest {
         }
     }
 
+    /**
+     * The candidates the strip has no room for are its extra ones, best first, for the panel slid
+     * up from it: none of the three shown, and there are some exactly when the dots are.
+     */
+    @Test
+    fun theStripsExtraCandidatesAreTheRest() {
+        TestModels.test().use { m ->
+            TypingState().use { s ->
+                s.useModels(m.models)
+                val t = Typist(s, FakeEditor(), m.models).also { it.reset() }
+                val strip = StripMaker(m.models)
+                var some = 0
+                for (typed in listOf("duoc", "khong", "toi", "co", "x")) {
+                    t.reset()
+                    t.text(typed)
+                    val shown = strip.make(t) as Strip.Candidates
+                    assertEquals(typed, shown.more, shown.extra.isNotEmpty())
+                    assertTrue(typed, shown.extra.none { it == shown.left || it == shown.centre || it == shown.right })
+                    assertEquals(shown.extra.distinct(), shown.extra)
+                    if (shown.extra.isNotEmpty()) some++
+                }
+                assertTrue(some > 0)
+            }
+        }
+    }
+
     @Test
     fun aWordTypedWithMarksShowsAsItIs() {
         TestModels.test().use { m ->

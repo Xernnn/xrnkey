@@ -111,4 +111,78 @@ class TypistTest {
         assertEquals(null, com.xern.xrnkey.ime.VietKeys.of('e', com.xern.xrnkey.engine.TypingState.TELEX))
         assertEquals(null, com.xern.xrnkey.ime.VietKeys.of('ç', com.xern.xrnkey.engine.TypingState.TELEX))
     }
+
+    /**
+     * Every toned form a held vowel offers goes in as the Telex keys that make it, so the word
+     * goes on taking marks: "v" + held "ặ" + "n" is "vặn", a capital as typed.
+     */
+    @Test
+    fun aHeldTonedFormJoinsTheWordInProgress() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("v"); t.text("ặ"); t.text("n")
+        t.text(" ")
+        t.text("Ữ"); t.text("a")
+        t.text(" ")
+        assertEquals("vặn Ữa ", f.text)
+    }
+
+    /**
+     * A swipe left from Backspace takes the word before the cursor with the spaces after it, one
+     * word a swipe, as on the reference: "xin chao ban" leaves "xin chao ", again "xin ".
+     */
+    @Test
+    fun deleteWordTakesTheWordBeforeTheCursor() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("xin chao ban")          // "ban" still in progress
+        t.deleteWord()
+        assertEquals("xin chao ", f.text)
+        assertEquals("", t.shown)
+        t.deleteWord()
+        assertEquals("xin ", f.text)
+        assertEquals(listOf("<s>", "xin"), t.context())
+        t.text("chaof ")                 // the typist's copy of the field is still right
+        assertEquals("xin chào ", f.text)
+        assertEquals(listOf("<s>", "xin", "chào"), t.context())
+        t.deleteWord(); t.deleteWord()
+        assertEquals("", f.text)
+        assertEquals(listOf("<s>"), t.context())
+        t.deleteWord()                   // nothing left: nothing happens
+        assertEquals("", f.text)
+    }
+
+    @Test
+    fun deleteWordTakesPunctuationAndEmojiAsAWordAndANewLineAlone() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("ok!! ")
+        t.deleteWord()
+        assertEquals("ok", f.text)
+        t.insert(" 👍🏽❤️")
+        t.deleteWord()
+        assertEquals("ok ", f.text)
+        t.text("vieetj")
+        t.enter()
+        t.deleteWord()
+        assertEquals("ok việt", f.text)
+        t.deleteWord()
+        assertEquals("ok ", f.text)
+        assertEquals(listOf("<s>", "ok"), t.context())
+    }
+
+    @Test
+    fun aWordsLengthBeforeTheCursor() {
+        fun n(s: String) = Typist.wordBefore(s)
+        assertEquals(3, n("xin chao ban"))
+        assertEquals(4, n("xin chao ban "))
+        assertEquals(6, n("được  "))
+        assertEquals(2, n("ok!!"))
+        assertEquals(1, n("a\n"))
+        assertEquals(2, n("a\n  "))   // the spaces after a new line, not the line
+        assertEquals("👍🏽❤️".length, n("hi 👍🏽❤️"))
+        assertEquals("tiếng".length, n("tiếng"))
+        assertEquals(3, n("   "))
+        assertEquals(0, n(""))
+    }
 }

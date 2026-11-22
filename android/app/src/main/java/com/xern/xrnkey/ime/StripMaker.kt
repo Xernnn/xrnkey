@@ -104,7 +104,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             ?: top?.let { Pick(it.text) }
         if (right?.emoji == false) top?.let { rest.remove(it) }
         offered = listOf(left, Pick(middle), right)
-        return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold)
+        return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold, extra = rest.map { it.text })
     }
 
     /**

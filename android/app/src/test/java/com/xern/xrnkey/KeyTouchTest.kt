@@ -5,8 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.View
 import com.xern.xrnkey.keyboard.KeyboardView
+import com.xern.xrnkey.keyboard.MorePanelView
 import com.xern.xrnkey.keyboard.Palette
+import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,6 +46,11 @@ class KeyTouchTest {
             override fun onCursorStart() { events += "cursor" }
             override fun onCursor(dx: Int, dy: Int) { events += "move $dx $dy" }
             override fun onCursorEnd() { events += "end" }
+            override fun onDeleteWord() { events += "word" }
+            override fun onEmoticon(text: String) { events += "emoticon $text" }
+            override fun onCandidate(slot: Int) { events += "slot $slot" }
+            override fun onMorePick(text: String) { events += "more $text" }
+            override fun onForget(word: String) { events += "forget $word" }
         }
         activity.setContentView(v)
         shadowOf(Looper.getMainLooper()).idle()
@@ -122,6 +130,19 @@ class KeyTouchTest {
         assertEquals(listOf("pick"), events)
     }
 
+    private fun holdAndLift(v: KeyboardView, x: Float, y: Float, dx: Float = 0f, dy: Float = 0f) {
+        touch(v, MotionEvent.ACTION_DOWN, x, y)
+        hold(450)
+        if (dx != 0f || dy != 0f) touch(v, MotionEvent.ACTION_MOVE, x + dx, y + dy)
+        touch(v, MotionEvent.ACTION_UP, x + dx, y + dy)
+    }
+
+    private val homeRowY = 594f
+
+    /**
+     * A held vowel offers all its toned forms, the grave one under the finger: let go there for
+     * it, slide a key's width (or a cell's height, 44 dp) for the next. Cells are 108 x 132 px.
+     */
     @Test
     fun holdingALetterOffersItsFormsAndTheFingerChooses() {
         for (palette in listOf(Palette.DARK, Palette.LIGHT)) {
@@ -129,24 +150,219 @@ class KeyTouchTest {
             val v = keyboard(palette)
             touch(v, MotionEvent.ACTION_DOWN, 270f, topRowY)  // e
             hold(450)
-            touch(v, MotionEvent.ACTION_MOVE, 330f, topRowY)  // one to the right: ê
+            assertEquals(12, v.popupForms.size)
+            assertEquals("è", v.popupChosen)
+            touch(v, MotionEvent.ACTION_MOVE, 378f, topRowY)  // one to the right: é
             shot("variants-e-${if (palette == Palette.DARK) "dark" else "light"}", v)
-            touch(v, MotionEvent.ACTION_UP, 330f, topRowY)
-            // Held and let go where it was: the digit.
-            touch(v, MotionEvent.ACTION_DOWN, 270f, topRowY)
-            hold(450)
-            touch(v, MotionEvent.ACTION_UP, 270f, topRowY)
-            // A letter with one form gives it at once: d -> đ.
-            touch(v, MotionEvent.ACTION_DOWN, 324f, 594f)
-            hold(450)
-            touch(v, MotionEvent.ACTION_UP, 324f, 594f)
-            // Slid far right: the last form.
-            touch(v, MotionEvent.ACTION_DOWN, 108f, 594f)     // a
-            hold(450)
-            touch(v, MotionEvent.ACTION_MOVE, 1079f, 594f)
-            touch(v, MotionEvent.ACTION_UP, 1079f, 594f)
-            assertEquals(listOf("ê", "3", "đ", "ạ"), events)
+            touch(v, MotionEvent.ACTION_UP, 378f, topRowY)
+            holdAndLift(v, 270f, topRowY)                     // let go where it was: è
+            holdAndLift(v, 270f, topRowY, dy = -132f)         // a row up: ẹ
+            holdAndLift(v, 270f, topRowY, dx = -108f, dy = -264f)  // two up, one left: ệ
+            holdAndLift(v, 108f, homeRowY, dx = 971f)         // a, slid far right: the row's last
+            assertEquals(listOf("é", "è", "ẹ", "ệ", "ạ"), events)
         }
+    }
+
+    /**
+     * o is in the top row: its four rows don't fit above it, so the popup sits lower and the
+     * finger still starts on ò; a cell up from there is ô, not the row the finger is over.
+     */
+    @Test
+    fun aPopupMovedToFitStillStartsUnderTheFinger() {
+        val v = keyboard()
+        touch(v, MotionEvent.ACTION_DOWN, 918f, topRowY)
+        hold(450)
+        assertEquals(18, v.popupForms.size)
+        assertEquals("ò", v.popupChosen)
+        shot("variants-o-dark", v)
+        touch(v, MotionEvent.ACTION_MOVE, 918f, topRowY - 132f)
+        assertEquals("ô", v.popupChosen)
+        touch(v, MotionEvent.ACTION_UP, 918f, topRowY - 132f)
+        assertEquals(listOf("ô"), events)
+    }
+
+    /** Holding q typed 1, the digit right above it on the number row; it gives Q now. */
+    @Test
+    fun holdingAConsonantGivesItsCapitalNotADigit() {
+        val v = keyboard()
+        holdAndLift(v, 54f, topRowY)                // q
+        holdAndLift(v, 324f, homeRowY)              // d: đ
+        holdAndLift(v, 324f, homeRowY, dx = 108f)   // d, one right: D
+        assertEquals(listOf("Q", "đ", "D"), events)
+        // Without the number row, holding the top row gives its digit.
+        events.clear()
+        val noRow = keyboard { numberRow = false }
+        holdAndLift(noRow, 54f, 48 * 3f + 90f)
+        assertEquals(listOf("1"), events)
+    }
+
+    @Test
+    fun holdingTheFullStopOffersPunctuation() {
+        val v = keyboard()
+        touch(v, MotionEvent.ACTION_DOWN, 864f, spaceY)
+        hold(450)
+        assertEquals(16, v.popupForms.size)
+        shot("variants-stop-dark", v)
+        touch(v, MotionEvent.ACTION_UP, 864f, spaceY)
+        holdAndLift(v, 864f, spaceY, dx = 108f)
+        assertEquals(listOf(",", "?"), events)
+    }
+
+    private val deleteX = 999f
+    private val zRowY = 774f
+
+    /** Slid left from Backspace past a key and a half: a word goes, once however far. */
+    @Test
+    fun swipingLeftFromBackspaceDeletesAWord() {
+        val v = keyboard()
+        touch(v, MotionEvent.ACTION_DOWN, deleteX, zRowY)
+        touch(v, MotionEvent.ACTION_MOVE, deleteX - 100f, zRowY)  // not yet
+        touch(v, MotionEvent.ACTION_MOVE, deleteX - 170f, zRowY)
+        touch(v, MotionEvent.ACTION_MOVE, deleteX - 700f, zRowY)  // still one word
+        touch(v, MotionEvent.ACTION_UP, deleteX - 700f, zRowY)
+        assertEquals(listOf("⌫", "word"), events)
+        // A short slide, or one to the right, is a Backspace.
+        events.clear()
+        touch(v, MotionEvent.ACTION_DOWN, deleteX, zRowY)
+        touch(v, MotionEvent.ACTION_MOVE, deleteX - 60f, zRowY)
+        touch(v, MotionEvent.ACTION_UP, deleteX - 60f, zRowY)
+        assertEquals(listOf("⌫"), events)
+    }
+
+    private val numberY = 234f
+
+    /** Swiping the number row left shows ten emoticons, each typed whole; right brings the digits back. */
+    @Test
+    fun swipingTheNumberRowTurnsItToEmoticonsAndBack() {
+        val v = keyboard()
+        touch(v, MotionEvent.ACTION_DOWN, 594f, numberY)
+        touch(v, MotionEvent.ACTION_MOVE, 594f - 250f, numberY)
+        touch(v, MotionEvent.ACTION_UP, 594f - 250f, numberY)
+        assertEquals(true, v.emoticonRow)
+        assertEquals(emptyList<String>(), events)  // the swipe types nothing
+        shot("emoticon-row-dark", v)
+        touch(v, MotionEvent.ACTION_DOWN, 54f, numberY)
+        touch(v, MotionEvent.ACTION_UP, 54f, numberY)
+        touch(v, MotionEvent.ACTION_DOWN, 300f, numberY)
+        touch(v, MotionEvent.ACTION_MOVE, 600f, numberY)
+        touch(v, MotionEvent.ACTION_UP, 600f, numberY)
+        assertEquals(false, v.emoticonRow)
+        touch(v, MotionEvent.ACTION_DOWN, 54f, numberY)
+        touch(v, MotionEvent.ACTION_MOVE, 162f, numberY)  // a short slide: the key it ends on
+        touch(v, MotionEvent.ACTION_UP, 162f, numberY)
+        assertEquals(listOf("emoticon :)", "2"), events)
+    }
+
+    private val hel = Strip.Candidates(
+        "help", "hello", "held", more = true,
+        extra = listOf("helium", "hell", "helix", "helps", "helped", "helmet", "helpful", "hello kitty"),
+    )
+
+    /**
+     * The panel (432 px: three rows of 132 px and 18 px margins) sits right above the strip, so
+     * at y -18..-150 its bottom row (best in the middle, then left, right), then -150..-282.
+     */
+    @Test
+    fun slidingUpFromTheStripOpensMoreAndLiftingOnOneTakesIt() {
+        val v = keyboard { strip = hel }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        assertEquals(emptyList<String>(), events)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 20f)
+        assertEquals(listOf("helium", "hell", "helix", "helps", "helped", "helmet", "helpful"), v.moreShown)
+        assertEquals(-1, v.moreChosen)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, -80f)
+        assertEquals(0, v.moreChosen)
+        touch(v, MotionEvent.ACTION_MOVE, 300f, -200f)
+        assertEquals(4, v.moreChosen)
+        touch(v, MotionEvent.ACTION_UP, 300f, -200f)
+        assertEquals(listOf("more helped"), events)
+        assertEquals(emptyList<String>(), v.moreShown)
+    }
+
+    @Test
+    fun slidingBackDownPastTheStripTakesNothing() {
+        val v = keyboard { strip = hel }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, -80f)
+        assertEquals(0, v.moreChosen)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 300f)
+        assertEquals(emptyList<String>(), v.moreShown)
+        touch(v, MotionEvent.ACTION_UP, 540f, 300f)
+        assertEquals(emptyList<String>(), events)
+    }
+
+    /**
+     * Lifted on the strip after a slide, the panel stays: each word in the strip shows a mark
+     * that forgets it, and a tap on a word still takes it.
+     */
+    @Test
+    fun theOpenPanelsMarksForgetAWord() {
+        val v = keyboard { strip = hel }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 20f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 60f)
+        touch(v, MotionEvent.ACTION_UP, 540f, 60f)
+        assertEquals(7, v.moreShown.size)
+        shot("strip-more-open-dark", v)
+        val mark = v.removeMark("hello")!!
+        touch(v, MotionEvent.ACTION_DOWN, mark.x, mark.y)
+        touch(v, MotionEvent.ACTION_UP, mark.x, mark.y)
+        assertEquals(listOf("forget hello"), events)
+        assertEquals(emptyList<String>(), v.moreShown)
+        assertEquals(null, v.removeMark("hello"))  // closed: no marks
+    }
+
+    /** A tap on the dots opens the panel too; a tap on a slot takes it; a key closes the panel and types. */
+    @Test
+    fun theDotsOpenThePanelAndAKeyClosesIt() {
+        val v = keyboard { strip = hel }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 60f)     // the middle word: taken on lifting
+        assertEquals(emptyList<String>(), events)
+        touch(v, MotionEvent.ACTION_UP, 540f, 60f)
+        assertEquals(listOf("slot 1"), events)
+        events.clear()
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 130f)    // the dots under it
+        touch(v, MotionEvent.ACTION_UP, 540f, 130f)
+        assertEquals(7, v.moreShown.size)
+        assertEquals(emptyList<String>(), events)
+        touch(v, MotionEvent.ACTION_DOWN, 270f, 387f)    // e
+        touch(v, MotionEvent.ACTION_UP, 270f, 387f)
+        assertEquals(emptyList<String>(), v.moreShown)
+        assertEquals(listOf("e"), events)
+        // With nothing more to show, a slide up opens nothing and takes nothing.
+        events.clear()
+        v.strip = Strip.Candidates("a", "b", "c")
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, -100f)
+        touch(v, MotionEvent.ACTION_UP, 540f, -100f)
+        assertEquals(emptyList<String>(), v.moreShown)
+        assertEquals(emptyList<String>(), events)
+    }
+
+    /** Once open, a tap on the panel itself (its own window) takes the candidate. */
+    @Test
+    fun aTapOnTheOpenPanelTakesACandidate() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val p = MorePanelView(activity)
+        p.words = hel.extra
+        var picked = -1
+        p.onPick = { picked = it }
+        p.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+        p.layout(0, 0, p.measuredWidth, p.measuredHeight)
+        assertEquals(432, p.height)
+        val e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 900f, 350f, 0)
+        p.onTouchEvent(e)
+        assertEquals(2, p.chosen)  // the bottom row's right: helix
+        e.action = MotionEvent.ACTION_UP
+        p.onTouchEvent(e)
+        e.recycle()
+        assertEquals(2, picked)
+        val dir = File(System.getProperty("xrnkey.shots") ?: return)
+        val bmp = Bitmap.createBitmap(p.width, p.height, Bitmap.Config.ARGB_8888)
+        p.chosen = 0
+        p.draw(Canvas(bmp))
+        dir.mkdirs()
+        File(dir, "more-panel-dark.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     @Test
