@@ -346,10 +346,10 @@ class StripMakerTest {
                     val typed = strip(m, w, before, index)
                     val first = typed.shown.centre!!.substringBefore(' ')
                     val why = "'$before$w': ${typed.shown.slots()}"
-                    // Vietnamese: a reading (or the word), or at least a Vietnamese completion
-                    // ("tôi nha": "nhận", where "nhà" is rare); at a sentence's start, a reading.
+                    // Vietnamese: a reading (or the word), or a longer Vietnamese word when that is
+                    // likelier ("tôi nha": "nhận", where "nhà" is rare; "an": "ảnh", where Laban
+                    // has "anh"), never English.
                     assertTrue(why, bare(first).startsWith(w) && (first == w || first.any { it.code >= 0x80 }))
-                    if (before.isEmpty()) assertEquals(why, w, bare(first))
                     typed.typist.text(" ")
                     assertEquals("$before$w ", typed.field.text)  // Space keeps what was typed
                 }
@@ -372,6 +372,27 @@ class StripMakerTest {
             assertTrue(meet.bold)
         }
         index.close()
+    }
+
+    /**
+     * Laban's middle for letters typed without marks is mostly a reading alone, with the reading
+     * and its next word at a side, and a longer Vietnamese word when that is likelier: "toan" ->
+     * toàn (xrnkey had "toàn bộ"), "vi" -> việc (xrnkey had "vì"), "ngu" -> người (had "ngủ").
+     * A pair nearly always said together keeps the middle ("cảm ơn").
+     */
+    @Test
+    fun theMiddleIsTheReadingOrALongerWordAsOnLaban() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            val toan = strip(m, "toan").shown
+            assertEquals(toan.slots().toString(), "toàn", toan.centre)
+            assertTrue(toan.slots().toString(), "toàn bộ" in toan.slots())
+            assertEquals(strip(m, "vi").shown.slots().toString(), "việc", strip(m, "vi").shown.centre)
+            assertEquals(strip(m, "ngu").shown.slots().toString(), "người", strip(m, "ngu").shown.centre)
+            assertEquals("cảm ơn", strip(m, "cam").shown.centre)
+            // Never an English completion there for Vietnamese letters, and Space is unchanged.
+            for (w in listOf("toan", "vi", "ngu")) typedSpace(m, w, "$w ")
+        }
     }
 
     @Test

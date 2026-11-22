@@ -21,8 +21,9 @@ import kotlin.math.pow
  * - the readings of the word: its accented forms when it was typed without marks ("cam": cảm,
  *   cám), or the tones it may take when typed with marks but none ("mêt": mệt);
  * - a reading with the word likely to follow it ("cảm ơn"). The reading alone then scores what
- *   is left of it, "cảm" followed by anything but "ơn": a near-certain pair takes the reading's
- *   place, a weaker one comes after it;
+ *   is left of it, "cảm" followed by anything but "ơn": a pair takes the reading's place only
+ *   when it is clearly likelier, as Laban keeps the reading in the middle and the pair at the
+ *   side more often than the odds alone would ("toàn" | "toàn bộ"); a weaker one comes after;
  * - completions: longer words that start with the letters typed ("hel": hello, help, "xin":
  *   xinh).
  *
@@ -188,8 +189,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
      * The middle for letters typed without marks, which Space keeps, weighed by the models:
      * - letters that are a Vietnamese syllable with a common reading, likelier as Vietnamese
      *   than as English ("cam", "ban", "an"): the best Vietnamese reading or reading with its
-     *   next word ("cảm ơn"), or the word itself when that is the likeliest ("em"), never a
-     *   completion ("came" and "camera" go to the sides);
+     *   next word ("cảm ơn"), a longer Vietnamese word when that is likelier ("vi": việc, "ngu":
+     *   người, as on Laban), or the word itself when that is the likeliest ("em"), never an
+     *   English completion ("came" and "camera" go to the sides);
      * - letters that are an English word Space keeps, likelier as English ("the", "love"): the
      *   word itself, in bold;
      * - else the best guess ("hel": hello), or the word when it is as likely or all there is
@@ -202,7 +204,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val marked = readings.firstOrNull { it.type == Candidate.RESTORED && it.text.any { c -> c.code >= 0x80 } }
         val vietnamese = if (marked == null) Models.NEVER else maxOf(marked.score, asVietnamese)
         if (vietnamese >= COMMON && vietnamese >= asEnglish) {
-            val best = guesses.firstOrNull { it.kind != Kind.COMPLETION && !it.corrected }
+            val best = guesses.firstOrNull { (it.kind != Kind.COMPLETION || it.text.any { c -> c.code >= 0x80 }) && !it.corrected }
             // The word itself, when it is the likeliest Vietnamese and no pair of it stands in
             // its place ("em", where "êm" is rare; but "xin lỗi" for "xin").
             val ownPair = guesses.any { it.kind == Kind.PAIR && it.base == word }
@@ -268,7 +270,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             val corrected = r.type == Candidate.CORRECTED
             val paired = i < PAIRED || r.text == word || r.text == commits
             val next = if (paired) nextWord(m, ctx, r.text) else null
-            if (next != null) out += Guess("${r.text} ${next.first}", r.score + next.second, Kind.PAIR, r.text, corrected)
+            if (next != null) out += Guess("${r.text} ${next.first}", r.score + next.second - PAIR_MARGIN, Kind.PAIR, r.text, corrected)
             // Alone, it scores what is left once its likeliest pair is counted apart.
             val alone = if (next == null) r.score else r.score + log10(1 - min(10f.pow(next.second), MOST))
             out += Guess(r.text, alone, Kind.READING, r.text, corrected)
@@ -398,8 +400,14 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     fun pick(slot: Int): Pick? = offered.getOrNull(slot)
 
     companion object {
-        /** log10: how likely the next word must be to go with a reading ("cảm ơn"). */
-        const val COMPLETION = -1.0f
+        /** log10: how likely the next word must be to go with a reading ("cảm ơn"): 1 in 20. */
+        const val COMPLETION = -1.3f
+
+        /**
+         * log10: how much likelier than its reading alone a reading with its next word must be to
+         * rank above it (a quarter): "cảm ơn" still does, "toàn bộ" no longer takes "toàn"'s place.
+         */
+        private const val PAIR_MARGIN = 0.1f
 
         /** log10: how likely a word must be to count as finished ("khôn" is; "ngươ" is no word). */
         private const val FINISHED = -6.0f
