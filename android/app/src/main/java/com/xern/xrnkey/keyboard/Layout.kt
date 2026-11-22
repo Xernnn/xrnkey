@@ -7,7 +7,8 @@ import java.text.Normalizer
  * row) and what holding it gives. KeyboardView draws and hits these; the tests check them.
  * The layout follows the owner's reference keyboard (android/docs/feature-spec.md, "The
  * keyboard"): a number row, QWERTY, Shift and Backspace beside z..m, and a bottom row of ?123,
- * comma, space, full stop and a round Enter.
+ * comma, space, full stop and a round Enter. The symbol pages and their number pad are laid out
+ * key for key as that keyboard's.
  */
 
 enum class KeyKind {
@@ -15,6 +16,9 @@ enum class KeyKind {
 
     /** A text emoticon on the number row's second page: it goes in whole, never as Telex keys. */
     EMOTICON,
+
+    /** The symbol pages' "1234": their number pad. */
+    NUMPAD,
 }
 
 data class Key(
@@ -41,6 +45,9 @@ data class Row(val keys: List<Key>, /** Empty space at each end, in letter keys.
 
 enum class Page {
     LETTERS, SYMBOLS, MORE_SYMBOLS,
+
+    /** The symbol pages' number pad: digits in a grid with the strip above, for any field. */
+    NUMPAD,
 
     /** The pads, for number, phone and date fields: no strip, big keys. */
     NUMBER, PHONE, DATETIME;
@@ -99,7 +106,20 @@ object Layouts {
             Key(KeyKind.CHAR, label, variants = (if (digits) listOf(DIGITS[i].toString()) else emptyList()) + forms)
         }
 
-    private fun symbols(s: String) = s.split(' ').map { Key(KeyKind.CHAR, it) }
+    /**
+     * What holding a symbol offers, the first under the finger. Seen on the owner's reference:
+     * ! gives ¡, ' its curly quotes with ’ first, π gives Π and ∏, and | and _ give nothing. The
+     * rest are xrnkey's: related symbols, ₫ first on $.
+     */
+    val SYMBOL_FORMS: Map<String, List<String>> = mapOf(
+        "!" to "¡", "'" to "’ ‚ ‘ ‛", "π" to "Π ∏",
+        "?" to "¿", "\"" to "“ ” „ « »", "*" to "† ‡ ★", "-" to "– — _ ·", "+" to "±",
+        "(" to "[ { <", ")" to "] } >", "$" to "₫ ¢ £ € ¥", "%" to "‰", "#" to "№", "/" to "\\",
+        "•" to "· ♪ ♥ ♠ ♦ ♣", "¶" to "§",
+        "^" to "↑ ↓ ← →", "°" to "′ ″", "=" to "≠ ≈ ∞", "<" to "≤ « ‹", ">" to "≥ » ›",
+    ).mapValues { it.value.split(' ') }
+
+    private fun symbols(s: String) = s.split(' ').map { Key(KeyKind.CHAR, it, variants = SYMBOL_FORMS[it].orEmpty()) }
 
     private fun bottom(switch: Key) = Row(
         listOf(
@@ -111,7 +131,27 @@ object Layouts {
         ),
     )
 
+    /**
+     * A symbol page's bottom row: the way back, comma, the number pad, a narrower space, two
+     * symbols of the page's own (where the letters have only the full stop), Enter.
+     */
+    private fun symbolBottom(home: Page, own: List<Key>) = Row(
+        listOf(
+            Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 1.5f),
+            Key(KeyKind.COMMA, ",", text = ","),
+            Key(KeyKind.NUMPAD, "1234"),
+            Key(KeyKind.SPACE, width = 3f, text = " "),
+        ) + own + Key(KeyKind.ENTER, width = 1.5f),
+    )
+
+    /** The full stop on a symbol page: the rest of the punctuation is on the page; holding it gives … */
+    private val symbolStop get() = Key(KeyKind.PERIOD, ".", text = ".", variants = listOf("…"))
+
+    /** The row both symbol pages share, under the digits. */
+    private const val MATHS = "~ ` | • √ π ÷ × ¶ ∆"
+
     private fun digit(d: Char) = Key(KeyKind.CHAR, d.toString(), width = 2.5f)
+    private fun cell(label: String) = Key(KeyKind.CHAR, label, width = 2f)
     private fun pad(label: String, width: Float = 2.5f) = Key(KeyKind.CHAR, label, width = width)
     private val padBackspace get() = Key(KeyKind.BACKSPACE, width = 2.5f)
     private val padSwitch get() = Key(KeyKind.SYMBOLS, "?123", width = 2.5f)
@@ -189,35 +229,55 @@ object Layouts {
             )
             add(bottom(Key(KeyKind.SYMBOLS, "?123", width = 1.5f)))
         }
-        Page.SYMBOLS -> listOf(
+        // With the number row: digits, the shared row, then the page's own. Without it, as many
+        // rows as the letters have: page 1 keeps its digits, page 2 its shared row.
+        Page.SYMBOLS -> listOfNotNull(
             Row(chars(DIGITS)),
-            Row(symbols("@ # ₫ _ & - + ( ) /")),
+            if (numberRow) Row(symbols(MATHS)) else null,
+            Row(symbols("@ # $ % & - + ( ) /")),
             Row(
                 listOf(Key(KeyKind.MORE_SYMBOLS, "=\\<", width = 1.5f)) + symbols("* \" ' : ; ! ?") +
                     Key(KeyKind.BACKSPACE, width = 1.5f),
             ),
-            bottom(Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 1.5f)),
+            symbolBottom(home, symbols("_") + symbolStop),
         )
-        Page.MORE_SYMBOLS -> listOf(
-            Row(symbols("~ ` | • √ π ÷ × ¶ ∆")),
-            Row(symbols("£ € $ ¥ ^ ° = { } \\")),
+        Page.MORE_SYMBOLS -> listOfNotNull(
+            if (numberRow) Row(chars(DIGITS)) else null,
+            Row(symbols(MATHS)),
+            Row(symbols("£ ¢ € ¥ ^ ° = { } …")),
             Row(
-                listOf(Key(KeyKind.SYMBOLS, "?123", width = 1.5f)) + symbols("% © ® ™ ✓ [ ]") +
+                listOf(Key(KeyKind.SYMBOLS, "?123", width = 1.5f)) + symbols("\\ © ® ™ ℅ [ ]") +
                     Key(KeyKind.BACKSPACE, width = 1.5f),
             ),
-            bottom(Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 1.5f)),
+            symbolBottom(home, symbols("< >")),
+        )
+        // , 1 2 3 - / ( 4 5 6 . / ) 7 8 9 ⌫ / ABC ?123 0 space ↵, two letter keys a cell.
+        Page.NUMPAD -> listOf(
+            Row(listOf(cell(","), cell("1"), cell("2"), cell("3"), cell("-"))),
+            Row(listOf(cell("("), cell("4"), cell("5"), cell("6"), cell("."))),
+            Row(listOf(cell(")"), cell("7"), cell("8"), cell("9"), Key(KeyKind.BACKSPACE, width = 2f))),
+            Row(
+                listOf(
+                    Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 2f),
+                    Key(KeyKind.SYMBOLS, "?123", width = 2f),
+                    cell("0"),
+                    Key(KeyKind.SPACE, width = 2f, text = " "),
+                    Key(KeyKind.ENTER, width = 2f),
+                ),
+            ),
         )
     }
 }
 
 /**
- * Where a held key's forms sit in its popup: a grid as near square as they allow (18 forms: 5
- * across and 4 up; 12: 4 by 3; 6: 3 by 2), so none is far from the finger. The first form is in
- * the bottom row over the key, under the finger; the others fill that row outward from it,
- * nearest first, then the rows above in the same order. Cells are a key wide.
+ * Where a held key's forms sit in its popup: up to five in a row, more in a grid as near square
+ * as they allow (18 forms: 5 across and 4 up; 12: 4 by 3; 6: 3 by 2), so none is far from the
+ * finger. The first form is in the bottom row over the key, under the finger; the others fill
+ * that row outward from it, nearest first, then the rows above in the same order. Cells are a
+ * key wide.
  */
 object PopupGrid {
-    fun columns(n: Int): Int = maxOf(1, Math.ceil(Math.sqrt(n.toDouble())).toInt())
+    fun columns(n: Int): Int = if (n <= 5) maxOf(1, n) else Math.ceil(Math.sqrt(n.toDouble())).toInt()
 
     fun rows(n: Int): Int = (n + columns(n) - 1) / columns(n)
 

@@ -62,14 +62,110 @@ class LayoutTest {
         assertEquals("1234567890", rows[0].keys.joinToString("") { it.label })
     }
 
+    /** A row as its keys show, symbols as themselves and the other keys by kind. */
+    private fun shown(row: com.xern.xrnkey.keyboard.Row): String = row.keys.joinToString(" ") {
+        when (it.kind) {
+            KeyKind.CHAR, KeyKind.COMMA, KeyKind.PERIOD, KeyKind.SYMBOLS, KeyKind.MORE_SYMBOLS, KeyKind.LETTERS -> it.label
+            KeyKind.NUMPAD -> "[1234]"
+            KeyKind.SPACE -> "[space ${it.width.toInt()}]"
+            KeyKind.BACKSPACE -> "[del]"
+            KeyKind.ENTER -> "[enter]"
+            else -> "[${it.kind}]"
+        }
+    }
+
+    /** The symbol pages, key for key as the owner's reference keyboard has them, number row on. */
     @Test
-    fun theSymbolPagesHaveTheDongSignAndAWayBack() {
-        val symbols = Layouts.rows(Page.SYMBOLS).flatMap { it.keys }
-        assertTrue(symbols.any { it.label == "₫" })
-        assertTrue(symbols.any { it.kind == KeyKind.LETTERS })
-        assertTrue(symbols.any { it.kind == KeyKind.MORE_SYMBOLS })
-        assertFalse(symbols.any { it.kind == KeyKind.SHIFT })
-        assertTrue(Layouts.rows(Page.MORE_SYMBOLS).flatMap { it.keys }.any { it.kind == KeyKind.SYMBOLS })
+    fun theSymbolPagesAreLaidOutAsTheReferences() {
+        assertEquals(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0",
+                "~ ` | • √ π ÷ × ¶ ∆",
+                "@ # $ % & - + ( ) /",
+                "=\\< * \" ' : ; ! ? [del]",
+                "ABC , [1234] [space 3] _ . [enter]",
+            ),
+            Layouts.rows(Page.SYMBOLS).map(::shown),
+        )
+        assertEquals(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0",
+                "~ ` | • √ π ÷ × ¶ ∆",
+                "£ ¢ € ¥ ^ ° = { } …",
+                "?123 \\ © ® ™ ℅ [ ] [del]",
+                "ABC , [1234] [space 3] < > [enter]",
+            ),
+            Layouts.rows(Page.MORE_SYMBOLS).map(::shown),
+        )
+        // The way keys and their widths: =\< and ?123 a key and a half, as are ABC and Enter.
+        val one = Layouts.rows(Page.SYMBOLS)
+        assertEquals(listOf(1.5f, 1f, 1f, 3f, 1f, 1f, 1.5f), one.last().keys.map { it.width })
+        assertEquals(1.5f, one[3].keys.first().width)
+        assertEquals(KeyKind.MORE_SYMBOLS, one[3].keys.first().kind)
+        assertEquals(KeyKind.SYMBOLS, Layouts.rows(Page.MORE_SYMBOLS)[3].keys.first().kind)
+        // In a number field the way back is to its pad.
+        assertEquals("123", Layouts.rows(Page.SYMBOLS, home = Page.NUMBER).last().keys.first().label)
+    }
+
+    /** Without the number row the pages have the letters' four rows: page 1 keeps its digits, page 2 its shared row. */
+    @Test
+    fun withoutTheNumberRowTheSymbolPagesKeepFourRows() {
+        assertEquals(
+            listOf("1 2 3 4 5 6 7 8 9 0", "@ # $ % & - + ( ) /"),
+            Layouts.rows(Page.SYMBOLS, numberRow = false).take(2).map(::shown),
+        )
+        assertEquals(4, Layouts.rows(Page.SYMBOLS, numberRow = false).size)
+        assertEquals(
+            listOf("~ ` | • √ π ÷ × ¶ ∆", "£ ¢ € ¥ ^ ° = { } …"),
+            Layouts.rows(Page.MORE_SYMBOLS, numberRow = false).take(2).map(::shown),
+        )
+        assertEquals(4, Layouts.rows(Page.MORE_SYMBOLS, numberRow = false).size)
+    }
+
+    /** The 1234 key's pad: five columns of two keys' width, four rows. */
+    @Test
+    fun theNumberPadIsAFiveColumnGrid() {
+        assertEquals(
+            listOf(
+                ", 1 2 3 -",
+                "( 4 5 6 .",
+                ") 7 8 9 [del]",
+                "ABC ?123 0 [space 2] [enter]",
+            ),
+            Layouts.rows(Page.NUMPAD).map(::shown),
+        )
+        assertTrue(Layouts.rows(Page.NUMPAD).all { r -> r.keys.all { it.width == 2f } })
+        assertEquals(Layouts.rows(Page.NUMPAD), Layouts.rows(Page.NUMPAD, numberRow = false))
+        assertFalse(Page.NUMPAD.isPad)  // it keeps the strip, unlike a field's pad
+        assertEquals(KeyKind.NUMPAD, Layouts.rows(Page.SYMBOLS).last().keys[2].kind)
+        assertEquals(KeyKind.NUMPAD, Layouts.rows(Page.MORE_SYMBOLS).last().keys[2].kind)
+    }
+
+    private fun symbolKey(page: Page, label: String) = Layouts.rows(page).flatMap { it.keys }.first { it.label == label }
+
+    /**
+     * Holding a symbol: ¡ on !, ’ first on ', Π on π, nothing on | and _ (as on the reference);
+     * ₫, which page 1 no longer shows, first on $.
+     */
+    @Test
+    fun holdingASymbolOffersItsRelatives() {
+        assertEquals(listOf("¡"), symbolKey(Page.SYMBOLS, "!").variants)
+        assertEquals("’", symbolKey(Page.SYMBOLS, "'").hold)
+        assertEquals(setOf("‘", "’", "‚", "‛"), symbolKey(Page.SYMBOLS, "'").variants.toSet())
+        assertEquals("Π", symbolKey(Page.SYMBOLS, "π").hold)
+        assertEquals(emptyList<String>(), symbolKey(Page.SYMBOLS, "|").variants)
+        assertEquals(emptyList<String>(), symbolKey(Page.SYMBOLS, "_").variants)
+        assertEquals("₫", symbolKey(Page.SYMBOLS, "$").hold)
+        assertEquals("¿", symbolKey(Page.SYMBOLS, "?").hold)
+        assertEquals(listOf("…"), Layouts.rows(Page.SYMBOLS).last().keys.single { it.kind == KeyKind.PERIOD }.variants)
+        assertEquals("≤", symbolKey(Page.MORE_SYMBOLS, "<").hold)
+        // Digits hold nothing, on every page.
+        for (page in listOf(Page.LETTERS, Page.SYMBOLS, Page.MORE_SYMBOLS, Page.NUMPAD)) {
+            assertTrue(Layouts.rows(page).flatMap { it.keys }.filter { it.label.singleOrNull()?.isDigit() == true }.all { it.variants.isEmpty() })
+        }
+        // Every symbol of both pages can be reached, ₫ included.
+        val reachable = listOf(Page.SYMBOLS, Page.MORE_SYMBOLS).flatMap { Layouts.rows(it) }.flatMap { it.keys }.flatMap { listOf(it.label) + it.variants }
+        assertTrue("₫" in reachable)
     }
 
     private fun held(c: Char, shift: Shift = Shift.OFF): List<String> =
@@ -132,8 +228,8 @@ class LayoutTest {
      */
     @Test
     fun aPopupIsACompactGridAroundTheKey() {
-        assertEquals(listOf(5, 4, 3, 4, 2, 1), listOf(18, 12, 6, 16, 2, 1).map { PopupGrid.columns(it) })
-        assertEquals(listOf(4, 3, 2, 4, 1, 1), listOf(18, 12, 6, 16, 2, 1).map { PopupGrid.rows(it) })
+        assertEquals(listOf(5, 4, 3, 4, 5, 4, 2, 1), listOf(18, 12, 6, 16, 5, 4, 2, 1).map { PopupGrid.columns(it) })
+        assertEquals(listOf(4, 3, 2, 4, 1, 1, 1, 1), listOf(18, 12, 6, 16, 5, 4, 2, 1).map { PopupGrid.rows(it) })
         // e (third key of the top row): è over the key, é right of it, ẻ left, ẽ further right.
         assertEquals("ẻ è é ẽ", bottomRow(held('e'), 216f, 324f))
         // a, at the left edge (half a key in): from the key rightward.

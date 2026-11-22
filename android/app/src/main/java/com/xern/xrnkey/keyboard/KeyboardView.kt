@@ -310,6 +310,11 @@ class KeyboardView(context: Context) : View(context) {
             }
             KeyKind.PERIOD -> drawLabel(canvas, ".", cx, cy, textSize(k), palette.glyph)
             KeyKind.EMOTICON -> drawLabel(canvas, k.label, cx, cy, 17 * sp, palette.glyph)
+            KeyKind.NUMPAD -> {
+                // The number pad's key: its digits in a small square.
+                drawLabel(canvas, "12", cx, cy - 7 * dp, 12 * sp, palette.glyph)
+                drawLabel(canvas, "34", cx, cy + 7 * dp, 12 * sp, palette.glyph)
+            }
             KeyKind.SPACE -> if (page.isPad) {
                 // On a pad's tile: the space mark.
                 stroke(palette.glyph, 2f * dp)
@@ -862,6 +867,7 @@ class KeyboardView(context: Context) : View(context) {
             }
             KeyKind.COMMA, KeyKind.PERIOD -> l?.onText(k.text)
             KeyKind.EMOTICON -> l?.onEmoticon(k.label)
+            KeyKind.NUMPAD -> page = Page.NUMPAD
             KeyKind.SPACE -> {
                 l?.onText(" ")
                 // After a symbol and a space, the letters (or the field's pad) come back on their own.

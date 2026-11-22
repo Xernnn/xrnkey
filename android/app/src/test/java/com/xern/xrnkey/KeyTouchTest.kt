@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.MorePanelView
+import com.xern.xrnkey.keyboard.Page
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
@@ -206,6 +207,29 @@ class KeyTouchTest {
         touch(v, MotionEvent.ACTION_UP, 864f, spaceY)
         holdAndLift(v, 864f, spaceY, dx = 108f)
         assertEquals(listOf(",", "?"), events)
+    }
+
+    private fun tapAt(v: KeyboardView, x: Float, y: Float) {
+        touch(v, MotionEvent.ACTION_DOWN, x, y)
+        touch(v, MotionEvent.ACTION_UP, x, y)
+    }
+
+    /** The symbol pages' 1234 key opens the number pad (four rows of 225 px); ?123 and ABC lead out. */
+    @Test
+    fun theNumberPadOpensFromTheSymbolsAndLeadsBack() {
+        val v = keyboard { page = Page.SYMBOLS }
+        tapAt(v, 324f, spaceY)                 // 1234
+        assertEquals(Page.NUMPAD, v.page)
+        shot("numpad-dark", v)
+        tapAt(v, 324f, 256f)                   // 1
+        tapAt(v, 108f, 481f)                   // (
+        tapAt(v, 972f, 256f)                   // -
+        tapAt(v, 324f, 931f)                   // ?123
+        assertEquals(Page.SYMBOLS, v.page)
+        tapAt(v, 324f, spaceY)
+        tapAt(v, 108f, 931f)                   // ABC
+        assertEquals(Page.LETTERS, v.page)
+        assertEquals(listOf("1", "(", "-"), events)
     }
 
     private val deleteX = 999f

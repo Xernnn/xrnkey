@@ -68,6 +68,7 @@ class KeyboardShotsTest {
     fun symbols() {
         both("symbols") { page = Page.SYMBOLS }
         both("symbols-more") { page = Page.MORE_SYMBOLS }
+        both("symbols-numpad") { page = Page.NUMPAD }
     }
 
     /** The strip after typing "duoc" following "không": the engine's own candidates. */

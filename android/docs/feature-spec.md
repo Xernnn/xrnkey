@@ -186,18 +186,30 @@ Fields change the keyboard:
 
 ### What it shows
 
-- **Page 1**:
+Key for key as the reference has them.
+
+- **Page 1** (`?123`):
   - `1 2 3 4 5 6 7 8 9 0`;
-  - `@ # ₫ _ & - + ( ) /`;
-  - `=\<`, `* " ' : ; ! ?`, then Backspace;
-  - the bottom row: `ABC`, comma, space, full stop and Enter.
-- **Page 2**:
   - ``~ ` | • √ π ÷ × ¶ ∆``;
-  - `£ € $ ¥ ^ ° = { } \`;
-  - `?123`, `% © ® ™ ✓ [ ]`, then Backspace;
-  - the same bottom row.
-- Long-press popups hold related symbols: `-` → – — ·, `₫` → $ € £ ¥ ¢, `"` → “ ” „ « », and so
-  on.
+  - `@ # $ % & - + ( ) /`;
+  - `=\<` (a key and a half), `* " ' : ; ! ?`, then Backspace;
+  - the bottom row: `ABC`, comma (with its globe), `1234` (the number pad), a narrower space
+    (three keys), `_`, full stop and Enter.
+- **Page 2** (`=\<`):
+  - `1 2 3 4 5 6 7 8 9 0`;
+  - ``~ ` | • √ π ÷ × ¶ ∆``;
+  - `£ ¢ € ¥ ^ ° = { } …`;
+  - `?123`, `\ © ® ™ ℅ [ ]`, then Backspace;
+  - the bottom row: `ABC`, comma, `1234`, space, `<`, `>` and Enter.
+- Without the number row each page has the letters' four rows: page 1 leaves out the
+  ``~ ` | …`` row, page 2 the digits.
+- **The number pad** (`1234`), five columns of two keys' width, with the strip above:
+  `, 1 2 3 -` / `( 4 5 6 .` / `) 7 8 9 ⌫` / `ABC ?123 0 space ↵`.
+- Long-press popups, the first under the finger: `!` → ¡, `'` → ’ ‚ ‘ ‛, `π` → Π ∏ (seen on
+  the reference, where `|` and `_` hold nothing), and xrnkey's own: `$` → ₫ ¢ £ € ¥ (₫ is no
+  longer a key of its own), `?` → ¿, `"` → “ ” „ « », `*` → † ‡ ★, `-` → – — _ ·, `+` → ±,
+  `(` → [ { <, `)` → ] } >, `%` → ‰, `#` → №, `/` → \, `•` → · ♪ ♥ ♠ ♦ ♣, `¶` → §,
+  `^` → ↑ ↓ ← →, `°` → ′ ″, `=` → ≠ ≈ ∞, `<` → ≤ « ‹, `>` → ≥ » ›, and the full stop → ….
 
 ### What you can do
 
