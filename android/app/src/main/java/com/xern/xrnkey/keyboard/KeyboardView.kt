@@ -927,8 +927,9 @@ class KeyboardView(context: Context) : View(context) {
      * The candidates after the strip's three, in a panel over the strip, as the keyboard the
      * owner came from has them. Slide up from the strip to open it ([More.SLIDING]) and lift on a
      * candidate to take it; slide back down past the strip to close it. Lifting anywhere else
-     * leaves it open ([More.OPEN]), as does a tap on the dots under the middle: then a tap takes
-     * a candidate, a word's mark in the strip forgets that word, and any key closes it.
+     * leaves it open ([More.OPEN]): then a tap takes a candidate, a word's mark in the strip
+     * forgets that word, and any key closes it. The dots under the middle only say there are
+     * more: a tap there takes the middle word, as anywhere on its slot.
      */
     private enum class More { CLOSED, SLIDING, OPEN }
 
@@ -967,13 +968,6 @@ class KeyboardView(context: Context) : View(context) {
         val n = panel?.words?.size ?: return -1
         val h = panelHeight(n)
         return MorePanelView.cells(n, width.toFloat(), h.toFloat(), 48 * dp, dp).indexOfFirst { it.contains(x, y + h) }
-    }
-
-    /** The finger went down on the dots under the middle slot. */
-    private fun onDots(x: Float, y: Float): Boolean {
-        val s = strip as? Strip.Candidates ?: return false
-        return s.more && extra().isNotEmpty() && y >= stripHeight - 14 * dp &&
-            Math.abs(x - stripSlots()[1].centerX()) <= 20 * dp
     }
 
     private fun openMore(mode: More) {
@@ -1079,9 +1073,7 @@ class KeyboardView(context: Context) : View(context) {
                 closeMore()
                 if (mark != null) listener?.onForget(mark.first) else tapStrip(stripX)
             }
-            More.CLOSED -> if (!stripLeft) {
-                if (onDots(stripX, stripY)) openMore(More.OPEN) else tapStrip(stripX)
-            }
+            More.CLOSED -> if (!stripLeft) tapStrip(stripX)
         }
     }
 

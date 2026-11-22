@@ -336,24 +336,35 @@ class KeyTouchTest {
         assertEquals(null, v.removeMark("hello"))  // closed: no marks
     }
 
-    /** A tap on the dots opens the panel too; a tap on a slot takes it; a key closes the panel and types. */
+    /**
+     * The dots under the middle only say there are more: a tap on them takes the middle word, as
+     * anywhere on its slot (it opened the panel, and a typist hitting the lower half of the word
+     * got the panel instead). Taken on lifting, not on landing.
+     */
     @Test
-    fun theDotsOpenThePanelAndAKeyClosesIt() {
+    fun aTapOnTheDotsTakesTheMiddleWord() {
         val v = keyboard { strip = hel }
-        touch(v, MotionEvent.ACTION_DOWN, 540f, 60f)     // the middle word: taken on lifting
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 60f)     // the middle word
         assertEquals(emptyList<String>(), events)
         touch(v, MotionEvent.ACTION_UP, 540f, 60f)
-        assertEquals(listOf("slot 1"), events)
-        events.clear()
         touch(v, MotionEvent.ACTION_DOWN, 540f, 130f)    // the dots under it
         touch(v, MotionEvent.ACTION_UP, 540f, 130f)
+        assertEquals(listOf("slot 1", "slot 1"), events)
+        assertEquals(emptyList<String>(), v.moreShown)
+    }
+
+    /** A key closes the open panel, and types; with nothing more, a slide up opens nothing. */
+    @Test
+    fun aKeyClosesThePanelAndTypes() {
+        val v = keyboard { strip = hel }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)
+        touch(v, MotionEvent.ACTION_MOVE, 540f, 20f)
+        touch(v, MotionEvent.ACTION_UP, 540f, 20f)
         assertEquals(7, v.moreShown.size)
-        assertEquals(emptyList<String>(), events)
         touch(v, MotionEvent.ACTION_DOWN, 270f, 387f)    // e
         touch(v, MotionEvent.ACTION_UP, 270f, 387f)
         assertEquals(emptyList<String>(), v.moreShown)
         assertEquals(listOf("e"), events)
-        // With nothing more to show, a slide up opens nothing and takes nothing.
         events.clear()
         v.strip = Strip.Candidates("a", "b", "c")
         touch(v, MotionEvent.ACTION_DOWN, 540f, 72f)

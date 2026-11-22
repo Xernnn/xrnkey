@@ -252,8 +252,9 @@ What the slots hold, by situation:
   candidates three to a row under the strip's slots, the best nearest the strip and in the
   middle. Lift on one to commit it with a space; slide back down past the strip to close it
   with nothing taken, as on the reference. Lifted anywhere else, it stays open.
-- **Tap the dots**: opens the same panel, which stays open. A tap on a candidate commits it;
-  any key closes it (and types).
+  While it stays open, a tap on a candidate commits it and any key closes it (and types).
+- **The dots** under the middle only say there are more: a tap anywhere on the middle slot,
+  dots included, commits the middle word.
 - **While the panel is open** each word in the strip has a small remove mark: a tap forgets
   that word from the personal words, as the settings' list does. Words only the models know
   come back.
