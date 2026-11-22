@@ -827,7 +827,9 @@ TEST_CASE("digits are typed, never taken as a suggestion pick",
         REQUIRE(c.inputPanel().candidateList());
         REQUIRE(c.inputPanel().candidateList()->size() > 0);
         c.type("1");
-        CHECK(c.text() == "ch1");
+        // The digit joins the word as typed ("ch1" is a code, as Laban Key has it), so in
+        // preedit mode it is still being composed: the field shows it, nothing is picked.
+        CHECK(c.shown() == "ch1");
         c.type(" mp3 ");
         CHECK(c.text() == "ch1 mp3 ");
     }
