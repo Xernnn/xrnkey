@@ -235,11 +235,17 @@ class LayoutTest {
         // a, at the left edge (half a key in): from the key rightward.
         assertEquals("à á ả ã ạ", bottomRow(held('a'), 54f, 162f))
         assertEquals(0, PopupGrid.home(18, 54f, 162f, 108f, 1080f))
-        // o, one key from the right edge: the grid stops at the edge, ò stays over the key.
+        // o, one key from the right edge: ò over the key and every other form to its left, as
+        // Laban Key has it; the grid ends at the key, not one column past it at the screen edge.
         val o = held('o')
-        val home = PopupGrid.home(18, 864f, 972f, 108f, 1080f)
-        assertEquals(3, home)
-        assertEquals("ọ õ ỏ ò ó", bottomRow(o, 864f, 972f))
+        assertEquals(4, PopupGrid.home(18, 864f, 972f, 108f, 1080f))
+        assertEquals("ọ õ ỏ ó ò", bottomRow(o, 864f, 972f))
+        // u, i and y, with room on both sides: the first form over the key, one column left of it.
+        assertEquals("ủ ù ú ũ", bottomRow(held('u'), 648f, 756f))
+        assertEquals("ỉ ì í", bottomRow(held('i'), 756f, 864f))
+        assertEquals("ỷ ỳ ý", bottomRow(held('y'), 540f, 648f))
+        // p, at the right edge itself: everything to its left.
+        assertEquals(4, PopupGrid.home(18, 972f, 1080f, 108f, 1080f))
         // Every form of a held a is within two columns and three rows of the first.
         val cells = PopupGrid.cells(18, 2)
         assertTrue(cells.all { (c, r) -> Math.abs(c - 2) <= 2 && r <= 3 })
