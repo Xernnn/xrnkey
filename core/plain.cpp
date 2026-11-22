@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -52,6 +53,24 @@ bool readings(const Lm& m, const std::string& shape, float* plain, float* best) 
     return true;
 }
 
+/* English typos common enough that web text (and so a model) has them: their fix is known,
+ * whatever the model makes of them. */
+const char* known_typo(const std::string& w) {
+    static const std::pair<const char*, const char*> table[] = {
+        {"teh", "the"},     {"hte", "the"},       {"adn", "and"},       {"nad", "and"},
+        {"taht", "that"},   {"thta", "that"},     {"thier", "their"},   {"wiht", "with"},
+        {"whit", "with"},   {"thsi", "this"},     {"tihs", "this"},     {"jsut", "just"},
+        {"knwo", "know"},   {"waht", "what"},     {"wnat", "want"},     {"becuase", "because"},
+        {"recieve", "receive"}, {"definately", "definitely"}, {"seperate", "separate"},
+        {"untill", "until"}, {"wich", "which"},   {"freind", "friend"}, {"beleive", "believe"},
+        {"tommorow", "tomorrow"}, {"tomorow", "tomorrow"}, {"occured", "occurred"},
+        {"goign", "going"}, {"thnak", "thank"},   {"thnaks", "thanks"}, {"pleae", "please"},
+    };
+    for (const auto& [typo, fix] : table)
+        if (w == typo) return fix;
+    return nullptr;
+}
+
 bool english(const Models& m, const std::string& w) {
     if (xrnkey::lexicon_is_english(w)) return true;
     return m.en && xrnkey::lm_id(*m.en, w) != xrnkey::lmfmt::kUnk &&
@@ -84,11 +103,12 @@ extern "C" char* xk_fix_wrong_word(const XKModels* models, const char* typed, fl
     if (!m.en) return nullptr;
     const std::string w = lower_ascii(typed);
     if (!letters_only(w) || w.size() < 3) return nullptr;
-    /* Right in either language: nothing to fix. A shape with Vietnamese readings is
-     * Vietnamese typed without marks, not a typo. */
-    if (english(m, w)) return nullptr;
+    /* A shape with Vietnamese readings is Vietnamese typed without marks, not a typo. */
     float plain, best;
     if (m.vi && readings(*m.vi, w, &plain, &best)) return nullptr;
+    if (const char* fix = known_typo(w)) return strdup(fix);
+    /* Right in English: nothing to fix. */
+    if (english(m, w)) return nullptr;
     std::vector<std::string> edits;
     const std::string abc = "abcdefghijklmnopqrstuvwxyz";
     for (size_t i = 0; i < w.size(); ++i) edits.push_back(w.substr(0, i) + w.substr(i + 1));
