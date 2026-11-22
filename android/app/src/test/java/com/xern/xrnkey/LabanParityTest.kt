@@ -65,6 +65,26 @@ class LabanParityTest {
         }
     }
 
+    /**
+     * Laban keeps chat abbreviations, letters with no vowel and contractions typed without the
+     * apostrophe as they were typed; xrnkey's English typo fix used to turn "thx" into "the",
+     * "fff" into "off", "strs" into "stars", "youre" into "your", "theyre" into "there" and
+     * "isnt" into "isn". They stay as typed, as on Laban, rather than gaining an apostrophe:
+     * "cant", "wont", "ill" and "well" are words too, so the apostrophe could not be added
+     * everywhere, and adding it to some would be a surprise.
+     */
+    private val chat = listOf("thx", "fff", "strs", "pls", "youre", "theyre", "isnt", "dont", "didnt", "weve", "rofl")
+
+    @Test
+    fun spaceKeepsChatAndContractionsAsTyped() {
+        TestModels.test().use { m -> for (w in chat) assertEquals(w, "$w ", typed(w, m)) }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            for (w in chat) assertEquals(w, "$w ", typed(w, m))
+            assertEquals("the ", typed("teh", m))  // a slip in a word is still fixed
+        }
+    }
+
     @Test
     fun onlyWhenNeededTonesTheWordsThatArentWordsAsTheyStand() {
         assumeTrue(TestModels.realAvailable)

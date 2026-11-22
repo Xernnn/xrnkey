@@ -55,6 +55,30 @@ TEST_CASE("a word wrong in both languages gets a confident one-edit fix", "[plai
     CHECK(m.fix("zzqx") == "");
 }
 
+TEST_CASE("letters with no vowel are left as typed", "[plain]") {
+    Setup m;
+    // Chat abbreviations and letters typed for their own sake, not a word with a slip in it:
+    // Laban Key keeps them, and "thx" used to become "the".
+    CHECK(m.fix("thx") == "");
+    CHECK(m.fix("THX") == "");
+    CHECK(m.fix("fff") == "");
+    CHECK(m.fix("strs") == "");
+    CHECK(m.fix("teh") == "the");  // a vowel: a slip, fixed as before
+}
+
+TEST_CASE("chat English is a word as it stands", "[plain]") {
+    Setup m;
+    // Contractions typed without the apostrophe: "youre" used to become "your", "weve" "were".
+    CHECK(m.fix("youre") == "");
+    CHECK(m.fix("weve") == "");
+    CHECK(m.fix("theyre") == "");
+    CHECK(xk_plain_word(m.models, "youre", -1.6f));
+    CHECK(xk_plain_word(m.models, "isnt", -1.6f));
+    // Abbreviations with a vowel in them.
+    CHECK(xk_plain_word(m.models, "rofl", -1.6f));
+    CHECK(xk_plain_word(m.models, "abt", -1.6f));
+}
+
 TEST_CASE("predictions can carry their scores", "[plain]") {
     Setup m;
     const char* ctx[] = {"<s>", "tôi", "không"};

@@ -42,10 +42,26 @@ std::string attested_key(const std::u32string& letters, int tone) {
     return utf8_of(letters) + static_cast<char>('0' + tone);
 }
 
+/* English as chat writes it, which word lists of edited text leave out: contractions typed
+ * without the apostrophe and the commonest abbreviations that have a vowel (those without one
+ * are never fixed anyway). They are words as they stand, as Laban Key keeps them: Space used to
+ * "fix" "youre" into "your", "isnt" into "isn" and "rofl" into "roll", and "didnt" ended as
+ * "đint". None of them is a Vietnamese syllable. */
+constexpr const char* kChatEnglish[] = {
+    "aint", "arent", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent", "heres",
+    "hows", "isnt", "itll", "ive", "mustnt", "neednt", "shes", "shouldnt", "thatll", "thats",
+    "theres", "theyd", "theyll", "theyre", "theyve", "wasnt", "werent", "weve", "whats",
+    "wheres", "whos", "wouldnt", "yall", "youd", "youll", "youre", "youve",
+    "abt", "afaik", "asap", "bae", "bday", "coz", "cuz", "cya", "fomo", "fyi", "hbu", "idc",
+    "idk", "iirc", "ikr", "ily", "imho", "imo", "irl", "lmao", "lol", "nah", "ofc", "okie", "omg",
+    "omw", "otw", "rofl", "sus", "wbu", "wyd", "xoxo", "yolo", "yup",
+};
+
 const std::unordered_set<std::string>& english() {
     static const std::unordered_set<std::string> set = [] {
         std::unordered_set<std::string> s;
         each_line(xrnkey_english_words, [&](const std::string& w) { s.insert(lower_ascii(w)); });
+        for (const char* w : kChatEnglish) s.insert(w);
         return s;
     }();
     return set;
