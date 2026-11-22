@@ -52,6 +52,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     /** The next word after a Space. */
     var nextWords = true
 
+    /** Words and phrases the owner hid (the strip's remove mark): never offered. */
+    var hidden: (String) -> Boolean = { false }
+
     private enum class Kind { READING, PAIR, COMPLETION }
 
     /** A guess: its text and score, what it is, and the reading it is or extends. */
@@ -66,7 +69,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         }
         val m = models
         val commits = t.preview()  // what Space commits, when it isn't what the field shows
-        val run = if (m != null) t.phrase() else null
+        val run = if (m != null) t.phrase()?.takeUnless { hidden(it.second) } else null
         val ctx = t.context()
         // A word Telex marked, read as its letters without marks: its syllables ("mêt": mệt,
         // mết, ...), the word itself among them.
@@ -104,7 +107,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             ?: top?.let { Pick(it.text) }
         if (right?.emoji == false) top?.let { rest.remove(it) }
         offered = listOf(left, Pick(middle), right)
-        return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold)
+        return Strip.Candidates(left?.text, middle, right?.text, more = rest.isNotEmpty(), bold = bold, extra = rest.map { it.text })
     }
 
     /**
@@ -197,7 +200,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             out += Guess(r.text, alone, Kind.READING, r.text, corrected)
         }
         for ((c, score) in completions(t, m, ctx)) out += Guess(c, score, Kind.COMPLETION, null, false)
-        return out.filter { it.text != word }.sortedByDescending { it.score }.distinctBy { it.text }
+        return out.filter { it.text != word && !hidden(it.text) }.sortedByDescending { it.score }.distinctBy { it.text }
     }
 
     /**
@@ -227,7 +230,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
 
     /** After a word and a space: the likeliest next words, the likeliest in the middle. */
     private fun next(t: Typist): Strip {
-        val words = models!!.predict(t.context(), 3)
+        val words = models!!.predict(t.context(), 3 + HIDDEN_SLACK).filterNot(hidden).take(3)
         if (words.isEmpty()) return Strip.Tools
         offered = listOf(words.getOrNull(1), words[0], words.getOrNull(2)).map { w -> w?.let { Pick(it) } }
         return Strip.Candidates(words.getOrNull(1), words[0], words.getOrNull(2), bold = false)
@@ -251,6 +254,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         private const val READINGS = 6
         private const val PAIRED = 3
         private const val COMPLETIONS = 3
+
+        /** Next words asked for beyond the three shown, for those hidden among them. */
+        private const val HIDDEN_SLACK = 5
 
         /**
          * log10 P: how likely after the words before a Vietnamese reading must be to hold the

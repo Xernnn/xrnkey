@@ -6,22 +6,26 @@ import com.xern.xrnkey.engine.Shortcuts
 import java.io.File
 
 /**
- * What the keyboard keeps about its owner, on the phone only: the personal words it learned and
- * the shortcuts table. Both are files in credential-encrypted storage ([dir]), so they exist only
+ * What the keyboard keeps about its owner, on the phone only: the personal words it learned, the
+ * suggestions the owner hid, and the shortcuts table. Both are files in credential-encrypted storage ([dir]), so they exist only
  * after the first unlock and survive restarts and app updates. The settings screen changes them
  * through the same files; [refresh] picks the changes up when a field starts.
  */
 class OnDevice(private val dir: File, private val prefs: SharedPreferences) : AutoCloseable {
     val wordsFile get() = File(dir, WORDS)
     val shortcutsFile get() = File(dir, SHORTCUTS)
+    val hiddenFile get() = File(dir, HIDDEN)
 
     var words: PersonalWords? = null
         private set
     var shortcuts: Shortcuts? = null
         private set
+    var hidden: HiddenWords? = null
+        private set
 
     private var wordsCleared = -1L
     private var shortcutsStamp = -1L
+    private var hiddenStamp = -1L
 
     /** Loads what isn't loaded yet, or changed since. Old habits fade once a month. */
     fun refresh(now: Long = System.currentTimeMillis()) {
@@ -47,6 +51,12 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             shortcuts = Shortcuts().also { if (shortcutsFile.exists()) it.load(shortcutsFile) }
             shortcutsStamp = stamp
         }
+        // The keyboard hides suggestions, the settings show them again: whichever wrote last.
+        val hiddenNow = if (hiddenFile.exists()) hiddenFile.lastModified() else 0L
+        if (hidden == null || hiddenNow != hiddenStamp) {
+            hidden = HiddenWords(hiddenFile)
+            hiddenStamp = hiddenNow
+        }
     }
 
     /** Writes the personal words, if any were learned since the last save. */
@@ -69,14 +79,16 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         const val WORDS = "personal-words.tsv"
         /** The laptop's macros.txt format, so one file can serve both (feature-spec, "Shortcuts"). */
         const val SHORTCUTS = "shortcuts.txt"
+        const val HIDDEN = "hidden-suggestions.txt"
         private const val KEY_CLEARED = "words-cleared"
         private const val KEY_DECAYED = "words-decayed"
         private const val MONTH = 30L * 24 * 3600 * 1000
         private const val DECAY = 0.9
 
-        /** Forgets every personal word (from the settings screen). */
+        /** Forgets every personal word, and shows every hidden suggestion again (from the settings screen). */
         fun clearWords(dir: File, prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
             File(dir, WORDS).delete()
+            File(dir, HIDDEN).delete()
             wordsChanged(prefs, now)
         }
 

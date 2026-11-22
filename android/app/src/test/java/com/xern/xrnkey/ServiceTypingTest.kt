@@ -122,6 +122,69 @@ class ServiceTypingTest {
         }
     }
 
+    /**
+     * A swipe left from Backspace goes through the typist: the field loses the word, the typist's
+     * copy of the field follows (its cursor is the field's), and the words before stay its context.
+     */
+    @Test
+    fun aSwipedWordDeleteKeepsTheContextRight() {
+        val (s, edit) = field()
+        s.typeReported(edit, "toi khong biet ")
+        val old = edit.selectionStart
+        s.onDeleteWord()
+        assertEquals("toi khong ", edit.text.toString())
+        s.onUpdateSelection(old, old, edit.selectionStart, edit.selectionStart, -1, -1)
+        assertEquals(listOf("<s>", "toi", "khong"), s.typist.context())
+        assertEquals(edit.selectionStart, s.typist.cursor())
+        // A word in progress goes whole.
+        s.type("bie")
+        s.onDeleteWord()
+        assertEquals("toi khong ", edit.text.toString())
+        assertEquals("", s.typist.shown)
+        assertEquals(edit.selectionStart, s.typist.cursor())
+        s.onDestroy()
+    }
+
+    /** A candidate from the more-suggestions panel replaces the word in progress, with a space. */
+    @Test
+    fun aCandidateFromThePanelIsTakenWithASpace() {
+        val (s, edit) = field()
+        s.type("xin cha")
+        s.onMorePick("chào")
+        assertEquals("xin chào ", edit.text.toString())
+        assertEquals(listOf("<s>", "xin", "chào"), s.typist.context())
+        s.onDestroy()
+    }
+
+    /** An emoticon from the number row's second page goes in whole: its D starts no word. */
+    @Test
+    fun anEmoticonFromTheNumberRowGoesInWhole() {
+        val (s, edit) = field()
+        s.type("ok ")
+        s.onEmoticon(":D")
+        assertEquals("ok :D", edit.text.toString())
+        assertEquals("", s.typist.shown)
+        s.onDestroy()
+    }
+
+    /**
+     * A strip slot's remove mark forgets the word from the personal words, as the settings' list
+     * does, and hides it with the personal data, so no model offers it either; a phrase is hidden.
+     */
+    @Test
+    fun aRemoveMarkForgetsAndHides() {
+        val (s, _) = field()
+        val words = s.typist.personal!!
+        repeat(3) { words.learn("<s>", "quocc") }
+        assertTrue(words.count("<s>", "quocc") > 0)
+        s.onRemove("quocc")
+        assertEquals(0.0, words.count("<s>", "quocc"), 0.0)
+        s.onRemove("cảm ơn")
+        val hidden = com.xern.xrnkey.ime.HiddenWords(java.io.File(s.filesDir, com.xern.xrnkey.ime.OnDevice.HIDDEN))
+        assertEquals(listOf("quocc", "cảm ơn"), hidden.all)
+        s.onDestroy()
+    }
+
     @Test
     fun aKnownTypoIsFixedOnSpace() {
         // Only with the bundled models: CI has the small test ones, which the APK doesn't ship.

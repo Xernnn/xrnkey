@@ -81,6 +81,7 @@ import com.xern.xrnkey.engine.ImportCounts
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.keyboard.Palette
+import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
@@ -185,6 +186,8 @@ class SettingsActivity : ComponentActivity() {
         if (wordsFile.exists()) w.load(wordsFile)
         w.words()
     }
+
+    private fun readHidden(): List<String> = HiddenWords(File(filesDir, OnDevice.HIDDEN)).all
 
     private fun forgetWord(word: String) {
         PersonalWords().use { w ->
@@ -581,6 +584,7 @@ class SettingsActivity : ComponentActivity() {
         @Composable
         fun WordsPage(o: Options, set: (Options) -> Unit) {
             var words by remember { mutableStateOf(readWords()) }
+            var hidden by remember { mutableStateOf(readHidden()) }
             var query by remember { mutableStateOf("") }
             var confirmClear by remember { mutableStateOf(false) }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
@@ -599,13 +603,27 @@ class SettingsActivity : ComponentActivity() {
                             }
                         }
                     }
+                    // What the strip's remove mark hid, each to show again.
+                    if (hidden.isNotEmpty() && q.isEmpty()) {
+                        item { Text("Hidden", style = quiet, modifier = Modifier.padding(start = 4.dp, top = 14.dp, bottom = 4.dp)) }
+                        items(hidden, key = { "hidden $it" }) { text ->
+                            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(text, style = label, modifier = Modifier.weight(1f))
+                                Pill("Show", false) {
+                                    HiddenWords(File(filesDir, OnDevice.HIDDEN)).show(text)
+                                    hidden = readHidden()
+                                }
+                            }
+                        }
+                    }
                 }
-                if (words.isNotEmpty()) Action("Clear all") { confirmClear = true }
+                if (words.isNotEmpty() || hidden.isNotEmpty()) Action("Clear all") { confirmClear = true }
             }
             if (confirmClear) {
                 Confirm("Clear personal words", "Clear", {
                     OnDevice.clearWords(filesDir, prefs)
                     words = readWords()
+                    hidden = readHidden()
                     confirmClear = false
                 }) { confirmClear = false }
             }

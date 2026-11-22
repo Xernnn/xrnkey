@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -117,6 +118,19 @@ class SettingsPagesTest {
         }
         // The keyboard reads the file again at its next field.
         assertTrue(prefs().getLong("words-cleared", 0L) != before)
+    }
+
+    /** What the strip's remove mark hid is listed under the personal words, each to show again. */
+    @Test
+    fun hiddenSuggestionsAreListedAndShownAgain() {
+        val file = File(rule.activity.filesDir, OnDevice.HIDDEN)
+        com.xern.xrnkey.ime.HiddenWords(file).apply { hide("hello kitty"); hide("dược") }
+        rule.onNodeWithText("Personal words").performClick()
+        rule.onNodeWithText("Hidden").assertIsDisplayed()
+        rule.onNodeWithText("hello kitty").assertIsDisplayed()
+        rule.onAllNodesWithText("Show")[0].performClick()
+        rule.onNodeWithText("hello kitty").assertDoesNotExist()
+        assertEquals(listOf("dược"), com.xern.xrnkey.ime.HiddenWords(file).all)
     }
 
     @Test

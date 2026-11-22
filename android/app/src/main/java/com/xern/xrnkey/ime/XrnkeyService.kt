@@ -357,6 +357,45 @@ class XrnkeyService :
         showStrip()
     }
 
+    /** A swipe left from Backspace: through the typist, so the words before the cursor stay right. */
+    override fun onDeleteWord() {
+        val q = searchQuery
+        if (q != null) {
+            search(q.trimEnd().dropLastWhile { !it.isWhitespace() })
+            return
+        }
+        edit { typist.deleteWord() }
+        showStrip()
+    }
+
+    /** An emoticon from the number row's second page: whole, as the emoji panel puts one in. */
+    override fun onEmoticon(text: String) {
+        val q = searchQuery
+        if (q != null) {
+            search(q + text)
+            return
+        }
+        edit { typist.insert(text) }
+        showStrip()
+    }
+
+    /** A candidate from the more-suggestions panel, as a tap on a slot takes one. */
+    override fun onMorePick(text: String) {
+        edit { typist.pick(text) }
+        showStrip()
+    }
+
+    /**
+     * A strip slot's remove mark: the word is forgotten from the personal words, as the settings'
+     * list does it, and hidden, so that no model offers it (or the phrase) either.
+     */
+    override fun onRemove(text: String) {
+        val od = onDevice ?: return
+        if (' ' !in text) od.words?.forget(text)
+        od.hidden?.hide(text)
+        showStrip()
+    }
+
     override fun onCursorStart() {
         typist.finish()
         keyboard?.strip = Strip.Tools
@@ -500,6 +539,7 @@ class XrnkeyService :
         if (!getSystemService(UserManager::class.java).isUserUnlocked) return
         val od = onDevice ?: OnDevice(filesDir, prefs()).also { onDevice = it }
         od.refresh()
+        strip.hidden = od.hidden?.let { h -> { text: String -> text in h } } ?: { false }
         val learning = options.learn
         typist.personal = if (learning) od.words else null
         models?.user = if (learning) od.words else null

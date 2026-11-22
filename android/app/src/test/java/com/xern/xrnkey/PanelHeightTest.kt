@@ -80,7 +80,7 @@ class PanelHeightTest {
         assertEquals("cursor pad", letters, height(frame))
 
         val k = keys(frame)
-        for (page in listOf(Page.SYMBOLS, Page.MORE_SYMBOLS)) {
+        for (page in listOf(Page.SYMBOLS, Page.MORE_SYMBOLS, Page.NUMPAD)) {
             k.page = page
             assertEquals("$page", letters, height(frame))
         }

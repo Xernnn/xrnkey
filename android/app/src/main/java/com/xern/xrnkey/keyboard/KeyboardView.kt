@@ -11,9 +11,11 @@ import android.graphics.Typeface
 import android.os.Build
 import android.os.SystemClock
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.widget.PopupWindow
 import com.xern.xrnkey.R
 
 /**
@@ -38,12 +40,20 @@ class KeyboardView(context: Context) : View(context) {
         fun onCursorEnd() {}
         fun onSearchClose() {}
         fun onSearchPick(emoji: String) {}
+        /** A swipe left from Backspace: the word before the cursor goes, one per swipe. */
+        fun onDeleteWord() {}
+        /** An emoticon from the number row's second page. */
+        fun onEmoticon(text: String) {}
+        /** A candidate taken from the more-suggestions panel. */
+        fun onMorePick(text: String) {}
+        /** A strip slot's remove mark, while the panel is open: the word or phrase is offered no more. */
+        fun onRemove(text: String) {}
     }
 
     var listener: Listener? = null
 
     var palette: Palette = Palette.DARK
-        set(value) { field = value; invalidate() }
+        set(value) { field = value; panel?.palette = value; invalidate() }
     var page: Page = Page.LETTERS
         set(value) { if (field != value) { field = value; relayout() } }
     /** Where the symbols' way back leads: the letters, or the field's pad. */
@@ -57,7 +67,13 @@ class KeyboardView(context: Context) : View(context) {
     var numberRow: Boolean = true
         set(value) { if (field != value) { field = value; requestLayout(); relayout() } }
     var strip: Strip = Strip.Tools
-        set(value) { field = value; invalidate() }
+        set(value) {
+            field = value
+            // What the panel showed is gone; a slide still under way takes nothing.
+            if (stripPointer >= 0) stripLeft = true
+            closeMore()
+            invalidate()
+        }
     var enterAction: EnterAction = EnterAction.NEWLINE
         set(value) { field = value; invalidate() }
     var keyPreview = true
@@ -66,9 +82,13 @@ class KeyboardView(context: Context) : View(context) {
     var heightPercent = 100
         set(value) { if (field != value) { field = value; requestLayout() } }
 
-    /** Holding a top-row letter gives its digit. */
+    /** Holding a top-row letter gives its digit, where there is no number row. */
     var holdDigits = true
         set(value) { if (field != value) { field = value; relayout() } }
+
+    /** The number row shows the emoticons: swiped left to them, right back to the digits. */
+    var emoticonRow = false
+        private set(value) { if (field != value) { field = value; relayout() } }
     /** Sliding along the space bar moves the cursor. */
     var spaceSwipe = true
     /** Holding the space bar turns the keys into a cursor pad. */
@@ -112,7 +132,7 @@ class KeyboardView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
 
     private fun relayout() {
-        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home)
+        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow)
         val w = width.toFloat()
         // A pad has no strip: its rows share the whole height.
         val first = if (page.isPad) 0f else stripHeight
@@ -149,7 +169,7 @@ class KeyboardView(context: Context) : View(context) {
         // A pad's keys are big enough to need no popup (and a PIN's shouldn't show one).
         pressed?.let { if (keyPreview && !page.isPad && it.key.kind == KeyKind.CHAR && !holdFired) drawPreview(canvas, it) }
         if (cursor != Cursor.OFF) drawCursorPad(canvas)
-        if (variantsOf != null) drawVariants(canvas)
+        popup?.let { drawPopup(canvas, it) }
     }
 
     /** The cursor pad: the keys fade, the space bar shows the arrows. */
@@ -176,28 +196,56 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
-    /** The row of a held letter's forms, above it; the one the finger is on is marked. */
-    private fun variantRects(): List<RectF> {
-        val h = variantsOf ?: return emptyList()
-        val n = h.key.variants.size
-        val w = h.rect.width()
-        val left = (h.rect.left).coerceIn(0f, maxOf(0f, width - n * w))
-        val top = maxOf(0f, h.rect.top - h.rect.height() - 4 * dp)
-        return List(n) { RectF(left + it * w, top, left + (it + 1) * w, top + h.rect.height()) }
+    /**
+     * A held key's popup: its forms in their cells ([PopupGrid]), and how far the first form's
+     * centre was from the finger when it opened. The finger chooses relative to that, so it starts
+     * on the first form even where the popup had to move to stay inside the keyboard.
+     */
+    private class Popup(val forms: List<String>, val cells: List<RectF>, val dx: Float, val dy: Float) {
+        val bounds: List<FloatArray> = cells.map { floatArrayOf(it.left, it.top, it.right, it.bottom) }
     }
 
-    private fun drawVariants(canvas: Canvas) {
-        val h = variantsOf ?: return
-        val rects = variantRects()
+    private var popup: Popup? = null
+    private var popupChoice = 0
+
+    /** What the held key's popup offers, and the one the finger is on (for the tests). */
+    val popupForms: List<String> get() = popup?.forms.orEmpty()
+    val popupChosen: String? get() = popup?.forms?.getOrNull(popupChoice)
+
+    /**
+     * The popup over a held key: its bottom row on the key's row, the first form under the
+     * finger, the cells a key wide and a little shorter than a row, so a slide to any form is short.
+     */
+    private fun openPopup(h: Hit) {
+        val forms = h.key.variants
+        val n = forms.size
+        val columns = PopupGrid.columns(n)
+        val rows = PopupGrid.rows(n)
+        val cw = width / 10f
+        val ch = minOf(h.rect.height(), 44 * dp)
+        val home = PopupGrid.home(n, h.rect.left, h.rect.right, cw, width.toFloat())
+        val left = (h.rect.left - home * cw).coerceIn(0f, maxOf(0f, width - columns * cw))
+        val top = (h.rect.centerY() - ch / 2 - (rows - 1) * ch).coerceIn(0f, maxOf(0f, height - rows * ch))
+        val cells = PopupGrid.cells(n, home).map { (c, r) ->
+            val x = left + c * cw
+            val y = top + (rows - 1 - r) * ch
+            RectF(x, y, x + cw, y + ch)
+        }
+        popup = Popup(forms, cells, cells[0].centerX() - fingerX, cells[0].centerY() - fingerY)
+        popupChoice = 0
+    }
+
+    private fun drawPopup(canvas: Canvas, p: Popup) {
+        val box = RectF(p.cells.minOf { it.left }, p.cells.minOf { it.top }, p.cells.maxOf { it.right }, p.cells.maxOf { it.bottom })
         fill.color = palette.preview
-        canvas.drawRoundRect(RectF(rects.first().left, rects.first().top, rects.last().right, rects.last().bottom), 10 * dp, 10 * dp, fill)
-        h.key.variants.forEachIndexed { i, v ->
-            val r = RectF(rects[i]).apply { inset(3 * dp, 3 * dp) }
-            if (i == variantChoice) {
+        canvas.drawRoundRect(box, 10 * dp, 10 * dp, fill)
+        p.forms.forEachIndexed { i, v ->
+            val r = RectF(p.cells[i]).apply { inset(3 * dp, 3 * dp) }
+            if (i == popupChoice) {
                 fill.color = palette.accent
                 canvas.drawRoundRect(r, 8 * dp, 8 * dp, fill)
             }
-            drawLabel(canvas, v, r.centerX(), r.centerY(), 24 * sp, if (i == variantChoice) palette.onAccent else palette.glyph)
+            drawLabel(canvas, v, r.centerX(), r.centerY(), 24 * sp, if (i == popupChoice) palette.onAccent else palette.glyph)
         }
     }
 
@@ -261,6 +309,12 @@ class KeyboardView(context: Context) : View(context) {
                 drawGlobe(canvas, cx, r.top + 13 * dp, 6.5f * dp, palette.dim)
             }
             KeyKind.PERIOD -> drawLabel(canvas, ".", cx, cy, textSize(k), palette.glyph)
+            KeyKind.EMOTICON -> drawLabel(canvas, k.label, cx, cy, 17 * sp, palette.glyph)
+            KeyKind.NUMPAD -> {
+                // The number pad's key: its digits in a small square.
+                drawLabel(canvas, "12", cx, cy - 7 * dp, 12 * sp, palette.glyph)
+                drawLabel(canvas, "34", cx, cy + 7 * dp, 12 * sp, palette.glyph)
+            }
             KeyKind.SPACE -> if (page.isPad) {
                 // On a pad's tile: the space mark.
                 stroke(palette.glyph, 2f * dp)
@@ -465,6 +519,18 @@ class KeyboardView(context: Context) : View(context) {
         return List(3) { RectF(side + it * w, 0f, side + (it + 1) * w, stripHeight) }
     }
 
+    /** A slot's text as drawn: shrunk to fit (a phrase) before it is cut short, and its width. */
+    private fun fitted(text: String, r: RectF): Triple<String, Float, Float> {
+        glyph.typeface = font
+        glyph.textSize = 18 * sp
+        val room = r.width() - 8 * dp
+        val wide = glyph.measureText(text)
+        val size = if (wide > room) maxOf(13 * sp, 18 * sp * room / wide) else 18 * sp
+        glyph.textSize = size
+        val shown = ellipsize(text, room)
+        return Triple(shown, size, glyph.measureText(shown))
+    }
+
     private fun drawCandidates(canvas: Canvas, s: Strip.Candidates) {
         val side = 48 * dp
         val cy = stripHeight / 2
@@ -475,14 +541,7 @@ class KeyboardView(context: Context) : View(context) {
         listOf(s.left, s.centre, s.right).forEachIndexed { i, text ->
             if (text == null) return@forEachIndexed
             val r = slots[i]
-            // A long candidate (a phrase) shrinks to fit before it is cut short.
-            glyph.typeface = font
-            glyph.textSize = 18 * sp
-            val room = r.width() - 8 * dp
-            val wide = glyph.measureText(text)
-            val size = if (wide > room) maxOf(13 * sp, 18 * sp * room / wide) else 18 * sp
-            glyph.textSize = size
-            val shown = ellipsize(text, room)
+            val (shown, size) = fitted(text, r)
             drawLabel(canvas, shown, r.centerX(), cy - if (i == 1 && s.more) 2 * dp else 0f, size,
                 if (i == 1) palette.glyph else palette.dim, if (i == 1 && s.bold) fontStrong else font)
         }
@@ -490,6 +549,27 @@ class KeyboardView(context: Context) : View(context) {
             fill.color = palette.dim
             val r = slots[1]
             for (dx in listOf(-6f, 0f, 6f)) canvas.drawCircle(r.centerX() + dx * dp, stripHeight - 8 * dp, 1.5f * dp, fill)
+        }
+        // While the panel is open, each word gets a small mark that forgets it.
+        if (more != More.CLOSED) for ((_, at) in removeMarks(s)) {
+            fill.color = palette.dim
+            canvas.drawCircle(at.x, at.y, 6 * dp, fill)
+            stroke(palette.strip, 1.4f * dp)
+            val d = 2.4f * dp
+            canvas.drawLine(at.x - d, at.y - d, at.x + d, at.y + d, line)
+            canvas.drawLine(at.x - d, at.y + d, at.x + d, at.y - d, line)
+        }
+    }
+
+    /** Where each slot's remove mark goes, after its word or phrase and a little above; none on an emoji. */
+    private fun removeMarks(s: Strip.Candidates): List<Pair<String, android.graphics.PointF>> {
+        val slots = stripSlots()
+        return listOf(s.left, s.centre, s.right).mapIndexedNotNull { i, text ->
+            if (text == null || text.none { it.isLetter() }) return@mapIndexedNotNull null
+            val r = slots[i]
+            val (_, _, w) = fitted(text, r)
+            val x = minOf(r.centerX() + w / 2 + 8 * dp, r.right - 7 * dp)
+            text to android.graphics.PointF(x, stripHeight / 2 - 9 * dp)
         }
     }
 
@@ -549,17 +629,23 @@ class KeyboardView(context: Context) : View(context) {
     private val lineStep get() = 28 * dp
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
 
-    /** The key whose forms are showing, and the one the finger is on. */
-    private var variantsOf: Hit? = null
-    private var variantChoice = 0
+    /** Where the pressed key's finger is now (where a popup opens around). */
+    private var fingerX = 0f
+    private var fingerY = 0f
+
+    /** The finger went down on the number row (a swipe there turns its page). */
+    private var onNumberRow = false
+
+    /** How far a finger must slide to swipe: from Backspace, and along the number row. */
+    private val deleteSwipe get() = 1.5f * width / 10f
+    private val rowSwipe get() = 2f * width / 10f
 
     private val hold = Runnable {
         val h = pressed ?: return@Runnable
         when {
             h.key.kind == KeyKind.COMMA -> if (commaHold) { holdFired = true; listener?.onPickKeyboard() }
             h.key.kind == KeyKind.SPACE -> if (spaceHold && cursor == Cursor.OFF) startCursor(Cursor.PAD)
-            h.key.variants.size > 1 -> { holdFired = true; variantsOf = h; variantChoice = 0 }
-            h.key.hold != null -> { holdFired = true; typeChar(h.key.hold!!) }
+            h.key.variants.isNotEmpty() -> { holdFired = true; openPopup(h) }
         }
         invalidate()
     }
@@ -646,41 +732,84 @@ class KeyboardView(context: Context) : View(context) {
         }
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                // A second finger lands before the first lifts: the first key counts.
+                // A second finger lands before the first lifts: the first key (or slot) counts.
+                if (stripPointer >= 0) finishStrip(true)
                 if (pressed != null) release(true)
                 val i = e.actionIndex
                 val x = e.getX(i)
                 val y = e.getY(i)
                 if (!page.isPad && y < stripHeight) {
-                    tapStrip(x)
+                    if (strip is Strip.Candidates) {
+                        // Taken when it lifts: a slide up opens the panel instead.
+                        stripPointer = e.getPointerId(i)
+                        stripX = x
+                        stripY = y
+                        stripLeft = false
+                    } else {
+                        tapStrip(x)
+                    }
                     return true
                 }
+                // A key closes the panel, and types as it would.
+                closeMore()
                 press(hitAt(x, y), e.getPointerId(i), x, y)
             }
             MotionEvent.ACTION_MOVE -> {
-                val i = e.findPointerIndex(pressedPointer)
-                if (i >= 0 && pressed?.key?.kind == KeyKind.SPACE) {
-                    moveCursor(e.getX(i), e.getY(i))
-                } else if (i >= 0 && variantsOf != null) {
-                    val rects = variantRects()
-                    val x = e.getX(i).coerceIn(rects.first().left, rects.last().right - 1)
-                    val c = rects.indexOfFirst { x >= it.left && x < it.right }
-                    if (c >= 0 && c != variantChoice) { variantChoice = c; invalidate() }
-                } else if (i >= 0) {
-                    val h = hitAt(e.getX(i), e.getY(i))
-                    if (h != null && h !== pressed && pressed?.key?.kind == KeyKind.CHAR && !holdFired) {
-                        removeCallbacks(hold)
-                        pressed = h
-                        if (h.key.hold != null) postDelayed(hold, holdMillis)
-                        invalidate()
-                    }
-                }
+                val si = if (stripPointer >= 0) e.findPointerIndex(stripPointer) else -1
+                if (si >= 0) moveStrip(e.getX(si), e.getY(si))
+                val i = if (pressedPointer >= 0) e.findPointerIndex(pressedPointer) else -1
+                if (i >= 0) movePressed(e.getX(i), e.getY(i))
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP ->
-                if (e.getPointerId(e.actionIndex) == pressedPointer) release(true)
-            MotionEvent.ACTION_CANCEL -> release(false)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                val id = e.getPointerId(e.actionIndex)
+                if (id == stripPointer) finishStrip(true)
+                if (id == pressedPointer) release(true)
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                finishStrip(false)
+                release(false)
+            }
         }
         return true
+    }
+
+    /** The finger on a key moved. */
+    private fun movePressed(x: Float, y: Float) {
+        val p = pressed
+        fingerX = x
+        fingerY = y
+        val pop = popup
+        when {
+            p?.key?.kind == KeyKind.SPACE -> moveCursor(x, y)
+            pop != null -> {
+                val c = PopupGrid.nearest(pop.bounds, x + pop.dx, y + pop.dy)
+                if (c != popupChoice) { popupChoice = c; invalidate() }
+            }
+            // Slid left from Backspace: the word before the cursor, once a swipe.
+            p?.key?.kind == KeyKind.BACKSPACE -> if (!holdFired && anchorX - x > deleteSwipe) {
+                holdFired = true
+                removeCallbacks(repeat)
+                listener?.onDeleteWord()
+                invalidate()
+            }
+            // Swiped along the number row: left to the emoticons, right back to the digits.
+            onNumberRow && !holdFired && Math.abs(x - anchorX) > rowSwipe && Math.abs(x - anchorX) > Math.abs(y - anchorY) -> {
+                removeCallbacks(hold)
+                holdFired = true
+                emoticonRow = x < anchorX
+                invalidate()
+            }
+            else -> {
+                val h = hitAt(x, y)
+                val kind = p?.key?.kind
+                if (h != null && h !== p && (kind == KeyKind.CHAR || kind == KeyKind.EMOTICON) && !holdFired) {
+                    removeCallbacks(hold)
+                    pressed = h
+                    if (h.key.hold != null) postDelayed(hold, holdMillis)
+                    invalidate()
+                }
+            }
+        }
     }
 
     private fun press(h: Hit?, pointer: Int, x: Float = 0f, y: Float = 0f) {
@@ -689,6 +818,9 @@ class KeyboardView(context: Context) : View(context) {
         holdFired = false
         anchorX = x
         anchorY = y
+        fingerX = x
+        fingerY = y
+        onNumberRow = h != null && page == Page.LETTERS && numberRow && h.rect.top < stripHeight + 1f
         if (h == null) return
         when (h.key.kind) {
             KeyKind.SPACE -> postDelayed(hold, holdMillis)
@@ -708,14 +840,14 @@ class KeyboardView(context: Context) : View(context) {
         removeCallbacks(repeat)
         pressed = null
         pressedPointer = -1
-        val shown = variantsOf
-        variantsOf = null
+        val shown = popup
+        popup = null
         when {
             cursor != Cursor.OFF -> {
                 cursor = Cursor.OFF
                 listener?.onCursorEnd()
             }
-            shown != null -> if (act) typeChar(shown.key.variants[variantChoice])
+            shown != null -> if (act) typeChar(shown.forms[popupChoice])
             h != null && act && !holdFired -> tap(h.key)
         }
         holdFired = false
@@ -731,6 +863,8 @@ class KeyboardView(context: Context) : View(context) {
                 if (shift == Shift.ONCE) shift = Shift.OFF
             }
             KeyKind.COMMA, KeyKind.PERIOD -> l?.onText(k.text)
+            KeyKind.EMOTICON -> l?.onEmoticon(k.label)
+            KeyKind.NUMPAD -> page = Page.NUMPAD
             KeyKind.SPACE -> {
                 l?.onText(" ")
                 // After a symbol and a space, the letters (or the field's pad) come back on their own.
@@ -782,6 +916,177 @@ class KeyboardView(context: Context) : View(context) {
                 }
             }
         }
+    }
+
+    // ---- the more-suggestions panel ----------------------------------------------------------
+
+    /**
+     * The candidates after the strip's three, in a panel over the strip, as the keyboard the
+     * owner came from has them. Slide up from the strip to open it ([More.SLIDING]) and lift on a
+     * candidate to take it; slide back down past the strip to close it. Lifting anywhere else
+     * leaves it open ([More.OPEN]): then a tap takes a candidate, a word's mark in the strip hides
+     * that word, and any key closes it. The dots under the middle only say there are more: a tap
+     * there takes the middle word, as anywhere on its slot.
+     */
+    private enum class More { CLOSED, SLIDING, OPEN }
+
+    private var more = More.CLOSED
+    private var panel: MorePanelView? = null
+    private var panelWindow: PopupWindow? = null
+
+    /** The finger on the strip of candidates: where it went down, and whether it left the strip. */
+    private var stripPointer = -1
+    private var stripX = 0f
+    private var stripY = 0f
+    private var stripLeft = false
+
+    /** How far up from where it went down a finger slides to open the panel. */
+    private val slideUp get() = maxOf(slop.toFloat(), 12 * dp)
+
+    /** What the panel offers while it is open, else nothing (for the tests). */
+    val moreShown: List<String> get() = if (more == More.CLOSED) emptyList() else panel?.words.orEmpty()
+
+    /** The panel's candidate under the sliding finger, or -1 (for the tests). */
+    val moreChosen: Int get() = if (more == More.CLOSED) -1 else panel?.chosen ?: -1
+
+    /** Where a strip word's remove mark is while the panel is open, else null (for the tests). */
+    fun removeMark(word: String): android.graphics.PointF? {
+        val s = strip as? Strip.Candidates ?: return null
+        if (more == More.CLOSED) return null
+        return removeMarks(s).firstOrNull { it.first == word }?.second
+    }
+
+    private fun extra(): List<String> = (strip as? Strip.Candidates)?.extra.orEmpty().take(MorePanelView.MOST)
+
+    private fun panelHeight(n: Int) = MorePanelView.height(n, dp)
+
+    /** The panel's candidate at a point in this view's coordinates (the panel is above it), or -1. */
+    private fun panelAt(x: Float, y: Float): Int {
+        val n = panel?.words?.size ?: return -1
+        val h = panelHeight(n)
+        return MorePanelView.cells(n, width.toFloat(), h.toFloat(), 48 * dp, dp).indexOfFirst { it.contains(x, y + h) }
+    }
+
+    private fun openMore(mode: More) {
+        val words = extra()
+        if (words.isEmpty()) return
+        val p = panel ?: MorePanelView(context).also { v ->
+            v.onPick = { pickMore(it) }
+            panel = v
+        }
+        p.palette = palette
+        p.words = words
+        p.chosen = -1
+        more = mode
+        showPanel(p, panelHeight(words.size))
+        invalidate()
+    }
+
+    /**
+     * The panel goes in a window of its own over the app, right above the keyboard (the keyboard's
+     * own window ends at the strip). A finger that slid onto it from the strip is still this
+     * view's, so the slide is followed here; once it is open, taps on it are the panel's.
+     */
+    private fun showPanel(p: MorePanelView, h: Int) {
+        if (windowToken == null || !isAttachedToWindow) return
+        val w = panelWindow ?: PopupWindow(p, width, h, false).also {
+            it.isClippingEnabled = false
+            it.isTouchable = true
+            it.inputMethodMode = PopupWindow.INPUT_METHOD_NOT_NEEDED
+            it.setBackgroundDrawable(null)
+            panelWindow = it
+        }
+        val at = IntArray(2)
+        getLocationInWindow(at)
+        if (w.isShowing) {
+            w.update(at[0], at[1] - h, width, h)
+        } else {
+            w.width = width
+            w.height = h
+            w.showAtLocation(this, Gravity.NO_GRAVITY, at[0], at[1] - h)
+        }
+    }
+
+    private fun closeMore() {
+        if (more == More.CLOSED) return
+        more = More.CLOSED
+        panel?.chosen = -1
+        panelWindow?.dismiss()
+        invalidate()
+    }
+
+    private fun pickMore(i: Int) {
+        val word = panel?.words?.getOrNull(i)
+        closeMore()
+        if (word != null) listener?.onMorePick(word)
+    }
+
+    private fun moveStrip(x: Float, y: Float) {
+        if (more == More.OPEN && y < 0) more = More.SLIDING
+        when {
+            more == More.SLIDING -> {
+                if (y > stripHeight) {
+                    // Slid back down past the strip: nothing is taken.
+                    closeMore()
+                    stripLeft = true
+                } else {
+                    panel?.chosen = panelAt(x, y)
+                }
+            }
+            more == More.CLOSED && !stripLeft && stripY - y > slideUp && extra().isNotEmpty() -> {
+                openMore(More.SLIDING)
+                panel?.chosen = panelAt(x, y)
+            }
+            y > stripHeight || y < 0 -> {
+                stripLeft = true
+                if (more == More.OPEN) closeMore()
+            }
+        }
+    }
+
+    /** The finger on the strip lifted ([act]) or the touch was cancelled. */
+    private fun finishStrip(act: Boolean) {
+        if (stripPointer < 0) return
+        stripPointer = -1
+        if (!act) {
+            if (more == More.SLIDING) closeMore()
+            return
+        }
+        when (more) {
+            More.SLIDING -> {
+                val c = panel?.chosen ?: -1
+                if (c >= 0) {
+                    pickMore(c)
+                } else {
+                    more = More.OPEN
+                    invalidate()
+                }
+            }
+            More.OPEN -> if (!stripLeft) {
+                val s = strip as? Strip.Candidates
+                val mark = s?.let { removeMarks(it) }?.firstOrNull { (_, at) ->
+                    Math.hypot((stripX - at.x).toDouble(), (stripY - at.y).toDouble()) <= 18 * dp
+                }
+                closeMore()
+                if (mark != null) listener?.onRemove(mark.first) else tapStrip(stripX)
+            }
+            More.CLOSED -> if (!stripLeft) tapStrip(stripX)
+        }
+    }
+
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        if (visibility != VISIBLE) closeMore()
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        if (visibility != VISIBLE) closeMore()
+    }
+
+    override fun onDetachedFromWindow() {
+        closeMore()
+        super.onDetachedFromWindow()
     }
 
     private fun RectF.insetBy(dx: Float, dy: Float) = RectF(left + dx, top + dy, right - dx, bottom - dy)

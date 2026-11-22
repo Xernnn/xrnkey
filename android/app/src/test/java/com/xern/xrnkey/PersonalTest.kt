@@ -98,6 +98,24 @@ class PersonalTest {
         }
     }
 
+    /** Hidden suggestions are kept with the personal words, survive a restart, and go with Clear all. */
+    @Test
+    fun hiddenSuggestionsAreKeptWithThePersonalWordsAndCleared() {
+        val dir = tmp.newFolder()
+        OnDevice(dir, prefs()).use { od ->
+            od.refresh(now = 1_000)
+            od.hidden!!.hide("Hello Kitty")
+            assertTrue("hello kitty" in od.hidden!!)
+        }
+        OnDevice(dir, prefs()).use { od ->
+            od.refresh(now = 2_000)
+            assertEquals(listOf("hello kitty"), od.hidden!!.all)
+            OnDevice.clearWords(dir, prefs(), now = 3_000)
+            od.refresh(now = 3_000)
+            assertEquals(emptyList<String>(), od.hidden!!.all)
+        }
+    }
+
     @Test
     fun oldHabitsFadeOnceAMonth() {
         val dir = tmp.root

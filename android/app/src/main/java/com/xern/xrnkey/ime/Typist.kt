@@ -379,6 +379,38 @@ class Typist(
         }
     }
 
+    /**
+     * A swipe left from Backspace: the word in progress goes, or else the word before the cursor
+     * with the spaces after it ("xin chao ban" and "xin chao ban " both leave "xin chao "). A run
+     * of punctuation or emoji goes as one word; a new line goes alone. One word a call. What the
+     * field shows is read for it, and the typist's own copy follows, so the words before the
+     * cursor stay its context.
+     */
+    fun deleteWord() {
+        spaceAfterWord = false
+        undo = null
+        plain.clear()
+        run.clear()
+        val s = state
+        if (composing.isNotEmpty()) {
+            editor.setComposing("")
+            composing = ""
+            s?.reset()
+            s?.setContext(context())
+            return
+        }
+        val before = editor.textBefore(TAIL)
+        val n = wordBefore(before)
+        if (n == 0) return
+        val gone = before.substring(before.length - n)
+        editor.deleteBefore(gone.codePointCount(0, gone.length))
+        val inTail = minOf(n, tail.length)
+        tail.setLength(tail.length - inTail)
+        if (n > inTail && anchor > 0) anchor = maxOf(0, anchor - (n - inTail))
+        pending.setLength(maxOf(0, pending.length - n))
+        s?.setContext(context())
+    }
+
     /** Enter ends the word, then reaches the field: one press does both. */
     fun enter() {
         spaceAfterWord = false
@@ -561,6 +593,42 @@ class Typist(
         private val WORD = Regex("[\\p{L}\\p{N}]+")
 
         private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
+
+        /** Marks, joiners, variation selectors and skin tones: part of the character before them. */
+        private fun joins(cp: Int): Boolean = when (Character.getType(cp)) {
+            Character.NON_SPACING_MARK.toInt(), Character.ENCLOSING_MARK.toInt(),
+            Character.FORMAT.toInt(), Character.MODIFIER_SYMBOL.toInt() -> true
+            else -> false
+        }
+
+        private fun wordChar(cp: Int) = Character.isLetterOrDigit(cp)
+
+        /**
+         * How many UTF-16 units at the end of `t` a word deletion takes: the spaces at the end,
+         * then the word (letters and digits) or the run of other characters before them, never
+         * past a new line; a new line right at the end alone.
+         */
+        internal fun wordBefore(t: String): Int {
+            var i = t.length
+            while (i > 0 && (t[i - 1] == ' ' || t[i - 1] == '\t')) i--
+            if (i == 0) return t.length
+            if (t[i - 1] == '\n') return if (i < t.length) t.length - i else 1
+            // The run's kind is the kind of its last character that isn't a mark on another.
+            var j = i
+            var base = t.codePointBefore(j)
+            while (joins(base) && j - Character.charCount(base) > 0) {
+                j -= Character.charCount(base)
+                base = t.codePointBefore(j)
+            }
+            val word = wordChar(base)
+            while (i > 0) {
+                val cp = t.codePointBefore(i)
+                if (cp == ' '.code || cp == '\t'.code || cp == '\n'.code) break
+                if (!joins(cp) && wordChar(cp) != word) break
+                i -= Character.charCount(cp)
+            }
+            return t.length - i
+        }
 
         private const val SENTENCE_END = ".!?\n"
 
