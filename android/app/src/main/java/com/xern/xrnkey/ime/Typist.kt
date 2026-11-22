@@ -514,6 +514,30 @@ class Typist(
         state?.setContext(context())
     }
 
+    /** What was committed lately, right before the word in progress (at most 120 characters). */
+    fun before(): String = tail.toString()
+
+    /**
+     * An emoji from the strip in place of what it stands for, with no space after it: the word in
+     * progress ("cam" -> "🍊"), and `typed` right before it where the field still shows that (the
+     * "cà " of "cà phê", or an emoticon typed with symbols, ":)" -> "🙂").
+     */
+    fun replaceWith(text: String, typed: String = "") {
+        plain.clear()
+        run.clear()
+        undo = null
+        spaceAfterWord = false
+        if (composing.isNotEmpty()) {
+            editor.setComposing("")
+            composing = ""
+            state?.reset()
+        }
+        if (typed.isEmpty() || !replaceBefore(typed, text)) commit(text, learnable = false)
+        learnSettled(all = true)
+        pendingPrev = "<p>"
+        state?.setContext(context())
+    }
+
     private fun commit(text: String, learnable: Boolean = true) {
         editor.commit(text)
         tail.append(text)

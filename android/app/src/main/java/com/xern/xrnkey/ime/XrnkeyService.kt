@@ -127,7 +127,13 @@ class XrnkeyService :
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         emoji = try {
-            assets.open("emoji-index.tsv").use { EmojiIndex.load(it.readBytes()) }
+            // The strip's keyword table goes with the index; without it the strip offers no emoji.
+            val keywords = try {
+                assets.open("emoji-keywords.tsv").use { it.readBytes() }
+            } catch (e: IOException) {
+                null
+            }
+            assets.open("emoji-index.tsv").use { EmojiIndex.load(it.readBytes(), keywords) }
         } catch (e: IOException) {
             null
         }
@@ -345,8 +351,7 @@ class XrnkeyService :
         val pick = strip.pick(slot) ?: return
         edit {
             if (pick.emoji) {
-                strip.centre?.let { if (typist.shown.isNotEmpty()) typist.pick(it) }
-                typist.insert(pick.text)
+                strip.putEmoji(typist, pick)
                 memory.addRecent(pick.text)
             } else if (pick.phrase != null) {
                 typist.pickPhrase(pick.phrase)
@@ -480,7 +485,8 @@ class XrnkeyService :
         if (panel.emoji.isEmpty()) panel.emoji = index?.all.orEmpty()
         panel.recents = memory.recents()
         panel.tones = memory.tones()
-        panel.suggestions = index?.suggest(typist.context().filter { it != "<s>" } + listOfNotNull(strip.centre)).orEmpty()
+        val words = typist.context().filter { it != "<s>" } + listOfNotNull(strip.centre)
+        panel.suggestions = (strip.emoji(typist) + index?.suggest(words).orEmpty()).distinct()
         // The keys stay laid out (invisible), so the panel keeps their height.
         keyboard?.visibility = View.INVISIBLE
         panel.visibility = View.VISIBLE
