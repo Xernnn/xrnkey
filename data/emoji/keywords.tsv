@@ -472,6 +472,7 @@ cái khiên	append	🛡️	cldr
 cái kẹp	append	🗜️	cldr
 cái ô	append	☂️	cldr
 cám ơn	append	🙏 ❤️ 😊	hand
+cám ơn bạn nhiều	append	🙏 ❤️ 🥰 😊	hand
 cám ơn nhiều	append	🙏 ❤️ 🥰 😊	hand
 cáp treo	append	🚡	cldr
 cân thăng bằng	append	⚖️	cldr
@@ -498,6 +499,7 @@ cưới	append	💍 💒	hand
 cười	append	😄 😆 😂 😁	hand
 cười đau bụng	append	🤣	hand
 cảm ơn	append	🙏 ❤️ 🥰 😊	hand
+cảm ơn bạn nhiều	append	🙏 ❤️ 🥰 😊 💕	hand
 cảm ơn nhiều	append	🙏 ❤️ 🥰 😊 💕	hand
 cần câu cá	append	🎣	cldr
 cần điều khiển	append	🕹️	cldr
@@ -755,6 +757,7 @@ headstone	append	🪦	cldr
 heart suit	append	♥️	cldr
 hedgehog	replace	🦔	cldr
 hehe	replace	😁 😆 😅 😏 🤭	hand
+hehehe	replace	😁 😆 😏	hand
 helicopter	append	🚁	cldr
 hello	append	👋	hand
 heo	replace	🐷 🐖	hand
@@ -765,6 +768,7 @@ hic	replace	😢 😥 😭 🥺 😞	hand
 hichic	replace	😭 😢 🥺	hand
 high voltage	append	⚡	cldr
 hihi	replace	😁 😊 🤭 😆 ☺️	hand
+hihihi	replace	😁 🤭 😆	hand
 hiking boot	append	🥾	cldr
 hindu temple	append	🛕	cldr
 hippopotamus	replace	🦛	cldr
@@ -1145,6 +1149,7 @@ new zealand	append	🇳🇿	cldr
 newspaper	append	📰	cldr
 ngon	append	😋 🤤	hand
 ngon quá	append	😋	hand
+ngu	append	🐮 🐷 🤪	hand
 ngân hàng	append	🏦	cldr
 ngòi bút đen	append	✒️	cldr
 ngôi nhà	append	🏠	cldr
@@ -1574,6 +1579,7 @@ thailand	append	🇹🇭	cldr
 thang máy	append	🛗	cldr
 thanh trượt mức	append	🎚️	cldr
 thank you	append	🙏 ❤️ 😊	hand
+thank you so much	append	🙏 ❤️ 🥰 😊	hand
 thanks	append	🙏 ❤️ 😊 🥰	hand
 thermometer	append	🌡️	cldr
 thiên nga	replace	🦢	cldr
@@ -1711,9 +1717,11 @@ tỏi	replace	🧄	cldr
 tổ có trứng	append	🪺	cldr
 tổ trống rỗng	append	🪹	cldr
 tủ hồ sơ	append	🗄️	cldr
+tức	append	😤 😡 😠 💢	hand
 tức giận	append	😠 😡	hand
 tức quá	append	😤 😡 😠 🤬	hand
 uganda	append	🇺🇬	cldr
+uk	append	👌 👍	hand
 ukraine	append	🇺🇦	cldr
 umbrella	append	☂️	cldr
 unicorn	replace	🦄	cldr
@@ -1846,11 +1854,14 @@ zô	append	🍻	hand
 ôi trời	append	😱	hand
 ôliu	replace	🫒	cldr
 ôm	append	🤗 🫂	hand
+ăn	append	😋 🍚 🍜 🍽️	hand
+ăn cơm	append	🍚 😋	hand
 đan mạch	append	🇩🇰	cldr
 đau	append	😣	hand
 đau đầu	append	🤕	hand
 đi học	append	🎒 📚	hand
 đi làm	append	💼	hand
+đi ăn	append	🍽️ 😋	hand
 đinh ghim	append	📌	cldr
 điện cao thế	append	⚡	cldr
 điện thoại bàn	append	☎️	cldr
@@ -1909,3 +1920,4 @@ zô	append	🍻	hand
 ống nghiệm	append	🧪	cldr
 ống tiêm	append	💉	cldr
 ớt chuông	replace	🫑	cldr
+ừ	append	👌 👍	hand

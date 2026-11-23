@@ -9,7 +9,9 @@
 haha	replace	😂 🤣 😆 😄 😁
 hahaha	replace	🤣 😂 😆 😹
 hihi	replace	😁 😊 🤭 😆 ☺️
+hihihi	replace	😁 🤭 😆
 hehe	replace	😁 😆 😅 😏 🤭
+hehehe	replace	😁 😆 😏
 hjhj	replace	😁 😊 🤭 😆
 ahihi	replace	😁 🤭 😜
 kaka	replace	😆 😂 🤣
@@ -76,6 +78,8 @@ okie	append	👌 👍
 oki	append	👌
 okela	append	👌 👍
 okay	append	👌 👍
+uk	append	👌 👍
+ừ	append	👌 👍
 hpbd	append	🎂 🎉 🥳 🎁 🎈
 hbd	append	🎂 🎉 🥳 🎁
 cmsn	append	🎂 🎉 🥳 🎁 🎈
@@ -111,6 +115,7 @@ phim	append	🎬 🍿
 pin	append	🔋
 hi	append	👋
 hot	append	🔥
+ngu	append	🐮 🐷 🤪
 
 # Feelings.
 buồn	append	😞 😢 😔 😥 🥺
@@ -132,6 +137,7 @@ nhớ quá	append	🥺
 nhớ em	append	🥺 ❤️
 nhớ anh	append	🥺 ❤️
 giận	append	😠 😡 😤 💢
+tức	append	😤 😡 😠 💢
 tức quá	append	😤 😡 😠 🤬
 tức giận	append	😠 😡
 bực	append	😤
@@ -144,6 +150,9 @@ chán	append	😒 😑 😩 🥱 😮‍💨
 chán quá	append	😩 😒 😑 🥱
 đói	append	🤤 😋 🍜 🍚
 đói quá	append	🤤 😩 🍜
+ăn	append	😋 🍚 🍜 🍽️
+đi ăn	append	🍽️ 😋
+ăn cơm	append	🍚 😋
 ngon quá	append	😋
 buồn ngủ	append	😴 🥱
 ngủ	append	😴 💤 🛌 🌙 🥱
@@ -200,6 +209,8 @@ cảm ơn	append	🙏 ❤️ 🥰 😊
 cám ơn	append	🙏 ❤️ 😊
 cảm ơn nhiều	append	🙏 ❤️ 🥰 😊 💕
 cám ơn nhiều	append	🙏 ❤️ 🥰 😊
+cảm ơn bạn nhiều	append	🙏 ❤️ 🥰 😊 💕
+cám ơn bạn nhiều	append	🙏 ❤️ 🥰 😊
 xin lỗi	append	🙏 😔 😞 🥺 🙇
 làm ơn	append	🙏
 đồng ý	append	👍 👌
@@ -282,6 +293,7 @@ miss you	append	🥺 ❤️
 sorry	append	😔 🙏 😞 🥺 🙇
 thanks	append	🙏 ❤️ 😊 🥰
 thank you	append	🙏 ❤️ 😊
+thank you so much	append	🙏 ❤️ 🥰 😊
 please	append	🙏
 wow	append	😮 🤩 😲 😯 🤯
 yay	append	🥳 🎉

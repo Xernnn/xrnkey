@@ -170,6 +170,7 @@ class EmojiStripTest {
         assertEquals(listOf("🎈", "🎁", "🥳", "🎉", "🎂"), after.row())
         after.tap(4)
         assertEquals("chuc mung sinh nhat 🎂", after.field.text)
+        assertEquals("🙏", typed(m, index, "cam on ban nhieu ").row().last())
         // A shorter one keeps the next words, the emoji on the right; so does one word. The
         // longest keyword wins.
         val thanks = typed(m, index, "cam on ")
@@ -206,6 +207,22 @@ class EmojiStripTest {
         assertTrue((sorry.strip() as Strip.Candidates).bold)  // Space ends "sory" as "sorry"
         sorry.tap(0)
         assertEquals("sorry 🙏", sorry.field.text)
+    }
+
+    /**
+     * The everyday words of Vietnamese chat have their emoji (data/emoji/keywords-hand.tsv): "ngu"
+     * as typed (🐮, as chat says it), "uk" and "ừ" (yes), "tức" (angry), "ăn" (eat); none had one.
+     */
+    @Test
+    fun chatWordsHaveTheirEmoji() = withModels { m, index ->
+        for ((keys, emoji) in listOf("ngu" to "🐮", "uk" to "👌", "uwf" to "👌", "tuwcs" to "😤", "awn" to "😋", "camon" to "🙏", "huhu" to "😭")) {
+            val t = typed(m, index, keys)
+            val shown = t.strip() as Strip.Candidates
+            val best = shown.row.lastOrNull() ?: shown.right
+            assertEquals("$keys: $shown", emoji, best)
+        }
+        // Space keeps the letters: an emoji is only offered.
+        typed(m, index, "ngu").also { it.typist.text(" ") }.let { assertEquals("ngu ", it.field.text) }
     }
 
     @Test
