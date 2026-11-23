@@ -66,7 +66,7 @@ class SettingsPagesTest {
         back()
         rule.onNodeWithText("Typing").performClick()
         rule.onNodeWithText("Old-style tones").assertIsDisplayed()
-        rule.onNodeWithTag("W types ư").assertIsOn()
+        rule.onNodeWithTag("W types ư").assertIsOff()
         back()
         rule.onNodeWithText("About").performClick()
         rule.onNodeWithText("Licences").performClick()

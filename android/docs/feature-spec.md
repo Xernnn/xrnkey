@@ -59,7 +59,8 @@ Swipe typing is not used.
 
 ## Day one (must have)
 
-1. Full Telex through the shared C++ core: `w` = ư, old-style tones (hòa, thúy), marks and tones
+1. Full Telex through the shared C++ core: `uw` = ư, `ow` = ơ, `aw` = ă, and a `w` alone stays `w`
+   as in Laban Key's simple Telex (the setting "W types ư" makes it ư), old-style tones (hòa, thúy), marks and tones
    allowed after the final consonant, a key typed twice undoes itself, and Backspace deletes one
    character. VNI and new-style tones are settings, since the core already has them.
 2. Accent restoration of words typed without marks, ranked by a syllable n-gram model with the

@@ -119,9 +119,10 @@ class SettingsTest {
     @Test
     fun theNewOptionsRoundTripAndDefaultToTheOwners() {
         val d = Options()
-        assertTrue(d.freeMarking && d.wShortcut && d.nextWord)
+        // The owner's Laban Key: tones after the word, simple Telex (w alone stays w).
+        assertTrue(d.freeMarking && !d.wShortcut && d.nextWord)
         val p = app().getSharedPreferences("n", Context.MODE_PRIVATE)
-        val changed = d.copy(freeMarking = false, wShortcut = false, nextWord = false)
+        val changed = d.copy(freeMarking = false, wShortcut = true, nextWord = false)
         changed.save(p)
         assertEquals(changed, Options.load(p))
     }
