@@ -15,23 +15,27 @@ import java.io.File
 /**
  * The strip's emoji as Laban Key offers them (measured on the owner's phone, 2026-11-22): only
  * when the word as it stands is one of the keywords ("cam" 🍊, "khóc" 😢, never bare "khoc"), in
- * the right slot, in every slot from the right when there are no words, for a phrase typed with
- * or without marks and after its Space ("chuc mung sinh nhat"); a tap puts the emoji after the
- * word ("ok 👌") or in its place ("🍊"). xrnkey used to offer one for 164 of 1,445 bare
- * syllables, from CLDR's general keywords and the word's readings ("co" 🙂‍↕️, "duoc" 👌).
+ * the right slot, in every slot from the right when there are no words (five across the strip
+ * when there are four or more), for a phrase typed with or without marks and after its Space
+ * ("chuc mung sinh nhat"); a tap puts the emoji after the word ("ok 👌") or in its place ("🍊").
+ * xrnkey used to offer one for 164 of 1,445 bare syllables, from CLDR's general keywords and the
+ * word's readings ("co" 🙂‍↕️, "duoc" 👌).
  */
 class EmojiStripTest {
     private class Typed(val maker: StripMaker, val typist: Typist, val field: FakeEditor) {
         fun strip(): Strip = maker.make(typist)
         fun slots(): List<String?> = (strip() as Strip.Candidates).let { listOf(it.left, it.centre, it.right) }
 
-        /** The slots that hold an emoji. */
+        /** The row of emoji across the strip, when it shows one (empty: the three slots). */
+        fun row(): List<String?> = (strip() as Strip.Candidates).row
+
+        /** The slots (or a row's places) that hold an emoji. */
         fun emojiSlots(): List<Int> {
             strip()
-            return (0..2).filter { maker.pick(it)?.emoji == true }
+            return (0 until Strip.Candidates.ROW).filter { maker.pick(it)?.emoji == true }
         }
 
-        /** A tap on the emoji in `slot`. */
+        /** A tap on the emoji in `slot` (or a row's place). */
         fun tap(slot: Int) {
             strip()
             val pick = maker.pick(slot)!!
@@ -88,18 +92,32 @@ class EmojiStripTest {
 
     @Test
     fun withNoWordsTheEmojiFillTheStripFromTheRight() = withModels { m, index ->
+        // Three or fewer: the three slots, the best on the right.
+        val kk = typed(m, index, "kk")
+        val few = kk.strip() as Strip.Candidates
+        assertEquals(listOf(null, "🤣", "😂"), listOf(few.left, few.centre, few.right))
+        assertFalse(few.bold)  // Space doesn't commit the middle
+        assertEquals(emptyList<String?>(), few.row)
+        // Four or more: a row of five across the strip, as Laban Key fills it ("haha": five; it
+        // used to show three).
         val hpbd = typed(m, index, "hpbd")
         val shown = hpbd.strip() as Strip.Candidates
-        assertEquals(listOf("🥳", "🎉", "🎂"), listOf(shown.left, shown.centre, shown.right))
-        assertFalse(shown.bold)  // Space doesn't commit the middle
-        assertEquals(listOf(0, 1, 2), hpbd.emojiSlots())
+        assertEquals(listOf("🎈", "🎁", "🥳", "🎉", "🎂"), shown.row)
+        assertEquals(listOf(null, null, null), listOf(shown.left, shown.centre, shown.right))
+        assertFalse(shown.bold)
+        assertEquals(listOf(0, 1, 2, 3, 4), hpbd.emojiSlots())
+        assertEquals(listOf("😁", "😄", "😆", "🤣", "😂"), typed(m, index, "haha").row())
+        assertEquals(listOf(null, "😹", "😆", "🤣", "😂"), typed(m, index, "kkk").row())  // four: the left place stays empty
         hpbd.typist.text(" ")
         assertEquals("hpbd ", hpbd.field.text)  // Space keeps the word
-        // With words to offer, one emoji, on the right.
-        val ok = typed(m, index, "ok")
-        val okShown = ok.strip() as Strip.Candidates
-        assertEquals("👌", okShown.right)
-        if (okShown.left != null) assertEquals(listOf(2), ok.emojiSlots())
+        // Each place is a tap on its emoji: a laugh takes the word's place, a wish goes after it.
+        typed(m, index, "haha").also { it.tap(0) }.let { assertEquals("😁", it.field.text) }
+        typed(m, index, "hpbd").also { it.tap(4) }.let { assertEquals("hpbd 🎂", it.field.text) }
+        // With words to offer, one emoji, on the right (with one word, a second on the left:
+        // withOneWordASecondEmojiTakesTheLeft).
+        val cam = typed(m, index, "cam")
+        assertEquals("🍊", cam.slots()[2])
+        assertEquals(listOf(2), cam.emojiSlots())
     }
 
     @Test
@@ -110,7 +128,7 @@ class EmojiStripTest {
         // In the word's place: a lone fruit, a laugh.
         typed(m, index, "cam").also { it.tap(2) }.let { assertEquals("🍊", it.field.text) }
         typed(m, index, "haha", before = "vui ").let { t ->
-            t.tap(t.emojiSlots().last())
+            t.tap(t.emojiSlots().last())  // the row's right end
             assertEquals("vui 😂", t.field.text)
         }
         // A word of two syllables, after other words: both syllables give way.
@@ -145,13 +163,20 @@ class EmojiStripTest {
         typing.tap(2)
         assertEquals("chuc mung sinh nhat 🎂", typing.field.text)
         assertEquals("🎂", typed(m, index, "chucs muwngf sinh nhaatj").slots()[2])
-        // After its Space: the next words, the emoji on the right; a tap puts it at the cursor.
+        // After its Space a wish of three words or more fills the strip with its emoji, as on
+        // Laban Key (it used to keep the next words, "and" and "tag", on the left and in the
+        // middle); a tap puts one at the cursor.
         val after = typed(m, index, "chuc mung sinh nhat ")
-        val shown = after.strip() as Strip.Candidates
-        assertEquals("🎂", shown.right)
-        after.tap(2)
+        assertEquals(listOf("🎈", "🎁", "🥳", "🎉", "🎂"), after.row())
+        after.tap(4)
         assertEquals("chuc mung sinh nhat 🎂", after.field.text)
-        // One word after its Space, too; and the longest keyword wins.
+        assertEquals("🙏", typed(m, index, "cam on ban nhieu ").row().last())
+        // A shorter one keeps the next words, the emoji on the right; so does one word. The
+        // longest keyword wins.
+        val thanks = typed(m, index, "cam on ")
+        assertEquals(emptyList<String?>(), thanks.row())
+        assertEquals("🙏", thanks.slots()[2])
+        assertTrue(thanks.slots().toString(), thanks.slots()[1] != null)
         assertEquals("👌", typed(m, index, "ok ").slots()[2])
         assertEquals("😴", typed(m, index, "buoonf ngur").slots()[2])
         // Not across a full stop.
@@ -168,6 +193,36 @@ class EmojiStripTest {
         assertEquals("😔", sorry.slots()[2])
         sorry.tap(2)
         assertEquals("sorry 😔", sorry.field.text)
+    }
+
+    /**
+     * With one word to offer, a second emoji takes the left, as Laban Key lays it out: "sorry"
+     * was " | sorry | 😔", the left empty.
+     */
+    @Test
+    fun withOneWordASecondEmojiTakesTheLeft() = withModels { m, index ->
+        val sorry = typed(m, index, "sorry")
+        assertEquals(listOf("🙏", "sorry", "😔"), sorry.slots())
+        assertEquals(listOf(0, 2), sorry.emojiSlots())
+        assertTrue((sorry.strip() as Strip.Candidates).bold)  // Space ends "sory" as "sorry"
+        sorry.tap(0)
+        assertEquals("sorry 🙏", sorry.field.text)
+    }
+
+    /**
+     * The everyday words of Vietnamese chat have their emoji (data/emoji/keywords-hand.tsv): "ngu"
+     * as typed (🐮, as chat says it), "uk" and "ừ" (yes), "tức" (angry), "ăn" (eat); none had one.
+     */
+    @Test
+    fun chatWordsHaveTheirEmoji() = withModels { m, index ->
+        for ((keys, emoji) in listOf("ngu" to "🐮", "uk" to "👌", "uwf" to "👌", "tuwcs" to "😤", "awn" to "😋", "camon" to "🙏", "huhu" to "😭")) {
+            val t = typed(m, index, keys)
+            val shown = t.strip() as Strip.Candidates
+            val best = shown.row.lastOrNull() ?: shown.right
+            assertEquals("$keys: $shown", emoji, best)
+        }
+        // Space keeps the letters: an emoji is only offered.
+        typed(m, index, "ngu").also { it.typist.text(" ") }.let { assertEquals("ngu ", it.field.text) }
     }
 
     @Test
@@ -201,7 +256,7 @@ class EmojiStripTest {
         assertEquals("🍊", cam.slots()[2])
         val after = typed(m, index, "chuc mung sinh nhat ")
         after.maker.hidden = { ' ' !in it && it.any(Char::isLetter) }  // every next word hidden
-        assertEquals("🎂", after.slots()[2])
+        assertEquals("🎂", after.row().last())
     }
 
     @Test

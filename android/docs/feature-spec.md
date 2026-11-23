@@ -231,42 +231,65 @@ Key for key as the reference has them.
 
 - On the left, a **menu button** (≡). It shows the tool row instead.
 - **Three slots.**
-  - The centre slot is the **centre pick**, with three small dots under it when there are more
-    candidates.
+  - The centre slot holds the best candidate, with three small dots under it when there are more
+    candidates. It is in bold only when Space commits it: a fix (`teh` → `the`), a word Telex
+    marked that Space ends as typed (`meet`, shown `mêt`), an abbreviation's expansion.
+  - The word as the field shows it takes no slot while there is anything else to offer: Space
+    keeps it anyway (tones only by Telex, as on Laban Key). A word finished with its Telex marks
+    gives way to what may follow it (`banj`: `bạn sẽ` | `bạn có` | `bạn nên`), a Vietnamese word
+    typed as it stands to the words that go with it (`em`: `email` | `em bé` | `em gái`), an
+    English word to its longer words and other readings (`the`: `theo` | `thế` | `they`; `ok`:
+    `okay`). Only when there is nothing else is the word itself in the centre, in bold.
   - The left and right slots hold the next-best candidates. A slot can hold an accented word, a
     two-word phrase (`không thể`, `dược phẩm`), the keys as typed, a shortcut's expansion, or an
     emoji.
   - An emoji shows only when the word as it stands is one of the strip's emoji keywords
     (`data/emoji/keywords.tsv`): typed bare or with Telex marks, exactly (`cam` → 🍊, `khóc` → 😢,
     never bare `khoc`), or as the last word of a phrase, with or without marks (`chuc mung sinh
-    nhat` → 🎂). It takes the right slot. When there are no words to offer, the emoji fill the
-    slots from the right (`hpbd`: 🥳 | 🎉 | 🎂). After Space, the next words keep the left and the
-    centre and the emoji takes the right; an emoticon just typed (`:)`, `=))`) shows its emoji too.
+    nhat` → 🎂). It takes the right slot. With one word to offer, a second emoji takes the left
+    (`sorry`: 🙏 | `sorry` | 😔). When there are no words to offer, the emoji fill the strip from
+    the right: three slots for three emoji or fewer (`kk`: — | 🤣 | 😂), else a **row of five**
+    even places between ≡ and the emoji button, the best on the right (`haha`: 😁 😄 😆 🤣 😂).
+    After Space, the next words keep the left and the centre and the emoji takes the right; a
+    wish or thanks of three words or more fills the strip with its emoji (`chuc mung sinh nhat `,
+    `cảm ơn bạn nhiều `), as on Laban Key; an emoticon just typed (`:)`, `=))`) shows its emoji
+    too.
+  - After Space, words typed without marks are read as they most likely stand for what comes
+    next (`cam on ` → `bạn`, not English), and a phrase with the word before shows only when that
+    word reads as typed: after `hom nay troi dep qua ` (`quá`), no `qua đời`. A sentence of one
+    such word that is a word as typed stays so (`bao ` → `bao giờ`).
   - The part of a candidate already in the field is drawn grey, the rest in the slot's colour
     (`bạn` of `bạn bè` while `bạn` is typed).
 - On the right, an **emoji button**.
 
-What the slots hold, by situation:
+What the slots hold, by situation (the centre in bold only where Space commits it):
 
-| Situation | Left | Centre (Space commits it) | Right |
+| Situation | Left | Centre | Right |
 |---|---|---|---|
-| `khong` typed | `không thể` | `không` | `không có` |
+| `khong` typed | `khổng` | `không` | `không chỉ` |
 | `cam` typed | `cảm` | `cảm ơn` | 🍊 |
-| `meeting` typed | `meetings` | `meeting` | `meet` |
-| `ko` typed, with shortcut `ko` → `không` | `ko` | `không` | — |
-| `list` typed after `the` | `lít` | `list` | `lists` |
+| `em` typed (Space keeps `em`) | `email` | `em bé` (`em` grey) | `em gái` |
+| `the` typed (Space keeps `the`) | `theo` | `thế` | `they` |
+| `ok` typed | 👍 | `okay` | 👌 |
+| `haha` typed | a row of five: 😁 😄 😆 🤣 😂 |  |  |
+| `teh` typed (Space fixes it) | — | **`the`** | — |
+| `ko` typed, with shortcut `ko` → `không` | `ko` | **`không`** | — |
+| `list` typed after `the` (shown `lít`, Space ends it `list`) | `listing` | **`list`** | `list of` |
 | `banj` typed (`bạn`, finished with its marks; Space commits `bạn`) | `bạn sẽ` | `bạn có` (`bạn` grey) | another `bạn …` |
-| just after Space, following `không` | `có` | `được` | `phải` |
+| just after Space, following `không` | `có` | `chỉ` | `không phải` (`không` grey) |
 | just after Space, following `một` | `trong` | `một số` (`một` grey) | `người` |
+| just after Space, following `cam on` | `các` | `bạn` | 🙏 |
+| just after Space, following `chuc mung sinh nhat` | a row of five: 🎈 🎁 🥳 🎉 🎂 |  |  |
 | field empty, nothing typed | the tool row instead |  |  |
 
 ### What you can do
 
-- **Tap a slot**: commits that candidate and a space. A phrase commits both words; after Space,
-  a phrase that starts with the word just typed adds its next word. An emoji does
-  what its keyword says, with no space after it: most go after the word, with one space (`ok` →
-  `ok 👌`); laughs, emoticons and a lone food, drink or animal take the word's place (`cam` → `🍊`,
-  `haha` → `😂`, `:)` → `🙂`, `cà phê` → `☕`). After Space, the emoji goes at the cursor.
+- **Tap a slot** (or a place of a row of emoji): commits that candidate and a space. A phrase
+  commits both words; after Space, a phrase that starts with the word just typed adds its next
+  word. An emoji does what its keyword says, with no space after it: most go after the word,
+  with one space (`ok` → `ok 👌`); laughs, emoticons and a lone food, drink or animal take the
+  word's place (`cam` → `🍊`, `haha` → `😂`, `:)` → `🙂`, `cà phê` → `☕`). After Space, the
+  emoji goes at the cursor. The word as typed has no slot: Space keeps it.
 - **Slide up from the strip**: the **more-suggestions panel** opens over it, up to 7 more
   candidates three to a row under the strip's slots, the best nearest the strip and in the
   middle. Lift on one to commit it with a space; slide back down past the strip to close it

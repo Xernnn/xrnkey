@@ -522,11 +522,15 @@ class KeyboardView(context: Context) : View(context) {
         canvas.drawArc(cx - s * 0.5f, cy - s * 0.3f, cx + s * 0.5f, cy + s * 0.55f, 20f, 140f, false, line)
     }
 
-    /** Where the strip's parts are: the menu, three slots, the emoji button. */
-    private fun stripSlots(): List<RectF> {
+    /**
+     * Where the strip's slots are, between the menu and the emoji button: three, or the places
+     * of a row of emoji ([Strip.Candidates.row]), evenly.
+     */
+    private fun stripSlots(s: Strip.Candidates? = null): List<RectF> {
         val side = 48 * dp
-        val w = (width - 2 * side) / 3f
-        return List(3) { RectF(side + it * w, 0f, side + (it + 1) * w, stripHeight) }
+        val n = s?.row?.size?.takeIf { it > 0 } ?: 3
+        val w = (width - 2 * side) / n
+        return List(n) { RectF(side + it * w, 0f, side + (it + 1) * w, stripHeight) }
     }
 
     /** A slot's text as drawn: shrunk to fit (a phrase) before it is cut short, and its width. */
@@ -547,6 +551,13 @@ class KeyboardView(context: Context) : View(context) {
         stroke(palette.dim, 1.8f * dp)
         for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
         drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        if (s.row.isNotEmpty()) {
+            // A row of emoji: each in its place, none above the others.
+            stripSlots(s).forEachIndexed { i, r ->
+                s.row[i]?.let { drawLabel(canvas, it, r.centerX(), cy, 18 * sp, palette.glyph) }
+            }
+            return
+        }
         val slots = stripSlots()
         listOf(s.left, s.centre, s.right).forEachIndexed { i, text ->
             if (text == null) return@forEachIndexed
@@ -942,7 +953,7 @@ class KeyboardView(context: Context) : View(context) {
                 when {
                     x < side -> listener?.onStripMenu()
                     x > width - side -> listener?.onTool(Tool.EMOJI)
-                    else -> stripSlots().indexOfFirst { x >= it.left && x < it.right }.let {
+                    else -> stripSlots(strip as Strip.Candidates).indexOfFirst { x >= it.left && x < it.right }.let {
                         if (it >= 0) listener?.onCandidate(it)
                     }
                 }

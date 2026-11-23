@@ -356,7 +356,7 @@ enum class Tool { THEME, SETTINGS, CLIPBOARD, CURSOR, EMOJI }
 sealed interface Strip {
     data object Tools : Strip
 
-    /** Up to three candidates; [centre] is what Space would commit. */
+    /** Up to three candidates, the best in the centre. */
     data class Candidates(
         val left: String?,
         val centre: String?,
@@ -372,7 +372,18 @@ sealed interface Strip {
          * "một số" after "một ". Missing: none.
          */
         val grey: List<Int> = emptyList(),
-    ) : Strip
+        /**
+         * Emoji in [ROW] even places across the strip instead of the three slots, the best on the
+         * right, as Laban Key fills the strip when it has four emoji or more and no word to offer
+         * ("haha", "chúc mừng sinh nhật "). Null: an empty place. Empty: the three slots.
+         */
+        val row: List<String?> = emptyList(),
+    ) : Strip {
+        companion object {
+            /** The places of a [row]. */
+            const val ROW = 5
+        }
+    }
 
     /** Emoji search: the query typed so far and the emoji it finds. */
     data class Search(val query: String, val results: List<String>) : Strip

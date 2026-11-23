@@ -11,7 +11,8 @@ emoji search, and the emoji panel's suggestions for the words just typed.
 does: an emoji shows only when the word as it stands is one of these keywords, or ends one of
 several words. One line per keyword: the keyword (lowercase), `append` (the emoji goes after the
 word: "ok 👌") or `replace` (it takes the word's place: "cam" → 🍊, ":)" → 🙂), its emoji
-(at most three, best first), and where the line comes from (`cldr` or `hand`).
+(at most five, best first: with no word to offer the strip shows four or five of them across
+it), and where the line comes from (`cldr` or `hand`).
 
 - A keyword of one word matches only as it is written, marks and all (any case, wherever the
   tone sits): "khóc" gives 😢, the bare "khoc" nothing. A keyword of several words (up to four)
@@ -32,11 +33,12 @@ word: "ok 👌") or `replace` (it takes the word's place: "cam" → 🍊, ":)" �
   takes the word's place; every other name goes after it.
 - `keywords-hand.tsv` is written for this project, from general knowledge of how Vietnamese is
   typed in chat: laughs and cries ("haha", "hihi", "huhu", "hic"), emoticons (":)", "=))",
-  ":3", "<3"), abbreviations ("hpbd", "cmsn", "snvv", "iu", "ny", "thx"), feelings, greetings,
-  thanks and wishes ("bó tay", "tức quá", "buồn ngủ", "cảm ơn", "chúc mừng năm mới"), the few
-  words typed without marks that are worth an emoji ("cam", "hoa", "tim", "vui", "ngon"), and
-  the CLDR names left out (`skip`) because they are everyday words too ("tất" of "tất cả",
-  "kiến" of "ý kiến", the hours: "ba giờ"). It is part of this project, under its MIT licence.
+  ":3", "<3"), abbreviations ("hpbd", "cmsn", "snvv", "iu", "ny", "thx", "uk"), feelings,
+  greetings, thanks and wishes ("bó tay", "tức quá", "buồn ngủ", "cảm ơn", "chúc mừng năm
+  mới"), the few words typed without marks that are worth an emoji ("cam", "hoa", "tim", "vui",
+  "ngon", "ngu"), and the CLDR names left out (`skip`) because they are everyday words too
+  ("tất" of "tất cả", "kiến" of "ý kiến", the hours: "ba giờ"). It is part of this project,
+  under its MIT licence.
 
 `generate.py` builds it from the files pinned in `sources.json`:
 
