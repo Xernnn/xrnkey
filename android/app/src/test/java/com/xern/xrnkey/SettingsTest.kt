@@ -133,7 +133,7 @@ class SettingsTest {
         keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
         keys.layout(0, 0, 1080, keys.measuredHeight)
         assertEquals("Tiếng Việt", keys.spaceLabel)
-        assertEquals(listOf("vi", "en", "ja"), keys.languages)
+        assertEquals(listOf("vi", "en", "ja", Options.FLICK), keys.languages)
         s.onLanguage("en")
         assertEquals("en", keys.language)
         assertEquals("English", keys.spaceLabel)
@@ -181,10 +181,11 @@ class SettingsTest {
     @Test
     fun theNewOptionsRoundTripAndDefaultToTheOwners() {
         val d = Options()
-        // The owner's Laban Key: tones after the word, simple Telex (w alone stays w).
-        assertTrue(d.freeMarking && !d.wShortcut && d.nextWord)
+        // The owner's Laban Key: tones after the word, simple Telex (w alone stays w). The 12-key
+        // pad toggles, as Gboard's does by default.
+        assertTrue(d.freeMarking && !d.wShortcut && d.nextWord && d.kanaToggle)
         val p = app().getSharedPreferences("n", Context.MODE_PRIVATE)
-        val changed = d.copy(freeMarking = false, wShortcut = true, nextWord = false)
+        val changed = d.copy(freeMarking = false, wShortcut = true, nextWord = false, kanaToggle = false, language = Options.FLICK)
         changed.save(p)
         assertEquals(changed, Options.load(p))
     }

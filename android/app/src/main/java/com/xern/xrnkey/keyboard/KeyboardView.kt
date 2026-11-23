@@ -17,6 +17,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.PopupWindow
+import com.xern.xrnkey.Options
 import com.xern.xrnkey.R
 
 /**
@@ -52,6 +53,14 @@ class KeyboardView(context: Context) : View(context) {
         fun onMorePick(text: String) {}
         /** A strip slot's remove mark, while the panel is open: the word or phrase is offered no more. */
         fun onRemove(text: String) {}
+        /** The 12-key pad: a kana, tapped or flicked (or its 、。？！). */
+        fun onKana(text: String) {}
+        /** The 12-key pad: the same key tapped again in time, the last kana steps along [cycle]. */
+        fun onKanaToggle(cycle: String) {}
+        /** The 12-key pad's ↺: the last kana a step back along its key's toggle. */
+        fun onKanaBack() {}
+        /** The 12-key pad's ゛゜小: the last kana in its next form. */
+        fun onKanaMark() {}
     }
 
     var listener: Listener? = null
@@ -111,6 +120,16 @@ class KeyboardView(context: Context) : View(context) {
     /** The Japanese keyboard types here: the letters' comma and full stop are 、 and 。. */
     var kana = false
         set(value) { if (field != value) { field = value; relayout() } }
+
+    /** The 12-key pad: the same kana key tapped again in time steps along its toggle (あ い う). */
+    var toggleInput = true
+
+    /**
+     * A reading is composing (the service says so): the 12-key pad's space says 変換 and its Enter
+     * 確定, and its ▶ only ends a toggle.
+     */
+    var composing = false
+        set(value) { if (field != value) { field = value; invalidate() } }
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -173,7 +192,8 @@ class KeyboardView(context: Context) : View(context) {
                 Rect().also { h.rect.roundOut(it) }
             }
         }
-        out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { spaceLabel = spaceLabelFor(spaceBar(it.rect).width()) }
+        out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { languageLabel = spaceLabelFor(spaceBar(it.rect).width()) }
+        if (menuOpen) closeMenu()
         invalidate()
     }
 
@@ -190,9 +210,14 @@ class KeyboardView(context: Context) : View(context) {
                 is Strip.Search -> drawSearch(canvas, s)
             }
         }
-        for (h in hits) drawKey(canvas, h, h === pressed && !holdFired)
-        // A pad's keys are big enough to need no popup (and a PIN's shouldn't show one).
-        pressed?.let { if (keyPreview && !page.isPad && it.key.kind == KeyKind.CHAR && !holdFired) drawPreview(canvas, it) }
+        // A kana key under its guide isn't lit itself: the guide's middle is.
+        for (h in hits) drawKey(canvas, h, h === pressed && !holdFired && !(keyPreview && h.key.kind == KeyKind.KANA))
+        // A pad's keys are big enough to need no popup (and a PIN's shouldn't show one). A kana
+        // key's popup is its guide.
+        pressed?.let {
+            if (keyPreview && !page.isPad && it.key.kind == KeyKind.CHAR && !holdFired) drawPreview(canvas, it)
+            if (keyPreview && it.key.kind == KeyKind.KANA) drawGuide(canvas, it)
+        }
         if (cursor != Cursor.OFF) drawCursorPad(canvas)
         popup?.let { drawPopup(canvas, it) }
     }
@@ -326,14 +351,21 @@ class KeyboardView(context: Context) : View(context) {
         else -> 18 * sp
     }
 
-    /** What the space bar says: the language, or its code where the bar is too narrow. */
-    var spaceLabel: String = ""
-        private set
+    /**
+     * What the space bar says: the language, or its code where the bar is too narrow; on the
+     * 12-key pad 空白, and 変換 while a reading is composing, as Gboard's.
+     */
+    val spaceLabel: String get() = if (page == Page.KANA) (if (composing) "変換" else "空白") else languageLabel
+
+    /** What the 12-key pad's Enter says while a reading is composing (確定), else null: its icon. */
+    val enterLabel: String? get() = if (page == Page.KANA && composing) "確定" else null
+
+    private var languageLabel = ""
 
     private fun spaceLabelFor(barWidth: Float): String {
         val full = when (language) {
             "en" -> "English"
-            "ja" -> "日本語"
+            "ja", Options.FLICK -> "日本語"
             else -> resources.getString(R.string.subtype)
         }
         glyph.textSize = 14 * sp
@@ -344,6 +376,25 @@ class KeyboardView(context: Context) : View(context) {
     private fun spaceBar(r: RectF): RectF {
         val half = minOf(17 * dp, r.height() * 0.3f)
         return RectF(r.left + 4 * dp, r.centerY() - half, r.right - 4 * dp, r.centerY() + half)
+    }
+
+    /**
+     * A label of Japanese marks (゛゜小, 、。?!), each drawn in a full-width cell with its ink in a
+     * corner: set closer, so they read as one label.
+     */
+    private fun drawTight(canvas: Canvas, text: String, cx: Float, cy: Float, size: Float) {
+        glyph.typeface = font
+        glyph.textSize = size
+        glyph.color = palette.glyph
+        val steps = text.map { c -> glyph.measureText(c.toString()) * if (c in "゛゜、。") 0.55f else 1f }
+        var x = cx - steps.sum() / 2
+        val m = glyph.fontMetrics
+        glyph.textAlign = Paint.Align.LEFT
+        text.forEachIndexed { i, c ->
+            canvas.drawText(c.toString(), x, cy - (m.ascent + m.descent) / 2, glyph)
+            x += steps[i]
+        }
+        glyph.textAlign = Paint.Align.CENTER
     }
 
     private fun drawLabel(canvas: Canvas, text: String, cx: Float, cy: Float, size: Float, color: Int, tf: Typeface = font) {
@@ -363,6 +414,14 @@ class KeyboardView(context: Context) : View(context) {
             // A pad's keys are tiles, as a dialer's are: big targets for a thumb.
             fill.color = if (down) palette.preview else palette.space
             canvas.drawRoundRect(r.insetBy(4 * dp, 4 * dp), 12 * dp, 12 * dp, fill)
+        } else if (page == Page.KANA && k.kind != KeyKind.ENTER) {
+            // The 12-key pad's keys are tiles, as Gboard's: the kana a shade lighter than the rest.
+            fill.color = when {
+                down -> palette.preview
+                k.kind == KeyKind.KANA || k.kind == KeyKind.KANA_MARK -> palette.space
+                else -> mix(palette.background, palette.space, 0.45f)
+            }
+            canvas.drawRoundRect(r.insetBy(3 * dp, 3 * dp), 10 * dp, 10 * dp, fill)
         } else if (down && k.kind != KeyKind.ENTER && k.kind != KeyKind.SPACE && k.kind != KeyKind.BLANK) {
             fill.color = palette.pressed
             canvas.drawRoundRect(r.insetBy(3 * dp, 4 * dp), 8 * dp, 8 * dp, fill)
@@ -383,7 +442,15 @@ class KeyboardView(context: Context) : View(context) {
                 drawLabel(canvas, "12", cx, cy - 7 * dp, 12 * sp, palette.glyph)
                 drawLabel(canvas, "34", cx, cy + 7 * dp, 12 * sp, palette.glyph)
             }
-            KeyKind.SPACE -> if (page.isPad) {
+            KeyKind.KANA -> if (k.label.length > 1) drawTight(canvas, k.label, cx, cy, 20 * sp) else drawLabel(canvas, k.label, cx, cy, 26 * sp, palette.glyph)
+            KeyKind.KANA_MARK -> drawTight(canvas, k.label, cx, cy, 20 * sp)
+            KeyKind.UNDO -> drawUndo(canvas, cx, cy, 10 * dp)
+            KeyKind.LEFT -> drawChevron(canvas, cx, cy, 9 * dp, -1)
+            KeyKind.RIGHT -> drawChevron(canvas, cx, cy, 9 * dp, 1)
+            KeyKind.GLOBE -> drawGlobe(canvas, cx, cy, 10 * dp, palette.glyph, 1.8f * dp)
+            KeyKind.SPACE -> if (page == Page.KANA) {
+                drawLabel(canvas, spaceLabel, cx, cy, 16 * sp, palette.glyph)
+            } else if (page.isPad) {
                 // On a pad's tile: the space mark.
                 stroke(palette.glyph, 2f * dp)
                 val s = 10 * dp
@@ -403,7 +470,9 @@ class KeyboardView(context: Context) : View(context) {
                 // A bright disc in the tile's plum, with the field's action as its icon.
                 fill.color = if (down) palette.accentPressed else palette.accent
                 canvas.drawCircle(cx, cy, minOf(r.height(), r.width()) * 0.36f, fill)
-                drawEnter(canvas, cx, cy, 10 * dp, palette.onAccent)
+                val label = enterLabel
+                if (label != null) drawLabel(canvas, label, cx, cy, 15 * sp, palette.onAccent, fontStrong)
+                else drawEnter(canvas, cx, cy, 10 * dp, palette.onAccent)
             }
         }
     }
@@ -526,8 +595,61 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
-    private fun drawGlobe(canvas: Canvas, cx: Float, cy: Float, r: Float, color: Int) {
-        stroke(color, 1.2f * dp)
+    /** ↺: a circle arrow going round anticlockwise, its head on the left. */
+    private fun drawUndo(canvas: Canvas, cx: Float, cy: Float, s: Float) {
+        stroke(palette.glyph)
+        val r = s * 0.8f
+        canvas.drawArc(cx - r, cy - r, cx + r, cy + r, 180f, 270f, false, line)
+        val a = s * 0.38f
+        canvas.drawLine(cx - r, cy + a * 0.2f, cx - r - a, cy - a * 0.8f, line)
+        canvas.drawLine(cx - r, cy + a * 0.2f, cx - r + a, cy - a * 0.8f, line)
+    }
+
+    /** ◀ or ▶ ([dir] -1 or 1): a chevron, as the cursor pad's. */
+    private fun drawChevron(canvas: Canvas, cx: Float, cy: Float, s: Float, dir: Int) {
+        stroke(palette.glyph, 2f * dp)
+        val x0 = cx - dir * s * 0.35f
+        canvas.drawLine(x0, cy - s * 0.7f, x0 + dir * s * 0.7f, cy, line)
+        canvas.drawLine(x0 + dir * s * 0.7f, cy, x0, cy + s * 0.7f, line)
+    }
+
+    /** [a] and [b] mixed, [t] of the way to [b]. */
+    private fun mix(a: Int, b: Int, t: Float): Int = Color.rgb(
+        (Color.red(a) + (Color.red(b) - Color.red(a)) * t).toInt(),
+        (Color.green(a) + (Color.green(b) - Color.green(a)) * t).toInt(),
+        (Color.blue(a) + (Color.blue(b) - Color.blue(a)) * t).toInt(),
+    )
+
+    /**
+     * The 12-key pad's guide while a finger is on a kana key, as Gboard draws it: the key's kana
+     * in a cross over it, its tap in the middle and its flicks around it, and the one the finger
+     * points at on the accent. A flick with nothing there has no cell.
+     */
+    private fun drawGuide(canvas: Canvas, h: Hit) {
+        val r = h.rect
+        val cell = minOf(r.width(), r.height()) * 0.78f
+        // Kept inside the keyboard: the top row's cross reaches into the strip, not above it.
+        val cx = minOf(maxOf(r.centerX(), 1.5f * cell), width - 1.5f * cell)
+        val cy = maxOf(r.centerY(), 1.5f * cell)
+        val at = listOf(0f to 0f, -1f to 0f, 0f to -1f, 1f to 0f, 0f to 1f)
+        val cells = (Flick.TAP..Flick.DOWN).filter { h.key.flick(it).isNotEmpty() }.map { d ->
+            val x = cx + at[d].first * cell
+            val y = cy + at[d].second * cell
+            d to RectF(x - cell / 2, y - cell / 2, x + cell / 2, y + cell / 2).insetBy(dp, dp)
+        }
+        // A shadow under the whole cross first, so it reads as over the keys.
+        fill.color = 0x40000000
+        for ((_, c) in cells) canvas.drawRoundRect(RectF(c).apply { offset(0f, 2 * dp) }, 12 * dp, 12 * dp, fill)
+        for ((d, c) in cells) {
+            val lit = d == flickDirection
+            fill.color = if (lit) palette.accent else palette.preview
+            canvas.drawRoundRect(c, 12 * dp, 12 * dp, fill)
+            drawLabel(canvas, h.key.flick(d), c.centerX(), c.centerY(), 28 * sp, if (lit) palette.onAccent else palette.glyph)
+        }
+    }
+
+    private fun drawGlobe(canvas: Canvas, cx: Float, cy: Float, r: Float, color: Int, width: Float = 1.2f * dp) {
+        stroke(color, width)
         canvas.drawCircle(cx, cy, r, line)
         canvas.drawOval(cx - r * 0.45f, cy - r, cx + r * 0.45f, cy + r, line)
         canvas.drawLine(cx - r, cy, cx + r, cy, line)
@@ -753,6 +875,20 @@ class KeyboardView(context: Context) : View(context) {
     /** The finger went down on the number row (a swipe there turns its page). */
     private var onNumberRow = false
 
+    /** The 12-key pad: where the finger on a kana key points ([Flick.TAP], [Flick.LEFT] ...). */
+    private var flickDirection = Flick.TAP
+    private val flickThreshold get() = Flick.THRESHOLD_DP * dp
+
+    /** The 12-key pad's toggle: the kana key tapped last, and when (null: none to step on). */
+    private var toggleKey: Key? = null
+    private var toggleAt = 0L
+
+    private fun toggling(now: Long = SystemClock.uptimeMillis()) = toggleKey != null && now - toggleAt < Flick.TOGGLE_MILLIS
+
+    /** The 🌐 menu stays open after a tap on 🌐, until a tap on it chooses or one elsewhere closes it. */
+    private var menuOpen = false
+    private var menuFinger = false
+
     /** How far a finger must slide to swipe: from Backspace, and along the number row. */
     private val deleteSwipe get() = 1.5f * width / 10f
     private val rowSwipe get() = 2f * width / 10f
@@ -762,11 +898,74 @@ class KeyboardView(context: Context) : View(context) {
         when {
             h.key.kind == KeyKind.COMMA -> if (commaHold) {
                 holdFired = true
-                openPopup(h, listOf(KEYBOARD_MENU) + languages.map { LANGUAGE_LABELS[it] ?: it }, menu = true)
+                openMenu(h)
             }
             h.key.variants.isNotEmpty() -> { holdFired = true; openPopup(h) }
         }
         invalidate()
+    }
+
+    /** The comma's (and 🌐's) menu over a key: ⌨, then the languages. */
+    private fun openMenu(h: Hit) = openPopup(h, listOf(KEYBOARD_MENU) + languages.map { LANGUAGE_LABELS[it] ?: it }, menu = true)
+
+    private fun closeMenu() {
+        menuOpen = false
+        menuFinger = false
+        popup = null
+        invalidate()
+    }
+
+    /** Touches while the 🌐 menu stays open: one on it chooses where it lifts, one elsewhere closes it. */
+    private fun menuTouch(e: MotionEvent) {
+        val p = popup ?: return closeMenu()
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val box = RectF(p.cells.first().left, p.cells.minOf { it.top }, p.cells.last().right, p.cells.maxOf { it.bottom })
+                menuFinger = box.contains(e.x, e.y)
+                if (menuFinger) {
+                    popupChoice = PopupGrid.nearest(p.bounds, e.x, e.y)
+                    invalidate()
+                } else {
+                    closeMenu()
+                }
+            }
+            MotionEvent.ACTION_MOVE -> if (menuFinger) {
+                val c = PopupGrid.nearest(p.bounds, e.x, e.y)
+                if (c != popupChoice) { popupChoice = c; invalidate() }
+            }
+            MotionEvent.ACTION_UP -> if (menuFinger) {
+                val form = p.forms[popupChoice]
+                closeMenu()
+                menuChoice(form)
+            }
+            MotionEvent.ACTION_CANCEL -> closeMenu()
+        }
+    }
+
+    /** ◀ or ▶ on the 12-key pad: the cursor a character. At the end of a reading ▶ stays put. */
+    private fun cursorKey(dx: Int) {
+        if (dx > 0 && composing) return
+        listener?.onCursorStart()
+        listener?.onCursor(dx, 0)
+        listener?.onCursorEnd()
+    }
+
+    /** A kana key tapped: its kana, or with the toggle, the next step when it was tapped last, in time. */
+    private fun tapKana(k: Key) {
+        val now = SystemClock.uptimeMillis()
+        if (toggleInput && toggleKey == k && toggling(now)) listener?.onKanaToggle(k.toggle) else listener?.onKana(k.text)
+        toggleKey = if (toggleInput) k else null
+        toggleAt = now
+    }
+
+    /** A kana key's finger lifted: a tap, or a flick (which ends the toggle). */
+    private fun liftKana(k: Key) {
+        if (flickDirection == Flick.TAP) {
+            tapKana(k)
+            return
+        }
+        toggleKey = null
+        k.flick(flickDirection).takeIf { it.isNotEmpty() }?.let { listener?.onKana(it) }
     }
 
     private fun startCursor(mode: Cursor) {
@@ -800,8 +999,12 @@ class KeyboardView(context: Context) : View(context) {
 
     private val repeat = object : Runnable {
         override fun run() {
-            if (pressed?.key?.kind != KeyKind.BACKSPACE) return
-            listener?.onBackspace()
+            when (pressed?.key?.kind) {
+                KeyKind.BACKSPACE -> listener?.onBackspace()
+                KeyKind.LEFT -> cursorKey(-1)
+                KeyKind.RIGHT -> cursorKey(1)
+                else -> return
+            }
             postDelayed(this, 50)
         }
     }
@@ -849,6 +1052,10 @@ class KeyboardView(context: Context) : View(context) {
             padTouch(e)
             return true
         }
+        if (menuOpen) {
+            menuTouch(e)
+            return true
+        }
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 // A second finger lands before the first lifts: the first key (or slot) counts.
@@ -858,6 +1065,7 @@ class KeyboardView(context: Context) : View(context) {
                 val x = e.getX(i)
                 val y = e.getY(i)
                 if (!page.isPad && y < stripHeight) {
+                    toggleKey = null
                     if (strip is Strip.Candidates) {
                         // Taken when it lifts: a slide up opens the panel instead.
                         stripPointer = e.getPointerId(i)
@@ -882,7 +1090,11 @@ class KeyboardView(context: Context) : View(context) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 val id = e.getPointerId(e.actionIndex)
                 if (id == stripPointer) finishStrip(true)
-                if (id == pressedPointer) release(true)
+                if (id == pressedPointer) {
+                    // A kana key's flick goes where the finger lifted, if no move said so first.
+                    if (pressed?.key?.kind == KeyKind.KANA) movePressed(e.getX(e.actionIndex), e.getY(e.actionIndex))
+                    release(true)
+                }
             }
             MotionEvent.ACTION_CANCEL -> {
                 finishStrip(false)
@@ -900,6 +1112,11 @@ class KeyboardView(context: Context) : View(context) {
         val pop = popup
         when {
             p?.key?.kind == KeyKind.SPACE -> moveCursor(x, y)
+            // A kana key: where the finger points, from where it went down. It stays that key's.
+            p?.key?.kind == KeyKind.KANA -> {
+                val d = Flick.direction(x - anchorX, y - anchorY, flickThreshold)
+                if (d != flickDirection) { flickDirection = d; invalidate() }
+            }
             pop != null -> {
                 val c = PopupGrid.nearest(pop.bounds, x + pop.dx, y + pop.dy)
                 if (c != popupChoice) { popupChoice = c; invalidate() }
@@ -940,12 +1157,26 @@ class KeyboardView(context: Context) : View(context) {
         fingerX = x
         fingerY = y
         onNumberRow = h != null && page == Page.LETTERS && numberRow && h.rect.top < stripHeight + 1f
+        flickDirection = Flick.TAP
         if (h == null) return
+        // Any key but a kana key and ↺ ends the 12-key pad's toggle. ▶ is the key for that: ending
+        // one, it moves nothing.
+        val toggled = toggling()
+        if (h.key.kind != KeyKind.KANA && h.key.kind != KeyKind.UNDO) toggleKey = null
         when (h.key.kind) {
             KeyKind.SPACE -> postDelayed(hold, holdMillis)
             KeyKind.BACKSPACE -> {
                 listener?.onBackspace()
                 postDelayed(repeat, holdMillis)
+            }
+            KeyKind.LEFT, KeyKind.RIGHT -> {
+                if (h.key.kind == KeyKind.LEFT) cursorKey(-1) else if (!toggled) cursorKey(1)
+                postDelayed(repeat, holdMillis)
+            }
+            // 🌐: its menu at once; a tap leaves it open.
+            KeyKind.GLOBE -> {
+                holdFired = true
+                openMenu(h)
             }
             KeyKind.COMMA -> postDelayed(hold, holdMillis)
             else -> if (h.key.hold != null) postDelayed(hold, holdMillis)
@@ -966,9 +1197,15 @@ class KeyboardView(context: Context) : View(context) {
                 cursor = Cursor.OFF
                 listener?.onCursorEnd()
             }
+            // 🌐 lifted where its menu opened: the menu stays, for a tap to choose.
+            shown != null && act && h?.key?.kind == KeyKind.GLOBE && popupChoice == 0 -> {
+                popup = shown
+                menuOpen = true
+            }
             shown != null -> if (act) {
                 if (shown.menu) menuChoice(shown.forms[popupChoice]) else typeChar(shown.forms[popupChoice])
             }
+            h != null && act && h.key.kind == KeyKind.KANA -> liftKana(h.key)
             h != null && act && !holdFired -> tap(h.key)
         }
         holdFired = false
@@ -978,6 +1215,7 @@ class KeyboardView(context: Context) : View(context) {
     /** A tap, as the keyboard acts on it (public for the tests and the service). */
     fun tap(k: Key) {
         val l = listener
+        if (k.kind != KeyKind.KANA && k.kind != KeyKind.UNDO) toggleKey = null
         when (k.kind) {
             KeyKind.CHAR -> {
                 l?.onText(k.label)
@@ -1006,6 +1244,20 @@ class KeyboardView(context: Context) : View(context) {
             KeyKind.LETTERS -> page = home
             KeyKind.ENTER -> l?.onEnter()
             KeyKind.BLANK -> Unit
+            KeyKind.KANA -> tapKana(k)
+            KeyKind.KANA_MARK -> l?.onKanaMark()
+            KeyKind.UNDO -> {
+                l?.onKanaBack()
+                // A toggle goes on from the step ↺ went back to.
+                if (toggling()) toggleAt = SystemClock.uptimeMillis()
+            }
+            // On the press, and again while held, as Backspace.
+            KeyKind.LEFT, KeyKind.RIGHT -> Unit
+            KeyKind.GLOBE -> hits.firstOrNull { it.key == k }?.let {
+                openMenu(it)
+                menuOpen = true
+                invalidate()
+            }
         }
     }
 
@@ -1197,12 +1449,18 @@ class KeyboardView(context: Context) : View(context) {
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        if (visibility != VISIBLE) closeMore()
+        if (visibility != VISIBLE) {
+            closeMore()
+            if (menuOpen) closeMenu()
+        }
     }
 
     override fun onWindowVisibilityChanged(visibility: Int) {
         super.onWindowVisibilityChanged(visibility)
-        if (visibility != VISIBLE) closeMore()
+        if (visibility != VISIBLE) {
+            closeMore()
+            if (menuOpen) closeMenu()
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -1217,7 +1475,7 @@ class KeyboardView(context: Context) : View(context) {
         const val KEYBOARD_MENU = "⌨"
 
         /** The comma menu's label of each language. */
-        val LANGUAGE_LABELS = mapOf("vi" to "VI", "en" to "EN", "ja" to "JA")
+        val LANGUAGE_LABELS = mapOf("vi" to "VI", "en" to "EN", "ja" to "JA", Options.FLICK to "あ")
     }
 }
 
