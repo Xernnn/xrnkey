@@ -20,13 +20,16 @@ static const char* const ONSETS[] = {
     "n", "ng", "ngh", "nh", "p", "ph", "qu", "r", "s", "t", "th", "tr", "v", "x",
 };
 
-/* Spellings chat uses that quốc ngữ doesn't, typed with their marks on
- * purpose: z and dz for the v/d/gi sound ("zậy", "dzậy", "zui"), and ơu, ôu
- * for âu ("đơu", "đôu"). Laban Key keeps them as typed. Words built with them
- * take marks and tones and stay as shown; anything else still has to be a
- * quốc ngữ syllable. */
-static const char* const CHAT_ONSETS[] = {"z", "dz"};
-static const char* const CHAT_RIMES[] = {"ơu", "ôu"};
+/* What typing takes beyond quốc ngữ: the spellings chat uses, typed with
+ * their marks on purpose. Onsets z, dz, w, f and j ("zậy", "dzậy", "wá",
+ * "fải", "jờ"); any onset before any rime, whatever the spelling rules say
+ * ("kái", "ngèo", "gì"); and the rimes ơu, ôu, eu and a bare ă or â ("đơu",
+ * "quấ"). Such a word takes marks and tones while it is typed and ends as
+ * shown, unless its keys are an English word (then Backspace right after
+ * Space brings the marks back). Only the onsets and rimes of Vietnamese make
+ * one: "ck", "sh", "br" or a final "l" still leave a word as typed. */
+static const char* const CHAT_ONSETS[] = {"z", "dz", "w", "f", "j"};
+static const char* const CHAT_RIMES[] = {"ơu", "ôu", "eu", "ă", "â"};
 
 /* Every rime (vowels plus final consonant). Rimes that begin with the glide
  * o/u ("medial") are listed after the others. */
@@ -148,7 +151,7 @@ struct Syllables {
         for (const char* o : onsets) {
             for (const char* rm : rimes) {
                 std::u32string r = u32_of(rm);
-                if (!onset_takes(o, r)) continue;
+                if (!chat && !onset_takes(o, r)) continue;
                 std::u32string s = u32_of(o) + r;
                 if (all.insert(s).second) add(s);
             }
