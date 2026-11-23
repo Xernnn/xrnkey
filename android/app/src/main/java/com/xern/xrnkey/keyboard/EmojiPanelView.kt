@@ -275,6 +275,8 @@ class EmojiPanelView(context: Context) : View(context) {
     private var downY = 0f
     private var lastY = 0f
     private var dragging = false
+    /** The finger went further than a tap may: whatever it was, it types nothing. */
+    private var moved = false
     private var velocity: VelocityTracker? = null
     private var pressedCell: Pair<Cell, RectF>? = null
 
@@ -318,6 +320,7 @@ class EmojiPanelView(context: Context) : View(context) {
                 scroller.forceFinished(true)
                 downX = e.x; downY = e.y; lastY = e.y
                 dragging = false
+                moved = false
                 velocity = VelocityTracker.obtain().also { it.addMovement(e) }
                 pressedCell = cellAt(e.x, e.y)
                 if (pressedCell != null) postDelayed(hold, 400)
@@ -328,6 +331,10 @@ class EmojiPanelView(context: Context) : View(context) {
                     val i = toneRects().indexOfFirst { e.x >= it.left && e.x < it.right }
                     if (i >= 0 && i != toneChoice) { toneChoice = i; invalidate() }
                     return true
+                }
+                if (!moved && (Math.abs(e.x - downX) > slop || Math.abs(e.y - downY) > slop)) {
+                    moved = true
+                    removeCallbacks(hold)
                 }
                 if (!dragging && pressedCell != null && Math.abs(e.y - downY) > slop) {
                     dragging = true
@@ -353,7 +360,7 @@ class EmojiPanelView(context: Context) : View(context) {
                         scroller.fling(0, offset.toInt(), 0, -it.yVelocity.toInt(), 0, 0, 0, maxScroll().toInt())
                         postInvalidateOnAnimation()
                     }
-                } else {
+                } else if (!moved) {
                     tap(e.x, e.y)
                 }
                 velocity?.recycle(); velocity = null

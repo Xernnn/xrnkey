@@ -1,6 +1,7 @@
 package com.xern.xrnkey
 
 import android.content.Context
+import android.view.MotionEvent
 import android.view.View.MeasureSpec
 import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.ime.EmojiMemory
@@ -56,6 +57,32 @@ class EmojiPanelTest {
         assertEquals(EmojiTab.EMOTICONS, p.tab)
         p.tap(30f, 200f)
         assertEquals(":)", typed.last())
+    }
+
+    /** A swipe across the grid used to type the emoji where the finger lifted (😘 on the phone). */
+    @Test
+    fun aSwipeOrAScrollTypesNothing() {
+        val p = panel()
+        fun touch(action: Int, x: Float, y: Float, t: Long) {
+            val e = MotionEvent.obtain(0, t, action, x, y, 0)
+            p.onTouchEvent(e)
+            e.recycle()
+        }
+        // Sideways, over the recents row.
+        touch(MotionEvent.ACTION_DOWN, 900f, 340f, 0)
+        touch(MotionEvent.ACTION_MOVE, 550f, 340f, 16)
+        touch(MotionEvent.ACTION_MOVE, 200f, 340f, 32)
+        touch(MotionEvent.ACTION_UP, 200f, 340f, 48)
+        // Up and down, ending where it began.
+        touch(MotionEvent.ACTION_DOWN, 10f, 340f, 100)
+        touch(MotionEvent.ACTION_MOVE, 10f, 600f, 116)
+        touch(MotionEvent.ACTION_MOVE, 10f, 340f, 132)
+        touch(MotionEvent.ACTION_UP, 10f, 340f, 148)
+        assertEquals(emptyList<String>(), typed)
+        // A tap still types.
+        touch(MotionEvent.ACTION_DOWN, 10f, 340f, 200)
+        touch(MotionEvent.ACTION_UP, 10f, 340f, 260)
+        assertEquals(listOf("🎂"), typed)
     }
 
     @Test
