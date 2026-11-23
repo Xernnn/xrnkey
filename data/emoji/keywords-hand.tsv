@@ -1,33 +1,33 @@
 # The hand-written part of the strip's emoji keywords, part of this project (data/emoji/README.md).
-# keyword <TAB> append|replace|skip <TAB> emoji, best first (at most three are used).
+# keyword <TAB> append|replace|skip <TAB> emoji, best first (at most five are used).
 # append: the emoji goes after the word ("ok 👌"); replace: the emoji takes the word's place
 # ("haha" -> "😂", "cà phê" -> "☕"); skip: a CLDR name left out. A keyword of one word fires
 # only as typed (marks and all, any case); one of several words also when typed without marks.
 # A line here takes the place of CLDR's for the same keyword.
 
 # Laughing, crying and other sounds: the emoji says it instead.
-haha	replace	😂 🤣 😆
-hahaha	replace	🤣 😂
-hihi	replace	😁 😊
-hehe	replace	😁 😆
-hjhj	replace	😁 😊
-ahihi	replace	😁 🤭
-kaka	replace	😆 😂
-kkk	replace	😂 🤣
-kk	replace	😂
-lol	replace	😂 🤣
-lmao	replace	🤣 😂
+haha	replace	😂 🤣 😆 😄 😁
+hahaha	replace	🤣 😂 😆 😹
+hihi	replace	😁 😊 🤭 😆 ☺️
+hehe	replace	😁 😆 😅 😏 🤭
+hjhj	replace	😁 😊 🤭 😆
+ahihi	replace	😁 🤭 😜
+kaka	replace	😆 😂 🤣
+kkk	replace	😂 🤣 😆 😹
+kk	replace	😂 🤣
+lol	replace	😂 🤣 😆
+lmao	replace	🤣 😂 💀
 xd	replace	😆
-huhu	replace	😭 😢
-huhuhu	replace	😭
-hic	replace	😢 😥
-hix	replace	😢 😥
-hichic	replace	😭
+huhu	replace	😭 😢 🥺 😿 😥
+huhuhu	replace	😭 😢 🥺
+hic	replace	😢 😥 😭 🥺 😞
+hix	replace	😢 😥 😭 🥺 😞
+hichic	replace	😭 😢 🥺
 hmm	replace	🤔
 hmmm	replace	🤔
-haizz	replace	😮‍💨 😩
-haiz	replace	😮‍💨
-zzz	replace	😴 💤
+haizz	replace	😮‍💨 😩 😔 😞 😓
+haiz	replace	😮‍💨 😩 😔
+zzz	replace	😴 💤 🥱
 muah	replace	😘 💋
 chụt	replace	😘
 suỵt	replace	🤫
@@ -70,26 +70,26 @@ t_t	replace	😭 😢
 </3	replace	💔
 
 # Chat abbreviations.
-ok	append	👌 👍
-oke	append	👌 👍
-okie	append	👌
+ok	append	👌 👍 🆗 🙆
+oke	append	👌 👍 🆗
+okie	append	👌 👍
 oki	append	👌
 okela	append	👌 👍
 okay	append	👌 👍
-hpbd	append	🎂 🎉 🥳
-hbd	append	🎂 🎉
-cmsn	append	🎂 🎉 🥳
-snvv	append	🎂 🥳
+hpbd	append	🎂 🎉 🥳 🎁 🎈
+hbd	append	🎂 🎉 🥳 🎁
+cmsn	append	🎂 🎉 🥳 🎁 🎈
+snvv	append	🎂 🥳 🎉 🎁
 hpny	append	🎆 🧧 🎉
 cmnm	append	🎆 🧧
-thx	append	🙏
-tks	append	🙏
+thx	append	🙏 ❤️ 😊
+tks	append	🙏 ❤️ 😊
 plz	append	🙏
 pls	append	🙏
-sr	append	🙏 😔
-xinloi	append	🙏 😔
-camon	append	🙏 ❤️
-iu	append	❤️ 🥰
+sr	append	🙏 😔 🥺
+xinloi	append	🙏 😔 😞 🥺
+camon	append	🙏 ❤️ 🥰 😊
+iu	append	❤️ 🥰 😘 💕 😍
 ny	append	💑 ❤️
 omg	append	😱 😲
 g9	append	😴 🌙
@@ -104,7 +104,7 @@ heo	replace	🐷 🐖
 meo	append	🐱
 hoa	append	🌸 💐 🌹
 tim	append	❤️
-vui	append	😄 😊
+vui	append	😄 😊 😁 🥳 😆
 ngon	append	😋 🤤
 xinh	append	😍 🥰
 phim	append	🎬 🍿
@@ -113,40 +113,40 @@ hi	append	👋
 hot	append	🔥
 
 # Feelings.
-buồn	append	😞 😢
-buồn quá	append	😢 😞
-vui quá	append	😄 🥳
-vui vẻ	append	😊 😄
+buồn	append	😞 😢 😔 😥 🥺
+buồn quá	append	😢 😞 😭 😔
+vui quá	append	😄 🥳 😆 😁
+vui vẻ	append	😊 😄 😁 🥰
 hạnh phúc	append	🥰 😊
-khóc	append	😢 😭
-cười	append	😄 😆
+khóc	append	😢 😭 😿 🥺 😥
+cười	append	😄 😆 😂 😁
 buồn cười	append	😂 🤣
 cười đau bụng	append	🤣
 hài	append	😂
 hài hước	append	😂
-yêu	append	❤️ 😍 🥰
-thương	append	🥰 ❤️
+yêu	append	❤️ 😍 🥰 😘 💕
+thương	append	🥰 ❤️ 💕 🤗
 thương quá	append	🥰
 yêu quá	append	😍 ❤️
 nhớ quá	append	🥺
 nhớ em	append	🥺 ❤️
 nhớ anh	append	🥺 ❤️
-giận	append	😠 😡
-tức quá	append	😤 😡
+giận	append	😠 😡 😤 💢
+tức quá	append	😤 😡 😠 🤬
 tức giận	append	😠 😡
 bực	append	😤
 bực mình	append	😤 😒
-sợ	append	😨 😱
-sợ quá	append	😱
-mệt	append	😩 😫
-mệt quá	append	😩 😫
-chán	append	😒 😑
-chán quá	append	😩 😒
-đói	append	🤤
-đói quá	append	🤤
+sợ	append	😨 😱 😰 😧
+sợ quá	append	😱 😨 😰
+mệt	append	😩 😫 😮‍💨 🥱 😪
+mệt quá	append	😩 😫 😮‍💨 🥱
+chán	append	😒 😑 😩 🥱 😮‍💨
+chán quá	append	😩 😒 😑 🥱
+đói	append	🤤 😋 🍜 🍚
+đói quá	append	🤤 😩 🍜
 ngon quá	append	😋
 buồn ngủ	append	😴 🥱
-ngủ	append	😴 💤
+ngủ	append	😴 💤 🛌 🌙 🥱
 ốm	append	🤒
 đau	append	😣
 đau đầu	append	🤕
@@ -161,7 +161,7 @@ lười	append	🦥 😴
 xỉu	append	😵
 hôn	append	😘 💋
 kết hôn	append	💍 💒
-ôm	append	🤗
+ôm	append	🤗 🫂
 dễ thương	append	🥰 😊
 đẹp	append	😍
 đẹp quá	append	😍
@@ -188,19 +188,19 @@ má ơi	append	😱
 chết rồi	append	😱
 
 # Greetings, thanks, sorry.
-chào	append	👋
+chào	append	👋 😊 🙋
 xin chào	append	👋 😊
 chào buổi sáng	append	☀️ 😊
-ngủ ngon	append	😴 🌙
-chúc ngủ ngon	append	😴 🌙 💤
-tạm biệt	append	👋
+ngủ ngon	append	😴 🌙 💤
+chúc ngủ ngon	append	😴 🌙 💤 🥰
+tạm biệt	append	👋 🙋
 hẹn gặp lại	append	👋
 bai bai	append	👋
-cảm ơn	append	🙏 ❤️
-cám ơn	append	🙏
-cảm ơn nhiều	append	🙏 ❤️
-cám ơn nhiều	append	🙏
-xin lỗi	append	🙏 😔
+cảm ơn	append	🙏 ❤️ 🥰 😊
+cám ơn	append	🙏 ❤️ 😊
+cảm ơn nhiều	append	🙏 ❤️ 🥰 😊 💕
+cám ơn nhiều	append	🙏 ❤️ 🥰 😊
+xin lỗi	append	🙏 😔 😞 🥺 🙇
 làm ơn	append	🙏
 đồng ý	append	👍 👌
 vỗ tay	append	👏
@@ -213,21 +213,21 @@ thả like	append	👍
 # Love.
 yêu em	append	❤️ 😘
 yêu anh	append	❤️ 😘
-anh yêu em	append	❤️ 😘 🥰
-em yêu anh	append	❤️ 😘 🥰
+anh yêu em	append	❤️ 😘 🥰 😍 💕
+em yêu anh	append	❤️ 😘 🥰 😍 💕
 người yêu	append	💑 ❤️
 trái tim	append	❤️
 thả tim	append	❤️
 crush	append	😍
 
 # Days and wishes.
-chúc mừng	append	🎉 👏
-sinh nhật	append	🎂 🎉
-chúc mừng sinh nhật	append	🎂 🎉 🥳
-sinh nhật vui vẻ	append	🎂 🥳
+chúc mừng	append	🎉 👏 🥳 🎊 🎁
+sinh nhật	append	🎂 🎉 🥳 🎁 🎈
+chúc mừng sinh nhật	append	🎂 🎉 🥳 🎁 🎈
+sinh nhật vui vẻ	append	🎂 🥳 🎉 🎁 🎈
 năm mới	append	🎆 🧧
-chúc mừng năm mới	append	🎆 🧧 🎉
-năm mới vui vẻ	append	🎆 🧧
+chúc mừng năm mới	append	🎆 🧧 🎉 🎊 🌸
+năm mới vui vẻ	append	🎆 🧧 🎉 🎊
 tết	append	🧧 🌸 🎆
 lì xì	append	🧧
 giáng sinh	append	🎄 🎅
@@ -275,15 +275,15 @@ chó	replace	🐶 🐕
 mèo	replace	🐱 🐈
 
 # English chat.
-love	replace	❤️
-love you	append	❤️ 😘
-i love you	append	❤️ 😍
+love	replace	❤️ 😍 🥰 💕
+love you	append	❤️ 😘 🥰 😍
+i love you	append	❤️ 😍 😘 🥰 💕
 miss you	append	🥺 ❤️
-sorry	append	😔 🙏
-thanks	append	🙏
-thank you	append	🙏
+sorry	append	😔 🙏 😞 🥺 🙇
+thanks	append	🙏 ❤️ 😊 🥰
+thank you	append	🙏 ❤️ 😊
 please	append	🙏
-wow	append	😮 🤩
+wow	append	😮 🤩 😲 😯 🤯
 yay	append	🥳 🎉
 cool	append	😎
 cute	append	🥰
@@ -305,13 +305,13 @@ congratulations	append	🎉 👏
 fighting	append	💪
 cheers	append	🍻 🥂
 hello	append	👋
-bye	append	👋
+bye	append	👋 😘 🙋
 bye bye	append	👋
 good morning	append	☀️ 😊
 good night	append	😴 🌙
-happy birthday	append	🎂 🎉 🥳
-happy new year	append	🎆 🎉
-merry christmas	append	🎄 🎅
+happy birthday	append	🎂 🎉 🥳 🎁 🎈
+happy new year	append	🎆 🎉 🥳 🎊
+merry christmas	append	🎄 🎅 🎁 ❄️
 valentine	append	❤️ 🌹
 coffee	replace	☕
 tea	replace	🍵

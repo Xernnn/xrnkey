@@ -35,7 +35,9 @@ import kotlin.math.pow
  * when Space commits it. A word finished with its Telex marks gives way to what may follow it
  * ("banj": bạn bè | bạn gái | bạn ấy); one on its way to a word shows as it is. A tap takes a
  * guess. When the words before were typed without marks too, the left offers the whole run
- * accented ("tôi không biết"). With no word, the next words, or the tool row.
+ * accented ("tôi không biết"). With one word to offer, a second emoji takes the left; with none,
+ * the emoji fill the strip from the right, five across it when there are four or more ("haha").
+ * With no word in progress, the next words, or the tool row.
  */
 class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = null) {
     /**
@@ -82,13 +84,17 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             if (!suggestions) return Strip.Tools
             val strip = if (nextWords && models != null && t.afterWord()) next(t) else Strip.Tools
             // An emoji for the words just ended ("chúc mừng sinh nhật ") or an emoticon (":)").
-            val picks = emojiFor(t, null)
+            val hit = emojiFor(t, null)
+            val picks = hit.picks
             if (picks.isEmpty()) return strip
             val words = offered.take(2)
-            offered = if (words.any { it != null }) words + picks[0] else fromTheRight(picks)
+            // A wish or a thanks of several words just ended ("chúc mừng sinh nhật ", "cảm ơn bạn
+            // nhiều ") is answered with emoji: they fill the strip, as on Laban Key. After a
+            // shorter keyword ("ok ", "cảm ơn ") the next words keep the left and the centre.
+            if (words.none { it != null } || hit.words >= WHOLE) return emojiOnly(picks)
+            offered = words + picks[0]
             // The next words keep what their slots show (a phrase, its typed part grey).
-            val next = (strip as? Strip.Candidates)?.takeIf { words.any { it != null } }
-                ?: return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
+            val next = strip as Strip.Candidates
             return Strip.Candidates(next.left, next.centre, picks[0].text, bold = false, grey = next.grey.take(2))
         }
         val m = models
@@ -122,24 +128,24 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
                 ?: best
         }
         leftGuess?.let { rest.remove(it) }
-        val left = run?.let { Pick(it.second, phrase = it) } ?: leftGuess?.let { Pick(it.text) }
-        // The right: an emoji when the word is one of their keywords, else the middle with its
-        // next word when that comes next, or the next best guess.
         val read = commits ?: readings.firstOrNull()?.text ?: word
         centre = read
+        val picks = emojiFor(t, commits).picks
         val top = rest.firstOrNull()
+        // Nothing to offer but the word as typed: the emoji fill the strip from the right.
+        if (leftGuess == null && run == null && top == null && commits == null && middle == word && picks.size > 1) return emojiOnly(picks)
+        // With no other word, a second emoji takes the left ("sorry": 🙏 | sorry | 😔).
+        val left = run?.let { Pick(it.second, phrase = it) } ?: leftGuess?.let { Pick(it.text) } ?: picks.getOrNull(1)
+        // The right: an emoji when the word is one of their keywords, else the middle with its
+        // next word when that comes next, or the next best guess.
         val pair = top?.takeIf { it.kind == Kind.PAIR && it.base == middle }
-        val picks = emojiFor(t, commits)
         val right = picks.firstOrNull()
             ?: pair?.let { Pick(it.text) }
             ?: top?.let { Pick(it.text) }
         if (right?.emoji == false) top?.let { rest.remove(it) }
-        // Nothing to offer but the word as typed: the emoji fill the strip from the right.
-        val alone = left == null && top == null && commits == null && middle == word
-        offered = if (alone && picks.size > 1) fromTheRight(picks) else listOf(left, Pick(middle), right)
-        val centreEmoji = offered[1]?.emoji == true
+        offered = listOf(left, Pick(middle), right)
         return Strip.Candidates(
-            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = rest.isNotEmpty(), bold = bold && !centreEmoji,
+            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = rest.isNotEmpty(), bold = bold,
             extra = rest.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
     }
@@ -172,17 +178,28 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             .sortedByDescending { it.score }.distinctBy { it.text }.toMutableList()
         centre = word
         val middle = pool.removeFirstOrNull()?.text ?: word
-        val left = pool.removeFirstOrNull()?.text
         // The right: an emoji when the word is one of their keywords, else the next best.
-        val picks = emojiFor(t, null)
-        val right = picks.firstOrNull() ?: pool.removeFirstOrNull()?.let { Pick(it.text) }
+        val picks = emojiFor(t, null).picks
         // Nothing to offer but the word itself: the emoji fill the strip from the right.
-        offered = if (middle == word && picks.size > 1) fromTheRight(picks) else listOf(left?.let { Pick(it) }, Pick(middle), right)
-        val centreEmoji = offered[1]?.emoji == true
+        if (middle == word && picks.size > 1) return emojiOnly(picks)
+        // With one word, a second emoji takes the left.
+        val left = pool.removeFirstOrNull()?.let { Pick(it.text) } ?: picks.getOrNull(1)
+        val right = picks.firstOrNull() ?: pool.removeFirstOrNull()?.let { Pick(it.text) }
+        offered = listOf(left, Pick(middle), right)
         return Strip.Candidates(
-            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word && !centreEmoji,
+            offered[0]?.text, offered[1]?.text, offered[2]?.text, more = pool.isNotEmpty(), bold = middle == word,
             extra = pool.map { it.text }, grey = greys(word, offered.map { it?.text }),
         )
+    }
+
+    /** Emoji in every slot, the first on the right: three slots ("hx": 😭 | 😿 | 😢), or a row of five. */
+    private fun emojiOnly(picks: List<Pick>): Strip {
+        if (picks.size >= ROW_FROM) {
+            offered = List(Strip.Candidates.ROW) { picks.getOrNull(Strip.Candidates.ROW - 1 - it) }
+            return Strip.Candidates(null, null, null, bold = false, row = offered.map { it?.text })
+        }
+        offered = listOf(picks.getOrNull(2), picks.getOrNull(1), picks[0])
+        return Strip.Candidates(offered[0]?.text, offered[1]?.text, offered[2]?.text, bold = false)
     }
 
     /**
@@ -366,46 +383,48 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         return p >= GOES_WITH && p - both(m.languages(listOf("<p>"), next)) >= GOES_WITH_LIFT
     }
 
+    /** The emoji for what was just typed, best first, and how many words their keyword has. */
+    private class Hit(val picks: List<Pick>, val words: Int)
+
     /**
      * The emoji for what was just typed, best first, as Laban Key offers them: only when it is
      * one of the keywords of data/emoji/keywords.tsv as it stands (the word in progress as the
      * field shows it, typed or marked, or as Space ends it: "sory" ends "sorry"), or ends a
-     * phrase that is ("chúc mừng sinh nhật"). With no word in progress, what was typed last: the
-     * words just ended by a space, whose emoji go at the cursor, or an emoticon (":)").
+     * phrase that is ("chúc mừng sinh nhật", also typed without marks). With no word in
+     * progress, what was typed last: the words just ended by a space, whose emoji go at the
+     * cursor, or an emoticon (":)").
      */
-    private fun emojiFor(t: Typist, commits: String?): List<Pick> =
-        keywordEmoji(t, commits).filterNot { hidden(it.text) }  // an emoji the owner hid stays hidden
+    private fun emojiFor(t: Typist, commits: String?): Hit =
+        keywordEmoji(t, commits).let { h -> Hit(h.picks.filterNot { hidden(it.text) }, h.words) }  // an emoji the owner hid stays hidden
 
-    private fun keywordEmoji(t: Typist, commits: String?): List<Pick> {
-        val index = emoji ?: return emptyList()
-        if (!emojiSuggestions || t.raw) return emptyList()
+    private fun keywordEmoji(t: Typist, commits: String?): Hit {
+        val none = Hit(emptyList(), 0)
+        val index = emoji ?: return none
+        if (!emojiSuggestions || t.raw) return none
         val line = t.before().substringAfterLast('\n')
         val word = t.shown
         if (word.isNotEmpty()) {
             // The words before the word in progress, when a space parts them from it.
             val earlier = if (line.isEmpty() || line.last() == ' ') words(line).takeLast(PHRASE - 1) else emptyList()
             for (w in listOfNotNull(word, commits?.takeIf { it != word && ' ' !in it })) {
-                val hit = index.keyword(earlier + w) ?: continue
+                val hit = index.keyword(earlier + w, MOST_EMOJI) ?: continue
                 val typed = earlier.takeLast(hit.words - 1).joinToString("") { "$it " }
-                return hit.emoji.map {
+                return Hit(hit.emoji.map {
                     if (hit.replace) Pick(it, emoji = true, replaces = typed) else Pick(it, emoji = true, word = w)
-                }
+                }, hit.words)
             }
-            return emptyList()
+            return none
         }
         val ended = words(line).takeLast(PHRASE)
-        if (ended.isEmpty()) return emptyList()
-        val hit = index.keyword(ended) ?: return emptyList()
+        if (ended.isEmpty()) return none
+        val hit = index.keyword(ended, MOST_EMOJI) ?: return none
         // After a space the words stay; an emoticon typed just now gives way.
         val replaces = ended.takeLast(hit.words).joinToString(" ").takeIf { hit.replace && !line.last().isWhitespace() }
-        return hit.emoji.map { Pick(it, emoji = true, replaces = replaces) }
+        return Hit(hit.emoji.map { Pick(it, emoji = true, replaces = replaces) }, hit.words)
     }
 
-    /** Emoji in every slot, the first on the right ("hx": 😭 | 😿 | 😢). */
-    private fun fromTheRight(picks: List<Pick>): List<Pick?> = listOf(picks.getOrNull(2), picks.getOrNull(1), picks[0])
-
     /** The strip's emoji for what was just typed, for the emoji panel's row. */
-    fun emoji(t: Typist): List<String> = emojiFor(t, if (t.shown.isEmpty()) null else t.preview()).map { it.text }
+    fun emoji(t: Typist): List<String> = emojiFor(t, if (t.shown.isEmpty()) null else t.preview()).picks.map { it.text }
 
     /** An emoji the strip offered, put in the field as its keyword says. */
     fun putEmoji(t: Typist, pick: Pick) {
@@ -422,7 +441,7 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         }
     }
 
-    /** The candidate in slot 0 (left), 1 (centre) or 2 (right). */
+    /** The candidate in slot 0 (left), 1 (centre) or 2 (right), or in a row's place 0 to 4. */
     fun pick(slot: Int): Pick? = offered.getOrNull(slot)
 
     companion object {
@@ -463,6 +482,18 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
 
         /** The most words an emoji keyword has ("chúc mừng sinh nhật"). */
         private const val PHRASE = 4
+
+        /** The most emoji a keyword offers: a row's places. */
+        private const val MOST_EMOJI = Strip.Candidates.ROW
+
+        /** How many emoji fill the strip as a row of five, not three slots. */
+        private const val ROW_FROM = 4
+
+        /**
+         * The words a keyword must have to fill the strip with emoji after its Space: a wish or a
+         * thanks said whole ("chúc mừng sinh nhật", "cảm ơn bạn nhiều", "anh yêu em").
+         */
+        private const val WHOLE = 3
 
         private fun words(line: String): List<String> = line.split(' ').filter { it.isNotEmpty() }
 

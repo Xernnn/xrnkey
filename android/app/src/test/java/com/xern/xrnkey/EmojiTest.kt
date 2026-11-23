@@ -33,7 +33,9 @@ class EmojiTest {
     fun theStripsKeywordTableComesThroughTheBridge() = testEmojiIndex().use { idx ->
         assertEquals(EmojiKeyword(listOf("🍊"), replace = true, words = 1), idx.keyword(listOf("cam")))
         assertEquals(null, idx.keyword(listOf("khoc")))
-        assertEquals(EmojiKeyword(listOf("😢", "😭"), replace = false, words = 1), idx.keyword(listOf("tôi", "khóc")))
+        assertEquals(EmojiKeyword(listOf("😢", "😭"), replace = false, words = 1), idx.keyword(listOf("tôi", "khóc"), max = 2))
+        // Up to five, for the row of emoji the strip fills when there are no words.
+        assertEquals(listOf("😂", "🤣", "😆", "😄", "😁"), idx.keyword(listOf("haha"), max = 5)!!.emoji)
         assertEquals(4, idx.keyword(listOf("chuc", "mung", "sinh", "nhat"))!!.words)
         assertEquals(listOf("🎂"), idx.keyword(listOf("hpbd"), max = 1)!!.emoji)
         assertEquals("😂", idx.search("haha").first())

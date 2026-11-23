@@ -7,6 +7,8 @@ import android.view.View.MeasureSpec
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.keyboard.Strip
+import android.view.MotionEvent
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +20,8 @@ import kotlin.math.pow
 
 /**
  * The strip's candidates as drawn: the part already in the field is grey and the rest in the
- * slot's own colour ("bạn" of "bạn bè"), as Laban Key draws a word with its next word.
+ * slot's own colour ("bạn" of "bạn bè"), as Laban Key draws a word with its next word; a row of
+ * emoji in five even places.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w432dp-h960dp-400dpi")
@@ -64,5 +67,49 @@ class StripLookTest {
                 assertTrue(why, ink(two, palette, tail.first, tail.last) > 0.9 * ink(plain, palette, tail.first, tail.last))
             }
         }
+    }
+
+    /**
+     * A row of emoji takes five even places between the menu and the emoji button (168 px each
+     * from x = 120), each drawn at its own centre and each a tap of its own; an empty place
+     * stays blank. The three slots are 280 px each.
+     */
+    @Test
+    fun aRowOfEmojiTakesFiveEvenPlaces() {
+        // Letters stand in for the emoji: the host's fonts may have no colour emoji.
+        val row = Strip.Candidates(null, null, null, bold = false, row = listOf(null, "W", "W", "W", "W"))
+        for (palette in listOf(Palette.DARK, Palette.LIGHT)) {
+            val bmp = draw(row, palette)
+            val places = (0 until 5).map { 120 + 168 * it + 84 }
+            assertTrue(ink(bmp, palette, places[0] - 30, places[0] + 30) < 1.5)
+            for (x in places.drop(1)) assertTrue("$palette at $x", ink(bmp, palette, x - 20, x + 20) > 3.0)
+            // Between two places, nothing: each emoji sits in its own.
+            assertTrue(ink(bmp, palette, 120 + 168 * 2 - 6, 120 + 168 * 2 + 6) < 1.5)
+        }
+        val v = KeyboardView(RuntimeEnvironment.getApplication())
+        val taps = mutableListOf<Int>()
+        v.listener = object : KeyboardView.Listener {
+            override fun onCandidate(slot: Int) { taps += slot }
+        }
+        v.strip = row
+        v.measure(MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+        v.layout(0, 0, v.measuredWidth, v.measuredHeight)
+        for (x in listOf(204f, 372f, 540f, 708f, 876f)) {
+            for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+                val e = MotionEvent.obtain(0, 0, action, x, 60f, 0)
+                v.onTouchEvent(e)
+                e.recycle()
+            }
+        }
+        assertEquals(listOf(0, 1, 2, 3, 4), taps)
+        // Three slots again: a tap at 876 is the right slot.
+        taps.clear()
+        v.strip = Strip.Candidates("a", "b", "c")
+        for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+            val e = MotionEvent.obtain(0, 0, action, 876f, 60f, 0)
+            v.onTouchEvent(e)
+            e.recycle()
+        }
+        assertEquals(listOf(2), taps)
     }
 }

@@ -11,7 +11,8 @@ emoji search, and the emoji panel's suggestions for the words just typed.
 does: an emoji shows only when the word as it stands is one of these keywords, or ends one of
 several words. One line per keyword: the keyword (lowercase), `append` (the emoji goes after the
 word: "ok 👌") or `replace` (it takes the word's place: "cam" → 🍊, ":)" → 🙂), its emoji
-(at most three, best first), and where the line comes from (`cldr` or `hand`).
+(at most five, best first: with no word to offer the strip shows four or five of them across
+it), and where the line comes from (`cldr` or `hand`).
 
 - A keyword of one word matches only as it is written, marks and all (any case, wherever the
   tone sits): "khóc" gives 😢, the bare "khoc" nothing. A keyword of several words (up to four)

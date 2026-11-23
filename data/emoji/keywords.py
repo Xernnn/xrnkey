@@ -8,7 +8,7 @@ One line per keyword, lowercase, NFC:
   keyword <TAB> append|replace <TAB> emoji emoji ... <TAB> cldr|hand
 
 `append` puts the emoji after the word ("ok 👌"), `replace` puts it in the
-word's place ("cam" -> "🍊"). At most three emoji, best first. The last column
+word's place ("cam" -> "🍊"). At most five emoji, best first. The last column
 says where the line comes from.
 
 Two sources, both in this folder:
@@ -45,7 +45,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 THINGS = {"Animals & Nature", "Food & Drink", "Travel & Places", "Activities", "Objects"}
 # Of these, the lone names that take the word's place ("cơm" -> "🍚").
 PICTURES = {"Animals & Nature", "Food & Drink"}
-MAX_EMOJI = 3
+MAX_EMOJI = 5
 
 
 def lower(s):
