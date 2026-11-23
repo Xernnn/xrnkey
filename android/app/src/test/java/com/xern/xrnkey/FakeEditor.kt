@@ -32,12 +32,18 @@ class FakeEditor(initial: String = "") : Editor {
         log += "finish"
     }
 
-    override fun backspace() {
+    override fun backspace(last: String): Boolean {
+        if (last.isNotEmpty() && committed.endsWith(last)) {
+            committed.setLength(committed.length - last.length)
+            log += "delete:$last"
+            return true
+        }
         if (committed.isNotEmpty()) {
             val n = Character.charCount(committed.codePointBefore(committed.length))
             committed.setLength(committed.length - n)
         }
         log += "backspace"
+        return false
     }
 
     override fun deleteBefore(codePoints: Int) {

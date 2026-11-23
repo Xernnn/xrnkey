@@ -81,6 +81,9 @@ class XrnkeyService :
      */
     private val expected = ArrayDeque<Int>()
 
+    /** The field has a selection, as it last said: Backspace goes to it as the key. */
+    private var selected = false
+
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
 
@@ -98,7 +101,17 @@ class XrnkeyService :
             currentInputConnection?.finishComposingText()
         }
 
-        override fun backspace() = sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+        override fun backspace(last: String): Boolean {
+            val ic = currentInputConnection
+            if (ic != null && last.isNotEmpty() && !selected && ic.getSelectedText(0).isNullOrEmpty() &&
+                ic.getTextBeforeCursor(last.length, 0)?.toString() == last
+            ) {
+                ic.deleteSurroundingText(last.length, 0)
+                return true
+            }
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+            return false
+        }
 
         override fun deleteBefore(codePoints: Int) {
             currentInputConnection?.deleteSurroundingTextInCodePoints(codePoints, 0)
@@ -218,6 +231,7 @@ class XrnkeyService :
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
         expected.clear()
+        selected = info.initialSelStart != info.initialSelEnd
         typist.reset(info.initialSelStart)
         searchQuery = null
         showKeys()
@@ -254,6 +268,7 @@ class XrnkeyService :
         candidatesStart: Int, candidatesEnd: Int,
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        selected = newSelStart != newSelEnd
         // A report of this keyboard's own edits, on time or late: nothing else moved.
         val cursor = typist.cursor()
         if (newSelStart == newSelEnd && cursor >= 0) {

@@ -5,6 +5,7 @@ import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.engine.TypingState
+import java.text.BreakIterator
 
 /**
  * What the keyboard does to the text field, as InputConnection does it: the word in progress
@@ -20,8 +21,14 @@ interface Editor {
     /** Keep the word in progress as it stands, ending it. */
     fun finishComposing()
 
-    /** Delete before the cursor, or the selection (the Backspace key itself). */
-    fun backspace()
+    /**
+     * Backspace with no word in progress. `last` is the character right before the cursor as
+     * the typist has it ("" when it doesn't know): it goes through the field's connection when
+     * the field shows it there and nothing is selected, in order with the edits after it;
+     * otherwise the Backspace key goes to the field (a selection, an empty field). Returns
+     * whether `last` went.
+     */
+    fun backspace(last: String): Boolean
 
     /** Delete `codePoints` characters right before the cursor (no word in progress). */
     fun deleteBefore(codePoints: Int)
@@ -435,7 +442,7 @@ class Typist(
         refused = null
         val s = state
         if (raw || s == null) {
-            editor.backspace()
+            editor.backspace("")
             return
         }
         if (composing.isEmpty()) plain.clear()
@@ -453,11 +460,14 @@ class Typist(
         }
         var deleted = false
         apply(s.key(TypingState.BACKSPACE)) {
-            editor.backspace()
-            deleted = true
-            // Backspace takes a character: an emoji is two UTF-16 units.
+            // Backspace takes a character (an emoji with its skin tone or joined parts is one).
+            // It goes through the field's connection, not as a key: some editors (Compose's)
+            // apply a key after the edits sent with it, and opening the word before it then
+            // went wrong there ("việt␣⌫" gave "vviệ").
             val n = tail.length
-            val units = if (n >= 2 && Character.isSurrogatePair(tail[n - 2], tail[n - 1])) 2 else 1
+            val last = lastCharacter(tail)
+            deleted = editor.backspace(last)
+            val units = maxOf(1, last.length)
             when {
                 n > 0 -> tail.setLength(n - units)
                 !wholeField && anchor > 0 -> anchor -= 1  // a character before what the tail holds
@@ -465,7 +475,8 @@ class Typist(
             if (pending.isNotEmpty()) pending.setLength(maxOf(0, pending.length - units))
             run.clear()
         }
-        // Backspace may have left the cursor at the end of a word: it is open again.
+        // Backspace may have left the cursor at the end of a word: it is open again (not after
+        // the key itself, which the field may apply later).
         if (deleted) reopenBefore(editor.textAfter(1))
     }
 
@@ -784,6 +795,16 @@ class Typist(
         }
 
         private fun wordChar(cp: Int) = Character.isLetterOrDigit(cp)
+
+        /** The last character of `t` as a reader sees one: "👍🏽", "👨‍👩‍👧" and "ệ" whole ("" when empty). */
+        internal fun lastCharacter(t: CharSequence): String {
+            if (t.isEmpty()) return ""
+            val s = t.substring(maxOf(0, t.length - 32))
+            val it = BreakIterator.getCharacterInstance()
+            it.setText(s)
+            val start = it.preceding(s.length)
+            return s.substring(if (start == BreakIterator.DONE) 0 else start)
+        }
 
         /**
          * How many UTF-16 units at the end of `t` a word deletion takes: the spaces at the end,
