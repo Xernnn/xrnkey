@@ -34,6 +34,15 @@ interface Editor {
 
     /** Up to `n` characters after the cursor ("" when the field doesn't say). */
     fun textAfter(n: Int): String
+
+    /**
+     * Underline the `before` UTF-16 units before the cursor and the `after` units after it as
+     * the word in progress, the text and the cursor as they are (where the field can).
+     */
+    fun markWord(before: Int, after: Int)
+
+    /** Delete `before` UTF-16 units before the cursor and `after` units after it. */
+    fun deleteAround(before: Int, after: Int)
 }
 
 /**
@@ -169,10 +178,29 @@ class Typist(
     private var spaceAfterWord = false
 
     /**
+     * How much of the word in progress is after the cursor: the word is one the cursor was put
+     * inside ([touch]). Its text stays as it is; a pick from the strip replaces it whole.
+     */
+    private var touchedAfter = 0
+
+    /** Whether a space follows the word the cursor is inside, so a pick adds none. */
+    private var spaceFollows = false
+
+    /**
+     * The word in progress is one the cursor was put inside and another word follows it: the
+     * strip offers what the word may be, not what may come after it.
+     */
+    var followed = false
+        private set
+
+    /** The word in progress is one the cursor was put inside: the cursor is in it, not after it. */
+    val touched: Boolean get() = touchedAfter > 0
+
+    /**
      * Where the cursor is after this typist's own edits, as a UTF-16 index (-1: not known). A
      * selection update elsewhere means the field changed under it, and [reset] reads it again.
      */
-    fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length
+    fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length - touchedAfter
 
     /** The editor says where the cursor is, and this typist didn't know: it is there now. */
     fun anchorAt(cursor: Int) {
@@ -302,6 +330,7 @@ class Typist(
 
     /** Typed text: each character is a key. */
     fun text(t: String) {
+        untouch()
         val s = state
         // A letter's Vietnamese form (held on its key) goes in as the keys that make it, so the
         // word goes on taking marks: "vi" + "ê" + "tj" is "việt".
@@ -429,6 +458,7 @@ class Typist(
     }
 
     fun backspace() {
+        untouch()
         spaceAfterWord = false
         val u = undo
         undo = null
@@ -475,20 +505,76 @@ class Typist(
      * marking it ("việt␣⌫s" is "viết") and the strip offers its suggestions. The core takes the
      * keys that make it, as for a form picked from a held key; a word they don't make again
      * exactly ("of" makes "ò") stays as it is, and so does the field. `after` is what follows
-     * the cursor: a letter there means the cursor is inside a word, which stays as it is.
+     * the cursor: a letter there means the cursor is inside a word ([touch]).
      * Returns whether a word was opened.
      */
     fun reopenBefore(after: String): Boolean {
-        val s = state ?: return false
-        if (raw || !autoCorrect || composing.isNotEmpty()) return false
-        if (after.isNotEmpty() && Character.isLetterOrDigit(after.codePointAt(0))) return false
+        if (!mayOpen() || !endsWord(after, 0)) return false
         val m = WORD_END.find(tail) ?: return false
         val start = m.range.first
         if (start == 0 && !wholeField) return false  // it may begin before what the typist holds
         val word = m.value
+        tail.setLength(start)
+        val keys = replay(word)
+        if (keys == null) {
+            tail.append(word)
+            state?.setContext(context())
+            return false
+        }
+        editor.deleteBefore(word.codePointCount(0, word.length))
+        editor.setComposing(word)
+        opened(word, word, keys)
+        return true
+    }
+
+    /**
+     * The cursor was put inside a word (a tap there): as on Laban Key, the word is underlined
+     * and the strip offers what it may be ("xin": xin lỗi, xịn), and a pick replaces the whole
+     * word. The word itself stays as it is: any key ends it where it is and goes in at the
+     * cursor. Only a whole word, as [reopenBefore] opens, that its keys make again exactly.
+     * `after` is what follows the cursor ([TOUCH_READ] characters of it). Returns whether a
+     * word was opened.
+     */
+    fun touch(after: String): Boolean {
+        if (!mayOpen()) return false
+        val m = WORD_END.find(tail) ?: return false
+        val rest = WORD_START.find(after) ?: return false
+        val end = rest.range.last + 1
+        if (end == after.length && after.length >= TOUCH_READ) return false  // it may go on
+        if (!endsWord(after, end)) return false
+        val start = m.range.first
+        if (start == 0 && !wholeField) return false
+        val head = m.value  // read before the tail is cut: the match reads it
+        val word = head + rest.value
+        tail.setLength(start)
+        val keys = replay(word)
+        if (keys == null) {
+            tail.append(head)
+            state?.setContext(context())
+            return false
+        }
+        editor.markWord(head.length, rest.value.length)
+        touchedAfter = rest.value.length
+        spaceFollows = end < after.length && after[end].isWhitespace()
+        followed = after.substring(end).trimStart().firstOrNull()?.isLetterOrDigit() == true
+        opened(word, head, keys)
+        return true
+    }
+
+    private fun mayOpen() = state != null && !raw && autoCorrect && composing.isEmpty()
+
+    /** Whether a word may end at `at` in `t`: nothing there, or not a letter, digit or joiner ("don't"). */
+    private fun endsWord(t: String, at: Int): Boolean =
+        at >= t.length || !Character.isLetterOrDigit(t.codePointAt(at)) && t[at] !in JOINERS
+
+    /**
+     * The keys that make `word` fed to the core, with the words before it as context; null, and
+     * the core reset, when they make something else.
+     */
+    private fun replay(word: String): String? {
+        val s = state ?: return null
         val keys = StringBuilder()
         for (c in word) keys.append(VietKeys.of(c, s.mode) ?: c.toString())
-        tail.setLength(start)
         s.reset()
         s.setContext(context())
         var shown: String? = ""
@@ -500,27 +586,54 @@ class Typist(
             }
             shown = r.preedit
         }
-        if (shown != word) {
-            s.reset()
-            tail.append(word)
-            s.setContext(context())
-            return false
-        }
-        editor.deleteBefore(word.codePointCount(0, word.length))
-        editor.setComposing(word)
+        if (shown == word) return keys.toString()
+        s.reset()
+        return null
+    }
+
+    /** `word` is the word in progress again; `before` is its part before the cursor. */
+    private fun opened(word: String, before: String, keys: String) {
         composing = word
         // Its marks were typed and kept: it ends as shown, never as its keys.
-        if (keys.toString() != word) {
+        if (keys != word) {
             held = true
             applyKeepForeign()
         }
-        if (pending.endsWith(word)) pending.setLength(pending.length - word.length)
+        if (pending.endsWith(before)) pending.setLength(pending.length - before.length)
         undo = null
-        refused = kept?.takeIf { it == keys.toString() }
+        refused = kept?.takeIf { it == keys }
         run.clear()
         plain.clear()
         spaceAfterWord = false
-        return true
+    }
+
+    /** The word the cursor is inside ends where it is: the field keeps it, the cursor stays in it. */
+    private fun untouch() {
+        followed = false
+        if (touchedAfter == 0) return
+        val before = composing.substring(0, composing.length - touchedAfter)
+        editor.finishComposing()
+        touchedAfter = 0
+        composing = ""
+        tail.append(before)
+        pending.append(before)
+        state?.reset()
+        state?.setContext(context())
+    }
+
+    /**
+     * The word the cursor is inside goes, for what replaces it; returns whether a space follows
+     * it in the field.
+     */
+    private fun dropTouched(): Boolean {
+        followed = false
+        val after = touchedAfter
+        editor.finishComposing()
+        editor.deleteAround(composing.length - after, after)
+        touchedAfter = 0
+        composing = ""
+        state?.reset()
+        return spaceFollows
     }
 
     /**
@@ -531,6 +644,7 @@ class Typist(
      * cursor stay its context.
      */
     fun deleteWord() {
+        untouch()
         spaceAfterWord = false
         undo = null
         plain.clear()
@@ -557,6 +671,7 @@ class Typist(
 
     /** Enter ends the word, then reaches the field: one press does both. */
     fun enter() {
+        untouch()
         spaceAfterWord = false
         undo = null
         val s = state
@@ -592,6 +707,7 @@ class Typist(
      */
     fun finish() {
         val s = state ?: return
+        untouch()  // a word the cursor is inside stays as it is
         val r = s.flush()
         when {
             r.commit.isNotEmpty() && r.commit != composing -> commit(r.commit)
@@ -617,6 +733,8 @@ class Typist(
      * is (-1: not known).
      */
     fun reset(cursor: Int = -1) {
+        touchedAfter = 0
+        followed = false
         plain.clear()
         learnSettled(all = true)
         state?.reset()
@@ -641,6 +759,7 @@ class Typist(
 
     /** Text from a panel (an emoji, a clip): the word in progress ends as it is, then the text. */
     fun insert(text: String) {
+        untouch()
         plain.clear()
         if (composing.isNotEmpty()) finish()
         undo = null
@@ -652,9 +771,21 @@ class Typist(
         state?.setContext(context())
     }
 
-    /** A candidate from the strip, in place of the word in progress, and a space. */
+    /**
+     * A candidate from the strip, in place of the word in progress, and a space (none in place
+     * of a word the cursor was inside when a space follows it).
+     */
     fun pick(word: String) {
         plain.clear()
+        if (touched && dropTouched()) {
+            commit(word)
+            composing = ""
+            state?.setContext(context())
+            undo = null
+            run.clear()
+            spaceAfterWord = false
+            return
+        }
         commit("$word ")
         composing = ""
         state?.reset()
@@ -677,7 +808,9 @@ class Typist(
         run.clear()
         undo = null
         spaceAfterWord = false
-        if (composing.isNotEmpty()) {
+        if (touched) {
+            dropTouched()
+        } else if (composing.isNotEmpty()) {
             editor.setComposing("")
             composing = ""
             state?.reset()
@@ -773,6 +906,15 @@ class Typist(
          * "2nd" or an address.
          */
         private val WORD_END = Regex("(?<![^\\s(\\[{\"“«])\\p{L}[\\p{L}\\p{M}]*$")
+
+        /** The rest of a word the cursor is inside: letters and their marks. */
+        private val WORD_START = Regex("^[\\p{L}\\p{M}]+")
+
+        /** Characters that join letters into one word: a word doesn't end before them. */
+        private const val JOINERS = "'’-_@"
+
+        /** How much after the cursor is read for the word it is inside. */
+        const val TOUCH_READ = 48
 
         private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
 

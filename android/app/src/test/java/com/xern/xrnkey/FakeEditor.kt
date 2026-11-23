@@ -4,7 +4,9 @@ import com.xern.xrnkey.ime.Editor
 
 /**
  * A text field as InputConnection edits it: committed text, then the composing word at the
- * cursor. A commit replaces the composing word; finishing keeps it as text.
+ * cursor, then [after]. A commit replaces the composing word; finishing keeps it as text. A
+ * word marked around the cursor ([markWord]) is the composing word while its text stays where
+ * it is: a commit or a new composing text replaces it whole.
  */
 class FakeEditor(initial: String = "") : Editor {
     val committed = StringBuilder(initial)
@@ -13,20 +15,46 @@ class FakeEditor(initial: String = "") : Editor {
     val log = mutableListOf<String>()
 
     /** What the field shows. */
-    val text: String get() = committed.toString() + composing
+    val text: String get() = committed.toString() + composing + after
+
+    /** A word marked around the cursor: its length before the cursor and after it. */
+    var marked: Pair<Int, Int>? = null
+        private set
+
+    /** The marked word goes, for what replaces it. */
+    private fun replaceMarked() {
+        val (b, a) = marked ?: return
+        committed.setLength(committed.length - b)
+        after = after.drop(a)
+        marked = null
+    }
+
+    override fun markWord(before: Int, after: Int) {
+        marked = before to after
+        log += "mark:$before,$after"
+    }
+
+    override fun deleteAround(before: Int, after: Int) {
+        committed.setLength(maxOf(0, committed.length - before))
+        this.after = this.after.drop(after)
+        log += "deleteAround:$before,$after"
+    }
 
     override fun setComposing(text: String) {
+        replaceMarked()
         composing = text
         log += "compose:$text"
     }
 
     override fun commit(text: String) {
+        replaceMarked()
         composing = ""
         committed.append(text)
         log += "commit:$text"
     }
 
     override fun finishComposing() {
+        marked = null
         committed.append(composing)
         composing = ""
         log += "finish"

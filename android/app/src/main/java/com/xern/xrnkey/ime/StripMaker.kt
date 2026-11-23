@@ -120,14 +120,18 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             null
         }
         val readings = if (m != null) readings(t, m, ctx, run, marked) else emptyList()
-        val guesses = if (m != null) guesses(t, m, ctx, readings, marked, commits) else emptyList()
+        // A word the cursor was put inside, with a word after it: what it may be, never a word
+        // to put between it and the next.
+        val guesses = if (m == null) emptyList() else guesses(t, m, ctx, readings, marked, commits)
+            .filterNot { t.followed && it.kind == Kind.PAIR }
         val picks = emojiFor(t, commits).picks
         // A word finished with its marks, which Space commits as it stands ("banj": bạn): the
         // strip offers what comes after it, as Laban Key does, not the word again.
         if (m != null && commits == null) {
             finished(t, word, marked)?.let {
                 centre = word
-                return alternatives(word, continuations(m, ctx, word, it), guesses, picks, null, vietnamese = false)
+                val follow = if (t.followed) emptyList() else continuations(m, ctx, word, it)
+                return alternatives(word, follow, guesses, picks, null, vietnamese = false)
             }
         }
 
@@ -148,7 +152,9 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             // with it ("em gái", "em bé"; not "em có", "em không", which follow anything).
             val itself = readings.firstOrNull { it.text == word }?.score
             if (itself != null && itself >= FINISHED && syllable >= COMMON && syllable >= asEnglish && m.plainWord(word)) {
-                val follow = continuations(m, ctx, word, itself).filter { goesWith(m, word, it.text.substringAfter(' ')) }
+                val follow = if (t.followed) emptyList() else {
+                    continuations(m, ctx, word, itself).filter { goesWith(m, word, it.text.substringAfter(' ')) }
+                }
                 return alternatives(word, follow, guesses, picks, run, vietnamese)
             }
             // An English word ("love", "ok", "thanks") goes on only with a word that nearly always
@@ -340,6 +346,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         val word = t.shown
         val all = when {
             t.restorable() -> m.restoreWord(ctx, t.keys(), READINGS)
+            // A word the cursor was put inside, with marks: its other readings, to fix it with.
+            marked != null && t.followed -> marked.filter { it.type == Candidate.RESTORED }.take(READINGS)
             marked != null && Normalizer.normalize(word, Normalizer.Form.NFD).none { it in TONES } ->
                 marked.filter { it.type == Candidate.RESTORED && untoned(it.text) == word }.take(READINGS)
             else -> emptyList()
@@ -518,7 +526,8 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
             replaces != null -> t.replaceWith(pick.text, replaces)
             word != null && t.shown.isNotEmpty() -> {
                 t.pick(word)
-                t.insert(pick.text)
+                // A pick inside the text adds no space where one follows: the emoji gets its own.
+                t.insert(if (t.before().lastOrNull()?.isWhitespace() == false) " ${pick.text}" else pick.text)
             }
             t.shown.isEmpty() && t.before().lastOrNull()?.isWhitespace() == false -> t.insert(" ${pick.text}")
             else -> t.insert(pick.text)

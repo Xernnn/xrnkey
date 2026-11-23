@@ -17,6 +17,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.core.view.WindowCompat
@@ -109,6 +110,19 @@ class XrnkeyService :
 
         override fun textAfter(n: Int): String =
             currentInputConnection?.getTextAfterCursor(n, 0)?.toString() ?: ""
+
+        override fun markWord(before: Int, after: Int) {
+            val ic = currentInputConnection ?: return
+            // Where the cursor is now, as the field says (an update may still be on its way).
+            val t = ic.getExtractedText(ExtractedTextRequest().apply { hintMaxChars = 1 }, 0) ?: return
+            if (t.selectionStart < 0 || t.selectionStart != t.selectionEnd) return
+            val at = t.startOffset + t.selectionStart
+            ic.setComposingRegion(at - before, at + after)
+        }
+
+        override fun deleteAround(before: Int, after: Int) {
+            currentInputConnection?.deleteSurroundingText(before, after)
+        }
 
         override fun enter() {
             val info = currentInputEditorInfo
@@ -268,6 +282,13 @@ class XrnkeyService :
                 return
             }
         }
+        // The cursor left a word it was put inside: that word stays as it is.
+        if (typist.touched) {
+            composingStart = -1
+            typist.finish()
+            refresh(newSelStart, reopen = newSelStart == newSelEnd)
+            return
+        }
         // The cursor left the word in progress (a tap elsewhere): the word ends where it is.
         // Some editors (Compose's text fields) report an update without the composing region
         // while the cursor is still at the end of the word: that is not a move, and ending the
@@ -296,14 +317,21 @@ class XrnkeyService :
 
     /**
      * The field changed under the typist: it reads what is before the cursor again. A cursor put
-     * at the end of a word (a tap there) opens that word again, as Backspace into it does.
+     * at the end of a word (a tap there) opens that word again, as Backspace into it does; one
+     * put inside a word opens it for the strip's suggestions. Not while the space bar moves the
+     * cursor: each step would open the word it passes.
      */
     private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
         typist.reset(cursor)
-        if (reopen) edit { typist.reopenBefore(editor.textAfter(1)) }
+        if (reopen && !movingCursor) {
+            edit { typist.reopenBefore(editor.textAfter(1)) || typist.touch(editor.textAfter(Typist.TOUCH_READ)) }
+        }
         showStrip()
     }
+
+    /** The space bar is moving the cursor (between [onCursorStart] and [onCursorEnd]). */
+    private var movingCursor = false
 
     /**
      * One edit of the field by this keyboard: one selection update from the editor, at the
@@ -409,6 +437,7 @@ class XrnkeyService :
     }
 
     override fun onCursorStart() {
+        movingCursor = true
         typist.finish()
         keyboard?.strip = Strip.Tools
     }
@@ -423,10 +452,13 @@ class XrnkeyService :
         press(if (dy < 0) KeyEvent.KEYCODE_DPAD_UP else KeyEvent.KEYCODE_DPAD_DOWN, Math.abs(dy))
     }
 
-    /** The cursor moved: what's before it now is the context for the next word. */
+    /**
+     * The cursor moved: what's before it now is the context for the next word, and the word it
+     * stopped at or in opens, as after a tap.
+     */
     override fun onCursorEnd() {
-        typist.reset()
-        showStrip()
+        movingCursor = false
+        refresh(-1, reopen = true)
     }
 
     override fun onStripMenu() {

@@ -108,23 +108,90 @@ class ServiceTypingTest {
 
     /**
      * A tap that puts the cursor at the end of a word opens it again: it is the composing word,
-     * and Telex marks it ("chao" + s is "cháo"). A tap inside a word leaves it as it is.
+     * and Telex marks it ("chao" + s is "cháo").
      */
     @Test
     fun aTapAtTheEndOfAWordOpensItAgain() {
         val (s, edit) = field()
         s.typeReported(edit, "xin chao ban ")
-        edit.setSelection(6)
-        s.onUpdateSelection(13, 13, 6, 6, -1, -1)
-        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
         edit.setSelection(8)
-        s.onUpdateSelection(6, 6, 8, 8, -1, -1)
+        s.onUpdateSelection(13, 13, 8, 8, -1, -1)
         assertEquals("xin chao ban ", edit.text.toString())
         assertEquals(4, BaseInputConnection.getComposingSpanStart(edit.text))
         assertEquals(8, BaseInputConnection.getComposingSpanEnd(edit.text))
         assertEquals("chao", s.typist.shown)
         s.onText("s")
         assertEquals("xin cháo ban ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /** Reports the field's selection and composing region now, as the editor does after an edit. */
+    private fun XrnkeyService.report(edit: EditText, old: Int) {
+        val e = edit.text
+        onUpdateSelection(old, old, edit.selectionStart, edit.selectionEnd, BaseInputConnection.getComposingSpanStart(e), BaseInputConnection.getComposingSpanEnd(e))
+    }
+
+    /**
+     * A tap inside a word opens it for the strip: the field underlines it whole and the cursor
+     * stays where the finger put it. A pick replaces the word; a tap elsewhere leaves it as it
+     * was; a key goes in at the cursor.
+     */
+    @Test
+    fun aTapInsideAWordOpensItForTheStrip() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        edit.setSelection(6)
+        s.onUpdateSelection(13, 13, 6, 6, -1, -1)
+        s.report(edit, 6)
+        assertEquals("xin chao ban ", edit.text.toString())
+        assertEquals(6, edit.selectionStart)
+        assertEquals(4, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(8, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertTrue(s.typist.touched)
+        assertEquals("chao", s.typist.shown)
+        s.onMorePick("chào")
+        s.report(edit, 6)
+        assertEquals("xin chào ban ", edit.text.toString())
+        assertEquals(8, edit.selectionStart)
+        assertEquals(false, s.typist.touched)
+        // A tap elsewhere: the word stays as it was.
+        edit.setSelection(10)
+        s.onUpdateSelection(8, 8, 10, 10, -1, -1)
+        s.report(edit, 10)
+        assertEquals("ban", s.typist.shown)
+        edit.setSelection(1)
+        s.onUpdateSelection(10, 10, 1, 1, 9, 12)
+        s.report(edit, 1)
+        assertEquals("xin chào ban ", edit.text.toString())
+        assertEquals("xin", s.typist.shown)
+        // A key ends it there and goes in at the cursor.
+        s.onText("a")
+        s.report(edit, 1)
+        assertEquals("xain chào ban ", edit.text.toString())
+        assertEquals(2, edit.selectionStart)
+        s.onDestroy()
+    }
+
+    /**
+     * The space bar moving the cursor opens no word on the way, only the one where it stops:
+     * each step used to open (and rewrite) the word it passed.
+     */
+    @Test
+    fun theSpaceBarOpensOnlyTheWordWhereTheCursorStops() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        s.onCursorStart()
+        edit.setSelection(8)
+        s.onUpdateSelection(13, 13, 8, 8, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        edit.setSelection(3)
+        s.onUpdateSelection(8, 8, 3, 3, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        s.onCursorEnd()
+        assertEquals("xin", s.typist.shown)
+        assertEquals(0, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(3, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertEquals("xin chao ban ", edit.text.toString())
         s.onDestroy()
     }
 

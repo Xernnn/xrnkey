@@ -159,6 +159,34 @@ class StripMakerTest {
     }
 
     /**
+     * A tap inside a word with a word after it offers what the word may be, to fix it with, not
+     * what may come between it and the next word: "bạn" in "bạn be" has its other tones, "nay"
+     * in "hom nay troi" its readings, none of them "nay là".
+     */
+    @Test
+    fun aWordTappedInsideOffersWhatItMayBe() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            for ((text, at, want) in listOf(Triple("banj be ", 1, "bàn"), Triple("hom nay troi dep ", 5, "này"))) {
+                val f = FakeEditor()
+                val t = Typist(TypingState().also { it.useModels(m.models) }, f, m.models).also { it.reset() }
+                t.text(text)
+                t.finish()
+                val all = f.text
+                f.committed.setLength(0)
+                f.committed.append(all.take(at))
+                f.after = all.drop(at)
+                t.reset(at)
+                assertTrue(t.touch(f.textAfter(Typist.TOUCH_READ)))
+                val shown = StripMaker(m.models).make(t) as Strip.Candidates
+                val offered = shown.slots() + shown.extra
+                assertTrue("$text: $offered", want in offered)
+                assertTrue("$text: $offered", offered.none { it != null && it.startsWith(t.shown + " ") })
+            }
+        }
+    }
+
+    /**
      * A word finished at a sentence's start is continued much as it would be anywhere. The
      * models learnt how sentences start from written text ("Làm thế nào", "Ngày nay", "Bạn có
      * thể"): counted in full, that put "làm thế" and "ngày nay" in the middle for the first word

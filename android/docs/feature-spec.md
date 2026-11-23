@@ -171,7 +171,16 @@ keyboard's hide button.
     gesture and closes the keyboard, as on the reference. A swipe from the key's left part, or
     one that rests a moment first, deletes.
 - **A tap at the end of a word** opens it again the same way (the cursor moved there by the
-  finger, with nothing selected); a tap inside a word leaves it as it is.
+  finger or the space bar, with nothing selected).
+- **A tap inside a word** opens it for the strip, as on Laban Key: the whole word is underlined,
+  the cursor stays where the finger put it, and the strip offers what the word may be. With a
+  word after it, that is its other readings (`nay` in "hom nay troi": này, nảy; `bạn` in
+  "bạn be": bàn, bán, bản), never a word to put between it and the next; at the end of the text,
+  what may follow it, as after Backspace. A pick replaces the whole word, with a space only
+  where none follows it already. The word itself stays as it is: any key ends it where it is
+  and goes in at the cursor (`x|in` + `a` is `xain`), and so does moving the cursor away. Only
+  a whole word opens, as at its end (not inside `don't` or `e-mail`), and only one shorter than
+  48 letters after the cursor.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
 - **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a

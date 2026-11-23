@@ -166,6 +166,86 @@ class TypistTest {
         assertEquals("viết xin chà ", f.text)
     }
 
+    /** The cursor put at `at` in the field (a tap there), as the service then opens a word. */
+    private fun tap(f: FakeEditor, t: Typist, at: Int): Boolean {
+        t.finish()
+        val all = f.text
+        f.committed.setLength(0)
+        f.committed.append(all.take(at))
+        f.after = all.drop(at)
+        t.reset(at)
+        return t.reopenBefore(f.textAfter(1)) || t.touch(f.textAfter(Typist.TOUCH_READ))
+    }
+
+    /**
+     * A tap inside a word opens it as Laban Key does: underlined, the cursor where the finger put
+     * it, the text as it was. A pick replaces the whole word, with no second space before the
+     * space that follows it; any key ends it where it is and goes in at the cursor.
+     */
+    @Test
+    fun aTapInsideAWordOpensItWhole() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("xin chao ban")
+        assertTrue(tap(f, t, 6))
+        assertEquals("xin chao ban", f.text)
+        assertEquals(2 to 2, f.marked)
+        assertTrue(t.touched)
+        assertEquals("chao", t.shown)
+        assertEquals(6, t.cursor())
+        assertEquals(listOf("<s>", "xin"), t.context())
+        t.pick("chào")
+        assertEquals("xin chào ban", f.text)
+        assertEquals("xin chào", f.committed.toString())
+        assertEquals(8, t.cursor())
+        // Inside the last word: nothing follows, so the pick gets its space.
+        assertTrue(tap(f, t, 10))
+        assertEquals("ban", t.shown)
+        t.pick("bạn")
+        assertEquals("xin chào bạn ", f.text)
+        // A key ends the word where it is and goes in at the cursor.
+        assertTrue(tap(f, t, 1))
+        assertEquals("xin", t.shown)
+        t.text("a")
+        assertEquals("xain chào bạn ", f.text)
+        assertEquals(null, f.marked)
+        assertEquals(false, t.touched)
+        // Backspace too.
+        assertTrue(tap(f, t, 6))
+        t.backspace()
+        assertEquals("xain hào bạn ", f.text)
+    }
+
+    /** Only a whole word opens: not "don't" from inside, not part of a long run of letters. */
+    @Test
+    fun aTapInsideOpensOnlyAWholeWord() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("don't e-mail ")
+        assertEquals(false, tap(f, t, 2))
+        assertEquals(false, tap(f, t, 8))
+        assertEquals("don't e-mail ", f.text)
+        assertEquals("", t.shown)
+        val g = FakeEditor("x " + "b".repeat(Typist.TOUCH_READ + 5))
+        val u = typist(g)
+        assertEquals(false, tap(g, u, 10))
+        assertEquals(null, g.marked)
+    }
+
+    /** Leaving a word the cursor was inside keeps it as it is: the cursor moving on, or the field. */
+    @Test
+    fun aWordTheCursorWasInsideStaysAsItIs() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("toi khong biet")
+        assertTrue(tap(f, t, 6))
+        assertEquals("khong", t.shown)
+        t.finish()
+        assertEquals("toi khong biet", f.text)
+        assertEquals("toi kh", f.committed.toString())
+        assertEquals("", t.shown)
+    }
+
     /**
      * Only a whole word opens again, and only as it was: not the end of "don't" or "e-mail", not
      * a word the cursor is inside, not one its keys would make differently ("Đ" + "ượ" ... is
