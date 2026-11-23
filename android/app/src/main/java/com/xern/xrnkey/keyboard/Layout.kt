@@ -19,6 +19,21 @@ enum class KeyKind {
 
     /** The symbol pages' "1234": their number pad. */
     NUMPAD,
+
+    /** The 12-key pad's kana keys: a tap types [Key.text], a flick one of [Key.flicks]. */
+    KANA,
+
+    /** The 12-key pad's ゛゜小: the last kana in its next form (か が, は ば ぱ, つ っ づ). */
+    KANA_MARK,
+
+    /** The 12-key pad's ↺: the last kana a step back along its key's toggle. */
+    UNDO,
+
+    /** The 12-key pad's ◀ and ▶: the cursor a character left or right. */
+    LEFT, RIGHT,
+
+    /** The 12-key pad's 🌐: the keyboard and language menu, as holding the comma opens it. */
+    GLOBE,
 }
 
 data class Key(
@@ -34,9 +49,16 @@ data class Key(
      * finger and is typed if the finger lifts without moving, the rest around it to slide to.
      */
     val variants: List<String> = emptyList(),
+    /** A kana key's flicks: what a slide left, up, right or down types ("" for none). */
+    val flicks: List<String> = emptyList(),
+    /** A kana key's toggle: what each tap of it in turn types, from [text] on (Flick.TOGGLE_MILLIS). */
+    val toggle: String = "",
 ) {
     /** What holding it and letting go types, if anything. */
     val hold: String? get() = variants.firstOrNull()
+
+    /** What a kana key types for a direction ([Flick.TAP], [Flick.LEFT] ...): "" for none. */
+    fun flick(direction: Int): String = if (direction == Flick.TAP) text else flicks.getOrElse(direction - 1) { "" }
 }
 
 data class Row(val keys: List<Key>, /** Empty space at each end, in letter keys. */ val inset: Float = 0f) {
@@ -50,7 +72,10 @@ enum class Page {
     NUMPAD,
 
     /** The pads, for number, phone and date fields: no strip, big keys. */
-    NUMBER, PHONE, DATETIME;
+    NUMBER, PHONE, DATETIME,
+
+    /** The Japanese 12-key pad (flick input): kana in a 3 by 4 grid, function keys either side. */
+    KANA;
 
     val isPad: Boolean get() = this == NUMBER || this == PHONE || this == DATETIME
 }
@@ -144,12 +169,19 @@ object Layouts {
      */
     private fun symbolBottom(home: Page, own: List<Key>) = Row(
         listOf(
-            Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 1.5f),
+            Key(KeyKind.LETTERS, backLabel(home), width = 1.5f),
             Key(KeyKind.COMMA, ",", text = ","),
             Key(KeyKind.NUMPAD, "1234"),
             Key(KeyKind.SPACE, width = 3f, text = " "),
         ) + own + Key(KeyKind.ENTER, width = 1.5f),
     )
+
+    /** The symbol pages' way back: to the field's pad, the 12-key pad, or the letters. */
+    private fun backLabel(home: Page) = when {
+        home.isPad -> "123"
+        home == Page.KANA -> "あいう"
+        else -> "ABC"
+    }
 
     /** The full stop on a symbol page: the rest of the punctuation is on the page; holding it gives … */
     private val symbolStop get() = Key(KeyKind.PERIOD, ".", text = ".", variants = listOf("…"))
@@ -260,6 +292,7 @@ object Layouts {
             ),
             symbolBottom(home, symbols("< >")),
         )
+        Page.KANA -> Flick.rows
         // , 1 2 3 - / ( 4 5 6 . / ) 7 8 9 ⌫ / ABC ?123 0 space ↵, two letter keys a cell.
         Page.NUMPAD -> listOf(
             Row(listOf(cell(","), cell("1"), cell("2"), cell("3"), cell("-"))),
@@ -267,7 +300,7 @@ object Layouts {
             Row(listOf(cell(")"), cell("7"), cell("8"), cell("9"), Key(KeyKind.BACKSPACE, width = 2f))),
             Row(
                 listOf(
-                    Key(KeyKind.LETTERS, if (home.isPad) "123" else "ABC", width = 2f),
+                    Key(KeyKind.LETTERS, backLabel(home), width = 2f),
                     Key(KeyKind.SYMBOLS, "?123", width = 2f),
                     cell("0"),
                     Key(KeyKind.SPACE, width = 2f, text = " "),
@@ -352,6 +385,80 @@ object PopupGrid {
             if (d < bestD) { best = i; bestD = d }
         }
         return best
+    }
+}
+
+/**
+ * The Japanese 12-key pad, as Gboard's (android/docs/feature-spec.md, "The 12-key pad"): あ か さ /
+ * た な は / ま や ら / ゛゜小 わ 、。?! in the middle, ↺ ◀ ?123 🌐 down the left and ⌫ ▶ space
+ * Enter down the right. A tap types a key's あ-column kana, a slide left, up, right or down its
+ * い, う, え or お one (か: き く け こ); tapped again in time, the same key steps along its toggle
+ * (あ い う え お ぁ ぃ ぅ ぇ ぉ).
+ */
+object Flick {
+    /** The directions: a tap, then the four flicks, as [Key.flicks] lists them. */
+    const val TAP = 0
+    const val LEFT = 1
+    const val UP = 2
+    const val RIGHT = 3
+    const val DOWN = 4
+
+    /** How far a finger slides, in dp, before a tap is a flick: a wobble is still a tap. */
+    const val THRESHOLD_DP = 24f
+
+    /** How soon the same key's next tap is a toggle step, not a new kana. */
+    const val TOGGLE_MILLIS = 1000L
+
+    /** The side columns' and the kana keys' widths, in letter keys: 1.7 + 3 × 2.2 + 1.7 = 10. */
+    private const val SIDE = 1.7f
+    private const val WIDE = 2.2f
+
+    /**
+     * A kana key: [flicks] its left, up, right and down kana (a space where it has none), and its
+     * toggle the tap's kana, then the flicks', then [more] (the small ones).
+     */
+    private fun kana(label: String, flicks: String, more: String = "", text: String = label) = Key(
+        KeyKind.KANA, label, WIDE, text,
+        flicks = flicks.map { if (it == ' ') "" else it.toString() },
+        toggle = text + flicks.filter { it != ' ' } + more,
+    )
+
+    private fun side(kind: KeyKind, label: String = "") = Key(kind, label, SIDE)
+
+    /** The kana keys, in reading order. や and わ have brackets and ー where the columns have gaps. */
+    val keys: List<Key> = listOf(
+        kana("あ", "いうえお", more = "ぁぃぅぇぉ"),
+        kana("か", "きくけこ"),
+        kana("さ", "しすせそ"),
+        kana("た", "ちつてと", more = "っ"),
+        kana("な", "にぬねの"),
+        kana("は", "ひふへほ"),
+        kana("ま", "みむめも"),
+        // や: （ ゆ ） よ, but its toggle is や ゆ よ and the small ones; わ's ends with ー.
+        kana("や", "（ゆ）よ").copy(toggle = "やゆよゃゅょ"),
+        kana("ら", "りるれろ"),
+        kana("わ", "をんー ").copy(toggle = "わをんゎー"),
+        kana("、。?!", "。？！ ", text = "、"),
+    )
+
+    val rows: List<Row> = listOf(
+        Row(listOf(side(KeyKind.UNDO)) + keys.subList(0, 3) + side(KeyKind.BACKSPACE)),
+        Row(listOf(side(KeyKind.LEFT)) + keys.subList(3, 6) + side(KeyKind.RIGHT)),
+        Row(listOf(side(KeyKind.SYMBOLS, "?123")) + keys.subList(6, 9) + Key(KeyKind.SPACE, width = SIDE, text = " ")),
+        Row(listOf(side(KeyKind.GLOBE), Key(KeyKind.KANA_MARK, "゛゜小", WIDE)) + keys.subList(9, 11) + side(KeyKind.ENTER)),
+    )
+
+    /** The toggle a kana is on (each is on one), for ↺: null for one no key types (が). */
+    fun toggleOf(c: Char): String? = keys.firstOrNull { c in it.toggle }?.toggle
+
+    /**
+     * Where a finger [dx], [dy] from where it went down points: a tap within [threshold], else
+     * the way it went furthest.
+     */
+    fun direction(dx: Float, dy: Float, threshold: Float): Int = when {
+        dx * dx + dy * dy < threshold * threshold -> TAP
+        Math.abs(dx) >= Math.abs(dy) -> if (dx < 0) LEFT else RIGHT
+        else -> if (dy < 0) UP else DOWN
     }
 }
 

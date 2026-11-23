@@ -297,7 +297,57 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         }
     }
 
+    // ---- the 12-key pad (flick input): its ways into the reading -------------------------------
+
+    /**
+     * A kana from the 12-key pad, tapped or flicked, or its 、。？！: it starts the reading, even
+     * with nothing composing (where the QWERTY keys' 、 would go straight in), or goes on with it,
+     * so a toggle can step it and Space converts it with the rest. After Space, the conversion
+     * shown is committed first, as a letter commits it. A reading of punctuation alone is
+     * committed before a kana, so the next sentence starts a reading of its own.
+     */
+    fun flick(k: String) {
+        if (converting) {
+            commitShown()
+        } else if (!romaji.isEmpty() && romaji.reading.all { it in PAD_PUNCTUATION } && k.none { it in PAD_PUNCTUATION }) {
+            commit(romaji.reading)
+            clearReading()
+        }
+        for (c in k) romaji.type(c)
+        show(romaji.shown)
+    }
+
+    /** The reading's last kana, or null (nothing composing, or romaji letters still waiting). */
+    val lastKana: Char? get() = if (romaji.pending.isEmpty()) romaji.shown.lastOrNull() else null
+
+    /**
+     * The reading's last kana steps [by] along [cycle] (a key's toggle: a tap of it again, or ↺
+     * back), if it is on it. After Space, the reading comes back first. False when it isn't.
+     */
+    fun step(cycle: String, by: Int): Boolean {
+        val i = lastKana?.let { cycle.indexOf(it) } ?: -1
+        if (i < 0) return false
+        replaceLast(cycle[(i + by).mod(cycle.length)])
+        return true
+    }
+
+    /** ゛゜小: the reading's last kana in its next form (ja.Kana). False when it has none. */
+    fun mark(): Boolean {
+        val next = lastKana?.let { com.xern.xrnkey.ja.Kana.nextForm(it) } ?: return false
+        replaceLast(next)
+        return true
+    }
+
+    private fun replaceLast(c: Char) {
+        stopConverting()
+        romaji.backspace()
+        romaji.type(c)
+        show(romaji.shown)
+    }
+
     companion object {
+        /** The 12-key pad's punctuation key's 、。？！. */
+        private const val PAD_PUNCTUATION = "、。？！"
         private const val TAIL = 120
 
         /** Gboard's default space in Japanese: full-width. */

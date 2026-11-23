@@ -100,7 +100,7 @@ class JapaneseServiceTest {
         val f = field()
         val line = ShadowLog.getLogsForTag("xrnkey").map { it.msg }.single { it.startsWith("dictionary: ") }
         assertTrue(line, Regex("dictionary: ja\\.xkdic at \\d+ \\(\\d+ bytes\\)").matches(line))
-        assertEquals(listOf("vi", "en", "ja"), f.keys.languages)
+        assertEquals(listOf("vi", "en", "ja", Options.FLICK), f.keys.languages)
         f.service.onDestroy()
         val none = field(assets = false)
         assertEquals(listOf("vi", "en"), none.keys.languages)

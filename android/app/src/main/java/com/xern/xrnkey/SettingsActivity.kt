@@ -570,6 +570,8 @@ class SettingsActivity : ComponentActivity() {
                 Toggle("Swipe space bar", o.spaceSwipe) { set(o.copy(spaceSwipe = it)) }
                 Toggle("Hold comma", o.commaHold) { set(o.copy(commaHold = it)) }
             }
+            // The Japanese 12-key pad's.
+            Card { Toggle("Toggle input", o.kanaToggle) { set(o.copy(kanaToggle = it)) } }
         }
 
         @Composable
