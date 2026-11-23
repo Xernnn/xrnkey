@@ -47,20 +47,27 @@ class AutoCorrectTest {
     }
 
     /**
-     * A word that opens again ends as it did: "of" (English, kept) would come back as "ò" through
-     * its keys, so it stays as it is; a picked "ò" opens as "ò" and stays "ò".
+     * A word that opens again ends as it did. Backspace right after a Space brings back what was
+     * shown before it: "of" showed "ò" until Space made it English, so "ò" comes back and stays.
+     * Once that moment has passed, "of" (English, kept) would come back as "ò" through its keys,
+     * so it stays as it is; a picked "ò" opens as "ò" and stays "ò".
      */
     @Test
     fun aWordOpensAgainOnlyAsItWas() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
         t.text("of ")
         t.backspace()
-        assertEquals("of", f.text)
+        assertEquals("ò", f.composing)
+        t.text(" ")
+        assertEquals("ò ", f.text)
+        t.text("of x")
+        t.backspace(); t.backspace()
+        assertEquals("ò of", f.text)
         assertEquals("", f.composing)
         t.text(" ò"); t.text(" ")
         t.backspace()
         assertEquals("ò", f.composing)
         t.text(" ")
-        assertEquals("of ò ", f.text)
+        assertEquals("ò of ò ", f.text)
     }
 
     /** With "Non-Vietnamese as typed" off, a held form's word leaves it off for the next. */
@@ -136,13 +143,40 @@ class AutoCorrectTest {
     }
 
     /**
-     * Chat's spellings stay as typed, marks and all, as on Laban Key: "đơu" (đâu) and "zậy"
-     * (vậy) fell back to their keys, as English words do, once the u came or the z went first.
+     * Chat's spellings stay as typed, marks and all, as on Laban Key: "đơu" (đâu), "zậy" (vậy),
+     * "kái" (cái), "ngèo" (nghèo) fell back to their keys, as English words do, once the
+     * spelling went outside quốc ngữ.
      */
     @Test
     fun chatSpellingsKeepTheirMarks() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
-        t.text("ddowu zaayj dzaayj ")
-        assertEquals("đơu zậy dzậy ", f.text)
+        t.text("ddowu zaayj dzaayj kais ngeof ")
+        assertEquals("đơu zậy dzậy kái ngèo ", f.text)
+    }
+
+    /**
+     * A word whose marks Space took away (its keys are English: "wá" ends "was") comes back as
+     * shown with Backspace right after, open to go on with, and the next Space keeps it. After
+     * punctuation, Backspace puts the word back as shown, the punctuation kept.
+     */
+    @Test
+    fun backspaceAfterSpaceBringsBackTheMarks() = TestModels.test().use { m ->
+        TypingState().use { s ->
+            s.useModels(m.models)
+            s.setOption(TypingState.OPT_W_SHORTCUT, false)
+            val f = FakeEditor()
+            val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_OFF; it.reset() }
+            t.text("was ")
+            assertEquals("was ", f.text)
+            t.backspace()
+            assertEquals("wá", f.composing)
+            assertEquals("wá", f.text)
+            t.text(" ")
+            assertEquals("wá ", f.text)
+            t.text("was,")
+            assertEquals("wá was,", f.text)
+            t.backspace()
+            assertEquals("wá wá,", f.text)
+        }
     }
 
     @Test

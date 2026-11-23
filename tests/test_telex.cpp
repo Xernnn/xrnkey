@@ -259,18 +259,24 @@ TEST_CASE("Telex still composes real Vietnamese syllables", "[telex]") {
     }
 }
 
-/* Chat spells some words outside quốc ngữ, typing their marks on purpose:
- * "đơu" for đâu, "zậy" and "dzậy" for vậy. They used to fall back to their
- * keys as an English word does once the u came ("ddowu"), or never took the
- * mark ("zaa"). Laban Key keeps them. English words that start the same way
- * still end as English. */
+/* Chat spells words outside quốc ngữ, typing their marks on purpose: "đơu"
+ * for đâu, "zậy" and "dzậy" for vậy, "kái" for cái, "ngèo" for nghèo, "wá"
+ * for quá. They used to fall back to their keys as an English word does once
+ * the spelling went wrong ("ddowu", "kais", "ngeof"), or never took the mark
+ * ("zaa"). Typing now takes Vietnamese onsets (and z, dz, w, f, j) before any
+ * rime, so marks and tones always land; a word whose keys are English still
+ * ends as English, and onsets or codas Vietnamese has none of still leave a
+ * word as typed. */
 TEST_CASE("Telex keeps the spellings chat uses", "[telex]") {
     struct Case { const char* keys; const char* want; };
     const Case cases[] = {
         {"ddowu", "đơu "},   {"ddowus", "đớu "},  {"ddoou", "đôu "},
         {"zaayj", "zậy "},   {"dzaayj", "dzậy "}, {"zeef", "zề "},
-        {"zui", "zui "},     {"zoom", "zoom "},   {"zone", "zone "},
-        {"zero", "zero "},
+        {"zui", "zui "},     {"kais", "kái "},    {"ngeof", "ngèo "},
+        {"quaas", "quấ "},   {"moaf", "mòa "},    {"fair", "fair "},
+        {"zoom", "zoom "},   {"zone", "zone "},   {"zero", "zero "},
+        {"text", "text "},   {"user", "user "},   {"law", "law "},
+        {"just", "just "},   {"word", "word "},   {"ckoongf", "ckoongf "},
     };
     for (const auto& c : cases) {
         XKState* s = make_telex();
@@ -278,6 +284,16 @@ TEST_CASE("Telex keeps the spellings chat uses", "[telex]") {
         REQUIRE(process_string(s, c.keys) == c.want);
         xk_state_free(s);
     }
+    /* With w alone a letter (Laban Key's simple Telex): "wá" while typed;
+     * its keys are English, so Space ends it "was". */
+    XKState* s = make_telex();
+    xk_state_set_option(s, XK_OPT_W_SHORTCUT, 0);
+    REQUIRE(process_string(s, "waf") == "wà ");
+    std::string shown;
+    for (const char* p = "was"; *p; ++p) shown = xk_process_key(s, static_cast<uint32_t>(*p), 0).preedit;
+    REQUIRE(shown == "wá");
+    REQUIRE(std::string(xk_process_key(s, 0x20, 0).commit) == "was ");
+    xk_state_free(s);
 }
 
 /* Enter used to be unhandled: it reached the application while the composing

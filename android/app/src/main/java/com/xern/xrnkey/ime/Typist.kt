@@ -377,8 +377,16 @@ class Typist(
         val hadWord = composing.isNotEmpty()
         // A number ends like a word: two spaces after "1" give "1. ", as Laban Key does.
         val afterNumber = !hadWord && tail.isNotEmpty() && tail.last().isDigit()
+        val shown = composing
+        val typed = if (hadWord) keys() else ""
         val r = s.key(c.code)
         apply(r) { commit(c.toString()) }
+        // The core ended the word as something else than it showed (its keys as English: "wá"
+        // ends "was"): Backspace right after brings back what was shown, open again after a
+        // Space ("was␣⌫" is "wá"), and the next Space keeps it.
+        if (hadWord && isSeparator(c) && composing.isEmpty() && r.commit.endsWith(c) && r.commit != shown + c) {
+            undo = if (c == ' ') Undo("", r.commit, reopen = typed) else Undo(shown + c, r.commit)
+        }
         // A word the core finished (typed with marks), or a key that is not a letter, ends the
         // run; the letters of the next word do not.
         if (r.commit.isNotEmpty() || !r.consumed || !c.isLetter()) {
@@ -466,6 +474,11 @@ class Typist(
             u.reopen?.let { keys ->
                 for (k in keys) apply(s.key(k.code))
                 refused = keys
+                // Its marks came back with it: it ends as shown, never as its keys.
+                if (composing != keys) {
+                    held = true
+                    applyKeepForeign()
+                }
             }
             return
         }
