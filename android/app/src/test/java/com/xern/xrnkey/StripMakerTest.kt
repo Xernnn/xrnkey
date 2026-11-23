@@ -441,6 +441,33 @@ class StripMakerTest {
     }
 
     /**
+     * After a Space, words typed without marks are read as they most likely stand for what may
+     * come next: "hom nay troi dep" is "hôm nay trời đẹp", so "quá" comes next (the test text has
+     * "Hôm nay trời đẹp quá"), where the letters, which the Vietnamese model has rarely seen, gave
+     * whatever is common anywhere, English with the real models ("cam on": vi, the).
+     */
+    @Test
+    fun afterASpaceWordsTypedWithoutMarksAreReadForWhatComesNext() {
+        TestModels.test().use { m ->
+            val shown = strip(m, "hom nay troi dep ").shown
+            assertTrue(shown.slots().toString(), "quá" in shown.slots())
+            val thanks = strip(m, "cam on ban ").shown
+            assertTrue(thanks.slots().toString(), "rất" in thanks.slots())
+        }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            val camOn = strip(m, "cam on ").shown
+            assertTrue(camOn.slots().toString(), "bạn" in camOn.slots())
+            // A phrase only on the word as it reads: after "trời đẹp qua" ("quá") no "qua đời".
+            val qua = strip(m, "hom nay troi dep qua ").shown
+            assertTrue(qua.slots().toString(), qua.slots().none { it?.startsWith("qua ") == true })
+            // A sentence of one word that is a word as typed stays so: "bao" -> bao giờ, bao nhiêu.
+            val bao = strip(m, "bao ").shown
+            assertTrue(bao.slots().toString(), bao.slots().any { it == "bao giờ" || it == "bao nhiêu" })
+        }
+    }
+
+    /**
      * Laban's middle for letters typed without marks is mostly a reading alone, with the reading
      * and its next word at a side, and a longer Vietnamese word when that is likelier: "toan" ->
      * toàn (xrnkey had "toàn bộ"), "vi" -> việc (xrnkey had "vì"), "ngu" -> người (had "ngủ").

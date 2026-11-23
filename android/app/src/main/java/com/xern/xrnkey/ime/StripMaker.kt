@@ -412,17 +412,20 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
     }
 
     /**
-     * After a word and a space: the likeliest next words in context (the two words before), the
-     * likeliest in the middle. One that goes with the word before as a phrase shows with it, that
-     * word in grey, as Laban Key mixes them: "một" -> một số, một mình, ..., but "tôi" -> về, đi.
-     * A tap adds the next word. A word hidden with the remove mark, alone or as its phrase, is
-     * left out.
+     * After a word and a space: the likeliest next words in context (the two words before, as
+     * [readContext] reads them), the likeliest in the middle. One that goes with the word before
+     * as a phrase shows with it, that word in grey, as Laban Key mixes them: "một" -> một số,
+     * một mình, ..., but "tôi" -> về, đi. A tap adds the next word. A word hidden with the remove
+     * mark, alone or as its phrase, is left out.
      */
     private fun next(t: Typist): Strip {
         val m = models!!
-        val last = t.wordBefore()?.takeIf { w -> w.any { it.isLetter() } }
+        val ctx = readContext(m, t)
+        // A word typed without marks makes a phrase only when it reads as it is typed: after
+        // "trời đẹp qua" ("quá"), "qua đời" is not what was meant, and the field keeps "qua".
+        val last = t.wordBefore()?.takeIf { w -> w.any { it.isLetter() } && w.equals(ctx.lastOrNull(), ignoreCase = true) }
         // Each next word with what its slot shows: the word, or the phrase it makes.
-        val words = m.predict(t.context(), 3 + HIDDEN_SLACK).asSequence().filterNot(hidden)
+        val words = m.predict(ctx, 3 + HIDDEN_SLACK).asSequence().filterNot(hidden)
             .map { w -> w to if (last != null && goesWith(m, last, w)) "$last $w" else w }
             .filterNot { hidden(it.second) }.take(3).toList()
         if (words.isEmpty()) return Strip.Tools
@@ -430,6 +433,26 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
         offered = order.map { w -> w?.let { Pick(it.first) } }
         val shown = order.map { it?.second }
         return Strip.Candidates(shown[0], shown[1], shown[2], bold = false, grey = last?.let { greys(it, shown) } ?: emptyList())
+    }
+
+    /**
+     * The words before the cursor as the models read them ([Typist.context]), with the words at
+     * the end of the sentence typed without marks read together as they most likely stand
+     * ("chuc mung sinh nhat": "chúc mừng sinh nhật"; "i love you" stays). As letters, the
+     * Vietnamese model has rarely seen them, and what came next was English ("and", "tag"). A
+     * sentence of one such word that is a word as it stands stays so: with nothing around it,
+     * "bao" is as likely "bao" (bao giờ) as "báo"; "khoc" is "khóc".
+     */
+    private fun readContext(m: Models, t: Typist): List<String> {
+        val ctx = t.context()
+        val bare = ctx.takeLastWhile { it != "<s>" && plain(it) }.size
+        if (bare == 0) return ctx
+        val text = t.before()
+        val sentence = text.substring(text.indexOfLast { it == '.' || it == '!' || it == '?' || it == '\n' } + 1)
+        val run = WORD.findAll(sentence).map { it.value }.toList().takeLastWhile(::plain).takeLast(RUN)
+        if (run.size < bare || (run.size == 1 && t.context(1).all { it == "<s>" } && m.plainWord(run[0]))) return ctx
+        val read = m.restoreRun(t.context(run.size), run)?.takeIf { it.size == run.size } ?: return ctx
+        return ctx.dropLast(bare) + read.takeLast(bare)
     }
 
     /**
@@ -556,12 +579,19 @@ class StripMaker(private val models: Models?, private val emoji: EmojiIndex? = n
          */
         private const val WHOLE = 3
 
+        /** The most words typed without marks read together for what follows them (the engine's). */
+        private const val RUN = 8
+
+        private val WORD = Regex("[\\p{L}\\p{N}]+")
+
         /**
          * A next word worth a phrase: a word of letters, not a letter alone that the models keep
          * from "'s" or an initial ("night s"), unless it has marks ("ở").
          */
         private fun isWord(w: String): Boolean = w.first().isLetter() && (w.length > 1 || w[0].code >= 0x80)
 
+        /** Letters without marks, a-z and A-Z: as a word typed bare is. */
+        private fun plain(w: String): Boolean = w.isNotEmpty() && w.all { it in 'a'..'z' || it in 'A'..'Z' }
 
         private fun words(line: String): List<String> = line.split(' ').filter { it.isNotEmpty() }
 
