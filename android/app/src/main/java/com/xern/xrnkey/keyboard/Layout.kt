@@ -95,6 +95,9 @@ object Layouts {
      */
     val PUNCTUATION = ", ? ! ' \" : - ; ( ) / @ & % + #".split(' ')
 
+    /** The same on the Japanese keyboard, whose full stop is 。: Japanese punctuation, 、 first. */
+    val KANA_PUNCTUATION = "、 ？ ！ ・ ー 「 」 … ～ ： （ ）".split(' ')
+
     /**
      * The number row's second page: ten emoji, the ones Laban Key's number row has by default.
      * The emoticon tab keeps the text emoticons.
@@ -124,12 +127,13 @@ object Layouts {
 
     private fun symbols(s: String) = s.split(' ').map { Key(KeyKind.CHAR, it, variants = SYMBOL_FORMS[it].orEmpty()) }
 
-    private fun bottom(switch: Key) = Row(
+    private fun bottom(switch: Key, kana: Boolean) = Row(
         listOf(
             switch,
-            Key(KeyKind.COMMA, ",", text = ","),
+            if (kana) Key(KeyKind.COMMA, "、", text = "、") else Key(KeyKind.COMMA, ",", text = ","),
             Key(KeyKind.SPACE, width = 5f, text = " "),
-            Key(KeyKind.PERIOD, ".", text = ".", variants = PUNCTUATION),
+            if (kana) Key(KeyKind.PERIOD, "。", text = "。", variants = KANA_PUNCTUATION)
+            else Key(KeyKind.PERIOD, ".", text = ".", variants = PUNCTUATION),
             Key(KeyKind.ENTER, width = 1.5f),
         ),
     )
@@ -185,7 +189,8 @@ object Layouts {
      * emoticons instead of the digits when [emoticons] (it is swiped to them). Holding a top-row
      * letter gives its digit first when [holdDigits] and there is no number row. A pad is a
      * dialer's grid of digits with a column beside it; [pad] says what a number pad adds. [home]
-     * is the page the symbols' way back leads to (the letters, or the field's pad).
+     * is the page the symbols' way back leads to (the letters, or the field's pad). On the
+     * Japanese keyboard ([kana]) the letters' comma and full stop are 、 and 。.
      */
     fun rows(
         page: Page,
@@ -195,6 +200,7 @@ object Layouts {
         pad: Pad = Pad(),
         home: Page = Page.LETTERS,
         emoticons: Boolean = false,
+        kana: Boolean = false,
     ): List<Row> = when (page) {
         // 1 2 3 ⌫ / 4 5 6 − / 7 8 9 sep / ?123 0 ↵: the minus and the separator only where the
         // field takes them.
@@ -230,7 +236,7 @@ object Layouts {
                         Key(KeyKind.BACKSPACE, width = 1.5f),
                 ),
             )
-            add(bottom(Key(KeyKind.SYMBOLS, "?123", width = 1.5f)))
+            add(bottom(Key(KeyKind.SYMBOLS, "?123", width = 1.5f), kana))
         }
         // With the number row: digits, the shared row, then the page's own. Without it, as many
         // rows as the letters have: page 1 keeps its digits, page 2 its shared row.
@@ -379,6 +385,12 @@ sealed interface Strip {
          * ("haha", "chúc mừng sinh nhật "). Null: an empty place. Empty: the three slots.
          */
         val row: List<String?> = emptyList(),
+        /** The centre is the candidate the field shows (Japanese, after Space): on the accent. */
+        val highlight: Boolean = false,
+        /** How many of [extra] the panel shows at most. */
+        val most: Int = MorePanelView.MOST,
+        /** Its words get the panel's remove marks (not the Japanese keyboard's). */
+        val removable: Boolean = true,
     ) : Strip {
         companion object {
             /** The places of a [row]. */

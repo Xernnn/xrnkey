@@ -58,7 +58,7 @@ class Typist(
     private val state: TypingState?,
     private val editor: Editor,
     private val models: Models? = null,
-) {
+) : Input {
     /** Password and similar fields: no Telex, no composing. */
     var raw = false
 
@@ -196,15 +196,15 @@ class Typist(
      * Where the cursor is after this typist's own edits, as a UTF-16 index (-1: not known). A
      * selection update elsewhere means the field changed under it, and [reset] reads it again.
      */
-    fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length
+    override fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length
 
     /** The editor says where the cursor is, and this typist didn't know: it is there now. */
-    fun anchorAt(cursor: Int) {
+    override fun anchorAt(cursor: Int) {
         if (anchor < 0 && cursor >= 0) anchor = maxOf(0, cursor - tail.length - composing.length)
     }
 
     /** The word in progress, as shown. */
-    val shown: String get() = composing
+    override val shown: String get() = composing
 
     /** The keys of the word in progress, as typed ("dduowcj" while it shows "được"). */
     fun keys(): String = state?.keys() ?: composing
@@ -249,7 +249,7 @@ class Typist(
     }
 
     /** Nothing typed yet in the sentence: the field's start, or after ". ", "! ", "? " or a new line. */
-    fun atSentenceStart(): Boolean {
+    override fun atSentenceStart(): Boolean {
         if (composing.isNotEmpty() || raw) return false
         val t = tail.toString()
         if (t.isBlank()) return wholeField
@@ -328,7 +328,7 @@ class Typist(
     }
 
     /** Typed text: each character is a key. */
-    fun text(t: String) {
+    override fun text(t: String) {
         val s = state
         // A letter's Vietnamese form (held on its key) goes in as the keys that make it, so the
         // word goes on taking marks: "vi" + "ê" + "tj" is "việt".
@@ -463,7 +463,7 @@ class Typist(
         state?.setContext(context())
     }
 
-    fun backspace() {
+    override fun backspace() {
         spaceAfterWord = false
         val u = undo
         undo = null
@@ -523,7 +523,7 @@ class Typist(
      * opens, as on Laban Key ("ch|ao": "ch", the strip offering what starts so), and ends as
      * typed. Not before a digit or inside "don't" or "e-mail". Returns whether a word was opened.
      */
-    fun reopenBefore(after: String): Boolean {
+    override fun reopenBefore(after: String): Boolean {
         val s = state ?: return false
         if (raw || !autoCorrect || composing.isNotEmpty()) return false
         val next = if (after.isEmpty()) -1 else after.codePointAt(0)
@@ -578,7 +578,7 @@ class Typist(
      * field shows is read for it, and the typist's own copy follows, so the words before the
      * cursor stay its context.
      */
-    fun deleteWord() {
+    override fun deleteWord() {
         spaceAfterWord = false
         undo = null
         plain.clear()
@@ -604,7 +604,7 @@ class Typist(
     }
 
     /** Enter ends the word, then reaches the field: one press does both. */
-    fun enter() {
+    override fun enter() {
         spaceAfterWord = false
         undo = null
         val s = state
@@ -638,7 +638,7 @@ class Typist(
      * The cursor moved, or the field is being left: end the word as a boundary would (the core
      * may restore it, "tém" to "terms") and keep it in the field.
      */
-    fun finish() {
+    override fun finish() {
         val s = state ?: return
         val r = s.flush()
         when {
@@ -664,7 +664,7 @@ class Typist(
      * the cursor is the field's text, read once. `cursor` is where the editor says the cursor
      * is (-1: not known).
      */
-    fun reset(cursor: Int = -1) {
+    override fun reset(cursor: Int) {
         plain.clear()
         learnSettled(all = true)
         state?.reset()
@@ -688,7 +688,7 @@ class Typist(
     }
 
     /** Text from a panel (an emoji, a clip): the word in progress ends as it is, then the text. */
-    fun insert(text: String) {
+    override fun insert(text: String) {
         plain.clear()
         if (composing.isNotEmpty()) finish()
         undo = null

@@ -51,7 +51,8 @@ data class Options(
     val toolsHidden: Boolean = false,
     /**
      * The keyboard's language, chosen from the comma's menu: "vi" (Telex or VNI), "en" (no
-     * marks, English words only).
+     * marks, English words only), "ja" (romaji to kana to kanji, where the APK has the Japanese
+     * dictionary).
      */
     val language: String = "vi",
 ) {
@@ -89,8 +90,8 @@ data class Options(
     companion object {
         val HOLD_CHOICES = listOf(200, 300, 400, 500, 600)
 
-        /** The keyboard's languages, as the comma's menu offers them. */
-        val LANGUAGES = listOf("vi", "en")
+        /** The keyboard's languages, as the comma's menu offers them (Japanese with its dictionary). */
+        val LANGUAGES = listOf("vi", "en", "ja")
         val HEIGHT_CHOICES = listOf(80, 90, 100, 110, 120)
 
         fun prefs(context: Context): SharedPreferences =

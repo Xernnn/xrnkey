@@ -71,6 +71,11 @@ class SettingsPagesTest {
         rule.onNodeWithText("About").performClick()
         rule.onNodeWithText("Licences").performClick()
         rule.onNodeWithText("Leipzig Corpora Collection").assertIsDisplayed()
+        // The Japanese dictionary's notices, word for word, under its entry.
+        rule.onNodeWithTag("notice", useUnmergedTree = true).assertDoesNotExist()
+        rule.onNodeWithText("Mozc").performScrollTo().performClick()
+        rule.onNodeWithTag("notice", useUnmergedTree = true).assertExists()
+        rule.onNodeWithText("Nara Institute of Science", substring = true, useUnmergedTree = true).assertExists()
         back()
         rule.onNodeWithText("Version").assertIsDisplayed()
         back()

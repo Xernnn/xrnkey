@@ -1,8 +1,9 @@
 # xrnkey for Android
 
 The keyboard: Telex through the shared core (`../core`), with accent restoration and the
-English/Vietnamese choice from the language models. It has no permissions. The feature spec is
-[docs/feature-spec.md](docs/feature-spec.md).
+English/Vietnamese choice from the language models, an English keyboard, and a Japanese one
+(romaji to kana, kana to kanji with Mozc's dictionary). It has no permissions. The feature spec
+is [docs/feature-spec.md](docs/feature-spec.md).
 
 ## Build and test
 
@@ -16,7 +17,7 @@ cmake.dir=/usr
 ```bash
 ./gradlew :app:testDebugUnitTest      # JVM tests, against the engine built for this machine
 ./gradlew :app:assembleDebug          # arm64-v8a
-./gradlew :app:assembleRelease        # needs the trained models
+./gradlew :app:assembleRelease        # needs the trained models and the Japanese dictionary
 ```
 
 - **Models.** The trained models (`vi-phone.xklm`, `en.xklm`; `../data/lm/README.md`) are
@@ -24,6 +25,8 @@ cmake.dir=/usr
   - A debug build without them bundles the small test models.
   - A release build without them fails.
   - They are stored uncompressed and memory-mapped in place.
+- **Japanese dictionary.** `ja.xkdic` (`../data/ja/README.md`) comes from the same folder, the
+  same way: a debug build without it bundles the made-up test dictionary, a release build fails.
 - **Tests.** The JVM tests run the real core through the JNI bridge, built for this machine by
   `host/CMakeLists.txt` (the `buildHost` task, which needs a C++ compiler, CMake, Ninja, Python 3
   and a JDK).
@@ -34,4 +37,5 @@ cmake.dir=/usr
 
 ## Credits
 
-MiSans (Xiaomi) for every label: `app/src/main/res/font/misans_vf.ttf`.
+MiSans (Xiaomi) for every label: `app/src/main/res/font/misans_vf.ttf`. The Japanese dictionary
+is derived from Mozc's (BSD 3-Clause, with the IPAdic notices): `../data/ja/NOTICE`.

@@ -13,9 +13,10 @@ import com.xern.xrnkey.R
 
 /**
  * The more-suggestions panel, drawn over the strip: the candidates the strip has no room for, up
- * to seven, three to a row under the strip's own slots. The best is nearest the strip and in the
- * middle, then left, then right, as the strip orders its three, so a slide straight up from a
- * slot goes through the candidates of its column. The keyboard view follows a slide onto it; a
+ * to seven (fifteen in Japanese, for its homophones: [Strip.Candidates.most]), three to a row
+ * under the strip's own slots. The best is nearest the strip and in the middle, then left, then
+ * right, as the strip orders its three, so a slide straight up from a slot goes through the
+ * candidates of its column. The keyboard view follows a slide onto it; a
  * tap on it, once it stays open, is its own.
  */
 @SuppressLint("ViewConstructor")
@@ -24,7 +25,7 @@ class MorePanelView(context: Context) : View(context) {
         set(value) { field = value; invalidate() }
 
     var words: List<String> = emptyList()
-        set(value) { field = value.take(MOST); invalidate() }
+        set(value) { field = value; invalidate() }
 
     /** The candidate under the finger, drawn in the accent; -1 for none. */
     var chosen = -1
@@ -90,7 +91,7 @@ class MorePanelView(context: Context) : View(context) {
     }
 
     companion object {
-        /** At most this many at once, as the keyboard the owner came from shows. */
+        /** At most this many by default, as the keyboard the owner came from shows. */
         const val MOST = 7
 
         /** A row's height and the panel's margin, in dp. */
@@ -98,7 +99,7 @@ class MorePanelView(context: Context) : View(context) {
         private const val MARGIN = 6f
 
         /** Three to a row. */
-        fun rows(n: Int) = (minOf(n, MOST) + 2) / 3
+        fun rows(n: Int) = (n + 2) / 3
 
         /** The panel's height in px for `n` candidates. */
         fun height(n: Int, dp: Float) = (rows(n) * ROW * dp + 2 * MARGIN * dp).toInt()
@@ -114,7 +115,7 @@ class MorePanelView(context: Context) : View(context) {
             val m = MARGIN * dp
             val slot = (width - 2 * side) / 3
             val edges = floatArrayOf(m, side + slot, side + 2 * slot, width - m)
-            return List(minOf(n, MOST)) {
+            return List(n) {
                 val (column, row) = place(it)
                 val bottom = height - m - row * ROW * dp
                 RectF(edges[column], bottom - ROW * dp, edges[column + 1], bottom)

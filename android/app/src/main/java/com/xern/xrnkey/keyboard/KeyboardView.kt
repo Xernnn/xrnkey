@@ -108,6 +108,10 @@ class KeyboardView(context: Context) : View(context) {
     /** The languages the comma's menu offers, in its order. */
     var languages = listOf("vi", "en")
 
+    /** The Japanese keyboard types here: the letters' comma and full stop are 、 and 。. */
+    var kana = false
+        set(value) { if (field != value) { field = value; relayout() } }
+
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
     private val stripHeight = 48 * dp
@@ -144,7 +148,7 @@ class KeyboardView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
 
     private fun relayout() {
-        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow)
+        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow, kana = kana)
         val w = width.toFloat()
         // A pad has no strip: its rows share the whole height.
         val first = if (page.isPad) 0f else stripHeight
@@ -369,10 +373,10 @@ class KeyboardView(context: Context) : View(context) {
             KeyKind.SYMBOLS, KeyKind.MORE_SYMBOLS, KeyKind.LETTERS ->
                 drawLabel(canvas, k.label, cx, cy, textSize(k), palette.glyph)
             KeyKind.COMMA -> {
-                drawLabel(canvas, ",", cx, cy + 2 * dp, textSize(k), palette.glyph)
+                drawMark(canvas, k.label, cx, cy + 2 * dp, textSize(k))
                 drawGlobe(canvas, cx, r.top + 13 * dp, 6.5f * dp, palette.dim)
             }
-            KeyKind.PERIOD -> drawLabel(canvas, ".", cx, cy, textSize(k), palette.glyph)
+            KeyKind.PERIOD -> drawMark(canvas, k.label, cx, cy, textSize(k))
             KeyKind.EMOTICON -> drawLabel(canvas, k.label, cx, cy, 17 * sp, palette.glyph)
             KeyKind.NUMPAD -> {
                 // The number pad's key: its digits in a small square.
@@ -402,6 +406,17 @@ class KeyboardView(context: Context) : View(context) {
                 drawEnter(canvas, cx, cy, 10 * dp, palette.onAccent)
             }
         }
+    }
+
+    /**
+     * The comma's or full stop's mark. Japanese 、 and 。 sit low on the left of their square, as
+     * they follow a character: moved to the key's middle.
+     */
+    private fun drawMark(canvas: Canvas, mark: String, cx: Float, cy: Float, size: Float) {
+        val wide = mark == "、" || mark == "。"
+        val dx = if (wide) 0.25f * size else 0f
+        val dy = if (wide) -0.25f * size else 0f
+        drawLabel(canvas, mark, cx + dx, cy + dy, size, palette.glyph)
     }
 
     private fun drawPreview(canvas: Canvas, h: Hit) {
@@ -613,16 +628,24 @@ class KeyboardView(context: Context) : View(context) {
         listOf(s.left, s.centre, s.right).forEachIndexed { i, text ->
             if (text == null) return@forEachIndexed
             val r = slots[i]
-            val (shown, size) = fitted(text, r)
+            val (shown, size, wide) = fitted(text, r)
             val y = cy - if (i == 1 && s.more) 2 * dp else 0f
-            val colour = if (i == 1) palette.glyph else palette.dim
+            // The candidate the field shows (Japanese, after Space): on the accent, as the panel
+            // shows the one under the finger.
+            val lit = i == 1 && s.highlight
+            if (lit) {
+                val half = minOf(r.width() / 2 - 2 * dp, maxOf(wide / 2 + 16 * dp, 30 * dp))
+                fill.color = palette.accent
+                canvas.drawRoundRect(r.centerX() - half, 7 * dp, r.centerX() + half, stripHeight - 7 * dp, 8 * dp, 8 * dp, fill)
+            }
+            val colour = if (lit) palette.onAccent else if (i == 1) palette.glyph else palette.dim
             val tf = if (i == 1 && s.bold) fontStrong else font
             val grey = minOf(s.grey.getOrElse(i) { 0 }, shown.length)
             if (grey > 0) drawTwoTone(canvas, shown, grey, r.centerX(), y, size, colour, tf)
             else drawLabel(canvas, shown, r.centerX(), y, size, colour, tf)
         }
         if (s.more) {
-            fill.color = palette.dim
+            fill.color = if (s.highlight) palette.onAccent else palette.dim
             val r = slots[1]
             for (dx in listOf(-6f, 0f, 6f)) canvas.drawCircle(r.centerX() + dx * dp, stripHeight - 8 * dp, 1.5f * dp, fill)
         }
@@ -641,7 +664,7 @@ class KeyboardView(context: Context) : View(context) {
     private fun removeMarks(s: Strip.Candidates): List<Pair<String, android.graphics.PointF>> {
         val slots = stripSlots()
         return listOf(s.left, s.centre, s.right).mapIndexedNotNull { i, text ->
-            if (text == null || text.none { it.isLetter() }) return@mapIndexedNotNull null
+            if (text == null || !s.removable || text.none { it.isLetter() }) return@mapIndexedNotNull null
             val r = slots[i]
             val (_, _, w) = fitted(text, r)
             val x = minOf(r.centerX() + w / 2 + 8 * dp, r.right - 7 * dp)
@@ -1054,7 +1077,7 @@ class KeyboardView(context: Context) : View(context) {
         return removeMarks(s).firstOrNull { it.first == word }?.second
     }
 
-    private fun extra(): List<String> = (strip as? Strip.Candidates)?.extra.orEmpty().take(MorePanelView.MOST)
+    private fun extra(): List<String> = (strip as? Strip.Candidates)?.let { it.extra.take(it.most) }.orEmpty()
 
     private fun panelHeight(n: Int) = MorePanelView.height(n, dp)
 

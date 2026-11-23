@@ -27,6 +27,8 @@ import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.engine.Model
 import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.TypingState
+import com.xern.xrnkey.ja.Converter
+import com.xern.xrnkey.ja.Dictionary
 import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EmojiTab
@@ -64,6 +66,20 @@ class XrnkeyService :
     /** Internal: the tests read its context. */
     internal lateinit var typist: Typist
         private set
+
+    /** The Japanese dictionary's converter, when the APK has the dictionary. */
+    private var converter: Converter? = null
+
+    /** The Japanese keyboard's typist, while Japanese is chosen (internal: the tests read it). */
+    internal var kana: KanaTypist? = null
+        private set
+    private val kanaStrip = KanaStrip()
+
+    /**
+     * Where the keys go: the Japanese typist where it types, else the Latin one. Password and
+     * address fields get plain letters, in Japanese too.
+     */
+    private val input: Input get() = kana?.takeIf { !typist.raw && typist.autoCorrect } ?: typist
     private var options = Options()
     private lateinit var strip: StripMaker
     private var keyboard: KeyboardView? = null
@@ -143,6 +159,7 @@ class XrnkeyService :
         // One line, so a model that didn't load shows in logcat (the English one once didn't, and
         // nothing said so: "teh" just stayed "teh").
         Log.i("xrnkey", "models: " + loaded.joinToString("; "))
+        converter = openDictionary(JAPANESE)?.let(::Converter)
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         english = en?.let { Models(null, it) }
@@ -165,6 +182,26 @@ class XrnkeyService :
 
     /** The models opened from the APK (false when an asset was missing). */
     fun hasModels(): Boolean = vi != null && en != null
+
+    /** The languages the comma's menu offers: Japanese only with its dictionary. */
+    private fun languages(): List<String> = Options.LANGUAGES.filter { it != "ja" || converter != null }
+
+    /** The Japanese dictionary, mapped in place from the APK as the models are, and how that went. */
+    private fun openDictionary(name: String): Dictionary? {
+        val (dict, line) = try {
+            (modelAssets?.invoke(name) ?: assets.openFd(name)).use { a ->
+                try {
+                    Dictionary.open(a.fileDescriptor, a.startOffset, a.length) to "at ${a.startOffset} (${a.length} bytes)"
+                } catch (e: IllegalArgumentException) {
+                    null to "REFUSED (${e.message})"
+                }
+            }
+        } catch (e: IOException) {
+            null to "MISSING (${e.message})"
+        }
+        Log.i("xrnkey", "dictionary: $name $line")
+        return dict
+    }
 
     /** A model mapped in place from the APK, and how that went in `loaded`. */
     private fun openModel(name: String, loaded: MutableList<String>): Model? = try {
@@ -237,10 +274,12 @@ class XrnkeyService :
         loadOnDevice(info)
         expected.clear()
         selected = info.initialSelStart != info.initialSelEnd
-        typist.reset(info.initialSelStart)
+        input.reset(info.initialSelStart)
         searchQuery = null
         showKeys()
+        val japanese = input is KanaTypist
         keyboard?.apply {
+            kana = japanese
             this.home = home
             pad = Layouts.padFor(info.inputType, resources.configuration.locales[0])
             page = home
@@ -269,7 +308,7 @@ class XrnkeyService :
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
-        typist.finish()
+        input.finish()
         onDevice?.save()
         super.onFinishInputView(finishingInput)
     }
@@ -281,7 +320,8 @@ class XrnkeyService :
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
         selected = newSelStart != newSelEnd
         // A report of this keyboard's own edits, on time or late: nothing else moved.
-        val cursor = typist.cursor()
+        val active = input
+        val cursor = active.cursor()
         if (newSelStart == newSelEnd && cursor >= 0) {
             if (newSelStart == cursor) {
                 expected.clear()
@@ -302,22 +342,22 @@ class XrnkeyService :
         // Where the word ends: as reported, or from where it starts and what it shows now.
         val at = when {
             candidatesStart >= 0 -> candidatesEnd
-            composingStart >= 0 -> composingStart + typist.shown.length
+            composingStart >= 0 -> composingStart + active.shown.length
             else -> -1
         }
         val inWord = at >= 0 && newSelStart == at && newSelEnd == at
-        if (typist.shown.isEmpty()) composingStart = -1
-        if (typist.shown.isNotEmpty() && !inWord) {
+        if (active.shown.isEmpty()) composingStart = -1
+        if (active.shown.isNotEmpty() && !inWord) {
             composingStart = -1
-            typist.finish()
+            active.finish()
             refresh(newSelStart, reopen = newSelStart == newSelEnd)  // the context is what is before the cursor there
             return
         }
-        if (typist.shown.isNotEmpty()) return
+        if (active.shown.isNotEmpty()) return
         // No word in progress, and the field changed in a way this keyboard's edits don't
         // explain (an app cleared it after Send, select-all and delete, a tap elsewhere): what is
         // before the cursor is read again, once.
-        if (cursor < 0 && newSelStart == newSelEnd) typist.anchorAt(newSelStart) else refresh(newSelStart, reopen = newSelStart == newSelEnd)
+        if (cursor < 0 && newSelStart == newSelEnd) active.anchorAt(newSelStart) else refresh(newSelStart, reopen = newSelStart == newSelEnd)
     }
 
     /**
@@ -327,8 +367,8 @@ class XrnkeyService :
      */
     private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
-        typist.reset(cursor)
-        if (reopen && !movingCursor) edit { typist.reopenBefore(editor.textAfter(1)) }
+        input.reset(cursor)
+        if (reopen && !movingCursor) edit { input.reopenBefore(editor.textAfter(1)) }
         showStrip()
     }
 
@@ -350,7 +390,7 @@ class XrnkeyService :
         } finally {
             ic?.endBatchEdit()
         }
-        typist.cursor().takeIf { it >= 0 }?.let {
+        input.cursor().takeIf { it >= 0 }?.let {
             expected.addLast(it)
             while (expected.size > EXPECTED) expected.removeFirst()
         }
@@ -364,7 +404,7 @@ class XrnkeyService :
             search(q + text)
             return
         }
-        edit { typist.text(text) }
+        edit { input.text(text) }
         showStrip()
     }
 
@@ -374,7 +414,7 @@ class XrnkeyService :
             search(q.dropLast(1))
             return
         }
-        edit { typist.backspace() }
+        edit { input.backspace() }
         showStrip()
     }
 
@@ -383,11 +423,17 @@ class XrnkeyService :
             onSearchClose()
             return
         }
-        edit { typist.enter() }
+        edit { input.enter() }
         showStrip()
     }
 
     override fun onCandidate(slot: Int) {
+        (input as? KanaTypist)?.let { k ->
+            val c = kanaStrip.pick(slot) ?: return
+            edit { k.pick(c) }
+            showStrip()
+            return
+        }
         val pick = strip.pick(slot) ?: return
         edit {
             if (pick.emoji) {
@@ -409,7 +455,7 @@ class XrnkeyService :
             search(q.trimEnd().dropLastWhile { !it.isWhitespace() })
             return
         }
-        edit { typist.deleteWord() }
+        edit { input.deleteWord() }
         showStrip()
     }
 
@@ -420,13 +466,19 @@ class XrnkeyService :
             search(q + text)
             return
         }
-        edit { typist.insert(text) }
+        edit { input.insert(text) }
         showStrip()
     }
 
     /** A candidate from the more-suggestions panel, as a tap on a slot takes one. */
     override fun onMorePick(text: String) {
-        edit { typist.pick(text) }
+        val k = input as? KanaTypist
+        if (k != null) {
+            val c = kanaStrip.pick(text) ?: return
+            edit { k.pick(c) }
+        } else {
+            edit { typist.pick(text) }
+        }
         showStrip()
     }
 
@@ -443,7 +495,7 @@ class XrnkeyService :
 
     override fun onCursorStart() {
         movingCursor = true
-        typist.finish()
+        input.finish()
         keyboard?.strip = idleStrip()
     }
 
@@ -482,12 +534,13 @@ class XrnkeyService :
      * field's text stays as it is, and the new keyboard goes on from the cursor.
      */
     override fun onLanguage(code: String) {
-        if (code == options.language || code !in Options.LANGUAGES) return
-        val at = typist.cursor()
-        typist.finish()
+        if (code == options.language || code !in languages()) return
+        val at = input.cursor()
+        input.finish()
         saveOptions(options.copy(language = code))
         expected.clear()
-        typist.reset(at)
+        input.reset(at)
+        keyboard?.kana = input is KanaTypist
         showStrip()
     }
 
@@ -514,7 +567,7 @@ class XrnkeyService :
 
     private val handler = Handler(Looper.getMainLooper())
     private val stripTask = Runnable {
-        val made = strip.make(typist)
+        val made = (input as? KanaTypist)?.let { kanaStrip.make(it) } ?: strip.make(typist)
         idle = made == Strip.Tools
         keyboard?.strip = if (idle) idleStrip() else made
         autoCapitalise()
@@ -523,7 +576,7 @@ class XrnkeyService :
     /** With auto-capitalise on: Shift for the first letter of a sentence. */
     private fun autoCapitalise() {
         val k = keyboard ?: return
-        if (options.autoCap && k.page == Page.LETTERS && k.shift == Shift.OFF && typist.atSentenceStart()) k.shift = Shift.ONCE
+        if (options.autoCap && k.page == Page.LETTERS && k.shift == Shift.OFF && input.atSentenceStart()) k.shift = Shift.ONCE
     }
 
     /**
@@ -555,7 +608,7 @@ class XrnkeyService :
     }
 
     override fun onEmoji(text: String, tab: EmojiTab) {
-        edit { typist.insert(text) }
+        edit { input.insert(text) }
         memory.addRecent(text, tab)
         emojiPanel?.setRecents(tab, memory.recents(tab))
     }
@@ -655,7 +708,7 @@ class XrnkeyService :
     }
 
     override fun onPaste(text: String) {
-        edit { typist.insert(text) }
+        edit { input.insert(text) }
     }
 
     override fun onPin(text: String, pinned: Boolean) {
@@ -690,10 +743,14 @@ class XrnkeyService :
      * The settings, as the settings screen left them: read when a field starts. A new typing
      * method needs a new core state (and a typist around it).
      */
-    private fun applyOptions(o: Options) {
+    private fun applyOptions(saved: Options) {
+        // Japanese saved, and no dictionary to type it with: Vietnamese.
+        val o = if (saved.language in languages()) saved else saved.copy(language = Options().language)
         val languageChanged = o.language != options.language
         options = o
-        val inEnglish = o.language == "en"
+        // The Japanese keyboard: its own typist where it types, plain English letters elsewhere.
+        kana = if (o.language == "ja") kana ?: converter?.let { KanaTypist(editor, it) } else null
+        val inEnglish = o.language == "en" || o.language == "ja"
         // The English keyboard: no marks, and the English model alone.
         val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
         val scoring = if (inEnglish) english else models
@@ -737,7 +794,7 @@ class XrnkeyService :
             spaceSwipe = o.spaceSwipe
             commaHold = o.commaHold
             language = o.language
-            languages = Options.LANGUAGES
+            languages = languages()
             heightPercent = o.height
         }
         emojiPanel?.palette = palette
@@ -760,6 +817,9 @@ class XrnkeyService :
          */
         internal var modelAssets: ((String) -> AssetFileDescriptor)? = null
         const val CLIPS = "clips.tsv"
+
+        /** The Japanese dictionary's asset (data/ja/README.md). */
+        const val JAPANESE = "ja.xkdic"
 
         /** Edits whose selection updates may still be on their way. */
         private const val EXPECTED = 32
