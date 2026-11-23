@@ -29,6 +29,7 @@ import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
+import com.xern.xrnkey.keyboard.EmojiTab
 import com.xern.xrnkey.keyboard.EnterAction
 import com.xern.xrnkey.keyboard.KeyboardFrame
 import com.xern.xrnkey.keyboard.KeyboardView
@@ -512,7 +513,7 @@ class XrnkeyService :
     private fun showEmoji() {
         val panel = emojiPanel ?: return
         if (panel.emoji.isEmpty()) panel.emoji = emoji?.all.orEmpty()
-        panel.recents = memory.recents()
+        for (t in EmojiTab.entries) panel.setRecents(t, memory.recents(t))
         panel.tones = memory.tones()
         panel.open()
         // The keys stay laid out (invisible), so the panel keeps their height.
@@ -520,10 +521,10 @@ class XrnkeyService :
         panel.visibility = View.VISIBLE
     }
 
-    override fun onEmoji(text: String) {
+    override fun onEmoji(text: String, tab: EmojiTab) {
         edit { typist.insert(text) }
-        memory.addRecent(text)
-        emojiPanel?.recents = memory.recents()
+        memory.addRecent(text, tab)
+        emojiPanel?.setRecents(tab, memory.recents(tab))
     }
 
     override fun onSkinTone(base: String, toned: String) {

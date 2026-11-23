@@ -86,7 +86,8 @@ Swipe typing is not used.
 
 - Haptics and key sound. The owner has both off.
 - Clipboard images, and a chip in the strip for a just-copied item.
-- The fancy-text tab (`Aa`): typed text shown in Unicode styles (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉).
+- Typing whole words in a Unicode style as they are typed (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉). The `Aa` tab
+  has the styled letters one at a time, as Laban Key's.
 - Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
   owner has these off in the reference.
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
@@ -592,31 +593,41 @@ spellings a key away.
 The panel replaces the strip and the keys, and is laid out as Laban Key's (measured on the
 owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or data.
 
-1. **A tab row**, 48 dp: a keyboard icon (back to the letters), then emoji ☺, emoticons `:-)`
-   and symbols `Ω`. The current tab has an underline in the accent colour. Fancy text `Aa`
-   comes later. A messaging app's sticker tab is left out: its stickers are another company's
+1. **A tab row**, 48 dp: a keyboard icon (back to the letters), then emoji ☺, kaomoji `:-)`,
+   symbols `Ω` and fancy letters `Aa`, as Laban Key's. The current tab has an underline in the
+   accent colour. A messaging app's sticker tab is left out: its stickers are another company's
    artwork.
 2. **A grid**, right under the tabs with no row between: 8 columns and exactly 4 rows in view
    (the rows share the height between the tabs and the bar; 135 × 157 px on the phone, as Laban
    Key's). An emoji is drawn about 70 px tall there, as Laban Key's, sized from the phone's
    emoji font's own measurements.
-3. **One category to a page.** The emoji tab has seven: recents, smileys and people, food and
-   drink, activity, travel and places, animals and nature, objects. Unicode's nine groups fold
-   into them: Smileys & Emotion with People & Body, and Objects with Symbols and Flags. Each
-   page scrolls up and down within its own category and stops at its end. A long page scrolls
-   far enough for its last row to clear the search button.
+3. **One category to a page**, and on every tab recents first. The emoji tab has seven:
+   recents, smileys and people, food and drink, activity, travel and places, animals and
+   nature, objects. Unicode's nine groups fold into them: Smileys & Emotion with People & Body,
+   and Objects with Symbols and Flags. Each page scrolls up and down within its own category
+   and stops at its end. A long page scrolls far enough for its last row to clear the search
+   button.
 4. **A round search button**, floating over the grid's bottom-right corner, on the emoji tab.
 5. **A category bar**, 48 dp: one cell for each page, then Backspace at the far right. On the
    emoji tab the cells are line icons in the palette's colours, like the keys' icons: a clock,
-   a smiley, a burger, a ball, a car, a bear's face, a light bulb. The current page's cell has a
-   lighter rounded background.
+   a smiley, a burger, a ball, a car, a bear's face, a light bulb. Every tab's recents cell is
+   the clock; the other tabs name a page by a face, a symbol or a letter from it. The current
+   page's cell has a lighter rounded background.
+   - Cells are at least 40 dp wide, or as wide as their face and some room. When they fit,
+     they share the room left of Backspace (the emoji tab's seven, an eighth of the width each,
+     as Laban Key's; the symbols' nine, 105 px each).
+   - When they don't (kaomoji, letters), the bar scrolls sideways under a drag or a fling,
+     Backspace staying put. The letters' cells are sized so that half of one shows at the edge.
+     Turning a page brings its cell into view with a little of the next one.
 6. The panel keeps the keyboard's palette, dark or light.
 
 ### What you can do
 
-- **Tap an emoji**: inserts it and moves it to the front of recents. The panel stays open.
-  On the recents page the order holds while the page is in view, so the emoji under the finger
-  don't move; the new order shows when the page is left or the panel opens again.
+- **Tap an emoji**, a face, a symbol or a letter: inserts it and moves it to the front of that
+  tab's recents. Each tab keeps its own recents, newest first: six rows (48 emoji, symbols or
+  letters; 24 kaomoji). The panel stays open. On the recents page the order holds while the
+  page is in view, so what is under the finger doesn't move; the new order shows when the page
+  is left or the panel opens again.
 - **Only a tap types**: the finger must lift within the touch slop of where it went down. A
   swipe or a scroll never types, and a tap on a grid that is still moving stops it and types
   nothing.
@@ -624,9 +635,11 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
   quarter of the width, turns to the next or previous page; anything shorter slides back.
   Before the first page and after the last the drag gives a little and springs back. The bar's
   highlight moves with the page.
-- **Tap a cell on the bar**: jumps to that page.
-- Every page shows at its top when it is turned to. The panel opens on recents when there are
-  any, otherwise on smileys and people, on the tab it was left on.
+- **Tap a cell on the bar**: jumps to that page. A tap on the bar while it is still flung
+  stops it and picks nothing.
+- Every page shows at its top when it is turned to. The panel opens on the tab it was left on,
+  on its recents when there are any, otherwise on its first category (smileys and people on the
+  emoji tab). While the panel stays open, a tab opens again on the page it was left on.
 - **Long-press an emoji that takes skin tones**: a popup of the six tones; slide to one and
   lift. The choice is remembered for that emoji. Laban Key shows only a large preview here.
   Holding any other emoji does nothing until the finger lifts, when it types it as a tap does.
@@ -636,13 +649,52 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
   best first. Back closes the search.
 - **Backspace** on the category bar deletes before the cursor in the app, one grapheme at a
   time, so a whole emoji goes at once.
-- **Emoticons tab**: text emoticons and kaomoji, 4 to a row, each shrunk to fit its cell, in
-  three pages named on the bar by a face from each (`:)`, `(^_^)`, `(T_T)`). A hand-written
-  list, part of the project.
-- **Symbols tab**: Unicode symbols, 8 to a row, in six pages named on the bar by a symbol from
-  each: arrows `→`, maths `±`, currency `₫`, marks and punctuation `©`, shapes and stars `★`,
-  and weather, music and other signs `♪`.
-- Only emoji that the phone's emoji font can draw are listed (`Paint.hasGlyph`). The emoji are
+- **Kaomoji tab**: 304 text emoticons and kaomoji, 4 to a row, each shrunk to fit its cell, in
+  nine pages by feeling, each named on the bar by a face from it. A hand-written list, part of
+  the project (`keyboard/Emoticons.kt`).
+
+  | Page | Bar | Faces |
+  |---|---|---|
+  | Classic (`:v`, `=))`, `^^`…) | `:-)` | 36 |
+  | Happy | `(^▽^)` | 34 |
+  | Love and shy | `(♡‿♡)` | 34 |
+  | Sad | `(T_T)` | 32 |
+  | Angry | ``(`Д´)`` | 32 |
+  | Surprised and confused | `(⊙_⊙)` | 32 |
+  | Greetings and cheering | `(^o^)/` | 34 |
+  | Animals | `ʕ•ᴥ•ʔ` | 36 |
+  | Actions and other | `(っ˘ω˘ς)` | 34 |
+
+- **Symbols tab**: 528 Unicode symbols, 8 to a row, in eight pages named on the bar by a symbol
+  from each, as Laban Key's (`keyboard/Symbols.kt`).
+
+  | Page | Bar | Symbols |
+  |---|---|---|
+  | Hearts, flowers and stars as ornaments | `♡` | 48 |
+  | Signs: ツ-like faces, gender, planets, peace and faith, hazards, office | `ツ` | 56 |
+  | Money (`₫` first), letter-like symbols, circled capitals | `A` | 64 |
+  | Numbers: circled, parenthesised, Roman, superscript, subscript, fractions | `⑨` | 80 |
+  | Maths and Greek | `Σ` | 72 |
+  | Brackets and punctuation | `⟨⟩` | 64 |
+  | Arrows | `→` | 64 |
+  | Stars, shapes, chess, cards, dice, music, weather, check marks | `★` | 80 |
+
+- **Fancy letters tab** (`Aa`): 27 pages, A to Z and the digits, 8 to a row, the bar a letter
+  each. A letter's page holds it, capital and small, in every style Unicode encodes: negative
+  squared 🅰, squared 🄰, negative circled 🅐, circled Ⓐ ⓐ, parenthesised ⒜, full width Ａ ａ;
+  the 13 alphabets of Mathematical Alphanumeric Symbols in pairs (bold, italic, bold italic,
+  script, bold script, fraktur, bold fraktur, double-struck, sans-serif, its bold, italic and
+  bold italic, monospace), their holes filled from Letterlike Symbols (ℬ ℰ ℱ ℋ ℐ ℒ ℳ ℛ ℯ ℊ ℴ,
+  ℭ ℌ ℑ ℜ ℨ, ℂ ℍ ℕ ℙ ℚ ℝ ℤ, italic ℎ); and the small capital ᴀ. 35 a letter; 34 for X, which
+  has no small capital, and Q, whose small capital Android's fonts don't draw. The digits'
+  page has a row for each, 0 to 9: bold, double-struck, sans-serif, sans-serif bold, monospace,
+  full width, circled, negative circled. Worked out from the code points
+  (`keyboard/FancyLetters.kt`); regional indicator letters are never used, as two side by side
+  make a flag.
+- Only emoji that the phone's emoji font can draw are listed (`Paint.hasGlyph`), and only
+  faces, symbols and letters whose every character the panel's font or the system's draws, so
+  nothing shows as an empty box. On Android 15's own fonts all of them draw, as text: none comes
+  from the colour emoji font (a bare `❤` or `☺` would, so they are left out). The emoji are
   drawn with the system font, and no emoji artwork ships with the app.
 - **The data**: `data/emoji/emoji-index.tsv`, read by the core (`xk_emoji_*`).
   - It holds 1,914 emoji from Unicode Emoji 17.0, in Unicode's order and groups, each with its
@@ -1136,5 +1188,7 @@ The owner answered the spec's open questions:
 4. **Look-back is on**: the previous word is fixed in place, as the reference does, and
    Backspace right after undoes the fix.
 5. **The emoji, `:-)` and `Ω` tabs stay.** Fancy text comes later. The sticker tab is left out.
+   (2026-11-24: the kaomoji were "not enough". The `:-)` and `Ω` tabs now hold what Laban Key's
+   do, and the `Aa` tab came, all with their own recents.)
 
 No questions are open.
