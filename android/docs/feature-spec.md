@@ -59,7 +59,8 @@ Swipe typing is not used.
 
 ## Day one (must have)
 
-1. Full Telex through the shared C++ core: `w` = ư, old-style tones (hòa, thúy), marks and tones
+1. Full Telex through the shared C++ core: `uw` = ư, `ow` = ơ, `aw` = ă, and a `w` alone stays `w`
+   as in Laban Key's simple Telex (the setting "W types ư" makes it ư), old-style tones (hòa, thúy), marks and tones
    allowed after the final consonant, a key typed twice undoes itself, and Backspace deletes one
    character. VNI and new-style tones are settings, since the core already has them.
 2. Accent restoration of words typed without marks, ranked by a syllable n-gram model with the
@@ -355,10 +356,14 @@ unless Settings says otherwise.
    - The keys are also an English word, and the context says English (see "Mixed English and
      Vietnamese"): the keys are committed as typed (`list`, not `lít`, after `the`).
    - The word can't be Vietnamese at all (`tẽt` from `text`): the keys as typed, as on the
-     laptop today. The spellings chat uses count as Vietnamese, as on Laban Key: `z` and `dz`
-     at the start (`zaayj` is `zậy`, `dzaayj` is `dzậy`) and `ơu`, `ôu` (`ddowu` is `đơu`).
-     They take marks and tones while typed and end as shown, unless the keys are an English
-     word (`zoom`, `zero`).
+     laptop today. The spellings chat uses count as Vietnamese, as on Laban Key: any
+     Vietnamese onset before any rime, whatever quốc ngữ's spelling rules say (`kais` is `kái`,
+     `ngeof` is `ngèo`), the onsets `z`, `dz`, `w`, `f`, `j` (`zaayj` is `zậy`, `dzaayj` is
+     `dzậy`, `was` shows `wá`), and the rimes `ơu`, `ôu`, `eu` and a bare `ă` or `â` (`ddowu` is
+     `đơu`, `quaas` is `quấ`). Marks and tones land on them while they are typed, and they end
+     as shown, unless the keys are an English word (`was`, `zoom`, `text`; Backspace right
+     after brings the marks back). Onsets and codas Vietnamese has none of (`ck`, `sh`, `br`, a
+     final `l`) still leave a word as typed.
    - A digit typed right after the letters makes the word a code or a name: it shows and ends
      as the keys typed (`tooi2`, `abc123`), as on Laban Key.
 3. **The keys used no Telex effect** (all ASCII, such as `khong`, `ban`, `can`, `meeting`):
@@ -389,7 +394,10 @@ Levels:
 - **Revert**: Backspace as the very next key after an auto-correct on Space takes it back with
   the space, and the word is in progress again as it was typed (`không␠` → `khong`, as Laban
   Key does); the next Space keeps it as typed. After punctuation it puts back what was typed and
-  the punctuation (`không,` → `khong,`). A second Backspace deletes as usual. When the owner
+  the punctuation (`không,` → `khong,`). The same when Space ended a word typed with marks as
+  something else than it showed (its keys as English: `wá` ends `was`, `ò` ends `of`):
+  Backspace brings back what was shown, open to go on with (`was␠` → `wá`), and the next Space
+  keeps it. A second Backspace deletes as usual. When the owner
   reverts the same typed form twice in a similar context, it is learned: that form is committed
   as typed from then on, and its auto-correct moves to the left slot.
 - **Look-back** (decided: on, as the reference does it): after Space, the engine re-ranks the

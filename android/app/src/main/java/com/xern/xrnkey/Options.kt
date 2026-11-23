@@ -14,8 +14,8 @@ data class Options(
     val modernTones: Boolean = false,
     /** Telex: tone and mark keys may come after the final consonant (toans). */
     val freeMarking: Boolean = true,
-    /** Telex: w alone is ư. */
-    val wShortcut: Boolean = true,
+    /** Telex: w alone is ư. Off, as in Laban Key's simple Telex: a w with no vowel to mark stays w ("wá"); uw, ow, aw still mark. */
+    val wShortcut: Boolean = false,
     val underline: Boolean = false,
     val suggestions: Boolean = true,
     val emojiSuggestions: Boolean = true,
