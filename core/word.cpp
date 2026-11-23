@@ -79,8 +79,10 @@ std::u32string word_letters(const Word& w) {
     return out;
 }
 
+/* What typing takes, chat's spellings too: "zaa" becomes "zâ", "ddowu" stays
+ * "đơu" (they used to fall back to their keys, as English words do). */
 bool word_prefix_ok(const Word& w) {
-    return syllable_prefix_ok(word_letters(w), w.tone);
+    return chat_syllable_prefix_ok(word_letters(w), w.tone);
 }
 
 /* Index into w.letters of the vowel that carries the tone, or -1. */
@@ -203,6 +205,8 @@ std::string word_final(const Word& w, const Options& o, const XKStateImpl* s) {
         return v;
     }
     if (const std::string* en = english()) return *en;
+    /* A spelling chat uses, its marks typed on purpose ("đơu", "zậy"). */
+    if (chat_syllable_valid(letters, w.tone)) return v;
     if (has_vn_marks(w)) return eff;
     return v;
 }

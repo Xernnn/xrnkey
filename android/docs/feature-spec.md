@@ -355,7 +355,10 @@ unless Settings says otherwise.
    - The keys are also an English word, and the context says English (see "Mixed English and
      Vietnamese"): the keys are committed as typed (`list`, not `lít`, after `the`).
    - The word can't be Vietnamese at all (`tẽt` from `text`): the keys as typed, as on the
-     laptop today.
+     laptop today. The spellings chat uses count as Vietnamese, as on Laban Key: `z` and `dz`
+     at the start (`zaayj` is `zậy`, `dzaayj` is `dzậy`) and `ơu`, `ôu` (`ddowu` is `đơu`).
+     They take marks and tones while typed and end as shown, unless the keys are an English
+     word (`zoom`, `zero`).
    - A digit typed right after the letters makes the word a code or a name: it shows and ends
      as the keys typed (`tooi2`, `abc123`), as on Laban Key.
 3. **The keys used no Telex effect** (all ASCII, such as `khong`, `ban`, `can`, `meeting`):

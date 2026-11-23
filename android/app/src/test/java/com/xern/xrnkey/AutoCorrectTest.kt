@@ -135,6 +135,16 @@ class AutoCorrectTest {
         assertEquals("không ", f.text)
     }
 
+    /**
+     * Chat's spellings stay as typed, marks and all, as on Laban Key: "đơu" (đâu) and "zậy"
+     * (vậy) fell back to their keys, as English words do, once the u came or the z went first.
+     */
+    @Test
+    fun chatSpellingsKeepTheirMarks() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
+        t.text("ddowu zaayj dzaayj ")
+        assertEquals("đơu zậy dzậy ", f.text)
+    }
+
     @Test
     fun backspaceAfterPunctuationKeepsThePunctuation() = typing { t, f, _ ->
         t.text("khong,")
