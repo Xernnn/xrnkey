@@ -269,7 +269,7 @@ TEST_CASE("the keyword table is small, and each emoji is in the index", "[emoji]
             ++emoji;
             from = sp + 1;
         }
-        CHECK((emoji >= 1 && emoji <= 3));
+        CHECK((emoji >= 1 && emoji <= 5));  // keywords.py MAX_EMOJI
         ++n;
     }
     CHECK(n == x.count);
