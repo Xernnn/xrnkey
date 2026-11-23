@@ -388,23 +388,35 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   （ ）`, `、` under the finger. `?` and `!` from the symbols are typed `？` and `！`. Inside a
   reading they join it and convert with it (`かみ、` → `紙、`); with nothing composing they go
   straight in. Holding `、` opens the comma's menu, as on the other keyboards.
-- **The strip while composing**:
-  - the middle holds the best conversion of the whole reading (`わたしはがくせいです`:
-    `私は学生です`), the left the reading in hiragana, the right in katakana;
-  - the more panel holds up to 15 more, five rows of three: the words read exactly so (`かみ`:
-    `神`, `髪` …), then words for the reading's start, for converting piece by piece (the first
-    word of the best conversion and the others read like it, `私`, `渡し`; then the other starts
-    that are words, longest first), then predictions, the likeliest words whose reading goes
-    on from what is typed (`にほ`: `日本`, `日本語`, `日本人`);
+- **The strip while composing**, as Gboard's:
+  - the middle, in bold, holds what Space gives: the best conversion of the whole reading
+    (`わたしはがくせいです`: `私は学生です`);
+  - the left and the right hold the next likeliest, whatever they are, each ranked by what it
+    costs as a whole sentence after the word before:
+    - the words read exactly so (`かみ`: `神`, `髪`);
+    - the reading with its start converted another way and the rest after it (`こんにちは`:
+      `今日は`; `わたしはがくせいです`: `わたしは学生です`), when it costs at most 2,000 more than
+      the best;
+    - predictions, words whose reading goes on from what is typed, a little dearer for each
+      kana not typed yet (`ありが`: `ありがとう`, `ありがとうございます`);
+  - each text once, wherever it came from;
+  - the more panel holds up to 15 more, five rows of three: the next nine of those, then the
+    hiragana and the katakana (in a slot only when nothing likelier is left), then words for the
+    reading's start alone, for converting piece by piece (`私`, `渡し`, then the other starts
+    that are words, longest first), then the rest;
+  - a reading that looks foreign keeps its katakana right after the best conversion: one with
+    ー, a small vowel (`ふぁ`, `てぃ`) or ゔ, or with a kana no word reads;
   - no remove marks: the dictionary's words are not the owner's to forget.
 - **Space**:
   - while composing, it converts: the field shows the best conversion, and the strip shows it
     in the middle on the accent, with the candidate before it on the left and the next on the
-    right. Each further Space shows the next one, after the last the first again: the best
-    conversion, the other words read so, the hiragana, the katakana (and the letters full-width,
-    `Ｔｏｋｙｏ`, for a reading of Latin letters), then the words for the reading's start. One of
-    those shows with the rest of the reading converted after it (`渡し` + `は学生です`).
-    Predictions are not in the round; they stay in the panel;
+    right. Each further Space shows the next one, after the last the first again. The order is
+    the strip's, without the predictions: the best conversion, the next likeliest conversions,
+    and after the first eight of those the hiragana, the katakana (and the letters full-width,
+    `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then the words for the
+    reading's start. A start converted another way shows with the rest of the reading
+    converted after it (`渡し` + `は学生です`). Predictions are not in the round; they stay in
+    the panel;
   - with nothing composing, it types a full-width space `　`, Gboard's default.
 - **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
   stands for, with no space after it. A word for the reading's start leaves the rest composing,
@@ -425,8 +437,11 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   words or of what they choose, no Telex, and no emoji in the strip (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
-  connection costs), and a kana no word reads stands for itself. It runs on each key, in a few
-  milliseconds with the real dictionary.
+  connection costs), and a kana no word reads stands for itself; of two as cheap, the first
+  found, as `data/ja/build_dict.py` converts. On Mozc's evaluation set the best conversion is
+  Mozc's for 505 of 683 sentences, Mozc's is in the strip's three for 547 and in the strip or
+  the panel for 553. The strip is made on each key in about 0.2 ms on a laptop's JVM with the
+  real dictionary.
 
 ## Auto-correct (Space and punctuation)
 

@@ -92,21 +92,23 @@ class KanaTypistTest {
     }
 
     /**
-     * The strip while composing: the best conversion in the middle, the hiragana on the left, the
-     * katakana on the right, and in the panel the words, the pieces and the predictions.
+     * The strip while composing, as Gboard's: what Space gives in the middle, the next likeliest
+     * on the left and the right, the others in the panel, then the kana and the pieces.
+     * Predictions take a slot when they are likelier than the words read so.
      */
     @Test
-    fun theStripOffersTheConversionThenKana() {
+    fun theStripOffersTheLikeliestThenKana() {
         type("kami")
         val s = strip.make(typist) as Strip.Candidates
-        assertEquals(listOf("かみ", "紙", "カミ"), listOf(s.left, s.centre, s.right))
-        assertEquals(listOf("神", "髪", "上", "蚊"), s.extra)
+        assertEquals(listOf("神", "紙", "髪"), listOf(s.left, s.centre, s.right))
+        assertEquals(listOf("上", "かみ", "カミ", "蚊"), s.extra)
         assertFalse(s.highlight)
         assertTrue(s.bold)
         typist.reset()
         type("niho")
         val p = strip.make(typist) as Strip.Candidates
-        assertTrue(p.extra.toString(), p.extra.containsAll(listOf("日本", "日本語", "日本人")))
+        assertEquals(listOf("日本", "にほ", "日本語"), listOf(p.left, p.centre, p.right))
+        assertTrue(p.extra.toString(), p.extra.containsAll(listOf("日本人", "ニホ")))
         typist.reset()
         assertEquals(Strip.Tools, strip.make(typist))
     }
@@ -146,7 +148,7 @@ class KanaTypistTest {
     fun aPieceAfterSpaceShowsTheRestConverted() {
         type("watashihagakuseidesu ")
         assertEquals("私は学生です", editor.composing)
-        repeat(4) { type(" ") }
+        repeat(3) { type(" ") }
         assertEquals("渡し", typist.cycle[typist.selected].text)
         assertEquals("渡しは学生です", editor.composing)
         typist.pick(typist.cycle[typist.selected])

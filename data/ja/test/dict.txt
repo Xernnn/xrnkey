@@ -23,6 +23,8 @@
 @id comma
 @id period
 @id symbol
+@id thanks
+@id polite
 
 @literal noun noun
 @literal number number
@@ -58,6 +60,9 @@
 @conn noun noun 3000
 @conn copula EOS 0
 @conn masu EOS 0
+@conn thanks polite 0
+@conn polite EOS 0
+@conn BOS polite 6000
 
 わたし	pronoun	500	私
 わたし	verb	2500	渡し
@@ -97,3 +102,6 @@
 ます	noun	4000	升
 あめ	noun	1500	雨
 あめ	noun	2000	飴
+たい	masu	300	たい
+ありがとう	thanks	1000	ありがとう
+ございます	polite	0	ございます

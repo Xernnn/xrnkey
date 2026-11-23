@@ -84,6 +84,12 @@ class Dictionary private constructor(private val b: ByteBuffer) {
         return (b.get(values + j).toInt() and 0xFF) * STEP
     }
 
+    /**
+     * Which build this is, near enough: its readings, parts of speech and size. The owner's
+     * history keeps it with the parts of speech it learned, which another build numbers otherwise.
+     */
+    val stamp: String get() = "$readings.$parts.${b.capacity()}"
+
     /** The part of speech for text of this kind. */
     fun literal(kind: Literal): Int = literals[kind.ordinal]
 

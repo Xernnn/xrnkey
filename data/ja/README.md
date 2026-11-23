@@ -40,7 +40,8 @@ python3 -I data/ja/build_dict.py eval ~/.cache/xrnkey-lm/models/ja.xkdic \
   own evaluation set (`evaluation.tsv`).
 
 The Android tests run the same set through the keyboard's own converter, which converts as
-`convert()` does (505 of 683):
+`convert()` does (505 of 683), and say how often Mozc's conversion is among the strip's three
+(547) or in the strip or its panel (553):
 
 ```bash
 cd android && ./gradlew :app:testDebugUnitTest --tests '*ConverterTest*' \

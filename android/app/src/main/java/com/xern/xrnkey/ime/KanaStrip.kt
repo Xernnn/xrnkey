@@ -4,12 +4,14 @@ import com.xern.xrnkey.ja.Candidate
 import com.xern.xrnkey.keyboard.Strip
 
 /**
- * The strip of the Japanese keyboard. While a reading is composing: the best conversion in the
- * middle, the hiragana on the left and the katakana on the right; the more panel holds the words
- * read exactly so, the conversions of the reading's start (piece by piece) and the predictions,
- * words whose reading goes on from it ([com.xern.xrnkey.ja.Conversion.offered]). After Space, the
- * candidate the field shows is in the middle, highlighted, with the one before it on the left
- * and the next on the right; the panel holds the others. With nothing composing, the tool row.
+ * The strip of the Japanese keyboard, as Gboard's:
+ * - while a reading is composing: what Space would give in the middle, in bold, and the next
+ *   likeliest on the left and the right, predictions included ("ありが": ありがとう); the more panel
+ *   holds the others, then the hiragana and katakana, then the pieces for converting piece by
+ *   piece ([com.xern.xrnkey.ja.Conversion.offered]);
+ * - after Space: the candidate the field shows in the middle, highlighted, with the one before it
+ *   on the left and the next on the right; the panel holds the others;
+ * - with nothing composing, the tool row.
  */
 class KanaStrip {
     private var slots: List<Candidate?> = emptyList()
