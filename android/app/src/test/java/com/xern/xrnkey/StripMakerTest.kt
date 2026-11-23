@@ -349,9 +349,9 @@ class StripMakerTest {
 
     /**
      * Letters that are a common Vietnamese syllable keep the middle Vietnamese: a reading of
-     * them, alone or with its next word, or the word itself; an English completion goes to the
-     * sides. On the phone after an English word, "cam" put "came" in the middle (Laban: "cảm
-     * ơn"). Letters that read as English keep English there; Space is unchanged.
+     * them, alone or with its next word, or the word itself with a word that goes with it; an
+     * English completion goes to the sides. On the phone after an English word, "cam" put "came"
+     * in the middle (Laban: "cảm ơn"). Space is unchanged.
      */
     @Test
     fun vietnameseLettersKeepTheMiddleVietnamese() {
@@ -375,14 +375,10 @@ class StripMakerTest {
                 assertTrue(cam.slots().toString(), cam.centre!!.startsWith("cảm") || cam.centre!!.startsWith("cám"))
             }
             assertEquals("cảm ơn", strip(m, "cam", emoji = index).shown.centre)
-            assertEquals("em", strip(m, "em", emoji = index).shown.centre)  // not "êm"
-            assertEquals("em", strip(m, "em", "tôi ", index).shown.centre)  // not "emphasized"
-            // English: the word itself where it reads as English, in bold; completions where the
-            // letters are no word.
-            for (w in listOf("the", "ok", "good", "love")) {
-                val shown = strip(m, w, emoji = index).shown
-                assertEquals(shown.slots().toString(), w, shown.centre)
-                assertTrue(shown.bold)
+            // "em": Space keeps it; the middle goes on with it ("em bé"), never "email".
+            for (before in listOf("", "tôi ")) {
+                val em = strip(m, "em", before, index).shown
+                assertTrue(em.slots().toString(), em.centre!!.startsWith("em ") || em.centre!!.any { it.code >= 0x80 })
             }
             assertTrue(strip(m, "hel", emoji = index).shown.centre in setOf("hello", "help"))
             val meet = strip(m, "meet", emoji = index).shown
@@ -390,6 +386,58 @@ class StripMakerTest {
             assertTrue(meet.bold)
         }
         index.close()
+    }
+
+    /**
+     * Space keeps the word as typed, so the middle doesn't show it again: it holds the best
+     * other candidate, not in bold, as Laban Key's does ("em", "the", "ok" and "love" were in
+     * the middle as typed, in bold, a slot spent on what Space commits anyway). The word takes
+     * the middle only when there is nothing else, in bold. A fix Space makes is in the middle,
+     * in bold: bold is what Space commits.
+     */
+    @Test
+    fun theMiddleNeverRepeatsWhatSpaceKeeps() {
+        TestModels.test().use { m ->
+            for (w in listOf("em", "the", "dduowcj", "banj", "ngu", "toi", "cup", "qzx", "teh")) {
+                val typed = strip(m, w)
+                val shown = typed.shown
+                val word = typed.typist.shown
+                val commits = typed.typist.preview()
+                val why = "$w: $shown"
+                if (shown.centre == word) {
+                    assertTrue(why, shown.left == null && shown.right == null && shown.extra.isEmpty())
+                }
+                assertEquals(why, shown.centre == (commits ?: word), shown.bold)
+                assertTrue(why, listOf(shown.left, shown.right).none { it == word })
+            }
+            for (w in listOf("em", "the")) {
+                val shown = strip(m, w).shown
+                assertTrue(shown.toString(), shown.centre != w && !shown.bold)
+                typedSpace(m, w, "$w ")  // Space still keeps it
+            }
+            assertEquals("qzx", strip(m, "qzx").shown.centre)  // nothing else: the word, in bold
+            assertTrue(strip(m, "qzx").shown.bold)
+            assertEquals("the", strip(m, "teh").shown.centre)  // Space fixes it: the fix, in bold
+            assertTrue(strip(m, "teh").shown.bold)
+        }
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            // What else the letters may be, the likeliest in the middle; Space keeps them.
+            assertEquals(listOf("theo", "thế", "they"), strip(m, "the").shown.slots())
+            assertEquals("okay", strip(m, "ok").shown.centre)
+            assertTrue(strip(m, "love").shown.slots().toString(), strip(m, "love").shown.centre in setOf("loved", "lovely"))
+            assertEquals("thanks to", strip(m, "thanks").shown.centre)
+            val em = strip(m, "em").shown
+            assertTrue(em.slots().toString(), em.centre!!.startsWith("em ") && "email" in em.slots())
+            assertEquals(2, em.grey[1])  // "em" grey: it is in the field
+            for (w in listOf("the", "ok", "love", "thanks", "em")) {
+                assertFalse(w, strip(m, w).shown.bold)
+                typedSpace(m, w, "$w ")
+            }
+            // An English word's next word shows with it only when it nearly always follows it:
+            // the English model's likeliest after "love" at a sentence's start is "island".
+            assertTrue(strip(m, "love").shown.slots().none { it?.startsWith("love ") == true })
+        }
     }
 
     /**
