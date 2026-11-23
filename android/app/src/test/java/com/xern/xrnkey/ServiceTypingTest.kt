@@ -221,6 +221,29 @@ class ServiceTypingTest {
     }
 
     /**
+     * The space bar moving the cursor opens no word on the way, only the one where it stops:
+     * each step used to open (and rewrite) the word it passed.
+     */
+    @Test
+    fun theSpaceBarOpensOnlyTheWordWhereTheCursorStops() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        s.onCursorStart()
+        edit.setSelection(8)
+        s.onUpdateSelection(13, 13, 8, 8, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        edit.setSelection(3)
+        s.onUpdateSelection(8, 8, 3, 3, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        s.onCursorEnd()
+        assertEquals("xin", s.typist.shown)
+        assertEquals(0, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(3, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertEquals("xin chao ban ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /**
      * The keyboard's own edits, reported on time or late, read nothing again: the words typed
      * without marks are still one run ("toi khong biet"), which a re-read would have ended.
      */

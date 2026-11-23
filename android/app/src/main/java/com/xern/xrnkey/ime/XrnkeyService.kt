@@ -311,14 +311,18 @@ class XrnkeyService :
 
     /**
      * The field changed under the typist: it reads what is before the cursor again. A cursor put
-     * at the end of a word (a tap there) opens that word again, as Backspace into it does.
+     * at the end of a word, or inside one (a tap there), opens it again, as Backspace into it
+     * does. Not while the space bar moves the cursor: each step would open the word it passes.
      */
     private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
         typist.reset(cursor)
-        if (reopen) edit { typist.reopenBefore(editor.textAfter(1)) }
+        if (reopen && !movingCursor) edit { typist.reopenBefore(editor.textAfter(1)) }
         showStrip()
     }
+
+    /** The space bar is moving the cursor (from [onCursorStart] to [onCursorEnd]). */
+    private var movingCursor = false
 
     /**
      * One edit of the field by this keyboard: one selection update from the editor, at the
@@ -424,6 +428,7 @@ class XrnkeyService :
     }
 
     override fun onCursorStart() {
+        movingCursor = true
         typist.finish()
         keyboard?.strip = Strip.Tools
     }
@@ -438,10 +443,13 @@ class XrnkeyService :
         press(if (dy < 0) KeyEvent.KEYCODE_DPAD_UP else KeyEvent.KEYCODE_DPAD_DOWN, Math.abs(dy))
     }
 
-    /** The cursor moved: what's before it now is the context for the next word. */
+    /**
+     * The cursor moved: what's before it now is the context for the next word, and the word it
+     * stopped at opens, as after a tap.
+     */
     override fun onCursorEnd() {
-        typist.reset()
-        showStrip()
+        movingCursor = false
+        refresh(-1, reopen = true)
     }
 
     override fun onStripMenu() {
