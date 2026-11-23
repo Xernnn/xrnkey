@@ -67,8 +67,9 @@ class Converter(private val dict: Dictionary) {
         if (reading.isEmpty()) return emptyList()
         val n = reading.length
         // The cheapest node ending at each position for each part of speech it ends with: the
-        // cost of what follows depends only on that.
-        val ends = Array(n + 1) { HashMap<Int, Node>() }
+        // cost of what follows depends only on that. In the order they came, so that of two as
+        // cheap the first wins, as in build_dict.py's convert() (Mozc's evaluation set: 505, not 503).
+        val ends = Array(n + 1) { LinkedHashMap<Int, Node>() }
         ends[0][left] = Node(0, left, null, "", 0, 0)
         for (i in 0 until n) {
             val before = ends[i].values

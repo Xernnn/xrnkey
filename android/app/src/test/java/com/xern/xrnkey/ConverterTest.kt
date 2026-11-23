@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Kana to kanji with the made-up test dictionary (data/ja/test/dict.txt), and, where this machine
@@ -130,6 +131,31 @@ class ConverterTest {
         assertTrue(kami.toString(), "紙" in kami && "神" in kami && "髪" in kami)
         assertTrue(c.convert("にほ").predictions.map { it.text }.containsAll(listOf("日本", "日本語")))
         assertTrue(c.convert("ありが").predictions.map { it.text }.contains("ありがとう"))
+    }
+
+    /**
+     * Mozc's evaluation set (data/ja/README.md), where -Pxrnkey.jaEval names it: the best
+     * conversion is Mozc's as often as build_dict.py's convert() makes it (505 of 683). Of two
+     * ways as cheap, the first found wins, as there; a hash map's order decided it before, and
+     * seven sentences came out otherwise (503).
+     */
+    @Test
+    fun theRealDictionaryOnMozcsEvaluationSet() {
+        val c = real()
+        assertEquals("服切る", c.bestText("ふくきる"))
+        assertEquals("熱出た", c.bestText("ねつでた"))
+        val file = System.getProperty("xrnkey.jaEval")?.let(::File)
+        assumeTrue(file?.isFile == true)
+        var best = 0
+        var total = 0
+        file!!.forEachLine { line ->
+            if (line.startsWith("#")) return@forEachLine
+            val f = line.split('\t')
+            if (c.bestText(f[1]) == f[2]) best++
+            total++
+        }
+        println("Mozc's evaluation set: best $best of $total")
+        assertTrue("$best of $total", best >= 505)
     }
 
     /** Fast enough for every key: a long reading converts, with every candidate, in milliseconds. */
