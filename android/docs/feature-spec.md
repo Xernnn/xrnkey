@@ -74,7 +74,7 @@ Swipe typing is not used.
 6. Keys and gestures as the owner set them up: the number row, long-press on the top letter row
    for digits, a key-press popup, a 400 ms long-press, swiping the space bar to move the cursor,
    holding the space bar to move the cursor, and holding the comma for the keyboard picker.
-7. Emoji panel: recents, categories, search, skin tones, and an emoji suggestion row.
+7. Emoji panel: recents, categories, search and skin tones.
 8. Clipboard panel: history, pin, delete and paste.
 9. Personal words learned on the phone, which can be viewed, deleted, exported and imported.
 10. Shortcuts, with import and export as a file in the laptop's `macros.txt` format.
@@ -537,42 +537,69 @@ spellings a key away.
 
 ### What it shows
 
-The panel replaces the strip and the keys.
+The panel replaces the strip and the keys, and is laid out as Laban Key's (measured on the
+owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or data.
 
-1. **A tab row**: back to the keyboard (`ABC`), emoji, emoticons `:-)` and symbols `Ω`. Fancy
-   text `Aa` comes later. A messaging app's sticker tab is left out: its stickers are another
-   company's artwork.
-2. **An emoji suggestion row**: emoji that match the last words typed: the strip's emoji
-   keyword first, then the Unicode CLDR keywords in Vietnamese and English (`không được` → 🙅 ❌).
-3. **A grid**, 8 per row, scrolling vertically. It opens on recents (up to 48), or on smileys
-   when recents are empty.
-4. **A round search button**, floating at the bottom right of the grid.
-5. **A category bar** at the bottom: recents, smileys and people, food, activities, travel,
-   animals and nature, objects, symbols and flags, then Backspace.
+1. **A tab row**, 48 dp: a keyboard icon (back to the letters), then emoji ☺, emoticons `:-)`
+   and symbols `Ω`. The current tab has an underline in the accent colour. Fancy text `Aa`
+   comes later. A messaging app's sticker tab is left out: its stickers are another company's
+   artwork.
+2. **A grid**, right under the tabs with no row between: 8 columns and exactly 4 rows in view
+   (the rows share the height between the tabs and the bar; 135 × 157 px on the phone, as Laban
+   Key's). An emoji is drawn about 70 px tall there, as Laban Key's, sized from the phone's
+   emoji font's own measurements.
+3. **One category to a page.** The emoji tab has seven: recents, smileys and people, food and
+   drink, activity, travel and places, animals and nature, objects. Unicode's nine groups fold
+   into them: Smileys & Emotion with People & Body, and Objects with Symbols and Flags. Each
+   page scrolls up and down within its own category and stops at its end. A long page scrolls
+   far enough for its last row to clear the search button.
+4. **A round search button**, floating over the grid's bottom-right corner, on the emoji tab.
+5. **A category bar**, 48 dp: one cell for each page, then Backspace at the far right. On the
+   emoji tab the cells are line icons in the palette's colours, like the keys' icons: a clock,
+   a smiley, a burger, a ball, a car, a bear's face, a light bulb. The current page's cell has a
+   lighter rounded background.
+6. The panel keeps the keyboard's palette, dark or light.
 
 ### What you can do
 
-- **Tap an emoji**: inserts it and moves it to the front of recents.
-- **Long-press an emoji that takes skin tones**: a popup of the six tones. The choice is
-  remembered for that emoji.
-- **Tap a category**: jumps the grid to it. The bar follows as the grid scrolls.
-- **Search**: a search field replaces the suggestion row, and the letter keys come back below it.
-  Typing goes into the search field, not the app. Results: the strip's emoji keyword for what is
-  typed first (`haha` → 😂), then CLDR keywords in Vietnamese (with or without accents) and
-  English, best first. Back closes the search.
+- **Tap an emoji**: inserts it and moves it to the front of recents. The panel stays open.
+  On the recents page the order holds while the page is in view, so the emoji under the finger
+  don't move; the new order shows when the page is left or the panel opens again.
+- **Only a tap types**: the finger must lift within the touch slop of where it went down. A
+  swipe or a scroll never types, and a tap on a grid that is still moving stops it and types
+  nothing.
+- **Swipe sideways on the grid**: the pages follow the finger. A fling, or a drag past a
+  quarter of the width, turns to the next or previous page; anything shorter slides back.
+  Before the first page and after the last the drag gives a little and springs back. The bar's
+  highlight moves with the page.
+- **Tap a cell on the bar**: jumps to that page.
+- Every page shows at its top when it is turned to. The panel opens on recents when there are
+  any, otherwise on smileys and people, on the tab it was left on.
+- **Long-press an emoji that takes skin tones**: a popup of the six tones; slide to one and
+  lift. The choice is remembered for that emoji. Laban Key shows only a large preview here.
+  Holding any other emoji does nothing until the finger lifts, when it types it as a tap does.
+- **Search**: the letter keys come back with a search field in the strip's place. Typing goes
+  into the search field, not the app. Results: the strip's emoji keyword for what is typed
+  first (`haha` → 😂), then CLDR keywords in Vietnamese (with or without accents) and English,
+  best first. Back closes the search.
 - **Backspace** on the category bar deletes before the cursor in the app, one grapheme at a
   time, so a whole emoji goes at once.
-- **Emoticons tab**: a grid of text emoticons and kaomoji. A hand-written list, part of the
-  project.
-- **Symbols tab**: Unicode symbols by group: arrows, maths, currency, bullets, boxes and stars.
+- **Emoticons tab**: text emoticons and kaomoji, 4 to a row, each shrunk to fit its cell, in
+  three pages named on the bar by a face from each (`:)`, `(^_^)`, `(T_T)`). A hand-written
+  list, part of the project.
+- **Symbols tab**: Unicode symbols, 8 to a row, in six pages named on the bar by a symbol from
+  each: arrows `→`, maths `±`, currency `₫`, marks and punctuation `©`, shapes and stars `★`,
+  and weather, music and other signs `♪`.
 - Only emoji that the phone's emoji font can draw are listed (`Paint.hasGlyph`). The emoji are
   drawn with the system font, and no emoji artwork ships with the app.
 - **The data**: `data/emoji/emoji-index.tsv`, read by the core (`xk_emoji_*`).
   - It holds 1,914 emoji from Unicode Emoji 17.0, in Unicode's order and groups, each with its
     CLDR 48 names and keywords in Vietnamese and English (Unicode License v3).
   - Skin-tone variants are folded into the base, which is flagged as taking them.
-  - The panel's suggestions match the last three, two or one words as a keyword (`sinh nhật` →
-    🎂, `cà phê` → ☕). Keywords that over 24 emoji share (`mặt`) are left out.
+  - The core can also match the last three, two or one words as a keyword (`sinh nhật` → 🎂,
+    `cà phê` → ☕; `xk_emoji_suggest`). Keywords that over 24 emoji share (`mặt`) are left out.
+    The panel no longer shows a row of these: Laban Key has none, and the row was empty most
+    of the time.
 - **The strip's emoji keywords**: `data/emoji/keywords.tsv`, read into the same index. About
   1,900 keywords, each `append` or `replace`: CLDR's names of things and countries, and a hand
   list of chat words, abbreviations, emoticons, feelings and wishes (`data/emoji/README.md`). Of

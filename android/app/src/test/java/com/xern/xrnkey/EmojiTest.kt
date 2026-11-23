@@ -56,18 +56,25 @@ class EmojiTest {
     }
 
     @Test
-    fun theGridHasRecentsFirstThenEachGroupOnNewRows() = index().use { idx ->
-        val rows = EmojiGrid.rows(EmojiTab.EMOJI, idx.all, listOf("🎂", "😀"), mapOf("👍" to "👍🏽"))
-        assertEquals(listOf("🎂", "😀"), rows[0].cells.map { it.text })
-        assertEquals(0, rows[0].section)
-        assertEquals(1, rows[1].section)  // smileys start on a row of their own
-        assertEquals("😀", rows[1].cells[0].text)
-        assertTrue(rows.all { it.cells.size <= 8 })
-        assertEquals(9, rows.maxOf { it.section })  // the nine groups
-        assertTrue(rows.flatMap { it.cells }.any { it.text == "👍🏽" })  // the chosen tone
-        assertEquals(-1, EmojiGrid.firstRow(EmojiGrid.rows(EmojiTab.EMOJI, idx.all, emptyList()), 0))
-        val emoticons = EmojiGrid.rows(EmojiTab.EMOTICONS, idx.all, emptyList())
-        assertTrue(emoticons.all { it.cells.size <= 3 } && emoticons.flatMap { it.cells }.any { it.text == ":v" })
-        assertTrue(EmojiGrid.rows(EmojiTab.SYMBOLS, idx.all, emptyList()).flatMap { it.cells }.any { it.text == "₫" })
+    fun theGridHasRecentsThenSixCategoriesEachAPage() = index().use { idx ->
+        val pages = EmojiGrid.pages(EmojiTab.EMOJI, idx.all, listOf("🎂", "😀"), mapOf("👍" to "👍🏽"))
+        assertEquals(7, pages.size)
+        assertEquals(listOf("🎂", "😀"), pages[EmojiGrid.RECENTS].cells.map { it.text })
+        assertEquals("😀", pages[EmojiGrid.SMILEYS].cells[0].text)
+        // Unicode's nine groups, every emoji once, in the six categories.
+        assertEquals(idx.all.size, pages.drop(1).sumOf { it.cells.size })
+        assertTrue(pages[EmojiGrid.SMILEYS].cells.any { it.text == "👍🏽" })  // the chosen tone
+        assertTrue(pages.last().cells.any { it.text == "🏁" })  // flags go with objects
+        // No recents: an empty first page, and the tab opens on smileys.
+        assertEquals(0, EmojiGrid.pages(EmojiTab.EMOJI, idx.all, emptyList())[0].cells.size)
+        assertEquals(EmojiGrid.SMILEYS, EmojiGrid.firstPage(EmojiTab.EMOJI, emptyList()))
+        assertEquals(EmojiGrid.RECENTS, EmojiGrid.firstPage(EmojiTab.EMOJI, listOf("🎂")))
+        val emoticons = EmojiGrid.pages(EmojiTab.EMOTICONS, idx.all, emptyList())
+        assertEquals(4, EmojiGrid.columns(EmojiTab.EMOTICONS))
+        assertTrue(emoticons.flatMap { it.cells }.any { it.text == ":v" })
+        assertEquals(60, emoticons.sumOf { it.cells.size })
+        val symbols = EmojiGrid.pages(EmojiTab.SYMBOLS, idx.all, emptyList())
+        assertEquals(listOf("→", "±", "₫", "©", "★", "♪"), symbols.map { it.sample })
+        assertTrue(symbols[2].cells.any { it.text == "₫" })
     }
 }

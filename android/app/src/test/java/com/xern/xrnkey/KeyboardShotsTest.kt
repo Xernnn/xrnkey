@@ -102,7 +102,7 @@ class KeyboardShotsTest {
         p.palette = palette
         p.emoji = index.all
         p.recents = listOf("😂", "❤️", "👍", "🙏", "🥰", "😭", "🎂", "☕", "🔥", "😅")
-        p.suggestions = index.suggest(listOf("chúc", "mừng", "sinh", "nhật"), 8)
+        p.open()
         p.tab = tab
         index.close()
         p.measure(
