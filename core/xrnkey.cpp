@@ -266,6 +266,12 @@ XKResult xk_process_key(XKState* state, uint32_t keysym, uint32_t modifiers) {
             xrnkey::word_key(s, &r, c);
             return r;
         }
+        /* Without marks a digit or an apostrophe after letters is part of the word ("mp3",
+         * "don't"), as English writes them. */
+        if (s->mode == XK_MODE_PLAIN && ((c >= '0' && c <= '9') || c == '\'') && !s->word.empty()) {
+            xrnkey::word_key(s, &r, c);
+            return r;
+        }
         if (!is_letter && !is_vni_digit && !s->word.empty()) {
             xrnkey::finalize_word(s, &r, c);
             return r;

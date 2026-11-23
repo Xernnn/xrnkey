@@ -296,6 +296,26 @@ TEST_CASE("Telex keeps the spellings chat uses", "[telex]") {
     xk_state_free(s);
 }
 
+/* The phone's English keyboard: no marks at all, so Telex's keys are letters
+ * ("vieetj", "off", "text"); a digit or an apostrophe stays inside the word;
+ * punctuation and Space end it as typed. */
+TEST_CASE("Plain mode types letters as they are", "[telex]") {
+    struct Case { const char* keys; const char* want; };
+    const Case cases[] = {
+        {"vieetj", "vieetj "}, {"off", "off "},   {"text", "text "}, {"of", "of "},
+        {"don't", "don't "},   {"mp3", "mp3 "},   {"ddaau", "ddaau "},
+    };
+    for (const auto& c : cases) {
+        XKState* s = xk_state_new(XK_MODE_PLAIN);
+        INFO("typing " << c.keys);
+        REQUIRE(process_string(s, c.keys) == c.want);
+        xk_state_free(s);
+    }
+    XKState* s = xk_state_new(XK_MODE_PLAIN);
+    REQUIRE(process_string(s, "hi,") == "hi,");  /* the comma ends "hi"; Space then goes to the app */
+    xk_state_free(s);
+}
+
 /* Enter used to be unhandled: it reached the application while the composing
  * block was still pending, so the word was silently abandoned. It then
  * registered the word but swallowed the Enter, so every line needed two.

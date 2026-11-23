@@ -39,7 +39,7 @@ void word_replay(Word& w, int mode, const Options& o) {
     w.locked = 0;
     w.recs.assign(w.keys.size(), KeyRec{});
     for (int i = 0; i < static_cast<int>(w.keys.size()); ++i) {
-        if (w.literal) word_add_letter(w, i);
+        if (w.literal || mode == XK_MODE_PLAIN) word_add_letter(w, i);
         else if (mode == XK_MODE_VNI) vni_apply_key(w, i, o);
         else telex_apply_key(w, i, o);
     }
