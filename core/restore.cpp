@@ -137,6 +137,28 @@ std::string with_case(const std::string& text, Case cs) {
     return out;
 }
 
+/* Words never "corrected": chat that is no dictionary's but is meant, and laughs of any length
+ * ("hahaha", "hjhj", "kaka": two or more of the same "ha", "he", "hi", "ho", "hu", "hj", "ka",
+ * "ke"). Space used to make "hehe" "here" and "oke" "one". */
+bool keep_as_typed(const std::string& w) {
+    static const char* const kChat[] = {"ko", "k", "dc", "vs", "ns", "mn", "nx", "ck", "vk", "bt",
+                                        "ny", "cx", "ak", "ok", "oke", "oki", "okie", "okela",
+                                        "okla", "hic", "hix", "hicc", "kkk", "thx", "pls", "plz",
+                                        "lol", "omg", "ntn", "bth", "uk", "ukm", "uhm", "haiz",
+                                        "haizz", "haizzz"};
+    for (const char* c : kChat)
+        if (w == c) return true;
+    if (w.size() >= 4 && w.size() % 2 == 0) {
+        static const char* const kLaughs[] = {"ha", "he", "hi", "ho", "hu", "hj", "ka", "ke"};
+        for (const char* l : kLaughs) {
+            bool all = true;
+            for (size_t i = 0; i < w.size() && all; i += 2) all = w[i] == l[0] && w[i + 1] == l[1];
+            if (all) return true;
+        }
+    }
+    return false;
+}
+
 namespace {
 
 struct Cand {
@@ -148,16 +170,6 @@ struct Cand {
     int slips;
 };
 
-/* Words never "corrected": chat that is no dictionary's but is meant. */
-bool keep_as_typed(const std::string& w) {
-    static const char* const kChat[] = {"ko", "k", "dc", "vs", "ns", "mn", "nx", "ck", "vk", "bt",
-                                        "ny", "cx", "ak", "ok", "oke", "okie", "hihi", "haha",
-                                        "hehe", "hic", "huhu", "kkk", "thx", "pls", "plz", "lol",
-                                        "omg", "ntn", "bth"};
-    for (const char* c : kChat)
-        if (w == c) return true;
-    return false;
-}
 
 /* The spellings at most `max_slips` keys away from `typed`, with the cost
  * of those slips. */

@@ -107,6 +107,28 @@ class ServiceTypingTest {
     }
 
     /**
+     * A tap that puts the cursor at the end of a word opens it again: it is the composing word,
+     * and Telex marks it ("chao" + s is "cháo"). A tap inside a word leaves it as it is.
+     */
+    @Test
+    fun aTapAtTheEndOfAWordOpensItAgain() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        edit.setSelection(6)
+        s.onUpdateSelection(13, 13, 6, 6, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        edit.setSelection(8)
+        s.onUpdateSelection(6, 6, 8, 8, -1, -1)
+        assertEquals("xin chao ban ", edit.text.toString())
+        assertEquals(4, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(8, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertEquals("chao", s.typist.shown)
+        s.onText("s")
+        assertEquals("xin cháo ban ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /**
      * The keyboard's own edits, reported on time or late, read nothing again: the words typed
      * without marks are still one run ("toi khong biet"), which a re-read would have ended.
      */

@@ -154,7 +154,13 @@ keyboard's hide button.
   undoes. Capitals follow the keys that typed them (`Vieetj` → `Việt`), as on the laptop.
 - **Backspace**:
   - with a word in progress, the engine deletes one character (`toán` → `tóa`, `được` → `đượ`);
-  - otherwise it deletes before the cursor, or the selection;
+  - otherwise it deletes before the cursor, or the selection; when that leaves the cursor at
+    the end of a word, the word is the word in progress again, as on Laban Key: Telex goes on
+    marking it (`việt␣⌫` + `s` is `viết`), the strip offers its suggestions, and Space ends it
+    as before. Only a whole word after a space, a bracket, a quote or the field's start opens
+    (never the end of `don't`, `e-mail` or `2nd`), and only one its keys make again exactly: an
+    English word Telex would change (`of` would come back as `ò`) stays as it is. A word whose
+    change Backspace refused stays as typed when it opens again;
   - right after an auto-correct, it reverts (see "Auto-correct");
   - holding it repeats after 400 ms, every 50 ms, and after 2 s it deletes a word at a time;
   - **swiping left** from it (a key and a half) deletes the word before the cursor, with the
@@ -164,6 +170,8 @@ keyboard's hide button.
     that: a quick swipe starting in the screen's outer 62 px (the key's right part) is its Back
     gesture and closes the keyboard, as on the reference. A swipe from the key's left part, or
     one that rests a moment first, deletes.
+- **A tap at the end of a word** opens it again the same way (the cursor moved there by the
+  finger, with nothing selected); a tap inside a word leaves it as it is.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
 - **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a

@@ -143,6 +143,59 @@ class TypistTest {
     }
 
     /**
+     * Backspace that leaves the cursor at the end of a word opens it again, as Laban Key does:
+     * Telex goes on marking it ("việt␣⌫s" is "viết"), and a Backspace more edits it like the word
+     * in progress it is again.
+     */
+    @Test
+    fun backspaceAfterSpaceOpensTheWordAgain() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("vieetj ")
+        t.backspace()
+        assertEquals("việt", f.text)
+        assertEquals("việt", f.composing)
+        t.text("s ")
+        assertEquals("viết ", f.text)
+        t.text("xin chao ")
+        t.backspace(); t.backspace()
+        assertEquals("viết xin cha", f.text)
+        assertEquals("cha", f.composing)
+        assertEquals(listOf("<s>", "viết", "xin"), t.context())
+        t.text("f ")
+        assertEquals("viết xin chà ", f.text)
+    }
+
+    /**
+     * Only a whole word opens again, and only as it was: not the end of "don't" or "e-mail", not
+     * a word the cursor is inside, not one its keys would make differently ("Đ" + "ượ" ... is
+     * fine, an emoji isn't a word).
+     */
+    @Test
+    fun onlyAWholeWordOpensAgain() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("don't ")
+        t.backspace()
+        assertEquals("don't", f.text)
+        assertEquals("", f.composing)
+        t.text(" e-mail ")
+        t.backspace()
+        assertEquals("", f.composing)
+        t.text(" 2nd ")
+        t.backspace()
+        assertEquals("", f.composing)
+        f.after = "abc"
+        t.text(" xin ")
+        t.backspace()
+        assertEquals("", f.composing)  // the cursor is inside a word
+        f.after = ""
+        t.text(" Đượcj ")
+        t.backspace()
+        assertEquals("", f.composing)  // its keys make "Được" plus a "j": not the same word
+    }
+
+    /**
      * A swipe left from Backspace takes the word before the cursor with the spaces after it, one
      * word a swipe, as on the reference: "xin chao ban" leaves "xin chao ", again "xin ".
      */
