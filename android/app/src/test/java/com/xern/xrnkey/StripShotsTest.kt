@@ -3,7 +3,6 @@ package com.xern.xrnkey
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View.MeasureSpec
-import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
@@ -26,7 +25,7 @@ class StripShotsTest {
     fun theStrips() {
         val dir = File(System.getProperty("xrnkey.shots") ?: return)
         dir.mkdirs()
-        val index = EmojiIndex.load(File(System.getProperty("xrnkey.emojiIndex")!!).readBytes())
+        val index = testEmojiIndex()  // with the strip's keywords
         val cases = listOf(
             Triple("off-ong", "ong", Typist.TONES_OFF),
             Triple("off-khong", "khong", Typist.TONES_OFF),
@@ -35,6 +34,15 @@ class StripShotsTest {
             Triple("always-khong", "khong", Typist.TONES_ALWAYS),
             Triple("finished-ban", "banj", Typist.TONES_OFF),
             Triple("next-mot", "mootj ", Typist.TONES_OFF),
+            Triple("kept-em", "em", Typist.TONES_OFF),
+            Triple("kept-love", "love", Typist.TONES_OFF),
+            Triple("one-word-ok", "ok", Typist.TONES_OFF),
+            Triple("row-haha", "haha", Typist.TONES_OFF),
+            Triple("row-kkk", "kkk", Typist.TONES_OFF),
+            Triple("three-kk", "kk", Typist.TONES_OFF),
+            Triple("next-cam-on", "cam on ", Typist.TONES_OFF),
+            Triple("next-chuc-mung-sinh-nhat", "chuc mung sinh nhat ", Typist.TONES_OFF),
+            Triple("next-dep-qua", "hom nay troi dep qua ", Typist.TONES_OFF),
         )
         TestModels.best().use { m ->
             for ((name, keys, mode) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
@@ -55,6 +63,6 @@ class StripShotsTest {
                 }
             }
         }
-        index?.close()
+        index.close()
     }
 }
