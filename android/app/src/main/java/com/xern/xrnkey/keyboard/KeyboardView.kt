@@ -151,7 +151,8 @@ class KeyboardView(context: Context) : View(context) {
         hits = out
         // A swipe from Backspace deletes a word. Backspace touches the right edge, where the
         // system's Back gesture would take a swipe that starts on its outer part and close the
-        // keyboard instead.
+        // keyboard instead. HyperOS ignores this (its own edge window takes the swipe), so
+        // there only a swipe from the key's left part, or one that rests first, deletes.
         if (Build.VERSION.SDK_INT >= 29) {
             systemGestureExclusionRects = out.filter { it.key.kind == KeyKind.BACKSPACE }.map { h ->
                 Rect().also { h.rect.roundOut(it) }

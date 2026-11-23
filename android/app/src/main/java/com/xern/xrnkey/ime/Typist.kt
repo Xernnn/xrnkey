@@ -73,6 +73,27 @@ class Typist(
      */
     var correctWrong = 1
 
+    /**
+     * A word that isn't Vietnamese, or is a common English word, ends as typed (the core's
+     * auto-restore, the settings' "Non-Vietnamese as typed"), except a word holding a form
+     * picked from a held key ([held]).
+     */
+    var keepForeign = true
+        set(value) {
+            field = value
+            applyKeepForeign()
+        }
+
+    /**
+     * The word in progress holds a form picked from a held key. Its marks were chosen, so it
+     * ends as shown, never as its keys: "ò" goes in as "of" and stays "ò".
+     */
+    private var held = false
+
+    private fun applyKeepForeign() {
+        state?.setOption(TypingState.OPT_AUTO_RESTORE, keepForeign && !held)
+    }
+
     /** The words of this sentence committed as typed without marks since the last pause. */
     private val plain = ArrayList<String>()
 
@@ -94,6 +115,14 @@ class Typist(
     private var pendingPrev: String? = "<s>"
 
     private var composing = ""
+        set(value) {
+            field = value
+            // The word ended (or went): the next one ends by the setting again.
+            if (value.isEmpty() && held) {
+                held = false
+                applyKeepForeign()
+            }
+        }
 
     /** What was committed lately, for the words before the next one. */
     private val tail = StringBuilder()
@@ -268,6 +297,10 @@ class Typist(
         // A letter's Vietnamese form (held on its key) goes in as the keys that make it, so the
         // word goes on taking marks: "vi" + "ê" + "tj" is "việt".
         val keys = if (s != null && !raw && t.length == 1) VietKeys.of(t[0], s.mode) ?: t else t
+        if (keys != t && !held) {
+            held = true
+            applyKeepForeign()
+        }
         for (c in keys) key(c)
     }
 

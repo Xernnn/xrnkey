@@ -14,16 +14,45 @@ import org.junit.Test
  */
 class AutoCorrectTest {
     private fun <T> typing(field: String = "", correction: Int = Models.CORRECT_FLEXIBLE,
+                           tones: Int = Typist.TONES_ALWAYS,
                            body: (Typist, FakeEditor, Models) -> T): T =
         TestModels.test().use { m ->
             m.models.correction = correction
             TypingState().use { s ->
                 s.useModels(m.models)
                 val f = FakeEditor(field)
-                val t = Typist(s, f, m.models).also { it.tonesOnSpace = Typist.TONES_ALWAYS; it.reset() }
+                val t = Typist(s, f, m.models).also { it.tonesOnSpace = tones; it.reset() }
                 body(t, f, m.models)
             }
         }
+
+    /**
+     * A form picked from a held key is the typist's choice: its word ends as shown, though its
+     * keys spell a common English word ("ò" goes in as "of", "í" as "is", "á" as "as"). The
+     * same keys typed stay English, and the word after it ends by the setting again ("cups",
+     * not "cúp").
+     */
+    @Test
+    fun aHeldFormIsKeptThoughItsKeysSpellAnEnglishWord() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
+        t.text("ò"); t.text(" ")
+        t.text("í"); t.text(",")
+        t.text(" of ")
+        assertEquals("ò í, of ", f.text)
+        t.text("á")
+        t.finish()
+        t.text(" cups ")
+        assertEquals("ò í, of á cups ", f.text)
+    }
+
+    /** With "Non-Vietnamese as typed" off, a held form's word leaves it off for the next. */
+    @Test
+    fun aHeldFormLeavesTheForeignWordsSettingAsItWas() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
+        t.keepForeign = false
+        t.text("cups ")
+        t.text("ó"); t.text(" ")
+        t.text("cups ")
+        assertEquals("cúp ó cúp ", f.text)
+    }
 
     @Test
     fun spaceRestoresAWordTypedWithoutMarks() = typing { t, f, _ ->
