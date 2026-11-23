@@ -49,8 +49,11 @@ data class Options(
     val theme: String = "dark",
     /** The tool row is folded away (its ≡): the bare strip, ≡ and emoji, shows instead. */
     val toolsHidden: Boolean = false,
-    /** The English keyboard: no Telex, English words only. Switched by holding the comma. */
-    val english: Boolean = false,
+    /**
+     * The keyboard's language, chosen from the comma's menu: "vi" (Telex or VNI), "en" (no
+     * marks, English words only).
+     */
+    val language: String = "vi",
 ) {
     fun save(p: SharedPreferences) {
         p.edit()
@@ -79,12 +82,15 @@ data class Options(
             .putBoolean("shortcuts", shortcuts)
             .putString("palette", theme)
             .putBoolean("tools_hidden", toolsHidden)
-            .putBoolean("english", english)
+            .putString("language", language)
             .apply()
     }
 
     companion object {
         val HOLD_CHOICES = listOf(200, 300, 400, 500, 600)
+
+        /** The keyboard's languages, as the comma's menu offers them. */
+        val LANGUAGES = listOf("vi", "en")
         val HEIGHT_CHOICES = listOf(80, 90, 100, 110, 120)
 
         fun prefs(context: Context): SharedPreferences =
@@ -118,7 +124,9 @@ data class Options(
                 shortcuts = p.getBoolean("shortcuts", d.shortcuts),
                 theme = p.getString("palette", d.theme)!!.takeIf { it in listOf("dark", "light", "system") } ?: d.theme,
                 toolsHidden = p.getBoolean("tools_hidden", d.toolsHidden),
-                english = p.getBoolean("english", d.english),
+                // 0.7.0 kept only whether it was English.
+                language = p.getString("language", null)?.takeIf { it in LANGUAGES }
+                    ?: if (p.getBoolean("english", false)) "en" else d.language,
             )
         }
     }

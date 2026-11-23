@@ -17,6 +17,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.core.view.WindowCompat
 import com.xern.xrnkey.Options
@@ -471,14 +472,20 @@ class XrnkeyService :
         keyboard?.strip = Strip.Tools
     }
 
+    /** The comma's menu, ⌨: Android's keyboard menu. */
+    override fun onKeyboardMenu() {
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
+    }
+
     /**
-     * Holding the comma: Vietnamese to English and back, as on Laban Key. The word in progress
-     * ends first; the field's text stays as it is, and the new keyboard goes on from the cursor.
+     * The comma's menu, a language, as on Laban Key. The word in progress ends first; the
+     * field's text stays as it is, and the new keyboard goes on from the cursor.
      */
-    override fun onSwitchLanguage() {
+    override fun onLanguage(code: String) {
+        if (code == options.language || code !in Options.LANGUAGES) return
         val at = typist.cursor()
         typist.finish()
-        saveOptions(options.copy(english = !options.english))
+        saveOptions(options.copy(language = code))
         expected.clear()
         typist.reset(at)
         showStrip()
@@ -684,11 +691,12 @@ class XrnkeyService :
      * method needs a new core state (and a typist around it).
      */
     private fun applyOptions(o: Options) {
-        val languageChanged = o.english != options.english
+        val languageChanged = o.language != options.language
         options = o
+        val inEnglish = o.language == "en"
         // The English keyboard: no marks, and the English model alone.
-        val mode = if (o.english) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
-        val scoring = if (o.english) english else models
+        val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
+        val scoring = if (inEnglish) english else models
         if (state?.mode != mode) {
             typist.finish()
             state?.close()
@@ -713,10 +721,10 @@ class XrnkeyService :
         // The typo channel inside restoration only works where Space restores every word.
         models?.correction = if (o.tonesOnSpace == Typist.TONES_ALWAYS) o.correction else Models.CORRECT_OFF
         // English words aren't restored, only fixed ("teh" -> "the").
-        typist.tonesOnSpace = if (o.english) Typist.TONES_OFF else o.tonesOnSpace
+        typist.tonesOnSpace = if (inEnglish) Typist.TONES_OFF else o.tonesOnSpace
         typist.correctWrong = o.correction
         typist.doubleSpace = o.doubleSpace
-        typist.english = o.english
+        typist.english = inEnglish
         strip.suggestions = o.suggestions
         strip.emojiSuggestions = o.emojiSuggestions
         strip.nextWords = o.nextWord
@@ -728,7 +736,8 @@ class XrnkeyService :
             holdDigits = o.holdDigits
             spaceSwipe = o.spaceSwipe
             commaHold = o.commaHold
-            english = o.english
+            language = o.language
+            languages = Options.LANGUAGES
             heightPercent = o.height
         }
         emojiPanel?.palette = palette

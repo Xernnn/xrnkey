@@ -44,7 +44,8 @@ class KeyTouchTest {
             override fun onText(text: String) { events += text }
             override fun onBackspace() { events += "⌫" }
             override fun onEnter() { events += "⏎" }
-            override fun onSwitchLanguage() { events += "language" }
+            override fun onKeyboardMenu() { events += "keyboards" }
+            override fun onLanguage(code: String) { events += "language $code" }
             override fun onCursorStart() { events += "cursor" }
             override fun onCursor(dx: Int, dy: Int) { events += "move $dx $dy" }
             override fun onCursorEnd() { events += "end" }
@@ -125,14 +126,30 @@ class KeyTouchTest {
         assertEquals(listOf(" ", ","), events)
     }
 
-    /** Holding the comma switches Vietnamese and English, as on Laban Key. */
+    /**
+     * Holding the comma opens its menu over it, as Laban Key's globe does: ⌨ under the finger,
+     * then the languages to its right. Lifting on ⌨ opens Android's keyboard menu; sliding to a
+     * language and lifting switches to it; the one in use does nothing. Nothing is typed.
+     */
     @Test
-    fun holdingTheCommaSwitchesTheLanguage() {
+    fun holdingTheCommaOpensTheKeyboardAndLanguageMenu() {
         val v = keyboard()
         touch(v, MotionEvent.ACTION_DOWN, 216f, spaceY)
         hold(450)
+        assertEquals(listOf(KeyboardView.KEYBOARD_MENU, "VI", "EN"), v.popupForms)
+        assertEquals(KeyboardView.KEYBOARD_MENU, v.popupChosen)
+        shot("comma-menu-dark", v)
         touch(v, MotionEvent.ACTION_UP, 216f, spaceY)
-        assertEquals(listOf("language"), events)
+        assertEquals(listOf("keyboards"), events)
+        events.clear()
+        for ((dx, want) in listOf(108f to emptyList(), 216f to listOf("language en"))) {
+            touch(v, MotionEvent.ACTION_DOWN, 216f, spaceY)
+            hold(450)
+            touch(v, MotionEvent.ACTION_MOVE, 216f + dx, spaceY)
+            touch(v, MotionEvent.ACTION_UP, 216f + dx, spaceY)
+            assertEquals(want, events)
+            events.clear()
+        }
     }
 
     private fun holdAndLift(v: KeyboardView, x: Float, y: Float, dx: Float = 0f, dy: Float = 0f) {
