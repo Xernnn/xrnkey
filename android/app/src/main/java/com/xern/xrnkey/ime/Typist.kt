@@ -5,6 +5,7 @@ import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.engine.TypingState
+import java.text.BreakIterator
 
 /**
  * What the keyboard does to the text field, as InputConnection does it: the word in progress
@@ -20,8 +21,14 @@ interface Editor {
     /** Keep the word in progress as it stands, ending it. */
     fun finishComposing()
 
-    /** Delete before the cursor, or the selection (the Backspace key itself). */
-    fun backspace()
+    /**
+     * Backspace with no word in progress. `last` is the character right before the cursor as
+     * the typist has it ("" when it doesn't know): it goes through the field's connection when
+     * the field shows it there and nothing is selected, in order with the edits after it;
+     * otherwise the Backspace key goes to the field (a selection, an empty field). Returns
+     * whether `last` went.
+     */
+    fun backspace(last: String): Boolean
 
     /** Delete `codePoints` characters right before the cursor (no word in progress). */
     fun deleteBefore(codePoints: Int)
@@ -125,7 +132,15 @@ class Typist(
                 held = false
                 applyKeepForeign()
             }
+            if (value.isEmpty()) inside = false
         }
+
+    /**
+     * The word in progress is the part before the cursor of a word the cursor was put inside
+     * ([reopenBefore]): Space and Enter end it as typed, never fixed or restored, since the
+     * rest of the word is after it.
+     */
+    private var inside = false
 
     /** What was committed lately, for the words before the next one. */
     private val tail = StringBuilder()
@@ -162,8 +177,11 @@ class Typist(
      */
     private var kept: String? = null
 
-    /** The word in progress is one Backspace opened again: Space and Enter keep it as typed. */
-    private fun keptAsTyped(): Boolean = refused != null && refused == keys()
+    /**
+     * The word in progress is one Backspace opened again, or the part before the cursor of a
+     * word: Space and Enter keep it as typed.
+     */
+    private fun keptAsTyped(): Boolean = inside || refused != null && refused == keys()
 
     /** The last key was a Space that ended a word (for the double-Space full stop). */
     private var spaceAfterWord = false
@@ -346,7 +364,7 @@ class Typist(
             val typed = keys()
             when {
                 keptAsTyped() -> {
-                    kept = typed
+                    if (!inside) kept = typed
                     endAsTyped(c, null)
                 }
                 tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
@@ -435,7 +453,7 @@ class Typist(
         refused = null
         val s = state
         if (raw || s == null) {
-            editor.backspace()
+            editor.backspace("")
             return
         }
         if (composing.isEmpty()) plain.clear()
@@ -453,11 +471,14 @@ class Typist(
         }
         var deleted = false
         apply(s.key(TypingState.BACKSPACE)) {
-            editor.backspace()
-            deleted = true
-            // Backspace takes a character: an emoji is two UTF-16 units.
+            // Backspace takes a character (an emoji with its skin tone or joined parts is one).
+            // It goes through the field's connection, not as a key: some editors (Compose's)
+            // apply a key after the edits sent with it, and opening the word before it then
+            // went wrong there ("việt␣⌫" gave "vviệ").
             val n = tail.length
-            val units = if (n >= 2 && Character.isSurrogatePair(tail[n - 2], tail[n - 1])) 2 else 1
+            val last = lastCharacter(tail)
+            deleted = editor.backspace(last)
+            val units = maxOf(1, last.length)
             when {
                 n > 0 -> tail.setLength(n - units)
                 !wholeField && anchor > 0 -> anchor -= 1  // a character before what the tail holds
@@ -465,7 +486,8 @@ class Typist(
             if (pending.isNotEmpty()) pending.setLength(maxOf(0, pending.length - units))
             run.clear()
         }
-        // Backspace may have left the cursor at the end of a word: it is open again.
+        // Backspace may have left the cursor at the end of a word: it is open again (not after
+        // the key itself, which the field may apply later).
         if (deleted) reopenBefore(editor.textAfter(1))
     }
 
@@ -475,13 +497,16 @@ class Typist(
      * marking it ("việt␣⌫s" is "viết") and the strip offers its suggestions. The core takes the
      * keys that make it, as for a form picked from a held key; a word they don't make again
      * exactly ("of" makes "ò") stays as it is, and so does the field. `after` is what follows
-     * the cursor: a letter there means the cursor is inside a word, which stays as it is.
-     * Returns whether a word was opened.
+     * the cursor. A letter there means the cursor is inside a word: its part before the cursor
+     * opens, as on Laban Key ("ch|ao": "ch", the strip offering what starts so), and ends as
+     * typed. Not before a digit or inside "don't" or "e-mail". Returns whether a word was opened.
      */
     fun reopenBefore(after: String): Boolean {
         val s = state ?: return false
         if (raw || !autoCorrect || composing.isNotEmpty()) return false
-        if (after.isNotEmpty() && Character.isLetterOrDigit(after.codePointAt(0))) return false
+        val next = if (after.isEmpty()) -1 else after.codePointAt(0)
+        if (Character.isDigit(next) || after.firstOrNull()?.let { it in JOINERS } == true) return false
+        val inWord = Character.isLetter(next)
         val m = WORD_END.find(tail) ?: return false
         val start = m.range.first
         if (start == 0 && !wholeField) return false  // it may begin before what the typist holds
@@ -509,6 +534,7 @@ class Typist(
         editor.deleteBefore(word.codePointCount(0, word.length))
         editor.setComposing(word)
         composing = word
+        inside = inWord
         // Its marks were typed and kept: it ends as shown, never as its keys.
         if (keys.toString() != word) {
             held = true
@@ -774,6 +800,9 @@ class Typist(
          */
         private val WORD_END = Regex("(?<![^\\s(\\[{\"“«])\\p{L}[\\p{L}\\p{M}]*$")
 
+        /** Characters that join letters into one word: no word opens right before them. */
+        private const val JOINERS = "'’-_@"
+
         private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
 
         /** Marks, joiners, variation selectors and skin tones: part of the character before them. */
@@ -784,6 +813,16 @@ class Typist(
         }
 
         private fun wordChar(cp: Int) = Character.isLetterOrDigit(cp)
+
+        /** The last character of `t` as a reader sees one: "👍🏽", "👨‍👩‍👧" and "ệ" whole ("" when empty). */
+        internal fun lastCharacter(t: CharSequence): String {
+            if (t.isEmpty()) return ""
+            val s = t.substring(maxOf(0, t.length - 32))
+            val it = BreakIterator.getCharacterInstance()
+            it.setText(s)
+            val start = it.preceding(s.length)
+            return s.substring(if (start == BreakIterator.DONE) 0 else start)
+        }
 
         /**
          * How many UTF-16 units at the end of `t` a word deletion takes: the spaces at the end,

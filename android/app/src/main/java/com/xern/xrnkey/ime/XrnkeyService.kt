@@ -81,6 +81,9 @@ class XrnkeyService :
      */
     private val expected = ArrayDeque<Int>()
 
+    /** The field has a selection, as it last said: Backspace goes to it as the key. */
+    private var selected = false
+
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
 
@@ -98,7 +101,17 @@ class XrnkeyService :
             currentInputConnection?.finishComposingText()
         }
 
-        override fun backspace() = sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+        override fun backspace(last: String): Boolean {
+            val ic = currentInputConnection
+            if (ic != null && last.isNotEmpty() && !selected && ic.getSelectedText(0).isNullOrEmpty() &&
+                ic.getTextBeforeCursor(last.length, 0)?.toString() == last
+            ) {
+                ic.deleteSurroundingText(last.length, 0)
+                return true
+            }
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+            return false
+        }
 
         override fun deleteBefore(codePoints: Int) {
             currentInputConnection?.deleteSurroundingTextInCodePoints(codePoints, 0)
@@ -218,6 +231,7 @@ class XrnkeyService :
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
         expected.clear()
+        selected = info.initialSelStart != info.initialSelEnd
         typist.reset(info.initialSelStart)
         searchQuery = null
         showKeys()
@@ -254,6 +268,7 @@ class XrnkeyService :
         candidatesStart: Int, candidatesEnd: Int,
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        selected = newSelStart != newSelEnd
         // A report of this keyboard's own edits, on time or late: nothing else moved.
         val cursor = typist.cursor()
         if (newSelStart == newSelEnd && cursor >= 0) {
@@ -296,14 +311,18 @@ class XrnkeyService :
 
     /**
      * The field changed under the typist: it reads what is before the cursor again. A cursor put
-     * at the end of a word (a tap there) opens that word again, as Backspace into it does.
+     * at the end of a word, or inside one (a tap there), opens it again, as Backspace into it
+     * does. Not while the space bar moves the cursor: each step would open the word it passes.
      */
     private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
         typist.reset(cursor)
-        if (reopen) edit { typist.reopenBefore(editor.textAfter(1)) }
+        if (reopen && !movingCursor) edit { typist.reopenBefore(editor.textAfter(1)) }
         showStrip()
     }
+
+    /** The space bar is moving the cursor (from [onCursorStart] to [onCursorEnd]). */
+    private var movingCursor = false
 
     /**
      * One edit of the field by this keyboard: one selection update from the editor, at the
@@ -409,6 +428,7 @@ class XrnkeyService :
     }
 
     override fun onCursorStart() {
+        movingCursor = true
         typist.finish()
         keyboard?.strip = Strip.Tools
     }
@@ -423,10 +443,13 @@ class XrnkeyService :
         press(if (dy < 0) KeyEvent.KEYCODE_DPAD_UP else KeyEvent.KEYCODE_DPAD_DOWN, Math.abs(dy))
     }
 
-    /** The cursor moved: what's before it now is the context for the next word. */
+    /**
+     * The cursor moved: what's before it now is the context for the next word, and the word it
+     * stopped at opens, as after a tap.
+     */
     override fun onCursorEnd() {
-        typist.reset()
-        showStrip()
+        movingCursor = false
+        refresh(-1, reopen = true)
     }
 
     override fun onStripMenu() {
@@ -555,8 +578,10 @@ class XrnkeyService :
         typist.personal = if (learning) od.words else null
         models?.user = if (learning) od.words else null
         typist.shortcuts = if (options.shortcuts) od.shortcuts else null
-        // Incognito fields ask for nothing to be learned.
-        typist.learnHere = info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING == 0
+        // Incognito fields ask for nothing to be learned, and nothing typed in this app's own
+        // fields is (its Try-it field is for trying the keys, its lists hold words already).
+        typist.learnHere = info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING == 0 &&
+            info.packageName != packageName
     }
 
     // ---- the clipboard ------------------------------------------------------------------------

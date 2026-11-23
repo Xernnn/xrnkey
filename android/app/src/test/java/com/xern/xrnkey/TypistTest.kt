@@ -168,7 +168,7 @@ class TypistTest {
 
     /**
      * Only a whole word opens again, and only as it was: not the end of "don't" or "e-mail", not
-     * a word the cursor is inside, not one its keys would make differently ("Đ" + "ượ" ... is
+     * the start of "don't" or "2nd", not one its keys would make differently ("Đ" + "ượ" ... is
      * fine, an emoji isn't a word).
      */
     @Test
@@ -185,14 +185,52 @@ class TypistTest {
         t.text(" 2nd ")
         t.backspace()
         assertEquals("", f.composing)
-        f.after = "abc"
-        t.text(" xin ")
+        f.after = "'t"
+        t.text(" don ")
         t.backspace()
-        assertEquals("", f.composing)  // the cursor is inside a word
+        assertEquals("", f.composing)  // the cursor is inside "don't"
+        f.after = "nd"
+        t.text(" 2 ")
+        t.backspace()
+        assertEquals("", f.composing)
         f.after = ""
         t.text(" Đượcj ")
         t.backspace()
         assertEquals("", f.composing)  // its keys make "Được" plus a "j": not the same word
+    }
+
+    /** The cursor put at `at` in the field (a tap there), as the service then opens a word. */
+    private fun tap(f: FakeEditor, t: Typist, at: Int): Boolean {
+        t.finish()
+        val all = f.text
+        f.committed.setLength(0)
+        f.committed.append(all.take(at))
+        f.after = all.drop(at)
+        t.reset(at)
+        return t.reopenBefore(f.textAfter(1))
+    }
+
+    /**
+     * A tap inside a word opens its part before the cursor, as on Laban Key: "ch|ao" is "ch",
+     * which Telex goes on with and a pick replaces ("xin ch|ao" + "chào" is "xin chào ao"),
+     * the rest of the word left where it is.
+     */
+    @Test
+    fun aTapInsideAWordOpensItsPartBeforeTheCursor() {
+        val f = FakeEditor()
+        val t = typist(f)
+        t.text("xin chao ban")
+        assertTrue(tap(f, t, 6))
+        assertEquals("ch", t.shown)
+        assertEquals("xin chao ban", f.text)
+        assertEquals(listOf("<s>", "xin"), t.context())
+        t.pick("chào")
+        assertEquals("xin chào ao ban", f.text)
+        assertTrue(tap(f, t, 1))
+        assertEquals("x", t.shown)
+        t.text("a")
+        assertEquals("xain chào ao ban", f.text)
+        assertEquals(false, tap(f, t, 0))  // nothing before the cursor
     }
 
     /**

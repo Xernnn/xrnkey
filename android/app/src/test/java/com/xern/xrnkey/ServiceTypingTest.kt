@@ -5,6 +5,9 @@ import android.os.ParcelFileDescriptor
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.view.inputmethod.InputConnectionWrapper
+import android.view.inputmethod.InputConnection
+import android.view.KeyEvent
 import android.view.inputmethod.BaseInputConnection
 import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.ime.StripMaker
@@ -34,7 +37,39 @@ class ServiceTypingTest {
     @After
     fun removePack() = packed.close()
 
-    private fun field(): Pair<XrnkeyService, EditText> {
+    /**
+     * A connection that applies a key only after the batch of edits it was sent in, as Compose's
+     * text fields do; EditText's applies it at once.
+     */
+    private class LateKeys(target: InputConnection) : InputConnectionWrapper(target, true) {
+        private var depth = 0
+        private val keys = ArrayList<KeyEvent>()
+
+        override fun beginBatchEdit(): Boolean {
+            depth++
+            return super.beginBatchEdit()
+        }
+
+        override fun endBatchEdit(): Boolean {
+            val r = super.endBatchEdit()
+            if (--depth == 0) {
+                val late = keys.toList()
+                keys.clear()
+                late.forEach { super.sendKeyEvent(it) }
+            }
+            return r
+        }
+
+        override fun sendKeyEvent(event: KeyEvent): Boolean {
+            if (depth > 0) {
+                keys += event
+                return true
+            }
+            return super.sendKeyEvent(event)
+        }
+    }
+
+    private fun field(lateKeys: Boolean = false, app: String? = null): Pair<XrnkeyService, EditText> {
         // The models the APK bundles (the release build copies them from this folder), opened
         // as on the phone: by descriptor, each at its offset in a file laid out as AGP lays out
         // the APK's assets.
@@ -45,8 +80,11 @@ class ServiceTypingTest {
         val s = Robolectric.setupService(XrnkeyService::class.java)
         XrnkeyService.modelAssets = null
         val edit = EditText(RuntimeEnvironment.getApplication())
-        val info = EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }
-        val ic = edit.onCreateInputConnection(info)!!
+        val info = EditorInfo().apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            packageName = app
+        }
+        val ic = edit.onCreateInputConnection(info)!!.let { if (lateKeys) LateKeys(it) else it }
         // What the framework does when a field takes the keyboard.
         val start = android.inputmethodservice.InputMethodService::class.java.getDeclaredField("mStartedInputConnection")
         start.isAccessible = true
@@ -57,6 +95,12 @@ class ServiceTypingTest {
     }
 
     private fun XrnkeyService.type(text: String) = text.forEach { onText(it.toString()) }
+
+    /** Reports the field's selection and composing region now, as the editor does after an edit. */
+    private fun XrnkeyService.report(edit: EditText, old: Int) {
+        val e = edit.text
+        onUpdateSelection(old, old, edit.selectionStart, edit.selectionEnd, BaseInputConnection.getComposingSpanStart(e), BaseInputConnection.getComposingSpanEnd(e))
+    }
 
     /** Types `text` and reports each key's selection update, as the editor does, `late` keys late. */
     private fun XrnkeyService.typeReported(edit: EditText, text: String, late: Int = 0) {
@@ -108,7 +152,8 @@ class ServiceTypingTest {
 
     /**
      * A tap that puts the cursor at the end of a word opens it again: it is the composing word,
-     * and Telex marks it ("chao" + s is "cháo"). A tap inside a word leaves it as it is.
+     * and Telex marks it ("chao" + s is "cháo"). A tap inside a word opens its part before the
+     * cursor, as on Laban Key ("ch|ao": "ch").
      */
     @Test
     fun aTapAtTheEndOfAWordOpensItAgain() {
@@ -116,15 +161,102 @@ class ServiceTypingTest {
         s.typeReported(edit, "xin chao ban ")
         edit.setSelection(6)
         s.onUpdateSelection(13, 13, 6, 6, -1, -1)
-        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        s.report(edit, 6)
+        assertEquals("xin chao ban ", edit.text.toString())
+        assertEquals(4, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(6, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertEquals("ch", s.typist.shown)
         edit.setSelection(8)
-        s.onUpdateSelection(6, 6, 8, 8, -1, -1)
+        s.onUpdateSelection(6, 6, 8, 8, 4, 6)
         assertEquals("xin chao ban ", edit.text.toString())
         assertEquals(4, BaseInputConnection.getComposingSpanStart(edit.text))
         assertEquals(8, BaseInputConnection.getComposingSpanEnd(edit.text))
         assertEquals("chao", s.typist.shown)
         s.onText("s")
         assertEquals("xin cháo ban ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /**
+     * Backspace after a Space opens the word again in any field: in one that applies a key after
+     * the edits sent with it (Compose's), the Backspace key came after the word was opened, and
+     * "việt␣⌫" gave "vviệ".
+     */
+    @Test
+    fun backspaceOpensTheWordAgainWhereKeysComeLate() {
+        for (late in listOf(false, true)) {
+            val (s, edit) = field(lateKeys = late)
+            s.typeReported(edit, "vieetj ")
+            s.onBackspace()
+            s.report(edit, 5)
+            assertEquals("late $late", "việt", edit.text.toString())
+            assertEquals("late $late", 0, BaseInputConnection.getComposingSpanStart(edit.text))
+            assertEquals("late $late", 4, BaseInputConnection.getComposingSpanEnd(edit.text))
+            s.onText("s")
+            s.report(edit, 4)
+            assertEquals("late $late", "viết", edit.text.toString())
+            // An emoji goes whole, skin tone and all.
+            s.typeReported(edit, " ")
+            s.onEmoji("👍🏽")
+            s.report(edit, 5)
+            s.onBackspace()
+            s.report(edit, 9)
+            assertEquals("late $late", "viết ", edit.text.toString())
+            s.onDestroy()
+        }
+    }
+
+    /**
+     * With a selection, Backspace goes to the field as the key, which deletes the selection; the
+     * connection takes nothing before it (the space before "chao" would go). (The test's field
+     * doesn't apply keys, so the selection stays.)
+     */
+    @Test
+    fun backspaceWithASelectionGoesAsTheKey() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        edit.setSelection(4, 9)
+        s.onUpdateSelection(13, 13, 4, 9, -1, -1)
+        s.onBackspace()
+        assertEquals("xin chao ban ", edit.text.toString())
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        s.onDestroy()
+    }
+
+    /**
+     * Nothing typed in xrnkey's own fields is learned: trying the keys in its Try-it field
+     * taught the personal words what the trying typed. Other apps' fields learn.
+     */
+    @Test
+    fun xrnkeysOwnFieldsLearnNothing() {
+        val own = field(app = RuntimeEnvironment.getApplication().packageName).first
+        assertEquals(false, own.typist.learnHere)
+        own.onDestroy()
+        val other = field(app = "com.example.chat").first
+        assertEquals(true, other.typist.learnHere)
+        other.onDestroy()
+    }
+
+    /**
+     * The space bar moving the cursor opens no word on the way, only the one where it stops:
+     * each step used to open (and rewrite) the word it passed.
+     */
+    @Test
+    fun theSpaceBarOpensOnlyTheWordWhereTheCursorStops() {
+        val (s, edit) = field()
+        s.typeReported(edit, "xin chao ban ")
+        s.onCursorStart()
+        edit.setSelection(8)
+        s.onUpdateSelection(13, 13, 8, 8, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        edit.setSelection(3)
+        s.onUpdateSelection(8, 8, 3, 3, -1, -1)
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
+        s.onCursorEnd()
+        assertEquals("xin", s.typist.shown)
+        assertEquals(0, BaseInputConnection.getComposingSpanStart(edit.text))
+        assertEquals(3, BaseInputConnection.getComposingSpanEnd(edit.text))
+        assertEquals("xin chao ban ", edit.text.toString())
         s.onDestroy()
     }
 

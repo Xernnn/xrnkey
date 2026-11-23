@@ -4,7 +4,7 @@ import com.xern.xrnkey.ime.Editor
 
 /**
  * A text field as InputConnection edits it: committed text, then the composing word at the
- * cursor. A commit replaces the composing word; finishing keeps it as text.
+ * cursor, then [after]. A commit replaces the composing word; finishing keeps it as text.
  */
 class FakeEditor(initial: String = "") : Editor {
     val committed = StringBuilder(initial)
@@ -13,7 +13,7 @@ class FakeEditor(initial: String = "") : Editor {
     val log = mutableListOf<String>()
 
     /** What the field shows. */
-    val text: String get() = committed.toString() + composing
+    val text: String get() = committed.toString() + composing + after
 
     override fun setComposing(text: String) {
         composing = text
@@ -32,12 +32,18 @@ class FakeEditor(initial: String = "") : Editor {
         log += "finish"
     }
 
-    override fun backspace() {
+    override fun backspace(last: String): Boolean {
+        if (last.isNotEmpty() && committed.endsWith(last)) {
+            committed.setLength(committed.length - last.length)
+            log += "delete:$last"
+            return true
+        }
         if (committed.isNotEmpty()) {
             val n = Character.charCount(committed.codePointBefore(committed.length))
             committed.setLength(committed.length - n)
         }
         log += "backspace"
+        return false
     }
 
     override fun deleteBefore(codePoints: Int) {

@@ -6,6 +6,7 @@ import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
@@ -113,6 +114,25 @@ class AutoCorrectTest {
         assertEquals("khong", f.composing)
         t.text(" ")
         assertEquals("khong ", f.text)
+    }
+
+    /**
+     * The part of a word before the cursor, opened by a tap there, ends as typed: Space splits
+     * the word and restores nothing, since the rest of it is after the cursor. At the word's end,
+     * Space restores it as usual.
+     */
+    @Test
+    fun aWordOpenedInsideEndsAsTyped() = typing(field = "khong") { t, f, _ ->
+        f.after = "x"
+        t.reset()
+        assertTrue(t.reopenBefore(f.textAfter(1)))
+        t.text(" ")
+        assertEquals("khong x", f.text)
+        f.after = ""
+        t.backspace()
+        assertEquals("khong", f.composing)
+        t.text(" ")
+        assertEquals("không ", f.text)
     }
 
     @Test
