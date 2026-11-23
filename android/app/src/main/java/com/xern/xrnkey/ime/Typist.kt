@@ -132,7 +132,15 @@ class Typist(
                 held = false
                 applyKeepForeign()
             }
+            if (value.isEmpty()) inside = false
         }
+
+    /**
+     * The word in progress is the part before the cursor of a word the cursor was put inside
+     * ([reopenBefore]): Space and Enter end it as typed, never fixed or restored, since the
+     * rest of the word is after it.
+     */
+    private var inside = false
 
     /** What was committed lately, for the words before the next one. */
     private val tail = StringBuilder()
@@ -169,8 +177,11 @@ class Typist(
      */
     private var kept: String? = null
 
-    /** The word in progress is one Backspace opened again: Space and Enter keep it as typed. */
-    private fun keptAsTyped(): Boolean = refused != null && refused == keys()
+    /**
+     * The word in progress is one Backspace opened again, or the part before the cursor of a
+     * word: Space and Enter keep it as typed.
+     */
+    private fun keptAsTyped(): Boolean = inside || refused != null && refused == keys()
 
     /** The last key was a Space that ended a word (for the double-Space full stop). */
     private var spaceAfterWord = false
@@ -353,7 +364,7 @@ class Typist(
             val typed = keys()
             when {
                 keptAsTyped() -> {
-                    kept = typed
+                    if (!inside) kept = typed
                     endAsTyped(c, null)
                 }
                 tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
@@ -486,13 +497,16 @@ class Typist(
      * marking it ("việt␣⌫s" is "viết") and the strip offers its suggestions. The core takes the
      * keys that make it, as for a form picked from a held key; a word they don't make again
      * exactly ("of" makes "ò") stays as it is, and so does the field. `after` is what follows
-     * the cursor: a letter there means the cursor is inside a word, which stays as it is.
-     * Returns whether a word was opened.
+     * the cursor. A letter there means the cursor is inside a word: its part before the cursor
+     * opens, as on Laban Key ("ch|ao": "ch", the strip offering what starts so), and ends as
+     * typed. Not before a digit or inside "don't" or "e-mail". Returns whether a word was opened.
      */
     fun reopenBefore(after: String): Boolean {
         val s = state ?: return false
         if (raw || !autoCorrect || composing.isNotEmpty()) return false
-        if (after.isNotEmpty() && Character.isLetterOrDigit(after.codePointAt(0))) return false
+        val next = if (after.isEmpty()) -1 else after.codePointAt(0)
+        if (Character.isDigit(next) || after.firstOrNull()?.let { it in JOINERS } == true) return false
+        val inWord = Character.isLetter(next)
         val m = WORD_END.find(tail) ?: return false
         val start = m.range.first
         if (start == 0 && !wholeField) return false  // it may begin before what the typist holds
@@ -520,6 +534,7 @@ class Typist(
         editor.deleteBefore(word.codePointCount(0, word.length))
         editor.setComposing(word)
         composing = word
+        inside = inWord
         // Its marks were typed and kept: it ends as shown, never as its keys.
         if (keys.toString() != word) {
             held = true
@@ -784,6 +799,9 @@ class Typist(
          * "2nd" or an address.
          */
         private val WORD_END = Regex("(?<![^\\s(\\[{\"“«])\\p{L}[\\p{L}\\p{M}]*$")
+
+        /** Characters that join letters into one word: no word opens right before them. */
+        private const val JOINERS = "'’-_@"
 
         private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
 

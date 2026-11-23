@@ -154,7 +154,9 @@ keyboard's hide button.
   undoes. Capitals follow the keys that typed them (`Vieetj` → `Việt`), as on the laptop.
 - **Backspace**:
   - with a word in progress, the engine deletes one character (`toán` → `tóa`, `được` → `đượ`);
-  - otherwise it deletes before the cursor, or the selection; when that leaves the cursor at
+  - otherwise it deletes the character before the cursor (an emoji with its skin tone or
+    joined parts is one) through the field's connection, in order with the edits after it, or
+    else sends the key (a selection, the field's start); when that leaves the cursor at
     the end of a word, the word is the word in progress again, as on Laban Key: Telex goes on
     marking it (`việt␣⌫` + `s` is `viết`), the strip offers its suggestions, and Space ends it
     as before. Only a whole word after a space, a bracket, a quote or the field's start opens
@@ -171,7 +173,13 @@ keyboard's hide button.
     gesture and closes the keyboard, as on the reference. A swipe from the key's left part, or
     one that rests a moment first, deletes.
 - **A tap at the end of a word** opens it again the same way (the cursor moved there by the
-  finger, with nothing selected); a tap inside a word leaves it as it is.
+  finger, with nothing selected).
+- **A tap inside a word** opens its part before the cursor, as on Laban Key: in "xin ch|ao"
+  the word in progress is `ch`, underlined, and the strip offers what starts so (Laban Key:
+  xin cho, chao, chúc mừng). Telex goes on with it, and a pick replaces it and adds a space
+  ("xin chào ao"), the rest of the word staying where it is. Space, punctuation and Enter end
+  it as typed, since the rest of the word is after it. Not before a digit, nor inside `don't`
+  or `e-mail`.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
 - **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a
