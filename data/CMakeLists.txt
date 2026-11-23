@@ -85,6 +85,9 @@ if(XRNKEY_ENABLE_TESTS)
     endforeach()
     add_custom_target(test_lm_models ALL DEPENDS ${XK_TEST_LM_FILES})
 
+    ## The Japanese dictionary's builder and reader, on the made-up test dictionary.
+    add_test(NAME "ja: dictionary"
+             COMMAND ${Python3_EXECUTABLE} -I "${CMAKE_CURRENT_SOURCE_DIR}/ja/test_build_dict.py")
     add_test(NAME "lm: tokenizer"
              COMMAND ${Python3_EXECUTABLE} -I "${CMAKE_CURRENT_SOURCE_DIR}/lm/test_xklm_text.py")
     set_tests_properties("lm: tokenizer" PROPERTIES

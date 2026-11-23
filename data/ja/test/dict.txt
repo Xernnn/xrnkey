@@ -1,0 +1,99 @@
+# A tiny Japanese dictionary for the tests and CI, written for this project: a handful of
+# everyday words with made-up costs and parts of speech, and made-up connection costs. It is
+# not taken from any dictionary. build_dict.py text turns it into a .xkdic as it turns Mozc's.
+#
+# Lines:
+#   @id NAME               a part of speech (the first is 1; 0 starts and ends a sentence)
+#   @conn LEFT RIGHT COST  what RIGHT costs after LEFT: names, * for any, BOS and EOS for the
+#                          sentence's start and end; a later line overrides an earlier one
+#   @literal KIND NAME     the part of speech of text no word reads (noun, number, alphabet,
+#                          comma, period, symbol)
+#   @scan N                prefixes with more than N readings get stored predictions
+#   READING<TAB>NAME<TAB>COST<TAB>SURFACE   a word (lower costs are likelier)
+
+@id noun
+@id pronoun
+@id wa
+@id case
+@id copula
+@id verb
+@id masu
+@id number
+@id alphabet
+@id comma
+@id period
+@id symbol
+
+@literal noun noun
+@literal number number
+@literal alphabet alphabet
+@literal comma comma
+@literal period period
+@literal symbol symbol
+
+@scan 3
+
+@conn * * 2000
+@conn BOS * 0
+@conn * EOS 0
+@conn wa * 500
+@conn case * 500
+@conn noun wa 0
+@conn noun case 0
+@conn pronoun wa 0
+@conn pronoun case 0
+@conn noun copula 0
+@conn verb masu 0
+@conn BOS wa 6000
+@conn BOS case 6000
+@conn BOS copula 6000
+@conn BOS masu 6000
+@conn wa wa 6000
+@conn wa case 6000
+@conn case case 6000
+@conn case wa 3000
+@conn verb EOS 5000
+@conn verb wa 5000
+@conn verb case 5000
+@conn noun noun 3000
+@conn copula EOS 0
+@conn masu EOS 0
+
+わたし	pronoun	500	私
+わたし	verb	2500	渡し
+は	wa	0	は
+は	noun	3000	葉
+は	noun	3500	歯
+が	case	0	が
+が	noun	4000	蛾
+を	case	0	を
+に	case	0	に
+に	noun	4000	二
+の	case	0	の
+がくせい	noun	1500	学生
+がく	noun	3500	額
+せい	noun	3000	性
+です	copula	0	です
+かみ	noun	2000	紙
+かみ	noun	2200	神
+かみ	noun	2600	髪
+かみ	noun	3000	上
+か	noun	3000	蚊
+み	noun	3000	身
+にほん	noun	1200	日本
+にほんご	noun	1600	日本語
+にほんじん	noun	1800	日本人
+ほん	noun	1500	本
+きって	noun	2000	切手
+しんぶん	noun	1500	新聞
+たにん	noun	2000	他人
+きょう	noun	800	今日
+きょう	noun	2500	京
+きょうと	noun	1800	京都
+がっこう	noun	1200	学校
+いき	verb	1500	行き
+いき	noun	2500	息
+ます	masu	0	ます
+ます	noun	4000	升
+あめ	noun	1500	雨
+あめ	noun	2000	飴
