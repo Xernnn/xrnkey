@@ -146,7 +146,8 @@ keyboard's hide button.
   is under the finger and typed if it lifts there; the rest sit around it in a grid as square
   as they allow (5 by 4 for 18), so no slide is long. Where the grid doesn't fit above the key,
   it moves and the finger still starts on the first form. Forms go to the engine as the Telex
-  keys that make them, so the word goes on taking marks. With the number row on, no digit is in
+  keys that make them, so the word goes on taking marks, but the word ends as shown, never as
+  its keys: a picked `ò` stays `ò`, though `of` typed stays `of`. With the number row on, no digit is in
   the popup (the row is right there); without it, a top-row letter's digit comes first (`q` →
   1 … `p` → 0, the "Long-press top row for digits" setting).
 - **Shift**: one tap gives one capital, and a double tap locks capitals, which a third tap
@@ -159,6 +160,10 @@ keyboard's hide button.
   - **swiping left** from it (a key and a half) deletes the word before the cursor, with the
     spaces after it, one word a swipe however far ("xin chao ban" → "xin chao "): the word in
     progress if there is one, a run of punctuation or emoji as one word, a new line alone.
+    The key asks the system to leave its swipes alone (gesture exclusion), but HyperOS ignores
+    that: a quick swipe starting in the screen's outer 62 px (the key's right part) is its Back
+    gesture and closes the keyboard, as on the reference. A swipe from the key's left part, or
+    one that rests a moment first, deletes.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
 - **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a

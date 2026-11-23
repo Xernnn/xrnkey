@@ -636,7 +636,7 @@ class XrnkeyService :
             typist = Typist(state, editor, models)
         }
         state?.setOption(TypingState.OPT_MODERN_STYLE, o.modernTones)
-        state?.setOption(TypingState.OPT_AUTO_RESTORE, o.keepForeign)
+        typist.keepForeign = o.keepForeign
         state?.setOption(TypingState.OPT_FREE_MARKING, o.freeMarking)
         state?.setOption(TypingState.OPT_W_SHORTCUT, o.wShortcut)
         // The typo channel inside restoration only works where Space restores every word.
