@@ -96,6 +96,9 @@ private data class Look(
     val pill: Color,
 )
 
+/** The Japanese dictionary's entry among the licences: a tap shows its notices. */
+private const val MOZC = "Mozc"
+
 private val DarkLook = Look(
     bg = Color(0xFF263238), card = Color(0xFF2E3B42), glyph = Color(0xFFECEFF1),
     dim = Color(0xFFB0BEC5), accent = Color(0xFFC4579D), pill = Color(0xFF3E4C53),
@@ -802,12 +805,21 @@ class SettingsActivity : ComponentActivity() {
                 "Common Voice" to "CC0",
                 "Unicode CLDR" to "Unicode License v3",
                 "MiSans" to "MiSans Font License",
+                MOZC to "BSD 3-Clause · IPAdic",
             )
+            // The Japanese dictionary's notices, word for word (data/ja/NOTICE): a tap shows them.
+            val notice = remember { runCatching { assets.open("ja-notice.txt").bufferedReader().use { it.readText() } }.getOrNull() }
+            var open by rememberSaveable { mutableStateOf(false) }
             Card {
                 for ((what, licence) in entries) {
-                    Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp)) {
+                    val text = notice.takeIf { what == MOZC }
+                    val tap = if (text != null) Modifier.clickable { open = !open } else Modifier
+                    Column(Modifier.fillMaxWidth().then(tap).padding(horizontal = 4.dp, vertical = 10.dp)) {
                         Text(what, style = label)
                         Text(licence, style = quiet)
+                        if (open && text != null) {
+                            Text(text, style = quiet.copy(fontSize = 12.sp), modifier = Modifier.padding(top = 8.dp).testTag("notice"))
+                        }
                     }
                 }
             }

@@ -2,12 +2,14 @@ package com.xern.xrnkey
 
 import com.xern.xrnkey.engine.Model
 import com.xern.xrnkey.engine.Models
+import com.xern.xrnkey.ja.Dictionary
 import java.io.File
 import java.io.RandomAccessFile
 
 /**
  * The models the tests use: the small ones trained from made-up text (android/host builds
- * them), or the real ones when this machine has them (data/lm/README.md).
+ * them), or the real ones when this machine has them (data/lm/README.md). The same for the
+ * Japanese dictionary: the made-up one (data/ja/test/dict.txt), or Mozc's (data/ja/README.md).
  */
 object TestModels {
     val testDir = File(System.getProperty("xrnkey.testModels") ?: "build/host/lm")
@@ -15,13 +17,27 @@ object TestModels {
 
     val realAvailable: Boolean get() = File(realDir, "vi-phone.xklm").isFile && File(realDir, "en.xklm").isFile
 
-    /** The files the APK bundles as vi.xklm and en.xklm: the real ones, else the test ones. */
+    /** The made-up Japanese dictionary, and Mozc's when this machine has it built. */
+    val testJapanese = File(testDir, "ja.xkdic")
+    val realJapanese = File(realDir, "ja.xkdic")
+    val realJapaneseAvailable: Boolean get() = realJapanese.isFile
+
+    /**
+     * The files the APK bundles as vi.xklm, en.xklm and ja.xkdic: the real ones, else the test
+     * ones.
+     */
     val bundled: Map<String, File>
-        get() = if (realAvailable) {
-            mapOf("vi.xklm" to File(realDir, "vi-phone.xklm"), "en.xklm" to File(realDir, "en.xklm"))
-        } else {
-            mapOf("vi.xklm" to File(testDir, "vi.xklm"), "en.xklm" to File(testDir, "en.xklm"))
-        }
+        get() = (
+            if (realAvailable) {
+                mapOf("vi.xklm" to File(realDir, "vi-phone.xklm"), "en.xklm" to File(realDir, "en.xklm"))
+            } else {
+                mapOf("vi.xklm" to File(testDir, "vi.xklm"), "en.xklm" to File(testDir, "en.xklm"))
+            }
+            ) + ("ja.xkdic" to if (realJapaneseAvailable) realJapanese else testJapanese)
+
+    fun japanese(): Dictionary = Dictionary.open(testJapanese)
+
+    fun realJapanese(): Dictionary = Dictionary.open(realJapanese)
 
     class Opened(val vi: Model, val en: Model) : AutoCloseable {
         val models = Models(vi, en)

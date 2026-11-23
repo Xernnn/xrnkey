@@ -17,8 +17,9 @@ binary format, and its `convert()` does what the keyboard does, for checking.
   and every file's SHA-256), and the made-up test dictionary `test/dict.txt`.
 - **Not in git**: the downloaded Mozc files and the built `ja.xkdic`.
 
-The tests use the made-up dictionary (it is written for this project, with made-up costs, and
-says nothing about quality).
+The tests and CI use the made-up dictionary, built at build time by `android/host` (it is
+written for this project, with made-up costs, and says nothing about quality). A debug build
+without the real dictionary bundles it too; a release build needs the real one.
 
 ## Building it
 
@@ -37,6 +38,9 @@ python3 -I data/ja/build_dict.py eval ~/.cache/xrnkey-lm/models/ja.xkdic \
   no conversion of Mozc's evaluation set. It takes about ten seconds.
 - `eval` says how often the best conversion is the one Mozc gave, for the sentences of Mozc's
   own evaluation set (`evaluation.tsv`).
+
+The Android build bundles `ja.xkdic` from the models folder (`~/.cache/xrnkey-lm/models`, or
+`-Pxrnkey.models=<dir>`), uncompressed, next to `vi.xklm` and `en.xklm`, and maps it in place.
 
 | Build | Size | Mozc's evaluation set |
 |---|---|---|
@@ -61,5 +65,6 @@ The dictionary is derived from Mozc's, at commit `ffa0d785342651fe649d13dcb6fcb2
 - the **Okinawa dictionary** (<http://sourceforge.jp/projects/o-dic/>), for named entities: in
   the public domain.
 
-Their notices, word for word, are in [`NOTICE`](NOTICE). The code that builds and reads the
-dictionary is MIT, like the rest of the repo.
+Their notices, word for word, are in [`NOTICE`](NOTICE). The APK carries that file
+(`assets/ja-notice.txt`), and Settings → About → Licences shows it under "Mozc". The code that
+builds and reads the dictionary is MIT, like the rest of the repo.

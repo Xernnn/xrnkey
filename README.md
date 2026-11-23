@@ -215,4 +215,6 @@ something doesn't type: [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 MIT — see [LICENSE](LICENSE). The word lists compiled into the engine come from SCOWL, Unicode's
 Unihan database, Mozilla Common Voice, Vietnamese Wikisource and Tatoeba, under their own terms;
-[`core/data/README.md`](core/data/README.md) has the sources and the notices they ask for.
+[`core/data/README.md`](core/data/README.md) has the sources and the notices they ask for. The
+Android keyboard's Japanese dictionary is derived from Mozc's, under the BSD 3-Clause licence
+with the IPAdic notices: [`data/ja/NOTICE`](data/ja/NOTICE).

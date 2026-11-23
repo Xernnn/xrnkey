@@ -190,10 +190,11 @@ keyboard's hide button.
   word, a number (`1␠␠` → `1. `) or closing punctuation, and never in password, URL or email
   fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
-  comma** opens a menu over it, one row to the right: ⌨, then the languages (VI, EN), the one
-  in use underlined. Slide to a choice and lift: ⌨ opens Android's keyboard menu, a language
-  switches the keyboard to it (see "The English keyboard"); the space bar names the one in
-  use, and it stays chosen. Lifting where it opened is ⌨.
+  comma** opens a menu over it, one row to the right: ⌨, then the languages (VI, EN, JA), the
+  one in use underlined. JA is there only when the APK has the Japanese dictionary. Slide to a
+  choice and lift: ⌨ opens Android's keyboard menu, a language switches the keyboard to it (see
+  "The English keyboard" and "The Japanese keyboard"); the space bar names the one in use, and
+  it stays chosen. Lifting where it opened is ⌨.
 - **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
   `, ? ! ' " : - ; ( ) / @ & % + #`, the comma under the finger, as on the reference.
 - **Enter**: ends the word, then sends the field's action or a newline.
@@ -313,7 +314,7 @@ What the slots hold, by situation (the centre in bold only where Space commits i
   word's place (`cam` → `🍊`, `haha` → `😂`, `:)` → `🙂`, `cà phê` → `☕`). After Space, the
   emoji goes at the cursor. The word as typed has no slot: Space keeps it.
 - **Slide up from the strip**: the **more-suggestions panel** opens over it, up to 7 more
-  candidates three to a row under the strip's slots, the best nearest the strip and in the
+  candidates (15 on the Japanese keyboard) three to a row under the strip's slots, the best nearest the strip and in the
   middle. Lift on one to commit it with a space; slide back down past the strip to close it
   with nothing taken, as on the reference. Lifted anywhere else, it stays open.
   While it stays open, a tap on a candidate commits it and any key closes it (and types).
@@ -359,6 +360,71 @@ Chosen from the comma's menu (EN); the space bar says "English".
   apostrophe ("dont": don't, "im": I'm), and "i" alone is "I". Words that are words themselves
   ("its", "ill", "were") stay. Backspace right after puts back what was typed.
 - Everything else is as on the Vietnamese keyboard: the strip, the panels, the gestures.
+
+## The Japanese keyboard
+
+Chosen from the comma's menu (JA); the space bar says "日本語". It types as Gboard's Japanese
+QWERTY does: romaji become kana, Space converts them to kanji. The dictionary is Mozc's
+open-source one (`data/ja/README.md`), in the APK and never downloaded.
+
+- **Letters spell a reading in romaji** (wāpuro), shown as composing hiragana, underlined:
+  - each kana as soon as its letters spell it: `ka` か, `kya` きゃ, `shi`/`si` し, `chi`/`ti` ち,
+    `tsu`/`tu` つ, `fu`/`hu` ふ, `ji`/`zi` じ, `ja` じゃ, `sha` しゃ, `cha` ちゃ, `wo` を, `fa` ふぁ,
+    `thi` てぃ, `va` ゔぁ;
+  - small kana with x or l: `xa`/`la` ぁ, `xya` ゃ, `xtu`/`ltu`/`xtsu` っ, `xwa` ゎ;
+  - a doubled consonant is っ: `kitte` きって, `matcha` まっちゃ;
+  - ん: `nn` and `n'`, an n before a consonant other than n and y (`shinbun` しんぶん), and an n
+    left at the end when the reading is converted or committed (`tanin` たにん, `tan'in`
+    たんいん; `konnnichiha` こんにちは takes three n);
+  - `-` is ー inside a reading (`ra-men` らーめん), and `-` with nothing composing;
+  - letters that spell nothing yet wait at the end, as typed (`かk`).
+- **Shift**: a capital goes in as it is, and so do the letters after it until the reading ends
+  (`Tokyo`), for names. Auto-capitalise never gives Shift here.
+- **Digits** stay ASCII. Inside a reading they join it (`3じ`), as other symbols do; with nothing
+  composing they go straight in.
+- **The comma and full stop keys** are `、` and `。`. Holding `。` gives `、 ？ ！ ・ ー 「 」 … ～ ：
+  （ ）`, `、` under the finger. `?` and `!` from the symbols are typed `？` and `！`. Inside a
+  reading they join it and convert with it (`かみ、` → `紙、`); with nothing composing they go
+  straight in. Holding `、` opens the comma's menu, as on the other keyboards.
+- **The strip while composing**:
+  - the middle holds the best conversion of the whole reading (`わたしはがくせいです`:
+    `私は学生です`), the left the reading in hiragana, the right in katakana;
+  - the more panel holds up to 15 more, five rows of three: the words read exactly so (`かみ`:
+    `神`, `髪` …), then words for the reading's start, for converting piece by piece (the first
+    word of the best conversion and the others read like it, `私`, `渡し`; then the other starts
+    that are words, longest first), then predictions, the likeliest words whose reading goes
+    on from what is typed (`にほ`: `日本`, `日本語`, `日本人`);
+  - no remove marks: the dictionary's words are not the owner's to forget.
+- **Space**:
+  - while composing, it converts: the field shows the best conversion, and the strip shows it
+    in the middle on the accent, with the candidate before it on the left and the next on the
+    right. Each further Space shows the next one, after the last the first again: the best
+    conversion, the other words read so, the hiragana, the katakana (and the letters full-width,
+    `Ｔｏｋｙｏ`, for a reading of Latin letters), then the words for the reading's start. One of
+    those shows with the rest of the reading converted after it (`渡し` + `は学生です`).
+    Predictions are not in the round; they stay in the panel;
+  - with nothing composing, it types a full-width space `　`, Gboard's default.
+- **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
+  stands for, with no space after it. A word for the reading's start leaves the rest composing,
+  as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
+  `は学生です`, the particle).
+- **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
+  after Space the conversion shown), with no new line; otherwise the field's action or a new
+  line.
+- **Backspace**: takes the last letter waiting or the last kana; after Space, it goes back to the
+  reading, unconverted; with nothing composing, the character before the cursor. A swipe from it
+  takes the whole reading, or with none the word before the cursor.
+- **A new letter after Space** commits the conversion shown and starts a new reading.
+- **Moving the cursor, leaving the field**, an emoji or a paste: what the field shows is
+  committed as it is (a last n as ん).
+- **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
+  types them; nothing converts.
+- **Not on this keyboard**: no next-word prediction after a commit, no learning of the owner's
+  words or of what they choose, no Telex, and no emoji in the strip (the emoji panel is there).
+- The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
+  each word's cost plus the cost of its part of speech after the one before (Mozc's
+  connection costs), and a kana no word reads stands for itself. It runs on each key, in a few
+  milliseconds with the real dictionary.
 
 ## Auto-correct (Space and punctuation)
 
@@ -919,6 +985,7 @@ All of it ships in the APK and is never downloaded.
 | Unihan readings (already a source) | the syllable inventory | Unicode License v3 |
 | SCOWL (already the source of `english.txt`) | the English vocabulary | SCOWL's permissive notice |
 | Unicode CLDR annotations, `vi` and `en`, and `emoji-test.txt` | emoji names, keywords, order and groups | Unicode License v3 |
+| Mozc's open-source dictionary (`src/data/dictionary_oss`: the words and the connection costs), itself from IPAdic and the Okinawa dictionary | the Japanese keyboard's conversions (`data/ja`) | BSD 3-Clause, with the IPAdic and ICOT notices (`data/ja/NOTICE`, shown in Settings → About → Licences) |
 | A hand list of Vietnamese and English chat words, abbreviations and emoticons, written for this project (`data/emoji/keywords-hand.tsv`) | the strip's emoji keywords | MIT, with the code |
 | A made-up chat and test set, written for this project | tuning the switch cost and abbreviations; the eval set C | MIT, with the code |
 
@@ -959,11 +1026,12 @@ Rules:
 | `en.lm` | ≤ 6 MB |
 | `lexicon.bin`, `emoji.bin` | ≤ 3 MB |
 | `libxrnkey.so` + JNI (arm64) | ≤ 3 MB |
+| `ja.xkdic` (the Japanese dictionary; 6.8 MB built) | ≤ 10 MB |
 | APK total | ≤ 45 MB |
 
-- The model files are stored uncompressed in the APK (`noCompress`). They are memory-mapped
-  straight from it through the asset's file descriptor and offset, so nothing is copied and only
-  the pages in use take RAM.
+- The model files and the Japanese dictionary are stored uncompressed in the APK
+  (`noCompress`). They are memory-mapped straight from it through the asset's file descriptor
+  and offset, so nothing is copied and only the pages in use take RAM.
 - If that fails on some phone, the files are copied once to `noBackupFilesDir`.
 
 ## Data and privacy

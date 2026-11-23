@@ -1,6 +1,7 @@
 ## The engine built for this machine, so the keyboard's JVM tests run the real core: the core,
-## the JNI bridge against the JDK's jni.h, and the small test models trained from the made-up
-## text in data/lm/test (as the core's own tests do). Gradle's buildHost task runs this.
+## the JNI bridge against the JDK's jni.h, the small test models trained from the made-up
+## text in data/lm/test (as the core's own tests do), and the made-up Japanese dictionary in
+## data/ja/test. Gradle's buildHost task runs this.
 cmake_minimum_required(VERSION 3.27)
 project(xrnkey_host LANGUAGES CXX)
 
@@ -33,4 +34,11 @@ foreach(name vi en)
         COMMAND xk-lm-build --order 3 ${OPT_${name}} --prune 0,0 -o "${LM}/${name}.xklm" "${LM}/${name}.tok"
         DEPENDS xk-lm-build "${LM}/${name}.tok")
 endforeach()
-add_custom_target(test_models ALL DEPENDS "${LM}/vi.xklm" "${LM}/en.xklm")
+# The made-up Japanese dictionary (data/ja/test/dict.txt), built as the real one is.
+add_custom_command(
+    OUTPUT "${LM}/ja.xkdic"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${LM}"
+    COMMAND ${Python3_EXECUTABLE} -I "${XRNKEY_REPO}/data/ja/build_dict.py" text
+            "${XRNKEY_REPO}/data/ja/test/dict.txt" "${LM}/ja.xkdic"
+    DEPENDS "${XRNKEY_REPO}/data/ja/test/dict.txt" "${XRNKEY_REPO}/data/ja/build_dict.py")
+add_custom_target(test_models ALL DEPENDS "${LM}/vi.xklm" "${LM}/en.xklm" "${LM}/ja.xkdic")

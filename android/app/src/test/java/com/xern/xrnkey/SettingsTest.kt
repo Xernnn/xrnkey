@@ -124,7 +124,8 @@ class SettingsTest {
 
     /**
      * A language from the comma's menu stays chosen, and the space bar says which. 0.7.0's
-     * saved English (a yes or no) is read as the language.
+     * saved English (a yes or no) is read as the language. Japanese is offered: the debug
+     * build bundles a dictionary (the test one, without the real one).
      */
     @Test
     fun theCommasMenuSwitchesTheKeyboardsLanguage() {
@@ -132,12 +133,16 @@ class SettingsTest {
         keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
         keys.layout(0, 0, 1080, keys.measuredHeight)
         assertEquals("Tiếng Việt", keys.spaceLabel)
-        assertEquals(listOf("vi", "en"), keys.languages)
+        assertEquals(listOf("vi", "en", "ja"), keys.languages)
         s.onLanguage("en")
         assertEquals("en", keys.language)
         assertEquals("English", keys.spaceLabel)
         assertEquals("en", Options.load(Options.prefs(app())).language)
+        s.onLanguage("ja")
+        assertEquals("日本語", keys.spaceLabel)
+        assertTrue(keys.kana)
         s.onLanguage("vi")
+        assertFalse(keys.kana)
         assertEquals("Tiếng Việt", keys.spaceLabel)
         s.onDestroy()
         val old = app().getSharedPreferences("old", Context.MODE_PRIVATE)
