@@ -11,6 +11,7 @@ import android.widget.EditText
 import com.xern.xrnkey.ime.XrnkeyService
 import com.xern.xrnkey.keyboard.EmojiGrid
 import com.xern.xrnkey.keyboard.EmojiPanelView
+import com.xern.xrnkey.keyboard.EmojiTab
 import com.xern.xrnkey.keyboard.Tool
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -109,6 +110,32 @@ class EmojiServiceTest {
         s.onTool(Tool.EMOJI)
         assertEquals(EmojiGrid.RECENTS, panel.page)
         assertEquals("😀", panel.pages[EmojiGrid.RECENTS].cells.first().text)
+        s.onDestroy()
+    }
+
+    /** A kaomoji types into the field and goes first in the kaomoji tab's recents, not the emoji's. */
+    @Test
+    fun aKaomojiGoesIntoTheFieldAndIntoItsOwnTabsRecents() {
+        val (s, edit) = field()
+        val panel = (0 until frame.childCount).map { frame.getChildAt(it) }.filterIsInstance<EmojiPanelView>().single()
+        s.onTool(Tool.EMOJI)
+        frame.measure(
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.AT_MOST),
+        )
+        frame.layout(0, 0, frame.measuredWidth, frame.measuredHeight)
+        panel.tab = EmojiTab.EMOTICONS
+        assertEquals(EmojiGrid.SMILEYS, panel.page)
+        panel.tap(panel.cellWidth() / 2, panel.gridTop() + panel.rowHeight() / 2)
+        assertEquals(":)", edit.text.toString())
+        s.onClosePanel()
+        s.onTool(Tool.EMOJI)
+        assertEquals(EmojiTab.EMOTICONS, panel.tab)
+        assertEquals(EmojiGrid.RECENTS, panel.page)
+        assertEquals(listOf(":)"), panel.pages[EmojiGrid.RECENTS].cells.map { it.text })
+        panel.tab = EmojiTab.EMOJI
+        assertEquals(EmojiGrid.SMILEYS, panel.page)
+        assertEquals(0, panel.pages[EmojiGrid.RECENTS].cells.size)
         s.onDestroy()
     }
 }

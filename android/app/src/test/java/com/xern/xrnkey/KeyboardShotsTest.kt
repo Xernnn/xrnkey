@@ -126,6 +126,7 @@ class KeyboardShotsTest {
             shotPanel("emoji-$name", panel(palette, EmojiTab.EMOJI))
             shotPanel("emoticons-$name", panel(palette, EmojiTab.EMOTICONS))
             shotPanel("symbols-tab-$name", panel(palette, EmojiTab.SYMBOLS))
+            shotPanel("letters-tab-$name", panel(palette, EmojiTab.LETTERS))
         }
     }
 

@@ -18,20 +18,24 @@ import com.xern.xrnkey.R
 import com.xern.xrnkey.engine.Emoji
 import com.xern.xrnkey.engine.SkinTones
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
  * The emoji panel, in place of the strip and the keys (android/docs/feature-spec.md, "The emoji
- * panel"): the tab row (back to the keys, emoji, emoticons, symbols), right under it the grid,
- * four rows at a time and one category to a page, a round search button over the grid's
- * corner, and the category bar with Backspace. A sideways swipe turns the page; only a tap
- * types. Drawn on one Canvas, like the keys.
+ * panel"): the tab row (back to the keys, emoji, kaomoji, symbols, fancy letters), right under
+ * it the grid, four rows at a time and one category to a page, a round search button over the
+ * grid's corner, and the category bar with Backspace; the bar scrolls sideways when its cells
+ * don't fit. A sideways swipe turns the page; only a tap types. Drawn on one Canvas, like the
+ * keys.
  */
 @SuppressLint("ViewConstructor")
 class EmojiPanelView(context: Context) : View(context) {
 
     interface Listener {
-        fun onEmoji(text: String) {}
+        /** A cell of `tab` was tapped: type it, and put it first in that tab's recents. */
+        fun onEmoji(text: String, tab: EmojiTab = EmojiTab.EMOJI) {}
         /** A skin tone was chosen for `base`: show it from now on. */
         fun onSkinTone(base: String, toned: String) {}
         fun onClosePanel() {}
@@ -42,12 +46,19 @@ class EmojiPanelView(context: Context) : View(context) {
     var listener: Listener? = null
     var palette: Palette = Palette.DARK
         set(value) { field = value; invalidate() }
+    /**
+     * The tab shown. A tab opens where it was left while the panel stays open, and otherwise on
+     * its recents, or its first category when there are none.
+     */
     var tab: EmojiTab = EmojiTab.EMOJI
         set(value) {
             if (field == value) return
+            places[field] = page
             field = value
+            holdRecents = false
+            stopBar()
             rebuild()
-            jumpTo(EmojiGrid.firstPage(value, recents))
+            jumpTo(places[value] ?: EmojiGrid.firstPage(recentsOf(value)))
         }
     /** The index's emoji, less those this phone's font can't draw (newer than its Android). */
     var emoji: List<Emoji> = emptyList()
@@ -56,14 +67,25 @@ class EmojiPanelView(context: Context) : View(context) {
             field = value.filter { probe.hasGlyph(it.text) }
             rebuild()
         }
-    /**
-     * The recent emoji. After a tap on the recents page the page keeps its order, so the emoji
-     * under the finger stay put; it catches up when the panel opens or the page is turned.
-     */
-    var recents: List<String> = emptyList()
-        set(value) { field = value; if (!holdRecents) refreshRecents() }
+    /** The emoji tab's recents: see [setRecents]. */
+    var recents: List<String>
+        get() = recentsOf(EmojiTab.EMOJI)
+        set(value) = setRecents(EmojiTab.EMOJI, value)
     var tones: Map<String, String> = emptyMap()
         set(value) { field = value; rebuild() }
+
+    /** A tab's recents, newest first, as last given. */
+    fun recentsOf(tab: EmojiTab): List<String> = latest[tab].orEmpty()
+
+    /**
+     * A tab's recents, newest first; each tab keeps its own. After a tap on the recents page the
+     * page keeps its order, so what is under the finger stays put; it catches up when the panel
+     * opens, the page is turned or the tab changes.
+     */
+    fun setRecents(tab: EmojiTab, list: List<String>) {
+        latest[tab] = list
+        if (tab == this.tab && !holdRecents) refreshRecents()
+    }
 
     /** The page shown, an index into [pages]. */
     var page = 0
@@ -92,8 +114,14 @@ class EmojiPanelView(context: Context) : View(context) {
         strokeWidth = 1.8f * dp
     }
 
-    private var shownRecents: List<String> = emptyList()
+    /** Each tab's recents as last given, and as its recents page shows them. */
+    private val latest = HashMap<EmojiTab, List<String>>()
+    private val shown = HashMap<EmojiTab, List<String>>()
     private var holdRecents = false
+    /** The page each tab was left on while the panel is open. */
+    private val places = HashMap<EmojiTab, Int>()
+    /** Each text tab's pages, less what the phone's fonts can't draw. */
+    private val drawable = HashMap<EmojiTab, List<TextPage>>()
     private var offset = 0f
     private var shift = 0f
     /** The page a swipe just turned from, and its scroll, while it slides out. */
@@ -104,34 +132,65 @@ class EmojiPanelView(context: Context) : View(context) {
 
     private fun refreshRecents() {
         holdRecents = false
-        if (shownRecents == recents) return
-        shownRecents = recents
+        val now = recentsOf(tab)
+        if (shown[tab] == now) return
+        shown[tab] = now
         rebuild()
     }
 
     private fun rebuild() {
-        pages = EmojiGrid.pages(tab, emoji, shownRecents, tones)
+        pages = EmojiGrid.pages(tab, emoji, shown[tab].orEmpty(), tones, textPages(tab))
         page = page.coerceIn(0, maxOf(0, pages.size - 1))
         scrollGrid(offset)
+        layoutBar()
         invalidate()
     }
 
+    private val textProbe = Paint().apply { typeface = font }
+    /** Whether the fonts draw a character, as found so far. */
+    private val drawn = HashMap<Int, Boolean>()
+
     /**
-     * The panel is shown: the tab it was left on, on that tab's first page (the emoji tab on
-     * recents when there are any, else on smileys and people), at the top.
+     * Whether the phone's fonts (MiSans, then the system's) draw every character of `text`, so
+     * nothing shows as an empty box.
      */
-    fun open() {
-        refreshRecents()
-        jumpTo(EmojiGrid.firstPage(tab, recents))
+    private fun canDraw(text: String): Boolean {
+        var i = 0
+        while (i < text.length) {
+            val c = text.codePointAt(i)
+            if (!Character.isWhitespace(c) && !drawn.getOrPut(c) { textProbe.hasGlyph(String(Character.toChars(c))) }) return false
+            i += Character.charCount(c)
+        }
+        return true
     }
 
-    /** Shows page `p` at its top at once, stopping any scroll or slide. */
-    private fun jumpTo(p: Int) {
+    private fun textPages(tab: EmojiTab): List<TextPage> = drawable.getOrPut(tab) {
+        EmojiGrid.textPages(tab).map { p -> p.copy(items = p.items.filter(::canDraw)) }.filter { it.items.isNotEmpty() }
+    }
+
+    /**
+     * The panel is shown: the tab it was left on, on that tab's first page (its recents when
+     * there are any, else its first category), at the top. Every other tab opens on its first
+     * page too.
+     */
+    fun open() {
+        places.clear()
+        stopBar()
+        refreshRecents()
+        jumpTo(EmojiGrid.firstPage(recentsOf(tab)))
+    }
+
+    /**
+     * Shows page `p` at its top at once, stopping any scroll or slide, and brings its cell on
+     * the bar into view: at once, or (`slide`) scrolling there.
+     */
+    private fun jumpTo(p: Int, slide: Boolean = false) {
         scroller.forceFinished(true)
         settler.forceFinished(true)
         shift = 0f
         leaving = -1
         turnTo(p)
+        revealBarCell(page, slide)
     }
 
     /** Makes `p` the page shown, at its top; the sideways shift is left to the caller. */
@@ -172,8 +231,96 @@ class EmojiPanelView(context: Context) : View(context) {
         return RectF(cx - r, cy - r, cx + r, cy + r)
     }
 
-    /** The category bar's cells: one a page and Backspace in the last, eight on every tab. */
-    private fun barCell() = width / 8f
+    // ---- the category bar --------------------------------------------------------------------
+
+    /**
+     * Where the bar's page cells run, before it is scrolled: cell i from barEdges[i] to
+     * barEdges[i + 1].
+     */
+    private var barEdges = FloatArray(1)
+    private var barScroll = 0f
+    /** Scrolls the bar: after a fling of the finger ([barFlung]), or to bring a cell into view. */
+    private val barScroller = OverScroller(context)
+    private var barFlung = false
+
+    /** How far the bar's cells are scrolled to the left, in px. */
+    val barScrolled get() = barScroll
+
+    /** Backspace's cell, fixed at the bar's right end: an eighth of the width. */
+    private fun backspaceWidth() = width / 8f
+    /** The part of the bar the page cells scroll in: all of it left of Backspace. */
+    private fun barRoom() = width - backspaceWidth()
+    private fun maxBarScroll() = maxOf(0f, barEdges.last() - barRoom())
+    private fun barTextSize() = (if (tab == EmojiTab.EMOTICONS) 14 else 16) * sp
+
+    /**
+     * The bar's cells: an icon or a sample, at least 40 dp wide, the sample's width and some room
+     * beside it. When they fit they share the room left of Backspace, alike if they can be (the
+     * emoji tab's seven, as Laban Key's, are an eighth of the width each); when they don't, they
+     * keep their own widths and the bar scrolls, the letters' sized so that half a cell shows at
+     * its edge.
+     */
+    private fun layoutBar() {
+        val room = barRoom()
+        val least = 40 * dp
+        glyph.typeface = font
+        glyph.textSize = barTextSize()
+        val own = pages.map { if (it.icon != null) least else maxOf(least, glyph.measureText(it.sample) + 24 * dp) }
+        val sum = own.sum()
+        val widths = when {
+            own.isEmpty() || room <= 0 -> own
+            own.max() * own.size <= room -> own.map { room / own.size }
+            sum <= room -> own.map { it * room / sum }
+            own.all { it == least } -> own.map { room / (floor(room / least) + 0.5f) }
+            else -> own
+        }
+        barEdges = FloatArray(widths.size + 1)
+        widths.forEachIndexed { i, w -> barEdges[i + 1] = barEdges[i] + w }
+        barScroll = barScroll.coerceIn(0f, maxBarScroll())
+    }
+
+    /** The bar back at its start, stopped. */
+    private fun stopBar() {
+        barScroller.forceFinished(true)
+        barFlung = false
+        barScroll = 0f
+    }
+
+    /** Page `p`'s cell on the bar, where it is drawn now. Public for the tests. */
+    fun barCell(p: Int): RectF {
+        val top = gridBottom()
+        return RectF(barEdges[p] - barScroll, top, barEdges[p + 1] - barScroll, top + barHeight)
+    }
+
+    /** The page whose bar cell is at x, or -1. */
+    private fun barPageAt(x: Float): Int {
+        if (x < 0 || x >= barRoom()) return -1
+        val at = x + barScroll
+        return pages.indices.firstOrNull { at >= barEdges[it] && at < barEdges[it + 1] } ?: -1
+    }
+
+    /**
+     * Scrolls the bar so page p's cell shows whole, with a little of the next one beside it: at
+     * once, or (`slide`) gliding there.
+     */
+    private fun revealBarCell(p: Int, slide: Boolean) {
+        if (p !in pages.indices || width == 0) return
+        val peek = 20 * dp
+        val target = when {
+            barEdges[p] - peek < barScroll -> barEdges[p] - peek
+            barEdges[p + 1] + peek > barScroll + barRoom() -> barEdges[p + 1] + peek - barRoom()
+            else -> return
+        }.coerceIn(0f, maxBarScroll())
+        barScroller.forceFinished(true)
+        barFlung = false
+        if (!slide || abs(target - barScroll) < 1) {
+            barScroll = target
+            invalidate()
+            return
+        }
+        barScroller.startScroll(barScroll.roundToInt(), 0, (target - barScroll).roundToInt(), 0, 200)
+        postInvalidateOnAnimation()
+    }
 
     /** The cell of the shown page at (x, y), or -1. */
     private fun cellAt(x: Float, y: Float): Int {
@@ -195,6 +342,8 @@ class EmojiPanelView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         scrollGrid(offset)
+        layoutBar()
+        revealBarCell(page, slide = false)
     }
 
     // ---- drawing ------------------------------------------------------------------------------
@@ -234,7 +383,7 @@ class EmojiPanelView(context: Context) : View(context) {
         canvas.drawRect(0f, 0f, width.toFloat(), headerHeight, fill)
         val cy = headerHeight / 2
         drawKeyboard(canvas, tabWidth / 2, cy, 10 * dp, palette.dim)
-        val tabs = listOf(EmojiTab.EMOJI to "☺", EmojiTab.EMOTICONS to ":-)", EmojiTab.SYMBOLS to "Ω")
+        val tabs = listOf(EmojiTab.EMOJI to "☺", EmojiTab.EMOTICONS to ":-)", EmojiTab.SYMBOLS to "Ω", EmojiTab.LETTERS to "Aa")
         tabs.forEachIndexed { i, (t, text) ->
             val cx = tabWidth * (i + 1) + tabWidth / 2
             val color = if (t == tab) palette.glyph else palette.dim
@@ -279,7 +428,8 @@ class EmojiPanelView(context: Context) : View(context) {
             when (tab) {
                 EmojiTab.EMOJI -> label(canvas, text, left + cw / 2, y + rh / 2, emojiSize, palette.glyph, null)
                 EmojiTab.EMOTICONS -> label(canvas, text, left + cw / 2, y + rh / 2, fit(text, 17 * sp, cw - 12 * dp), palette.glyph)
-                EmojiTab.SYMBOLS -> label(canvas, text, left + cw / 2, y + rh / 2, 24 * sp, palette.glyph)
+                EmojiTab.SYMBOLS, EmojiTab.LETTERS ->
+                    label(canvas, text, left + cw / 2, y + rh / 2, fit(text, 24 * sp, cw - 12 * dp), palette.glyph)
             }
         }
     }
@@ -313,25 +463,28 @@ class EmojiPanelView(context: Context) : View(context) {
         fill.color = palette.strip
         canvas.drawRect(0f, top, width.toFloat(), height.toFloat(), fill)
         val cy = top + barHeight / 2
-        val w = barCell()
         // The highlight moves on once a swipe is past half way.
         val lit = when {
             shift < -width / 2f && page < pages.size - 1 -> page + 1
             shift > width / 2f && page > 0 -> page - 1
             else -> page
         }
-        pages.take(7).forEachIndexed { i, pg ->
-            val cx = i * w + w / 2
+        canvas.save()
+        canvas.clipRect(0f, top, barRoom(), height.toFloat())
+        pages.forEachIndexed { i, pg ->
+            val cell = barCell(i)
+            if (cell.right <= 0 || cell.left >= barRoom()) return@forEachIndexed
             if (i == lit) {
                 fill.color = palette.space
-                canvas.drawRoundRect(RectF(cx - w / 2 + 6 * dp, top + 6 * dp, cx + w / 2 - 6 * dp, top + barHeight - 6 * dp), 10 * dp, 10 * dp, fill)
+                canvas.drawRoundRect(RectF(cell.left + 6 * dp, top + 6 * dp, cell.right - 6 * dp, top + barHeight - 6 * dp), 10 * dp, 10 * dp, fill)
             }
             val color = if (i == lit) palette.glyph else palette.dim
             val icon = pg.icon
-            if (icon != null) drawIcon(canvas, icon, cx, cy, 9 * dp, color)
-            else label(canvas, pg.sample, cx, cy, fit(pg.sample, 16 * sp, w - 16 * dp), color)
+            if (icon != null) drawIcon(canvas, icon, cell.centerX(), cy, 9 * dp, color)
+            else label(canvas, pg.sample, cell.centerX(), cy, fit(pg.sample, barTextSize(), cell.width() - 16 * dp), color)
         }
-        drawBackspace(canvas, width - w / 2, cy, 10 * dp, palette.glyph)
+        canvas.restore()
+        drawBackspace(canvas, width - backspaceWidth() / 2, cy, 10 * dp, palette.glyph)
     }
 
     // ---- icons: lines in the palette's colours, like the keys' --------------------------------
@@ -481,7 +634,7 @@ class EmojiPanelView(context: Context) : View(context) {
 
     // ---- touch ---------------------------------------------------------------------------------
 
-    private enum class Drag { NONE, PAGE, SCROLL }
+    private enum class Drag { NONE, PAGE, SCROLL, BAR }
 
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
     /** A sideways fling this fast turns the page however short it was (ViewPager's figure). */
@@ -497,6 +650,10 @@ class EmojiPanelView(context: Context) : View(context) {
     /** The finger went down on a grid that was still moving: it stops it, and types nothing. */
     private var stopped = false
     private var inGrid = false
+    /** The finger went down on the bar's page cells, which it may drag sideways. */
+    private var inBar = false
+    /** Where the bar would be scrolled with the finger at x = 0, while it drags the bar. */
+    private var barFrom = 0f
     private var velocity: VelocityTracker? = null
     /** The cell of the shown page under a finger that may yet be a tap, or -1. */
     private var pressed = -1
@@ -528,6 +685,10 @@ class EmojiPanelView(context: Context) : View(context) {
             if (settler.isFinished) leaving = -1
             more = true
         }
+        if (barScroller.computeScrollOffset()) {
+            barScroll = barScroller.currX.toFloat().coerceIn(0f, maxBarScroll())
+            more = true
+        }
         if (more) postInvalidateOnAnimation()
     }
 
@@ -554,6 +715,7 @@ class EmojiPanelView(context: Context) : View(context) {
             leavingScroll = offset
             shift += if (next > page) width else -width
             turnTo(next)
+            revealBarCell(next, slide = true)
         }
         val from = shift.roundToInt()
         settler.startScroll(from, 0, -from, 0, (240 * abs(from) / maxOf(1, width)).coerceIn(80, 240))
@@ -567,7 +729,12 @@ class EmojiPanelView(context: Context) : View(context) {
                 // Brought up to date first: one whose time has run out isn't moving any more.
                 scroller.computeScrollOffset()
                 settler.computeScrollOffset()
-                stopped = !scroller.isFinished || !settler.isFinished
+                barScroller.computeScrollOffset()
+                inBar = e.y >= gridBottom() && e.x < barRoom()
+                // A finger on the bar stops it where it is; only a fling of it makes this no tap.
+                val barMoving = inBar && barFlung && !barScroller.isFinished
+                if (inBar) barScroller.forceFinished(true)
+                stopped = !scroller.isFinished || !settler.isFinished || barMoving
                 scroller.forceFinished(true)
                 if (!settler.isFinished) { settler.forceFinished(true); shift = 0f }
                 leaving = -1
@@ -600,12 +767,16 @@ class EmojiPanelView(context: Context) : View(context) {
                         drag = if (abs(dx) > abs(dy)) Drag.PAGE else Drag.SCROLL
                         shiftFrom = e.x
                         lastY = e.y
+                    } else if (inBar && abs(dx) > abs(dy) && maxBarScroll() > 0) {
+                        drag = Drag.BAR
+                        barFrom = barScroll + e.x
                     }
                     invalidate()
                 }
                 when (drag) {
                     Drag.PAGE -> { shift = resisted(e.x - shiftFrom); invalidate() }
                     Drag.SCROLL -> { scrollGrid(offset - (e.y - lastY)); invalidate() }
+                    Drag.BAR -> { barScroll = (barFrom - e.x).coerceIn(0f, maxBarScroll()); invalidate() }
                     Drag.NONE -> {}
                 }
                 lastY = e.y
@@ -626,6 +797,15 @@ class EmojiPanelView(context: Context) : View(context) {
                         val vy = velocity?.yVelocity ?: 0f
                         if (abs(vy) > minFling) {
                             scroller.fling(0, offset.toInt(), 0, -vy.toInt(), 0, 0, 0, maxScroll().toInt())
+                            postInvalidateOnAnimation()
+                        }
+                    }
+                    Drag.BAR -> {
+                        val vx = velocity?.xVelocity ?: 0f
+                        if (abs(vx) > minFling) {
+                            barFlung = true
+                            // The scroller counts whole px: rounded up, it reaches the bar's end.
+                            barScroller.fling(barScroll.roundToInt(), 0, -vx.toInt(), 0, 0, ceil(maxBarScroll()).toInt(), 0, 0)
                             postInvalidateOnAnimation()
                         }
                     }
@@ -658,19 +838,17 @@ class EmojiPanelView(context: Context) : View(context) {
                 1 -> tab = EmojiTab.EMOJI
                 2 -> tab = EmojiTab.EMOTICONS
                 3 -> tab = EmojiTab.SYMBOLS
+                4 -> tab = EmojiTab.LETTERS
             }
             y >= gridBottom() -> {
-                val i = (x / barCell()).toInt()
-                when {
-                    i >= 7 -> l?.onBackspace()
-                    i < pages.size -> jumpTo(i)
-                }
+                if (x >= barRoom()) l?.onBackspace()
+                else barPageAt(x).takeIf { it >= 0 }?.let { jumpTo(it, slide = true) }
             }
             tab == EmojiTab.EMOJI && searchButton().contains(x, y) -> l?.onEmojiSearch()
             else -> cells().getOrNull(cellAt(x, y))?.let {
                 // The recents page stays as it is under the finger until it is left.
-                if (tab == EmojiTab.EMOJI && page == EmojiGrid.RECENTS) holdRecents = true
-                l?.onEmoji(it.text)
+                if (page == EmojiGrid.RECENTS) holdRecents = true
+                l?.onEmoji(it.text, tab)
             }
         }
     }

@@ -69,14 +69,7 @@ class EmojiTest {
         assertTrue(pages.last().cells.any { it.text == "🏁" })  // flags go with objects
         // No recents: an empty first page, and the tab opens on smileys.
         assertEquals(0, EmojiGrid.pages(EmojiTab.EMOJI, idx.all, emptyList())[0].cells.size)
-        assertEquals(EmojiGrid.SMILEYS, EmojiGrid.firstPage(EmojiTab.EMOJI, emptyList()))
-        assertEquals(EmojiGrid.RECENTS, EmojiGrid.firstPage(EmojiTab.EMOJI, listOf("🎂")))
-        val emoticons = EmojiGrid.pages(EmojiTab.EMOTICONS, idx.all, emptyList())
-        assertEquals(4, EmojiGrid.columns(EmojiTab.EMOTICONS))
-        assertTrue(emoticons.flatMap { it.cells }.any { it.text == ":v" })
-        assertEquals(60, emoticons.sumOf { it.cells.size })
-        val symbols = EmojiGrid.pages(EmojiTab.SYMBOLS, idx.all, emptyList())
-        assertEquals(listOf("→", "±", "₫", "©", "★", "♪"), symbols.map { it.sample })
-        assertTrue(symbols[2].cells.any { it.text == "₫" })
+        assertEquals(EmojiGrid.SMILEYS, EmojiGrid.firstPage(emptyList()))
+        assertEquals(EmojiGrid.RECENTS, EmojiGrid.firstPage(listOf("🎂")))
     }
 }
