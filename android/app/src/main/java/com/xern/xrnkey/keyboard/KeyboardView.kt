@@ -32,7 +32,7 @@ class KeyboardView(context: Context) : View(context) {
         fun onEnter() {}
         fun onCandidate(slot: Int) {}
         fun onTool(tool: Tool) {}
-        fun onPickKeyboard() {}
+        fun onSwitchLanguage() {}
         fun onStripMenu() {}
         /** The space bar became a cursor pad: the word in progress ends. */
         fun onCursorStart() {}
@@ -92,10 +92,12 @@ class KeyboardView(context: Context) : View(context) {
         private set(value) { if (field != value) { field = value; relayout() } }
     /** Sliding along the space bar moves the cursor. */
     var spaceSwipe = true
-    /** Holding the space bar turns the keys into a cursor pad. */
-    var spaceHold = true
-    /** Holding the comma picks another keyboard. */
+    /** Holding the comma switches between Vietnamese and English. */
     var commaHold = true
+
+    /** The English keyboard is on: the space bar says so. */
+    var english = false
+        set(value) { if (field != value) { field = value; relayout() } }
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -277,10 +279,10 @@ class KeyboardView(context: Context) : View(context) {
         private set
 
     private fun spaceLabelFor(barWidth: Float): String {
-        val full = resources.getString(R.string.subtype)
+        val full = if (english) "English" else resources.getString(R.string.subtype)
         glyph.textSize = 14 * sp
         glyph.typeface = font
-        return if (glyph.measureText(full) <= barWidth - 24 * dp) full else "VI"
+        return if (glyph.measureText(full) <= barWidth - 24 * dp) full else if (english) "EN" else "VI"
     }
 
     private fun spaceBar(r: RectF): RectF {
@@ -476,11 +478,8 @@ class KeyboardView(context: Context) : View(context) {
     private fun drawTool(canvas: Canvas, t: Tool, cx: Float, cy: Float, s: Float) {
         stroke(palette.dim, 1.8f * dp)
         when (t) {
-            Tool.THEME -> {
-                canvas.drawCircle(cx, cy, s, line)
-                fill.color = palette.dim
-                canvas.drawArc(cx - s, cy - s, cx + s, cy + s, 90f, 180f, true, fill)
-            }
+            // The strip's own ≡, where it sits on the strip: the tools give way to it.
+            Tool.HIDE -> for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(cx - 8 * dp, cy + dy * dp, cx + 8 * dp, cy + dy * dp, line)
             Tool.SETTINGS -> {
                 // A cog: eight flat teeth around a ring.
                 val cog = Path()
@@ -686,8 +685,7 @@ class KeyboardView(context: Context) : View(context) {
     private val hold = Runnable {
         val h = pressed ?: return@Runnable
         when {
-            h.key.kind == KeyKind.COMMA -> if (commaHold) { holdFired = true; listener?.onPickKeyboard() }
-            h.key.kind == KeyKind.SPACE -> if (spaceHold && cursor == Cursor.OFF) startCursor(Cursor.PAD)
+            h.key.kind == KeyKind.COMMA -> if (commaHold) { holdFired = true; listener?.onSwitchLanguage() }
             h.key.variants.isNotEmpty() -> { holdFired = true; openPopup(h) }
         }
         invalidate()

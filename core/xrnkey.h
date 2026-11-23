@@ -31,6 +31,8 @@ typedef struct XKEmojiDB XKEmojiDB;
 /* Input mode */
 #define XK_MODE_TELEX 0
 #define XK_MODE_VNI   1
+#define XK_MODE_PLAIN 2  /* no marks: letters as typed (the phone's English keyboard); a
+                            digit or an apostrophe after letters stays in the word */
 
 /* Tone indices (internal) */
 #define XK_TONE_NONE   0

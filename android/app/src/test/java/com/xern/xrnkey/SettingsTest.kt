@@ -15,6 +15,8 @@ import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ime.XrnkeyService
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Palette
+import com.xern.xrnkey.keyboard.Tool
+import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -48,7 +50,8 @@ class SettingsTest {
         assertTrue(d.suggestions && d.emojiSuggestions && d.learn && d.keepForeign && d.doubleSpace)
         assertEquals(1, d.correction)
         assertEquals("auto", d.numberRow)
-        assertTrue(d.holdDigits && d.keyPopup && d.spaceSwipe && d.spaceHold && d.commaHold && d.clipboard && d.shortcuts)
+        assertTrue(d.holdDigits && d.keyPopup && d.spaceSwipe && d.commaHold && d.clipboard && d.shortcuts)
+        assertFalse(d.english || d.toolsHidden)
         assertEquals(400, d.holdMillis)
         val p = app().getSharedPreferences("o", Context.MODE_PRIVATE)
         assertEquals(d, Options.load(p))  // nothing saved yet: the defaults
@@ -75,7 +78,6 @@ class SettingsTest {
         assertEquals(300L, keys.holdMillis)
         assertFalse(keys.holdDigits)
         assertFalse(keys.spaceSwipe)
-        assertTrue(keys.spaceHold)
         assertFalse(keys.commaHold)
         assertEquals(Palette.LIGHT, keys.palette)
         keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
@@ -85,6 +87,57 @@ class SettingsTest {
         val cm = app().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("", "kept nowhere"))
         assertTrue(ClipHistory(File(s.filesDir, "clips.tsv")).clips.isEmpty())
+        s.onDestroy()
+    }
+
+    /** A service with its keys, on a text field. */
+    private fun keyboardOn(): Pair<XrnkeyService, KeyboardView> {
+        val s = Robolectric.setupService(XrnkeyService::class.java)
+        val frame = s.onCreateInputView() as ViewGroup
+        s.onStartInputView(EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }, false)
+        shadowOf(Looper.getMainLooper()).idle()
+        return s to (0 until frame.childCount).map { frame.getChildAt(it) }.filterIsInstance<KeyboardView>().single()
+    }
+
+    /**
+     * The tool row's ≡ folds it away, as on Laban Key: with nothing to suggest the strip is bare,
+     * ≡ and the emoji button, in every field after, until ≡ brings the tools back. There is no
+     * theme button any more.
+     */
+    @Test
+    fun theToolRowFoldsAwayAndComesBack() {
+        val (s, keys) = keyboardOn()
+        assertEquals(Strip.Tools, keys.strip)
+        assertEquals(listOf(Tool.HIDE, Tool.SETTINGS, Tool.CLIPBOARD, Tool.CURSOR, Tool.EMOJI), Tool.entries)
+        s.onTool(Tool.HIDE)
+        assertEquals(XrnkeyService.BARE, keys.strip)
+        assertTrue(Options.load(Options.prefs(app())).toolsHidden)
+        s.onStartInputView(EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }, false)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(XrnkeyService.BARE, keys.strip)
+        s.onStripMenu()
+        assertEquals(Strip.Tools, keys.strip)
+        assertFalse(Options.load(Options.prefs(app())).toolsHidden)
+        s.onDestroy()
+    }
+
+    /**
+     * Holding the comma switches to the English keyboard and back, and it stays chosen: the space
+     * bar says which.
+     */
+    @Test
+    fun holdingTheCommaSwitchesTheKeyboardsLanguage() {
+        val (s, keys) = keyboardOn()
+        keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+        keys.layout(0, 0, 1080, keys.measuredHeight)
+        assertEquals("Tiếng Việt", keys.spaceLabel)
+        s.onSwitchLanguage()
+        assertTrue(keys.english)
+        assertEquals("English", keys.spaceLabel)
+        assertTrue(Options.load(Options.prefs(app())).english)
+        s.onSwitchLanguage()
+        assertFalse(keys.english)
+        assertEquals("Tiếng Việt", keys.spaceLabel)
         s.onDestroy()
     }
 

@@ -39,7 +39,7 @@ data class Options(
     val keyPopup: Boolean = true,
     val holdMillis: Int = 400,
     val spaceSwipe: Boolean = true,
-    val spaceHold: Boolean = true,
+    /** Holding the comma switches between Vietnamese and English, as on Laban Key. */
     val commaHold: Boolean = true,
     /** Keyboard height, in percent. */
     val height: Int = 100,
@@ -47,6 +47,10 @@ data class Options(
     val shortcuts: Boolean = true,
     /** "dark", "light" or "system". */
     val theme: String = "dark",
+    /** The tool row is folded away (its ≡): the bare strip, ≡ and emoji, shows instead. */
+    val toolsHidden: Boolean = false,
+    /** The English keyboard: no Telex, English words only. Switched by holding the comma. */
+    val english: Boolean = false,
 ) {
     fun save(p: SharedPreferences) {
         p.edit()
@@ -69,12 +73,13 @@ data class Options(
             .putBoolean("key_popup", keyPopup)
             .putInt("hold_ms", holdMillis)
             .putBoolean("space_swipe", spaceSwipe)
-            .putBoolean("space_hold", spaceHold)
             .putBoolean("comma_hold", commaHold)
             .putInt("height", height)
             .putBoolean("clipboard", clipboard)
             .putBoolean("shortcuts", shortcuts)
             .putString("palette", theme)
+            .putBoolean("tools_hidden", toolsHidden)
+            .putBoolean("english", english)
             .apply()
     }
 
@@ -107,12 +112,13 @@ data class Options(
                 keyPopup = p.getBoolean("key_popup", d.keyPopup),
                 holdMillis = p.getInt("hold_ms", d.holdMillis).coerceIn(150, 1000),
                 spaceSwipe = p.getBoolean("space_swipe", d.spaceSwipe),
-                spaceHold = p.getBoolean("space_hold", d.spaceHold),
                 commaHold = p.getBoolean("comma_hold", d.commaHold),
                 height = p.getInt("height", d.height).coerceIn(70, 130),
                 clipboard = p.getBoolean("clipboard", d.clipboard),
                 shortcuts = p.getBoolean("shortcuts", d.shortcuts),
                 theme = p.getString("palette", d.theme)!!.takeIf { it in listOf("dark", "light", "system") } ?: d.theme,
+                toolsHidden = p.getBoolean("tools_hidden", d.toolsHidden),
+                english = p.getBoolean("english", d.english),
             )
         }
     }

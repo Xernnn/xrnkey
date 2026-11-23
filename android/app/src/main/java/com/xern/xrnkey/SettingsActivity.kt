@@ -545,7 +545,6 @@ class SettingsActivity : ComponentActivity() {
             }
             Card {
                 Toggle("Swipe space bar", o.spaceSwipe) { set(o.copy(spaceSwipe = it)) }
-                Toggle("Hold space bar", o.spaceHold) { set(o.copy(spaceHold = it)) }
                 Toggle("Hold comma", o.commaHold) { set(o.copy(commaHold = it)) }
             }
         }

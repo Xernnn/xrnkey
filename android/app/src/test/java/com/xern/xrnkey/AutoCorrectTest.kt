@@ -179,6 +179,26 @@ class AutoCorrectTest {
         }
     }
 
+    /**
+     * The English keyboard: no marks, English fixes only. Words typed without their apostrophe
+     * get it back, "i" is "I", and a Vietnamese word typed there is left alone or read as
+     * English, never accented.
+     */
+    @Test
+    fun theEnglishKeyboardFixesEnglishOnly() = TestModels.test().use { m ->
+        Models(null, m.en).use { en ->
+            TypingState(TypingState.PLAIN).use { s ->
+                s.useModels(en)
+                val f = FakeEditor()
+                val t = Typist(s, f, en).also { it.english = true; it.reset() }
+                t.text("i dont think im ok, Dont vieetj ")
+                assertEquals("I don't think I'm ok, Don't vieetj ", f.text)
+                t.backspace()
+                assertEquals("vieetj", f.composing)
+            }
+        }
+    }
+
     @Test
     fun backspaceAfterPunctuationKeepsThePunctuation() = typing { t, f, _ ->
         t.text("khong,")
