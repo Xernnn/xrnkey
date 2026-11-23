@@ -31,6 +31,9 @@ interface Editor {
 
     /** Up to `n` characters before the cursor ("" when the field doesn't say). */
     fun textBefore(n: Int): String
+
+    /** Up to `n` characters after the cursor ("" when the field doesn't say). */
+    fun textAfter(n: Int): String
 }
 
 /**
@@ -152,6 +155,12 @@ class Typist(
      * until the word changes.
      */
     private var refused: String? = null
+
+    /**
+     * The keys of the last word Space kept as typed after Backspace refused its change: opened
+     * again, it is still kept ("khong␣⌫␣⌫␣" stays "khong").
+     */
+    private var kept: String? = null
 
     /** The word in progress is one Backspace opened again: Space and Enter keep it as typed. */
     private fun keptAsTyped(): Boolean = refused != null && refused == keys()
@@ -336,7 +345,10 @@ class Typist(
         if (isSeparator(c) && restorable()) {
             val typed = keys()
             when {
-                keptAsTyped() -> endAsTyped(c, null)
+                keptAsTyped() -> {
+                    kept = typed
+                    endAsTyped(c, null)
+                }
                 tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
                 tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> endRestored(c, lookBack = false)
                 else -> endAsTyped(c, wrongWordFix(typed))
@@ -439,8 +451,10 @@ class Typist(
             }
             return
         }
+        var deleted = false
         apply(s.key(TypingState.BACKSPACE)) {
             editor.backspace()
+            deleted = true
             // Backspace takes a character: an emoji is two UTF-16 units.
             val n = tail.length
             val units = if (n >= 2 && Character.isSurrogatePair(tail[n - 2], tail[n - 1])) 2 else 1
@@ -451,6 +465,62 @@ class Typist(
             if (pending.isNotEmpty()) pending.setLength(maxOf(0, pending.length - units))
             run.clear()
         }
+        // Backspace may have left the cursor at the end of a word: it is open again.
+        if (deleted) reopenBefore(editor.textAfter(1))
+    }
+
+    /**
+     * The cursor is at the end of a word (Backspace took what followed it, or a tap put it
+     * there): that word is the word in progress again, as on Laban Key, so Telex goes on
+     * marking it ("việt␣⌫s" is "viết") and the strip offers its suggestions. The core takes the
+     * keys that make it, as for a form picked from a held key; a word they don't make again
+     * exactly ("of" makes "ò") stays as it is, and so does the field. `after` is what follows
+     * the cursor: a letter there means the cursor is inside a word, which stays as it is.
+     * Returns whether a word was opened.
+     */
+    fun reopenBefore(after: String): Boolean {
+        val s = state ?: return false
+        if (raw || !autoCorrect || composing.isNotEmpty()) return false
+        if (after.isNotEmpty() && Character.isLetterOrDigit(after.codePointAt(0))) return false
+        val m = WORD_END.find(tail) ?: return false
+        val start = m.range.first
+        if (start == 0 && !wholeField) return false  // it may begin before what the typist holds
+        val word = m.value
+        val keys = StringBuilder()
+        for (c in word) keys.append(VietKeys.of(c, s.mode) ?: c.toString())
+        tail.setLength(start)
+        s.reset()
+        s.setContext(context())
+        var shown: String? = ""
+        for (k in keys) {
+            val r = s.key(k.code)
+            if (r.commit.isNotEmpty() || !r.consumed || r.deleteBefore > 0) {
+                shown = null
+                break
+            }
+            shown = r.preedit
+        }
+        if (shown != word) {
+            s.reset()
+            tail.append(word)
+            s.setContext(context())
+            return false
+        }
+        editor.deleteBefore(word.codePointCount(0, word.length))
+        editor.setComposing(word)
+        composing = word
+        // Its marks were typed and kept: it ends as shown, never as its keys.
+        if (keys.toString() != word) {
+            held = true
+            applyKeepForeign()
+        }
+        if (pending.endsWith(word)) pending.setLength(pending.length - word.length)
+        undo = null
+        refused = kept?.takeIf { it == keys.toString() }
+        run.clear()
+        plain.clear()
+        spaceAfterWord = false
+        return true
     }
 
     /**
@@ -696,6 +766,13 @@ class Typist(
         /** How much committed text is kept: enough for three words and where the sentence began. */
         private const val TAIL = 120
         private val WORD = Regex("[\\p{L}\\p{N}]+")
+
+        /**
+         * The word the cursor is at the end of: letters (and their marks) after a space, an
+         * opening bracket or quote, or the field's start; never part of "don't", "e-mail",
+         * "2nd" or an address.
+         */
+        private val WORD_END = Regex("(?<![^\\s(\\[{\"“«])\\p{L}[\\p{L}\\p{M}]*$")
 
         private fun isSeparator(c: Char) = c == ' ' || c in ",.;:!?"
 

@@ -107,6 +107,9 @@ class XrnkeyService :
         override fun textBefore(n: Int): String =
             currentInputConnection?.getTextBeforeCursor(n, 0)?.toString() ?: ""
 
+        override fun textAfter(n: Int): String =
+            currentInputConnection?.getTextAfterCursor(n, 0)?.toString() ?: ""
+
         override fun enter() {
             val info = currentInputEditorInfo
             val action = info?.let { it.imeOptions and EditorInfo.IME_MASK_ACTION } ?: EditorInfo.IME_ACTION_NONE
@@ -281,20 +284,24 @@ class XrnkeyService :
         if (typist.shown.isNotEmpty() && !inWord) {
             composingStart = -1
             typist.finish()
-            refresh(newSelStart)  // the context is what is before the cursor there
+            refresh(newSelStart, reopen = newSelStart == newSelEnd)  // the context is what is before the cursor there
             return
         }
         if (typist.shown.isNotEmpty()) return
         // No word in progress, and the field changed in a way this keyboard's edits don't
         // explain (an app cleared it after Send, select-all and delete, a tap elsewhere): what is
         // before the cursor is read again, once.
-        if (cursor < 0 && newSelStart == newSelEnd) typist.anchorAt(newSelStart) else refresh(newSelStart)
+        if (cursor < 0 && newSelStart == newSelEnd) typist.anchorAt(newSelStart) else refresh(newSelStart, reopen = newSelStart == newSelEnd)
     }
 
-    /** The field changed under the typist: it reads what is before the cursor again. */
-    private fun refresh(cursor: Int) {
+    /**
+     * The field changed under the typist: it reads what is before the cursor again. A cursor put
+     * at the end of a word (a tap there) opens that word again, as Backspace into it does.
+     */
+    private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
         typist.reset(cursor)
+        if (reopen) edit { typist.reopenBefore(editor.textAfter(1)) }
         showStrip()
     }
 

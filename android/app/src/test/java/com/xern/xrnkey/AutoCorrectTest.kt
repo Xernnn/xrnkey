@@ -44,6 +44,23 @@ class AutoCorrectTest {
         assertEquals("ò í, of á cups ", f.text)
     }
 
+    /**
+     * A word that opens again ends as it did: "of" (English, kept) would come back as "ò" through
+     * its keys, so it stays as it is; a picked "ò" opens as "ò" and stays "ò".
+     */
+    @Test
+    fun aWordOpensAgainOnlyAsItWas() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
+        t.text("of ")
+        t.backspace()
+        assertEquals("of", f.text)
+        assertEquals("", f.composing)
+        t.text(" ò"); t.text(" ")
+        t.backspace()
+        assertEquals("ò", f.composing)
+        t.text(" ")
+        assertEquals("of ò ", f.text)
+    }
+
     /** With "Non-Vietnamese as typed" off, a held form's word leaves it off for the next. */
     @Test
     fun aHeldFormLeavesTheForeignWordsSettingAsItWas() = typing(tones = Typist.TONES_OFF) { t, f, _ ->
@@ -73,8 +90,10 @@ class AutoCorrectTest {
         t.text(" ")
         assertEquals("khong ", f.text)  // the next Space keeps it as typed
         t.backspace()
-        assertEquals("khong", f.text)  // then Backspace deletes as usual
-        assertEquals("", f.composing)
+        assertEquals("khong", f.text)  // then Backspace opens it again, still kept as typed
+        assertEquals("khong", f.composing)
+        t.text(" ")
+        assertEquals("khong ", f.text)
     }
 
     @Test

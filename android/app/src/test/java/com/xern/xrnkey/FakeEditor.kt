@@ -54,4 +54,9 @@ class FakeEditor(initial: String = "") : Editor {
     }
 
     override fun textBefore(n: Int): String = committed.takeLast(n).toString()
+
+    /** What follows the cursor (the fake's cursor is at the end of [committed] + [composing]). */
+    var after = ""
+
+    override fun textAfter(n: Int): String = after.take(n)
 }
