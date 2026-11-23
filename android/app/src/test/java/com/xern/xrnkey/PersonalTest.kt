@@ -98,6 +98,31 @@ class PersonalTest {
         }
     }
 
+    /**
+     * What was chosen on the Japanese keyboard is kept with the personal words: it survives a
+     * restart, and the settings' Clear forgets it (the keyboard reads the file again).
+     */
+    @Test
+    fun theJapaneseChoicesSurviveARestartAndClearingForgetsThem() {
+        val dir = tmp.newFolder()
+        val conv = com.xern.xrnkey.ja.Converter(TestModels.japanese())
+        val kami = conv.convert("かみ").words.first { it.text == "髪" }.segments
+        OnDevice(dir, prefs()).use { od ->
+            od.refresh(now = 1_000)
+            od.japanese!!.learn(null, kami)
+        }
+        OnDevice(dir, prefs()).use { od ->
+            od.refresh(now = 2_000)
+            assertEquals(listOf("髪"), od.japanese!!.of("かみ").map { it.surface })
+            conv.history = od.japanese
+            assertEquals("髪", conv.convert("かみ").best.text)
+            OnDevice.clearJapanese(dir, prefs(), now = 3_000)
+            od.refresh(now = 4_000)
+            assertEquals(0, od.japanese!!.size)
+            assertTrue(!od.japaneseFile.exists())
+        }
+    }
+
     /** Hidden suggestions are kept with the personal words, survive a restart, and go with Clear all. */
     @Test
     fun hiddenSuggestionsAreKeptWithThePersonalWordsAndCleared() {

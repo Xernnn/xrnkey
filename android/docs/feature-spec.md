@@ -393,6 +393,7 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
     (`わたしはがくせいです`: `私は学生です`);
   - the left and the right hold the next likeliest, whatever they are, each ranked by what it
     costs as a whole sentence after the word before:
+    - the owner's choices first (see "Learning" below);
     - the words read exactly so (`かみ`: `神`, `髪`);
     - the reading with its start converted another way and the rest after it (`こんにちは`:
       `今日は`; `わたしはがくせいです`: `わたしは学生です`), when it costs at most 2,000 more than
@@ -411,17 +412,46 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   - while composing, it converts: the field shows the best conversion, and the strip shows it
     in the middle on the accent, with the candidate before it on the left and the next on the
     right. Each further Space shows the next one, after the last the first again. The order is
-    the strip's, without the predictions: the best conversion, the next likeliest conversions,
-    and after the first eight of those the hiragana, the katakana (and the letters full-width,
-    `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then the words for the
-    reading's start. A start converted another way shows with the rest of the reading
-    converted after it (`渡し` + `は学生です`). Predictions are not in the round; they stay in
-    the panel;
+    the strip's, without the predictions: the best conversion, the owner's choices, the next
+    likeliest conversions, and after the first eight of those the hiragana, the katakana (and
+    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then
+    the words for the reading's start. A start converted another way shows with the rest of the
+    reading converted after it (`渡し` + `は学生です`). Predictions are not in the round; they
+    stay in the panel;
   - with nothing composing, it types a full-width space `　`, Gboard's default.
 - **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
   stands for, with no space after it. A word for the reading's start leaves the rest composing,
   as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
   `は学生です`, the particle).
+- **The word before**: a reading converts after the last word put in by Space, Enter or a tap,
+  while nothing else went in after it: `は` after `私` is the particle, not `葉`. A space,
+  punctuation, Backspace into the text, an emoji or a moved cursor ends it.
+- **Next words**: with nothing composing, right after a word goes in, the strip offers what may
+  follow it, the likeliest in the middle, not bold (Space doesn't take it):
+  - the words the owner put in after it before, the latest first;
+  - then the short words its part of speech goes on with best, by the connection cost plus the
+    word's own: particles, the copula and auxiliaries, and the commonest verbs and nouns that
+    follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`, `ます`).
+    Only those under a limit, so after a particle there may be none, and the tool row shows;
+  - a tap puts it in with no space, and the strip goes on from it;
+  - the settings' "Next word" turns it off, as on the other keyboards.
+- **Learning** (the owner's choices, on the phone only):
+  - what Space or a tap puts in is learned: each word with its reading, and each pair of a word
+    and the one before it, with how often and when. Not what Enter commits as typed, nor Latin
+    letters, digits, punctuation or a kana no word has;
+  - a word chosen for a reading is offered right after what Space gives, and it costs less than
+    every other word read so (more, the more often it was chosen; of two chosen, the later), so
+    it wins its reading in the lattice too: `かみ` is `上` in Mozc's dictionary, and once `紙` is
+    picked, `かみ` is `紙` and `かみをきる` is `紙を切る`. A particle stays one where it belongs;
+  - a word chosen before is predicted from the start of its reading, and one chosen after the
+    word before comes first after it;
+  - with the settings' "Learn words" (as the personal words); not in password fields, fields
+    that ask for no personalised learning, or xrnkey's own;
+  - at most 3,000 words and 3,000 pairs, the longest unused going first. Kept in
+    `japanese-history.tsv` next to the personal words, written when a field is left; its parts
+    of speech are the dictionary's, looked up again when another build of it comes;
+  - Settings → Personal words → Japanese lists them with their count; each can be deleted, or
+    all cleared.
 - **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
   after Space the conversion shown), with no new line; otherwise the field's action or a new
   line.
@@ -433,15 +463,16 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   committed as it is (a last n as ん).
 - **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
   types them; nothing converts.
-- **Not on this keyboard**: no next-word prediction after a commit, no learning of the owner's
-  words or of what they choose, no Telex, and no emoji in the strip (the emoji panel is there).
+- **Not on this keyboard**: no learning of new words the dictionary lacks (only of choices
+  among its words and the kana), no next words beyond the owner's and the short words that
+  follow, no Telex, and no emoji in the strip (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first
   found, as `data/ja/build_dict.py` converts. On Mozc's evaluation set the best conversion is
   Mozc's for 505 of 683 sentences, Mozc's is in the strip's three for 547 and in the strip or
   the panel for 553. The strip is made on each key in about 0.2 ms on a laptop's JVM with the
-  real dictionary.
+  real dictionary and a full history.
 
 ## Auto-correct (Space and punctuation)
 
@@ -871,6 +902,7 @@ opens on the settings list.
 | Suggestions | Show suggestions | on |
 | | Emoji suggestions | on |
 | | Personal words: the list, search, add, delete one, clear all (with confirm), export, import | — |
+| | Japanese (under Personal words): the words chosen, delete one, clear all (with confirm) | — |
 | Auto-correct | Level: off / flexible / strong | flexible |
 | | Keep non-Vietnamese words as typed | on |
 | | Double space for full stop | on |
@@ -1058,6 +1090,7 @@ Rules:
   `BIND_INPUT_METHOD` of the system that binds it.
 - **On the phone** (credential-encrypted private storage):
   - personal words and pairs;
+  - the words chosen on the Japanese keyboard, and pairs of them;
   - the revert memory;
   - the shortcut table;
   - the clipboard history and pins;

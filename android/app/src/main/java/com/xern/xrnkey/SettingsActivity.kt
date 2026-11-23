@@ -83,6 +83,7 @@ import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.OnDevice
+import com.xern.xrnkey.ja.UserHistory
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
 
@@ -119,9 +120,16 @@ enum class Page(val title: String, val icon: Icon? = null) {
     CLIPBOARD("Clipboard", Icon.CLIPBOARD),
     THEME("Theme", Icon.THEME),
     ABOUT("About", Icon.ABOUT),
-    LICENCES("Licences", Icon.LICENCES);
+    LICENCES("Licences", Icon.LICENCES),
 
-    fun parent(): Page = if (this == LICENCES) ABOUT else MAIN
+    /** What was chosen on the Japanese keyboard, under the personal words. */
+    JAPANESE("Japanese");
+
+    fun parent(): Page = when (this) {
+        LICENCES -> ABOUT
+        JAPANESE -> WORDS
+        else -> MAIN
+    }
 
     companion object {
         /** The main list, in order. */
@@ -192,6 +200,17 @@ class SettingsActivity : ComponentActivity() {
 
     private fun readHidden(): List<String> = HiddenWords(File(filesDir, OnDevice.HIDDEN)).all
 
+    private val japaneseFile get() = File(filesDir, OnDevice.JAPANESE)
+
+    private fun readJapanese(): List<UserHistory.Entry> = UserHistory().also { it.load(japaneseFile) }.all()
+
+    private fun forgetJapanese(e: UserHistory.Entry) {
+        val h = UserHistory().also { it.load(japaneseFile) }
+        h.forget(e.reading, e.surface)
+        h.save(japaneseFile)
+        OnDevice.japaneseChanged(prefs)
+    }
+
     private fun forgetWord(word: String) {
         PersonalWords().use { w ->
             if (wordsFile.exists()) w.load(wordsFile)
@@ -242,7 +261,8 @@ class SettingsActivity : ComponentActivity() {
                     Page.KEYBOARD -> ui.Scrolling { ui.KeyboardPage(o, set) }
                     Page.TYPING -> ui.Scrolling { ui.TypingPage(o, set) }
                     Page.SUGGESTIONS -> ui.Scrolling { ui.SuggestionsPage(o, set) }
-                    Page.WORDS -> ui.WordsPage(o, set)
+                    Page.WORDS -> ui.WordsPage(o, set) { page = Page.JAPANESE }
+                    Page.JAPANESE -> ui.JapanesePage()
                     Page.SHORTCUTS -> ui.ShortcutsPage(o, set)
                     Page.CLIPBOARD -> ui.Scrolling { ui.ClipboardPage(o, set) }
                     Page.THEME -> ui.Scrolling { ui.ThemePage(o, set) }
@@ -584,13 +604,15 @@ class SettingsActivity : ComponentActivity() {
         }
 
         @Composable
-        fun WordsPage(o: Options, set: (Options) -> Unit) {
+        fun WordsPage(o: Options, set: (Options) -> Unit, openJapanese: () -> Unit) {
             var words by remember { mutableStateOf(readWords()) }
             var hidden by remember { mutableStateOf(readHidden()) }
             var query by remember { mutableStateOf("") }
             var confirmClear by remember { mutableStateOf(false) }
+            val japanese = remember { readJapanese().size }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
                 Card { Toggle("Learn words", o.learn) { set(o.copy(learn = it)) } }
+                Card { NavRow(Page.JAPANESE.title, "$japanese", onClick = openJapanese) }
                 Field(query, "Search", { query = it }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
                 val q = query.trim().lowercase()
                 val shown = if (q.isEmpty()) words else words.filter { it.first.contains(q) }
@@ -626,6 +648,35 @@ class SettingsActivity : ComponentActivity() {
                     OnDevice.clearWords(filesDir, prefs)
                     words = readWords()
                     hidden = readHidden()
+                    confirmClear = false
+                }) { confirmClear = false }
+            }
+        }
+
+        /** The words chosen on the Japanese keyboard, the latest first: each to delete, or all. */
+        @Composable
+        fun JapanesePage() {
+            var chosen by remember { mutableStateOf(readJapanese()) }
+            var confirmClear by remember { mutableStateOf(false) }
+            Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+                LazyColumn(Modifier.weight(1f).padding(vertical = 6.dp).clip(RoundedCornerShape(18.dp)).background(look.card).padding(horizontal = 12.dp)) {
+                    items(chosen, key = { it.reading + "\t" + it.surface }) { e ->
+                        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(e.surface, style = label, modifier = Modifier.weight(1f))
+                            Text(e.reading, style = quiet)
+                            Bin("Delete ${e.surface}") {
+                                forgetJapanese(e)
+                                chosen = readJapanese()
+                            }
+                        }
+                    }
+                }
+                if (chosen.isNotEmpty()) Action("Clear all") { confirmClear = true }
+            }
+            if (confirmClear) {
+                Confirm("Clear Japanese", "Clear", {
+                    OnDevice.clearJapanese(filesDir, prefs)
+                    chosen = readJapanese()
                     confirmClear = false
                 }) { confirmClear = false }
             }

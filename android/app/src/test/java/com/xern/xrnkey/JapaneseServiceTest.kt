@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ime.XrnkeyService
 import com.xern.xrnkey.keyboard.KeyKind
 import com.xern.xrnkey.keyboard.KeyboardView
@@ -27,6 +28,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLog
+import java.io.File
 
 /**
  * The Japanese keyboard in the service, typing into a real text field as on the phone: chosen
@@ -43,7 +45,7 @@ class JapaneseServiceTest {
 
     private class Field(val service: XrnkeyService, val edit: EditText, val keys: KeyboardView)
 
-    private fun field(inputType: Int = InputType.TYPE_CLASS_TEXT, assets: Boolean = true): Field {
+    private fun field(inputType: Int = InputType.TYPE_CLASS_TEXT, assets: Boolean = true, imeOptions: Int = 0): Field {
         XrnkeyService.modelAssets = { name ->
             val (at, length) = (if (assets) packed.places[name] else null) ?: throw java.io.FileNotFoundException(name)
             AssetFileDescriptor(ParcelFileDescriptor.open(packed.file, ParcelFileDescriptor.MODE_READ_ONLY), at, length)
@@ -51,7 +53,10 @@ class JapaneseServiceTest {
         val s = Robolectric.setupService(XrnkeyService::class.java)
         XrnkeyService.modelAssets = null
         // The field's own type: its connection fills the EditorInfo from it.
-        val edit = EditText(RuntimeEnvironment.getApplication()).also { it.inputType = inputType }
+        val edit = EditText(RuntimeEnvironment.getApplication()).also {
+            it.inputType = inputType
+            it.imeOptions = imeOptions
+        }
         val info = EditorInfo()
         val ic = edit.onCreateInputConnection(info)!!
         val start = android.inputmethodservice.InputMethodService::class.java.getDeclaredField("mStartedInputConnection")
@@ -156,6 +161,55 @@ class JapaneseServiceTest {
         f.service.onMorePick("私")
         assertEquals("紙私は", f.edit.text.toString())
         assertEquals("は", f.composing)
+        f.service.onDestroy()
+    }
+
+    /**
+     * Type, pick: the strip then offers what follows the word, and a tap puts it in with no space,
+     * the strip going on from it. What was picked is learned, comes first next time, and is kept
+     * in the phone's storage when the field is left.
+     */
+    @Test
+    fun aPickIsFollowedByTheNextWordsAndLearned() {
+        val f = field()
+        f.service.onLanguage("ja")
+        f.type("watashi")
+        assertEquals("私", (f.strip() as Strip.Candidates).centre)
+        f.service.onCandidate(1)
+        assertEquals("私", f.edit.text.toString())
+        val next = f.strip() as Strip.Candidates
+        assertEquals("は", next.centre)
+        assertFalse(next.bold)
+        f.service.onCandidate(1)
+        assertEquals("私は", f.edit.text.toString())
+        assertEquals("", f.composing)
+        assertTrue(f.strip() is Strip.Candidates)
+        // 髪 from the panel; next time it comes first.
+        f.type("kami")
+        assertEquals("紙", (f.strip() as Strip.Candidates).centre)
+        f.service.onMorePick("髪")
+        assertEquals("私は髪", f.edit.text.toString())
+        f.type("kami")
+        assertEquals("髪", (f.strip() as Strip.Candidates).centre)
+        f.service.onFinishInputView(true)
+        val kept = File(f.service.filesDir, OnDevice.JAPANESE).readText()
+        assertTrue(kept, kept.contains("w\tかみ\t髪\t"))
+        assertTrue(kept, kept.contains("p\t私\tは\tは\t"))
+        f.service.onDestroy()
+    }
+
+    /** In an incognito field nothing chosen is learned, and nothing is written. */
+    @Test
+    fun anIncognitoFieldLearnsNothing() {
+        val f = field(imeOptions = EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+        f.service.onLanguage("ja")
+        f.type("kami")
+        f.strip()
+        f.service.onMorePick("髪")
+        f.type("kami")
+        assertEquals("紙", (f.strip() as Strip.Candidates).centre)
+        f.service.onFinishInputView(true)
+        assertFalse(File(f.service.filesDir, OnDevice.JAPANESE).exists())
         f.service.onDestroy()
     }
 

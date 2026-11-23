@@ -3,9 +3,11 @@ package com.xern.xrnkey
 import com.xern.xrnkey.ime.KanaStrip
 import com.xern.xrnkey.ime.KanaTypist
 import com.xern.xrnkey.ja.Converter
+import com.xern.xrnkey.ja.UserHistory
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -15,7 +17,8 @@ import org.junit.Test
  */
 class KanaTypistTest {
     private val editor = FakeEditor()
-    private val typist = KanaTypist(editor, Converter(TestModels.japanese())).also { it.reset() }
+    private val converter = Converter(TestModels.japanese())
+    private val typist = KanaTypist(editor, converter).also { it.reset() }
     private val strip = KanaStrip()
 
     private fun type(keys: String) = keys.forEach { typist.text(it.toString()) }
@@ -111,6 +114,125 @@ class KanaTypistTest {
         assertTrue(p.extra.toString(), p.extra.containsAll(listOf("日本人", "ニホ")))
         typist.reset()
         assertEquals(Strip.Tools, strip.make(typist))
+    }
+
+    /**
+     * A conversion chosen by Space, or a candidate by a tap, is learned: next time it comes first,
+     * for Space and in the strip.
+     */
+    @Test
+    fun whatIsChosenComesFirstNextTime() {
+        converter.history = UserHistory()
+        type("kami  ")
+        assertEquals("神", editor.composing)
+        typist.enter()
+        type("kami")
+        assertEquals("神", (strip.make(typist) as Strip.Candidates).centre)
+        type(" ")
+        assertEquals("神", editor.composing)
+        typist.enter()
+        // A tap on the right slot (髪).
+        type("kami")
+        strip.make(typist)
+        typist.pick(strip.pick(2)!!)
+        assertEquals("神神髪", editor.committed.toString())
+        typist.reset()
+        type("kami ")
+        assertEquals("髪", editor.composing)
+        assertEquals(listOf("髪", "神"), converter.history!!.of("かみ").map { it.surface })
+    }
+
+    /** Nothing is learned where the field asks for none (incognito), nor with learning off. */
+    @Test
+    fun nothingIsLearnedInIncognitoFieldsOrWithLearningOff() {
+        val h = UserHistory()
+        converter.history = h
+        typist.learnHere = false
+        type("kami  ")
+        typist.enter()
+        type("kami")
+        strip.make(typist)
+        typist.pick(strip.pick(2)!!)
+        assertEquals(0, h.size)
+        assertEquals(0, h.unsaved)
+        typist.learnHere = true
+        converter.history = null
+        type("kami  ")
+        typist.enter()
+        assertEquals(0, h.size)
+    }
+
+    /**
+     * Right after a word goes in, the strip offers what may follow it, not bold (Space doesn't take
+     * it); a tap puts it in with no space, and the strip goes on from it. A space, punctuation or
+     * Backspace ends it.
+     */
+    @Test
+    fun theNextWordsFollowACommit() {
+        type("watashi ")
+        typist.enter()
+        assertEquals("私", editor.committed.toString())
+        val s = strip.make(typist) as Strip.Candidates
+        assertEquals("は", s.centre)
+        assertFalse(s.bold)
+        assertTrue(s.more)
+        assertTrue(listOf(s.left, s.right).containsAll(listOf("が", "を")))
+        typist.pick(strip.pick(1)!!)
+        assertEquals("私は", editor.committed.toString())
+        assertEquals("", editor.composing)
+        assertTrue(strip.make(typist) is Strip.Candidates)
+        type(" ")
+        assertEquals(Strip.Tools, strip.make(typist))
+        type("ikimasu")
+        typist.enter()
+        type("、")
+        assertEquals(Strip.Tools, strip.make(typist))
+        type("ikimasu")
+        typist.enter()
+        typist.backspace()
+        assertEquals(Strip.Tools, strip.make(typist))
+        // Off in the settings: the tool row.
+        type("watashi ")
+        typist.enter()
+        strip.nextWords = false
+        assertEquals(Strip.Tools, strip.make(typist))
+    }
+
+    /** The word after one picked from the strip is learned with it, and offered first after it. */
+    @Test
+    fun aNextWordPickedIsLearnedAfterItsWord() {
+        converter.history = UserHistory()
+        type("watashi ")
+        typist.enter()
+        strip.make(typist)
+        typist.pick(strip.pick("の")!!)
+        assertEquals("私の", editor.committed.toString())
+        typist.reset()
+        type("watashi ")
+        typist.enter()
+        assertEquals("の", (strip.make(typist) as Strip.Candidates).centre)
+    }
+
+    /**
+     * A reading converts after the word before it: は after 私 is the particle; alone, at the
+     * field's start, it is 葉. A space between them, and it is alone again.
+     */
+    @Test
+    fun aReadingFollowsTheWordBefore() {
+        type("ha ")
+        assertEquals("葉", editor.composing)
+        typist.enter()
+        typist.reset()
+        type("watashi ")
+        typist.enter()
+        assertEquals("私", typist.context?.surface)
+        type("ha ")
+        assertEquals("は", editor.composing)
+        typist.enter()
+        type(" ")
+        assertNull(typist.context)
+        type("ha ")
+        assertEquals("葉", editor.composing)
     }
 
     /**
@@ -238,6 +360,59 @@ class KanaTypistTest {
         assertEquals("今日は 雨", editor.committed.toString())
         typist.deleteWord()
         assertEquals("今日は ", editor.committed.toString())
+    }
+
+    /**
+     * Fast enough for every key: the strip, made after each key from Mozc's dictionary (where it is
+     * built) with a history full of the owner's choices, takes well under a few milliseconds.
+     */
+    @Test
+    fun theStripIsMadeQuicklyWithAFullHistory() {
+        val dict = if (TestModels.realJapaneseAvailable) TestModels.realJapanese() else TestModels.japanese()
+        val conv = Converter(dict)
+        val h = UserHistory()
+        conv.history = h
+        // As many choices as it keeps, each after the one before: the words predicted from two kana.
+        val kana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ"
+        var prev: String? = null
+        loop@ for (a in kana) for (b in kana) for (w in dict.predict("$a$b", 3)) {
+            h.learn(prev, listOf(Converter.Segment(w.surface, w.reading, w.rid, w.lid)))
+            prev = w.surface
+            if (h.size >= UserHistory.MOST) break@loop
+        }
+        val ed = FakeEditor()
+        val t = KanaTypist(ed, conv)
+        val s = KanaStrip()
+        val sentences = listOf("watashihagakuseidesu", "kyouhaiitenkidesune", "arigatougozaimasu", "konnichiha", "ashitagakkouniikimasu")
+        fun run(): Pair<Double, Int> {
+            var keys = 0
+            val start = System.nanoTime()
+            for (sentence in sentences) {
+                t.reset()
+                for (c in sentence) {
+                    t.text(c.toString())
+                    s.make(t)
+                    keys++
+                }
+                t.text(" ")
+                s.make(t)
+                t.enter()
+                s.make(t)
+                keys += 2
+            }
+            return (System.nanoTime() - start) / 1e6 to keys
+        }
+        repeat(3) { run() }  // warm up
+        var total = 0.0
+        var keys = 0
+        repeat(10) {
+            val (ms, n) = run()
+            total += ms
+            keys += n
+        }
+        val each = total / keys
+        println("strip: %.3f ms a key, with %d chosen words (%s)".format(each, h.size, if (TestModels.realJapaneseAvailable) "Mozc" else "test"))
+        assertTrue("%.3f ms".format(each), each < 3)
     }
 
     /** Text from a panel ends the reading as it is, then goes in. */

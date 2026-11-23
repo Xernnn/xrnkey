@@ -125,6 +125,39 @@ class SettingsPagesTest {
         assertTrue(prefs().getLong("words-cleared", 0L) != before)
     }
 
+    /**
+     * What was chosen on the Japanese keyboard: a row with its count under the personal words, and
+     * its page lists each word to delete, or clears them all; the keyboard reads the file again.
+     */
+    @Test
+    fun japaneseChoicesAreCountedListedAndCleared() {
+        val file = File(rule.activity.filesDir, OnDevice.JAPANESE)
+        val conv = com.xern.xrnkey.ja.Converter(TestModels.japanese())
+        com.xern.xrnkey.ja.UserHistory().apply {
+            learn(null, conv.convert("かみ").words.first { it.text == "髪" }.segments)
+            learn(null, conv.best("わたしはがくせい"))
+            save(file)
+        }
+        val before = prefs().getLong("japanese-cleared", 0L)
+        rule.onNodeWithText("Personal words").performClick()
+        rule.onNodeWithText("Japanese").assertIsDisplayed()
+        rule.onNodeWithText("4").assertIsDisplayed()
+        shot("settings-words-japanese")
+        rule.onNodeWithText("Japanese").performClick()
+        rule.onNodeWithText("髪").assertIsDisplayed()
+        shot("settings-japanese")
+        rule.onNodeWithContentDescription("Delete 髪").performClick()
+        rule.onNodeWithText("髪").assertDoesNotExist()
+        assertEquals(3, com.xern.xrnkey.ja.UserHistory().also { it.load(file) }.size)
+        assertTrue(prefs().getLong("japanese-cleared", 0L) != before)
+        rule.onNodeWithText("Clear all").performClick()
+        rule.onNodeWithText("Clear").performClick()
+        rule.onNodeWithText("学生").assertDoesNotExist()
+        assertFalse(file.exists())
+        back()
+        rule.onNodeWithText("Japanese").assertIsDisplayed()
+    }
+
     /** What the strip's remove mark hid is listed under the personal words, each to show again. */
     @Test
     fun hiddenSuggestionsAreListedAndShownAgain() {

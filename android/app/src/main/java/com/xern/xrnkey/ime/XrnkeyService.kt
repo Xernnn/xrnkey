@@ -219,6 +219,7 @@ class XrnkeyService :
     override fun onDestroy() {
         handler.removeCallbacks(stripTask)
         models?.user = null
+        converter?.history = null
         typist.personal = null
         typist.shortcuts = null
         onDevice?.close()
@@ -669,6 +670,9 @@ class XrnkeyService :
         // fields is (its Try-it field is for trying the keys, its lists hold words already).
         typist.learnHere = info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING == 0 &&
             info.packageName != packageName
+        // The Japanese keyboard's choices: used and learned as the personal words are.
+        converter?.history = if (learning) od.japanese else null
+        kana?.learnHere = typist.learnHere
     }
 
     // ---- the clipboard ------------------------------------------------------------------------
@@ -750,6 +754,8 @@ class XrnkeyService :
         options = o
         // The Japanese keyboard: its own typist where it types, plain English letters elsewhere.
         kana = if (o.language == "ja") kana ?: converter?.let { KanaTypist(editor, it) } else null
+        kana?.learnHere = typist.learnHere
+        kanaStrip.nextWords = o.nextWord
         val inEnglish = o.language == "en" || o.language == "ja"
         // The English keyboard: no marks, and the English model alone.
         val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX

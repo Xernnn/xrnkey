@@ -11,18 +11,28 @@ import com.xern.xrnkey.keyboard.Strip
  *   piece ([com.xern.xrnkey.ja.Conversion.offered]);
  * - after Space: the candidate the field shows in the middle, highlighted, with the one before it
  *   on the left and the next on the right; the panel holds the others;
- * - with nothing composing, the tool row.
+ * - with nothing composing, right after a word went in: what may follow it ("私": は, の, が), the
+ *   likeliest in the middle, not bold (Space doesn't take it). With nothing to offer, the tool row.
  */
 class KanaStrip {
     private var slots: List<Candidate?> = emptyList()
     private var extra: List<Candidate> = emptyList()
 
+    /** The next words are offered after a word (the settings' "Next word"). */
+    var nextWords = true
+
     fun make(k: KanaTypist): Strip {
         val conv = k.conversion()
         if (k.shown.isEmpty() || conv == null) {
-            slots = emptyList()
-            extra = emptyList()
-            return Strip.Tools
+            val next = if (nextWords && k.shown.isEmpty()) k.nextWords() else emptyList()
+            if (next.isEmpty()) {
+                slots = emptyList()
+                extra = emptyList()
+                return Strip.Tools
+            }
+            slots = listOf(next.getOrNull(1), next[0], next.getOrNull(2))
+            extra = next.drop(3)
+            return candidates(highlight = false, bold = false)
         }
         if (k.converting) {
             val c = k.cycle
@@ -38,9 +48,9 @@ class KanaStrip {
         return candidates(highlight = false)
     }
 
-    private fun candidates(highlight: Boolean) = Strip.Candidates(
+    private fun candidates(highlight: Boolean, bold: Boolean = true) = Strip.Candidates(
         slots[0]?.text, slots[1]?.text, slots[2]?.text,
-        more = extra.isNotEmpty(), bold = true, extra = extra.map { it.text }.take(MOST), highlight = highlight,
+        more = extra.isNotEmpty(), bold = bold, extra = extra.map { it.text }.take(MOST), highlight = highlight,
         most = MOST, removable = false,
     )
 
