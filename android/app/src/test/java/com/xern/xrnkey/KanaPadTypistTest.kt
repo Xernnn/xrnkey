@@ -2,10 +2,12 @@ package com.xern.xrnkey
 
 import com.xern.xrnkey.ime.KanaTypist
 import com.xern.xrnkey.ja.Converter
+import com.xern.xrnkey.keyboard.Flick
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 /**
@@ -16,10 +18,7 @@ class KanaPadTypistTest {
     private val editor = FakeEditor()
     private val typist = KanaTypist(editor, Converter(TestModels.japanese())).also { it.reset() }
 
-    /** The 12-key pad's toggles: what each tap of a key in turn types. */
-    private val toggles = mapOf("あ" to "あいうえおぁぃぅぇぉ", "た" to "たちつてとっ", "ま" to "まみむめも", "、。?!" to "、。？！")
-
-    private fun toggle(key: String) = toggles.getValue(key)
+    private fun toggle(key: String) = Flick.keys.single { it.label == key }.toggle
 
     /** わ (tap), た (tap), し (さ flicked left): わたし, and Space converts it to 私. */
     @Test
@@ -81,11 +80,11 @@ class KanaPadTypistTest {
         // Not on that key's toggle: nothing changes.
         assertFalse(typist.step(toggle("ま"), 1))
         assertEquals("かぉ", editor.composing)
-        // ↺: the last kana's own toggle, back.
+        // ↺ as the service finds it: the last kana's own toggle.
         typist.backspace()
         typist.flick("と")
         assertEquals('と', typist.lastKana)
-        assertTrue(typist.step(toggle("た"), -1))
+        assertTrue(typist.step(Flick.toggleOf(typist.lastKana!!)!!, -1))
         assertEquals("かて", editor.composing)
         assertEquals("", editor.committed.toString())
     }
@@ -161,6 +160,35 @@ class KanaPadTypistTest {
         typist.flick("！")
         typist.text(" ")
         assertEquals("雨！", editor.composing)
+    }
+
+    /**
+     * A sentence as fingers type it on the pad, with Mozc's dictionary where it is built: each
+     * kana a key and a direction (L U R D, or . for a tap), ゛ and 小 by the mark key (*).
+     */
+    @Test
+    fun aSentenceFlickedConvertsWithTheRealDictionary() {
+        assumeTrue(TestModels.realJapaneseAvailable)
+        val real = FakeEditor()
+        val t = KanaTypist(real, Converter(TestModels.realJapanese())).also { it.reset() }
+        fun strokes(s: String) {
+            for (stroke in s.split(' ')) {
+                val k = Flick.keys.single { it.label == stroke.substring(0, stroke.indexOfFirst { it in ".LURD" }) }
+                val dir = ".LURD".indexOf(stroke[stroke.indexOfFirst { it in ".LURD" }])
+                t.flick(k.flick(dir))
+                repeat(stroke.count { it == '*' }) { t.mark() }
+            }
+        }
+        // き ょ う は い い て ん き で す ね
+        strokes("かL やD* あU は. あL あL たR わU かL たR* さU なR")
+        assertEquals("きょうはいいてんきですね", real.composing)
+        t.text(" ")
+        assertEquals("今日はいい天気ですね", real.composing)
+        t.enter()
+        // わ た し は が く せ い で す
+        strokes("わ. た. さL は. か.* かU さR あL たR* さU")
+        t.text(" ")
+        assertEquals("私は学生です", real.composing)
     }
 
     /** Backspace takes the last flicked kana; with none, what is before the cursor. */

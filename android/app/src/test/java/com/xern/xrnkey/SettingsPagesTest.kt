@@ -63,6 +63,7 @@ class SettingsPagesTest {
         rule.onNodeWithText("Keyboard").performClick()
         rule.onNodeWithText("Height").assertIsDisplayed()
         rule.onNodeWithText("Hold comma").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("Toggle input").performScrollTo().assertIsOn()
         back()
         rule.onNodeWithText("Typing").performClick()
         rule.onNodeWithText("Old-style tones").assertIsDisplayed()

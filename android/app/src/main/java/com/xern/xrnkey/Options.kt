@@ -52,9 +52,11 @@ data class Options(
     /**
      * The keyboard's language, chosen from the comma's menu: "vi" (Telex or VNI), "en" (no
      * marks, English words only), "ja" (romaji to kana to kanji, where the APK has the Japanese
-     * dictionary).
+     * dictionary), "ja-flick" (the same Japanese, typed on the 12-key kana pad).
      */
     val language: String = "vi",
+    /** The 12-key pad: the same key tapped again in time steps its kana (あ い う), as Gboard's. */
+    val kanaToggle: Boolean = true,
 ) {
     fun save(p: SharedPreferences) {
         p.edit()
@@ -84,14 +86,21 @@ data class Options(
             .putString("palette", theme)
             .putBoolean("tools_hidden", toolsHidden)
             .putString("language", language)
+            .putBoolean("kana_toggle", kanaToggle)
             .apply()
     }
 
     companion object {
         val HOLD_CHOICES = listOf(200, 300, 400, 500, 600)
 
+        /** Japanese on the 12-key kana pad: its own choice in the comma's menu, after QWERTY's "ja". */
+        const val FLICK = "ja-flick"
+
         /** The keyboard's languages, as the comma's menu offers them (Japanese with its dictionary). */
-        val LANGUAGES = listOf("vi", "en", "ja")
+        val LANGUAGES = listOf("vi", "en", "ja", FLICK)
+
+        /** The languages the Japanese typist types: on QWERTY (romaji) and on the 12-key pad. */
+        val JAPANESE = setOf("ja", FLICK)
         val HEIGHT_CHOICES = listOf(80, 90, 100, 110, 120)
 
         fun prefs(context: Context): SharedPreferences =
@@ -128,6 +137,7 @@ data class Options(
                 // 0.7.0 kept only whether it was English.
                 language = p.getString("language", null)?.takeIf { it in LANGUAGES }
                     ?: if (p.getBoolean("english", false)) "en" else d.language,
+                kanaToggle = p.getBoolean("kana_toggle", d.kanaToggle),
             )
         }
     }

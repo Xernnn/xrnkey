@@ -190,11 +190,12 @@ keyboard's hide button.
   word, a number (`1␠␠` → `1. `) or closing punctuation, and never in password, URL or email
   fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
-  comma** opens a menu over it, one row to the right: ⌨, then the languages (VI, EN, JA), the
-  one in use underlined. JA is there only when the APK has the Japanese dictionary. Slide to a
-  choice and lift: ⌨ opens Android's keyboard menu, a language switches the keyboard to it (see
-  "The English keyboard" and "The Japanese keyboard"); the space bar names the one in use, and
-  it stays chosen. Lifting where it opened is ⌨.
+  comma** opens a menu over it, one row to the right: ⌨ VI EN JA あ, the one in use underlined.
+  JA (Japanese on QWERTY) and あ (Japanese on the 12-key pad) are there only when the APK has
+  the Japanese dictionary. Slide to a choice and lift: ⌨ opens Android's keyboard menu, a
+  language switches the keyboard to it (see "The English keyboard" and "The Japanese
+  keyboard"); the space bar names the one in use, and it stays chosen. Lifting where it opened
+  is ⌨.
 - **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
   `, ? ! ' " : - ; ( ) / @ & % + #`, the comma under the finger, as on the reference.
 - **Enter**: ends the word, then sends the field's action or a newline.
@@ -365,7 +366,8 @@ Chosen from the comma's menu (EN); the space bar says "English".
 
 Chosen from the comma's menu (JA); the space bar says "日本語". It types as Gboard's Japanese
 QWERTY does: romaji become kana, Space converts them to kanji. The dictionary is Mozc's
-open-source one (`data/ja/README.md`), in the APK and never downloaded.
+open-source one (`data/ja/README.md`), in the APK and never downloaded. The same Japanese can
+be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below).
 
 - **Letters spell a reading in romaji** (wāpuro), shown as composing hiragana, underlined:
   - each kana as soon as its letters spell it: `ka` か, `kya` きゃ, `shi`/`si` し, `chi`/`ti` ち,
@@ -427,6 +429,55 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself. It runs on each key, in a few
   milliseconds with the real dictionary.
+
+### The 12-key pad (flick input)
+
+Chosen from the menu as あ, after JA: the kana pad most Japanese phones type on, as Gboard's
+12-key Japanese keyboard has it. It types into the same reading as the QWERTY keys, so the strip,
+the more panel, Space, Enter and Backspace work as above. JA stays QWERTY (0.8.0's saved choice
+is JA). Password, email and URL fields get plain QWERTY letters, and number fields their pad.
+
+- **What it shows**: four rows, as tall together as the letters with their number row; no
+  number row of its own. Kana keys are tiles in a 3 by 4 grid, a shade lighter than the function
+  keys either side:
+
+  | | | | | |
+  |---|---|---|---|---|
+  | ↺ | あ | か | さ | ⌫ |
+  | ◀ | た | な | は | ▶ |
+  | ?123 | ま | や | ら | 空白 |
+  | 🌐 | ゛゜小 | わ | 、。?! | Enter |
+
+  The side columns are 1.7 letter keys wide, the kana keys 2.2. The space says 空白, and 変換
+  while a reading is composing; Enter shows its icon, and 確定 while composing.
+- **Tap** a kana key for its あ-column kana. **Flick** it left, up, right or down for the い, う,
+  え or お one (か: き く け こ). A finger within 24 dp of where it went down is a tap; past that,
+  the way it went furthest, and it stays that key's however far it slides. The exceptions:
+  - や: left `（`, up ゆ, right `）`, down よ;
+  - わ: left を, up ん, right ー;
+  - 、。?!: tap `、`, left `。`, up `？`, right `！`.
+- **The guide**: while a finger is on a kana key, its kana show in a cross over it, the tap in
+  the middle and the flicks around it, the one the finger points at on the accent, as Gboard
+  draws it. It is the key's popup: "Key popup" off, no guide.
+- **Toggle input** (a setting, on by default, as on Gboard): the same key tapped again within a
+  second steps its kana: あ い う え お ぁ ぃ ぅ ぇ ぉ, た … と っ, や ゆ よ ゃ ゅ ょ, わ を ん ゎ ー,
+  、 。 ？ ！. A pause, a flick, ▶ or any other key ends it, so the next tap of that key is a kana
+  of its own (ああ is あ ▶ あ). Off, each tap is a kana.
+- **↺** steps the last kana back along its key's toggle (う to い, あ to ぉ); a toggle goes on
+  from there. With nothing composing it does nothing.
+- **゛゜小** changes the reading's last kana to its next form: か ⇄ が, は → ば → ぱ, つ → っ → づ,
+  う → ぅ → ゔ, あ ⇄ ぁ, や ⇄ ゃ, わ ⇄ ゎ, and so on for every kana that has one; after Space, the
+  reading comes back first.
+- **Punctuation**: 、。？！ join the reading and convert with it (かみ、 → 紙、), as the QWERTY
+  keys' do. With nothing composing they start a reading, so the toggle can step 、 to 。, and a
+  kana after a reading of punctuation alone commits it first.
+- **◀ and ▶** move the cursor a character, and repeat while held. ◀ with a reading commits it as
+  shown, as the space bar's slide does; ▶ at the end of a reading stays put (it ends a toggle).
+- **?123** opens the symbols, whose way back says あいう. **🌐** opens the comma's menu at once:
+  slide to a choice and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap
+  elsewhere closes it.
+- **Not yet**: a 12-key number pad (the symbols serve), godan and other kana layouts, flick for
+  Latin letters, ↺ undoing a commit, and moving the cursor inside a reading.
 
 ## Auto-correct (Space and punctuation)
 
@@ -867,6 +918,7 @@ opens on the settings list.
 | | Swipe space bar to move cursor | on |
 | | Hold space bar to move cursor | on |
 | | Hold comma to switch keyboard | on |
+| | Toggle input (the 12-key pad) | on |
 | | Keyboard height: 80–120 % | 100 % |
 | Clipboard | Keep history | on |
 | | History size | 50 |

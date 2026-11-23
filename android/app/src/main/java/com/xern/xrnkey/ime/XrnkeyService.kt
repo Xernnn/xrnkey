@@ -33,6 +33,7 @@ import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EmojiTab
 import com.xern.xrnkey.keyboard.EnterAction
+import com.xern.xrnkey.keyboard.Flick
 import com.xern.xrnkey.keyboard.KeyboardFrame
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Layouts
@@ -183,8 +184,11 @@ class XrnkeyService :
     /** The models opened from the APK (false when an asset was missing). */
     fun hasModels(): Boolean = vi != null && en != null
 
-    /** The languages the comma's menu offers: Japanese only with its dictionary. */
-    private fun languages(): List<String> = Options.LANGUAGES.filter { it != "ja" || converter != null }
+    /** The languages the comma's menu offers: Japanese (QWERTY and the 12-key pad) only with its dictionary. */
+    private fun languages(): List<String> = Options.LANGUAGES.filter { it !in Options.JAPANESE || converter != null }
+
+    /** The letters' page: the 12-key pad where Japanese is typed on it, else QWERTY. */
+    private fun lettersPage(): Page = if (options.language == Options.FLICK && input is KanaTypist) Page.KANA else Page.LETTERS
 
     /** The Japanese dictionary, mapped in place from the APK as the models are, and how that went. */
     private fun openDictionary(name: String): Dictionary? {
@@ -278,11 +282,13 @@ class XrnkeyService :
         searchQuery = null
         showKeys()
         val japanese = input is KanaTypist
+        val letters = if (home == Page.LETTERS) lettersPage() else home
         keyboard?.apply {
             kana = japanese
-            this.home = home
+            composing = false
+            this.home = letters
             pad = Layouts.padFor(info.inputType, resources.configuration.locales[0])
-            page = home
+            page = letters
             shift = Shift.OFF
             enterAction = enterActionOf(info)
             // The number row on Auto: shown in portrait, left out in landscape.
@@ -540,7 +546,15 @@ class XrnkeyService :
         saveOptions(options.copy(language = code))
         expected.clear()
         input.reset(at)
-        keyboard?.kana = input is KanaTypist
+        keyboard?.apply {
+            kana = input is KanaTypist
+            // Between QWERTY and the 12-key pad: the letters' page changes (a field's pad stays).
+            if (!home.isPad) {
+                val onLetters = page == Page.LETTERS || page == Page.KANA
+                home = lettersPage()
+                if (onLetters) page = home
+            }
+        }
         showStrip()
     }
 
@@ -584,8 +598,31 @@ class XrnkeyService :
      * keys come faster than the strip can follow, only the latest strip is worked out.
      */
     private fun showStrip() {
+        keyboard?.composing = input.shown.isNotEmpty()
         handler.removeCallbacks(stripTask)
         handler.post(stripTask)
+    }
+
+    // ---- the 12-key pad (flick input) ---------------------------------------------------------
+
+    override fun onKana(text: String) {
+        if (input !is KanaTypist || searchQuery != null) return onText(text)
+        kanaEdit { it.flick(text) }
+    }
+
+    /** The same key again in time: its kana steps on, or, if the reading changed since, starts anew. */
+    override fun onKanaToggle(cycle: String) = kanaEdit { if (!it.step(cycle, 1)) it.flick(cycle.take(1)) }
+
+    override fun onKanaBack() = kanaEdit { k -> k.lastKana?.let(Flick::toggleOf)?.let { k.step(it, -1) } }
+
+    override fun onKanaMark() = kanaEdit { it.mark() }
+
+    /** A 12-key pad's edit of the reading, where the Japanese typist types. */
+    private inline fun kanaEdit(block: (KanaTypist) -> Unit) {
+        val k = input as? KanaTypist ?: return
+        if (searchQuery != null) return
+        edit { block(k) }
+        showStrip()
     }
 
     // ---- the emoji panel ----------------------------------------------------------------------
@@ -749,8 +786,8 @@ class XrnkeyService :
         val languageChanged = o.language != options.language
         options = o
         // The Japanese keyboard: its own typist where it types, plain English letters elsewhere.
-        kana = if (o.language == "ja") kana ?: converter?.let { KanaTypist(editor, it) } else null
-        val inEnglish = o.language == "en" || o.language == "ja"
+        kana = if (o.language in Options.JAPANESE) kana ?: converter?.let { KanaTypist(editor, it) } else null
+        val inEnglish = o.language == "en" || o.language in Options.JAPANESE
         // The English keyboard: no marks, and the English model alone.
         val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
         val scoring = if (inEnglish) english else models
@@ -795,6 +832,7 @@ class XrnkeyService :
             commaHold = o.commaHold
             language = o.language
             languages = languages()
+            toggleInput = o.kanaToggle
             heightPercent = o.height
         }
         emojiPanel?.palette = palette

@@ -2,7 +2,8 @@
 
 The keyboard: Telex through the shared core (`../core`), with accent restoration and the
 English/Vietnamese choice from the language models, an English keyboard, and a Japanese one
-(romaji to kana, kana to kanji with Mozc's dictionary). It has no permissions. The feature spec
+(romaji or the 12-key flick pad to kana, kana to kanji with Mozc's dictionary). It has no
+permissions. The feature spec
 is [docs/feature-spec.md](docs/feature-spec.md).
 
 ## Build and test
