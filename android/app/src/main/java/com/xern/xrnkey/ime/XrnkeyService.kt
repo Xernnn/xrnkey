@@ -481,12 +481,10 @@ class XrnkeyService :
 
     private fun showEmoji() {
         val panel = emojiPanel ?: return
-        val index = emoji
-        if (panel.emoji.isEmpty()) panel.emoji = index?.all.orEmpty()
+        if (panel.emoji.isEmpty()) panel.emoji = emoji?.all.orEmpty()
         panel.recents = memory.recents()
         panel.tones = memory.tones()
-        val words = typist.context().filter { it != "<s>" } + listOfNotNull(strip.centre)
-        panel.suggestions = (strip.emoji(typist) + index?.suggest(words).orEmpty()).distinct()
+        panel.open()
         // The keys stay laid out (invisible), so the panel keeps their height.
         keyboard?.visibility = View.INVISIBLE
         panel.visibility = View.VISIBLE

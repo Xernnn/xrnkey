@@ -4,9 +4,14 @@ import android.content.res.AssetFileDescriptor
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.text.InputType
+import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import com.xern.xrnkey.ime.XrnkeyService
+import com.xern.xrnkey.keyboard.EmojiGrid
+import com.xern.xrnkey.keyboard.EmojiPanelView
+import com.xern.xrnkey.keyboard.Tool
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,6 +21,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * The strip's emoji in the keyboard service, typing into a real text field: the APK bundles the
@@ -23,8 +29,10 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)  // the panel lists only emoji the font can draw
 class EmojiServiceTest {
     private val packed = TestModels.packed()
+    private lateinit var frame: ViewGroup
 
     @After
     fun removePack() = packed.close()
@@ -42,7 +50,7 @@ class EmojiServiceTest {
         val start = android.inputmethodservice.InputMethodService::class.java.getDeclaredField("mStartedInputConnection")
         start.isAccessible = true
         start.set(s, ic)
-        s.onCreateInputView()
+        frame = s.onCreateInputView() as ViewGroup
         s.onStartInputView(info, false)
         return s to edit
     }
@@ -73,5 +81,34 @@ class EmojiServiceTest {
         s4.typeAndTapRight("uoongs caf phee")
         assertEquals("uống ☕", edit4.text.toString())  // both syllables
         s4.onDestroy()
+    }
+
+    /**
+     * The emoji panel opens on smileys and people while there are no recents, and on recents
+     * after; a tap types into the field and leaves the panel open for the next.
+     */
+    @Test
+    fun theEmojiPanelOpensOnRecentsOnceThereAreAnyAndATapKeepsItOpen() {
+        val (s, edit) = field()
+        val panel = (0 until frame.childCount).map { frame.getChildAt(it) }.filterIsInstance<EmojiPanelView>().single()
+        s.onTool(Tool.EMOJI)
+        assertEquals(View.VISIBLE, panel.visibility)
+        frame.measure(
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.AT_MOST),
+        )
+        frame.layout(0, 0, frame.measuredWidth, frame.measuredHeight)
+        assertEquals(EmojiGrid.SMILEYS, panel.page)
+        val x = panel.cellWidth() / 2
+        val y = panel.gridTop() + panel.rowHeight() / 2
+        panel.tap(x, y)
+        panel.tap(x, y)
+        assertEquals("😀😀", edit.text.toString())
+        assertEquals(View.VISIBLE, panel.visibility)
+        s.onClosePanel()
+        s.onTool(Tool.EMOJI)
+        assertEquals(EmojiGrid.RECENTS, panel.page)
+        assertEquals("😀", panel.pages[EmojiGrid.RECENTS].cells.first().text)
+        s.onDestroy()
     }
 }
