@@ -69,7 +69,7 @@ class ServiceTypingTest {
         }
     }
 
-    private fun field(lateKeys: Boolean = false): Pair<XrnkeyService, EditText> {
+    private fun field(lateKeys: Boolean = false, app: String? = null): Pair<XrnkeyService, EditText> {
         // The models the APK bundles (the release build copies them from this folder), opened
         // as on the phone: by descriptor, each at its offset in a file laid out as AGP lays out
         // the APK's assets.
@@ -80,7 +80,10 @@ class ServiceTypingTest {
         val s = Robolectric.setupService(XrnkeyService::class.java)
         XrnkeyService.modelAssets = null
         val edit = EditText(RuntimeEnvironment.getApplication())
-        val info = EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }
+        val info = EditorInfo().apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            packageName = app
+        }
         val ic = edit.onCreateInputConnection(info)!!.let { if (lateKeys) LateKeys(it) else it }
         // What the framework does when a field takes the keyboard.
         val start = android.inputmethodservice.InputMethodService::class.java.getDeclaredField("mStartedInputConnection")
@@ -218,6 +221,20 @@ class ServiceTypingTest {
         assertEquals("xin chao ban ", edit.text.toString())
         assertEquals(-1, BaseInputConnection.getComposingSpanStart(edit.text))
         s.onDestroy()
+    }
+
+    /**
+     * Nothing typed in xrnkey's own fields is learned: trying the keys in its Try-it field
+     * taught the personal words what the trying typed. Other apps' fields learn.
+     */
+    @Test
+    fun xrnkeysOwnFieldsLearnNothing() {
+        val own = field(app = RuntimeEnvironment.getApplication().packageName).first
+        assertEquals(false, own.typist.learnHere)
+        own.onDestroy()
+        val other = field(app = "com.example.chat").first
+        assertEquals(true, other.typist.learnHere)
+        other.onDestroy()
     }
 
     /**

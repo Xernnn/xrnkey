@@ -204,6 +204,8 @@ Fields change the keyboard:
 - **Password fields** (any variation): every key is typed as itself. There is no Telex, no strip,
   no learning, and nothing goes to the clipboard history.
 - **Fields that ask for no personalised learning**: everything works, but nothing is learned.
+  The same in xrnkey's own fields (the Try-it field, the settings' lists): what is typed there
+  to try the keys, or to add a word, is not the owner's writing.
 
 ## The symbols layouts
 

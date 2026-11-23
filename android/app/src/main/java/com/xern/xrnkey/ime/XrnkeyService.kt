@@ -578,8 +578,10 @@ class XrnkeyService :
         typist.personal = if (learning) od.words else null
         models?.user = if (learning) od.words else null
         typist.shortcuts = if (options.shortcuts) od.shortcuts else null
-        // Incognito fields ask for nothing to be learned.
-        typist.learnHere = info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING == 0
+        // Incognito fields ask for nothing to be learned, and nothing typed in this app's own
+        // fields is (its Try-it field is for trying the keys, its lists hold words already).
+        typist.learnHere = info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING == 0 &&
+            info.packageName != packageName
     }
 
     // ---- the clipboard ------------------------------------------------------------------------
