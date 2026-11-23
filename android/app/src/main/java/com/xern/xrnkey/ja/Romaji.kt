@@ -8,7 +8,10 @@ package com.xern.xrnkey.ja
  *
  * ん: "nn" and "n'" are ん, so is an n before any consonant but n and y ("shinbun" しんぶん),
  * and an n left at the end becomes ん when the reading is converted or committed ([reading]):
- * "tanin" is たにん, "tan'in" たんいん.
+ * "tanin" is たにん, "tan'in" たんいん. The second n of "nn" also starts the next kana when a
+ * vowel or y follows it, as the word is spelt: "minna" みんな, "konnichiha" こんにちは,
+ * "konnyaku" こんにゃく. Before anything else, or at the end, it goes ("nihonn" にほん), and a
+ * third n starts afresh ("konnnichiha" こんにちは too).
  *
  * A capital letter (Shift) goes in as it is, and so does every letter after it until the reading
  * ends: names in Latin letters ("Tokyo"). Anything else that isn't a letter (digits, punctuation)
@@ -25,11 +28,14 @@ class Romaji {
     var latin = false
         private set
 
+    /** [pending] is the second n of an "nn" whose ん is already in the kana. */
+    private var soft = false
+
     /** What the field shows: the kana so far, then the letters still waiting. */
     val shown: String get() = text.toString() + pending
 
-    /** The reading as a conversion or a commit takes it: a last lone n is ん. */
-    val reading: String get() = text.toString() + if (pending == "n") "ん" else pending
+    /** The reading as a conversion or a commit takes it: a last lone n is ん (or was, after "nn"). */
+    val reading: String get() = text.toString() + if (pending == "n") (if (soft) "" else "ん") else pending
 
     fun isEmpty(): Boolean = text.isEmpty() && pending.isEmpty()
 
@@ -37,6 +43,7 @@ class Romaji {
         text.setLength(0)
         pending = ""
         latin = false
+        soft = false
     }
 
     /** A key: a letter of the romaji, or text that goes in as it is. */
@@ -48,6 +55,16 @@ class Romaji {
                 text.append(c)
             }
             latin && c in 'a'..'z' -> text.append(c)
+            soft && pending == "n" && (c in 'a'..'z' || c == '\'') -> {
+                // The second n of "nn": a vowel or y takes it ("minna"); anything else drops it.
+                soft = false
+                pending = when {
+                    c in VOWELS || c == 'y' -> "n$c"
+                    c == '\'' -> ""
+                    else -> c.toString()
+                }
+                resolve()
+            }
             c in 'a'..'z' || c == '-' || c == '\'' && pending == "n" -> {
                 pending += c
                 resolve()
@@ -62,6 +79,11 @@ class Romaji {
     /** Backspace: the last letter waiting, else the last kana. False when there was nothing. */
     fun backspace(): Boolean {
         when {
+            // "nn" shown as "んn": back to the one n typed before it.
+            soft && pending == "n" -> {
+                soft = false
+                text.setLength(text.length - 1)
+            }
             pending.isNotEmpty() -> pending = pending.dropLast(1)
             text.isNotEmpty() -> {
                 val n = if (text.length >= 2 && Character.isSurrogatePair(text[text.length - 2], text[text.length - 1])) 2 else 1
@@ -81,14 +103,20 @@ class Romaji {
         val inText = minOf(n, text.length)
         text.delete(0, inText)
         if (n > inText) pending = pending.drop(n - inText)
+        // The second n of an "nn" whose ん went with the candidate goes too.
+        if (soft && text.isEmpty()) {
+            pending = ""
+            soft = false
+        }
         if (isEmpty()) latin = false
     }
 
     /** The letters waiting end the kana: a lone n as ん, others as letters. */
     private fun flush() {
         if (pending.isEmpty()) return
-        text.append(if (pending == "n") "ん" else pending)
+        if (!soft) text.append(if (pending == "n") "ん" else pending)
         pending = ""
+        soft = false
     }
 
     private fun resolve() {
@@ -106,6 +134,12 @@ class Romaji {
             val first = p[0]
             val second = p.getOrNull(1)
             when {
+                p == "nn" -> {
+                    text.append('ん')
+                    pending = "n"
+                    soft = true
+                    return
+                }
                 known != null -> {
                     text.append(TABLE[p.substring(0, known)])
                     pending = p.substring(known)
@@ -165,7 +199,6 @@ class Romaji {
                 put("${p}tu", "っ"); put("${p}tsu", "っ"); put("${p}wa", "ゎ"); put("${p}ka", "ゕ"); put("${p}ke", "ゖ")
             }
             put("xn", "ん")
-            put("nn", "ん")
             put("n'", "ん")
             put("wyi", "ゐ"); put("wye", "ゑ")
             put("-", "ー")

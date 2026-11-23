@@ -375,7 +375,9 @@ open-source one (`data/ja/README.md`), in the APK and never downloaded.
   - a doubled consonant is っ: `kitte` きって, `matcha` まっちゃ;
   - ん: `nn` and `n'`, an n before a consonant other than n and y (`shinbun` しんぶん), and an n
     left at the end when the reading is converted or committed (`tanin` たにん, `tan'in`
-    たんいん; `konnnichiha` こんにちは takes three n);
+    たんいん). The second n of `nn` also starts the next kana when a vowel or y follows, as
+    the word is spelt (`minna` みんな, `konnichiha` こんにちは, `konnyaku` こんにゃく); before
+    anything else, or at the end, it goes (`nihonn` にほん), and `konnnichiha` works too;
   - `-` is ー inside a reading (`ra-men` らーめん), and `-` with nothing composing;
   - letters that spell nothing yet wait at the end, as typed (`かk`).
 - **Shift**: a capital goes in as it is, and so do the letters after it until the reading ends

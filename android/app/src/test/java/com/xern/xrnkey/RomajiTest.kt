@@ -53,14 +53,27 @@ class RomajiTest {
     /**
      * ん: "nn" and "n'", an n before a consonant other than n and y, and a lone n at the end of
      * the reading. "tanin" is たにん (他人), "tan'in" たんいん: the apostrophe parts n from the
-     * vowel. "nn" is always ん, so "konnnichiha" takes three n.
+     * vowel. The second n of "nn" starts the next kana when a vowel or y follows, as the word is
+     * spelt ("minna" みんな, "konnichiha" こんにちは); else it goes ("nihonn" にほん), and three n
+     * work too. It used to be ん whatever followed, so "minna" was みんあ.
      */
     @Test
     fun nBecomesNByTheRules() {
         assertEquals("しんぶん", reading("shinbun"))
         assertEquals("たにん", reading("tanin"))
         assertEquals("たんいん", reading("tan'in"))
+        assertEquals("こんにちは", reading("konnichiha"))
         assertEquals("こんにちは", reading("konnnichiha"))
+        assertEquals("みんな", reading("minna"))
+        assertEquals("こんにゃく", reading("konnyaku"))
+        assertEquals("こんやく", reading("kon'yaku"))
+        assertEquals("しんねん", reading("shinnen"))
+        assertEquals("にほん", reading("nihonn"))
+        assertEquals("ほんだ", reading("honnda"))
+        assertEquals("たんい", reading("tann'i"))
+        // While the second n waits, it shows; Backspace takes it back to the one n.
+        assertEquals("みんn", typed("minn").shown)
+        assertEquals("みn", typed("minn").also { it.backspace() }.shown)
         assertEquals("ほんや", reading("hon'ya"))
         assertEquals("にゃ", reading("nya"))
         assertEquals("せんせい", reading("sensei"))
