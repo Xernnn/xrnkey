@@ -158,6 +158,24 @@ class StripMakerTest {
         }
     }
 
+    /**
+     * A word finished at a sentence's start is continued much as it would be anywhere. The
+     * models learnt how sentences start from written text ("Làm thế nào", "Ngày nay", "Bạn có
+     * thể"): counted in full, that put "làm thế" and "ngày nay" in the middle for the first word
+     * typed, and kept "bạn bè" and "bạn gái" out of the strip and its panel.
+     */
+    @Test
+    fun aFinishedWordAtASentencesStartIsContinuedMuchAsAnywhere() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            assertEquals("làm việc", strip(m, "lamf").shown.centre)
+            assertEquals("ngày càng", strip(m, "ngayf").shown.centre)
+            val ban = strip(m, "banj").shown
+            val offered = ban.slots() + ban.extra
+            assertTrue(offered.toString(), "bạn bè" in offered && "bạn gái" in offered)
+        }
+    }
+
     /** The part of a slot already in the field is drawn grey, as Laban Key draws it. */
     @Test
     fun thePartAlreadyTypedIsGrey() {
