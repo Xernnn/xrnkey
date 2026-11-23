@@ -261,6 +261,22 @@ class ServiceTypingTest {
     }
 
     /**
+     * The English keyboard types letters as they are, no Telex ("vieetj" stays), and fixes
+     * English typos on Space ("teh"); back on Vietnamese, Telex marks again.
+     */
+    @Test
+    fun theEnglishKeyboardTypesWithoutTelex() {
+        val (s, edit) = field()
+        s.onSwitchLanguage()
+        s.typeReported(edit, "vieetj teh ")
+        assertEquals("vieetj the ", edit.text.toString())
+        s.onSwitchLanguage()
+        s.typeReported(edit, "vieetj ")
+        assertEquals("vieetj the việt ", edit.text.toString())
+        s.onDestroy()
+    }
+
+    /**
      * The keyboard's own edits, reported on time or late, read nothing again: the words typed
      * without marks are still one run ("toi khong biet"), which a re-read would have ended.
      */

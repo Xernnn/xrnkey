@@ -154,6 +154,8 @@ class TypingState(val mode: Int = TELEX) : AutoCloseable {
     companion object {
         const val TELEX = 0
         const val VNI = 1
+        /** No marks: letters as typed (the English keyboard). */
+        const val PLAIN = 2
         const val BACKSPACE = 0xFF08
         const val RETURN = 0xFF0D
         const val OPT_AUTO_RESTORE = 1

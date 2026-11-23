@@ -16,6 +16,7 @@ object VietKeys {
 
     /** The keys for [c], or null when it is a plain letter (or not a Vietnamese one). */
     fun of(c: Char, mode: Int): String? {
+        if (mode == TypingState.PLAIN) return null  // no marks to type: the letter goes in as it is
         val vniMode = mode == TypingState.VNI
         when (c) {
             'đ' -> return if (vniMode) "d9" else "dd"

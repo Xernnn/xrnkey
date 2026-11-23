@@ -44,7 +44,7 @@ class KeyTouchTest {
             override fun onText(text: String) { events += text }
             override fun onBackspace() { events += "⌫" }
             override fun onEnter() { events += "⏎" }
-            override fun onPickKeyboard() { events += "pick" }
+            override fun onSwitchLanguage() { events += "language" }
             override fun onCursorStart() { events += "cursor" }
             override fun onCursor(dx: Int, dy: Int) { events += "move $dx $dy" }
             override fun onCursorEnd() { events += "end" }
@@ -99,20 +99,22 @@ class KeyTouchTest {
         assertEquals(listOf(" "), events)
     }
 
+    /**
+     * Holding the space bar is a space, nothing more: it used to turn the keys into a cursor pad,
+     * which the owner doesn't use (the tool row's cursor pad and the space bar's slide stay).
+     */
     @Test
-    fun holdingTheSpaceBarMakesACursorPadThatMovesByLinesToo() {
+    fun holdingTheSpaceBarTypesASpace() {
         val v = keyboard()
         touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)
         hold(450)
-        touch(v, MotionEvent.ACTION_MOVE, 540f + 60f, spaceY - 170f)
-        shot("cursor-pad-dark", v)
-        touch(v, MotionEvent.ACTION_UP, 540f + 60f, spaceY - 170f)
-        assertEquals(listOf("cursor", "move 2 -2", "end"), events)
+        touch(v, MotionEvent.ACTION_UP, 540f, spaceY)
+        assertEquals(listOf(" "), events)
     }
 
     @Test
     fun theSettingsTurnTheGesturesOff() {
-        val v = keyboard { spaceSwipe = false; spaceHold = false; commaHold = false }
+        val v = keyboard { spaceSwipe = false; commaHold = false }
         touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)
         hold(450)
         touch(v, MotionEvent.ACTION_MOVE, 740f, spaceY)
@@ -123,13 +125,14 @@ class KeyTouchTest {
         assertEquals(listOf(" ", ","), events)
     }
 
+    /** Holding the comma switches Vietnamese and English, as on Laban Key. */
     @Test
-    fun holdingTheCommaPicksAKeyboard() {
+    fun holdingTheCommaSwitchesTheLanguage() {
         val v = keyboard()
         touch(v, MotionEvent.ACTION_DOWN, 216f, spaceY)
         hold(450)
         touch(v, MotionEvent.ACTION_UP, 216f, spaceY)
-        assertEquals(listOf("pick"), events)
+        assertEquals(listOf("language"), events)
     }
 
     private fun holdAndLift(v: KeyboardView, x: Float, y: Float, dx: Float = 0f, dy: Float = 0f) {
@@ -427,6 +430,7 @@ class KeyTouchTest {
     fun theToolRowsCursorPadStaysUntilATap() {
         val v = keyboard()
         v.openCursorPad()
+        shot("cursor-pad-dark", v)
         // Each drag moves from where it starts: 10 dp (30 px) a character, 28 dp (84 px) a line.
         touch(v, MotionEvent.ACTION_DOWN, 300f, 500f)
         touch(v, MotionEvent.ACTION_MOVE, 420f, 590f)

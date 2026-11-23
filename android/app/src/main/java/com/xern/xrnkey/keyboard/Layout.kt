@@ -350,7 +350,8 @@ object PopupGrid {
 }
 
 /** The strip's other face: the tool row (no mic: the keyboard is fully offline). */
-enum class Tool { THEME, SETTINGS, CLIPBOARD, CURSOR, EMOJI }
+/** The tool row's buttons, left to right. HIDE (≡) folds the row away to the bare strip. */
+enum class Tool { HIDE, SETTINGS, CLIPBOARD, CURSOR, EMOJI }
 
 /** What the strip above the keys shows. */
 sealed interface Strip {

@@ -46,8 +46,8 @@ Swipe typing is not used.
 - **Auto-correct**: Space or punctuation committing the centre pick instead of the keys as typed.
 - **Revert**: Backspace right after an auto-correct, which puts back what was typed (after Space,
   as the word in progress).
-- **Tool row**: the strip's other face, a row of buttons: theme, settings, clipboard, cursor pad
-  and emoji.
+- **Tool row**: the strip's other face, a row of buttons: ≡ (folds the row away), settings,
+  clipboard, cursor pad and emoji.
 - **Panel**: a full-keyboard-height view in place of the keys: emoji, clipboard, cursor pad or
   the expanded candidate list.
 - **Personal words**: words and word pairs learned from what the owner types. They are kept on
@@ -74,7 +74,7 @@ Swipe typing is not used.
    stop from a double Space.
 6. Keys and gestures as the owner set them up: the number row, long-press on the top letter row
    for digits, a key-press popup, a 400 ms long-press, swiping the space bar to move the cursor,
-   holding the space bar to move the cursor, and holding the comma for the keyboard picker.
+   and holding the comma to switch between Vietnamese and English.
 7. Emoji panel: recents, categories, search and skin tones.
 8. Clipboard panel: history, pin, delete and paste.
 9. Personal words learned on the phone, which can be viewed, deleted, exported and imported.
@@ -125,7 +125,7 @@ large, in MiSans Latin.
    - Shift (1.5 keys wide), `z x c v b n m`, then Backspace (1.5 keys wide).
 4. **Bottom row**:
    - `?123`.
-   - Comma, with a small globe above it, because holding it opens the keyboard picker.
+   - Comma, with a small globe above it, because holding it switches Vietnamese and English.
    - The space bar, about 5 keys wide. It shows only a small, faint xrnkey tile, where the
      reference shows its name.
    - Full stop.
@@ -183,14 +183,15 @@ keyboard's hide button.
   or `e-mail`.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
   bar moves the cursor one character per 12 dp. The word in progress is committed first.
-- **Hold the space bar** (400 ms, no movement): the keys dim and the whole keyboard becomes a
-  trackpad. Dragging moves the cursor in two dimensions, with lines as up and down. Lifting the
-  finger leaves it.
+- **Holding the space bar** types a space, nothing more. (It used to turn the keys into a
+  trackpad; the owner doesn't use that. The tool row's cursor pad does the same.)
 - **Double Space**: replaces "␠␠" after a word with ". ". This happens only straight after a
   word, a number (`1␠␠` → `1. `) or closing punctuation, and never in password, URL or email
   fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
-  comma** opens Android's keyboard picker, so the owner can switch to another keyboard and back.
+  comma** switches between the Vietnamese and the English keyboard, as on Laban Key (its 🌐
+  says so); the space bar names the one in use, and it stays chosen (see "The English
+  keyboard"). Android's own keyboard switcher picks another keyboard.
 - **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
   `, ? ! ' " : - ; ( ) / @ & % + #`, the comma under the finger, as on the reference.
 - **Enter**: ends the word, then sends the field's action or a newline.
@@ -329,18 +330,33 @@ The strip never shows a sentence of explanation, only candidates.
 
 ### What it shows
 
-Five buttons, evenly spaced: theme, settings, clipboard, cursor pad and emoji. There is no mic:
-the keyboard is fully offline and has no voice typing. The tool row shows whenever there is no word in
-progress and no prediction to show, and whenever ≡ is tapped.
+Five buttons, evenly spaced: ≡, settings, clipboard, cursor pad and emoji. There is no mic:
+the keyboard is fully offline and has no voice typing, and no theme button (the theme is in
+Settings). The tool row shows whenever there is no word in progress and no prediction to show,
+and whenever ≡ is tapped. Folded away by its ≡, it gives way to the bare strip, ≡ and emoji
+with nothing between, as on Laban Key, in every field after, until ≡ brings it back.
 
 ### What you can do
 
-- **Theme**: a small panel offering dark slate (the default), light, true black, and follow the
-  system.
+- **≡**: folds the tool row away (see above).
 - **Settings**: opens Settings.
 - **Clipboard**: opens the clipboard panel.
 - **Cursor pad**: opens the cursor pad.
 - **Emoji**: opens the emoji panel.
+
+## The English keyboard
+
+Holding the comma switches to it and back; the space bar says "English".
+
+- **No marks**: Telex's keys are letters ("vieetj", "off" stay as typed), and a digit or an
+  apostrophe after letters stays in the word ("mp3", "don't").
+- **English only**: the strip's completions, next words and fixes come from the English model
+  alone ("an": another, and, any; "how are ": we, you, they), and the personal words don't
+  join in. Emoji keywords still offer their emoji.
+- **Space fixes English**: a typo English has no word for ("teh": the), a word typed without its
+  apostrophe ("dont": don't, "im": I'm), and "i" alone is "I". Words that are words themselves
+  ("its", "ill", "were") stay. Backspace right after puts back what was typed.
+- Everything else is as on the Vietnamese keyboard: the strip, the panels, the gestures.
 
 ## Auto-correct (Space and punctuation)
 

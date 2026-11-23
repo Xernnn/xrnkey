@@ -69,6 +69,12 @@ class Typist(
     var doubleSpace = true
 
     /**
+     * The English keyboard: words typed without their apostrophe get it back ("dont" is "don't",
+     * "im" is "I'm"), and "i" alone is "I", as English keyboards do.
+     */
+    var english = false
+
+    /**
      * What Space and punctuation do to a word typed without marks. [TONES_OFF] keeps it as it
      * was typed, as Laban Key does: the accented reading is in the strip for a tap.
      * [TONES_WHEN_NEEDED] adds the tones only to a word that isn't one as it stands ("khong",
@@ -314,6 +320,9 @@ class Typist(
 
     private fun wrongWordFix(typed: String): String? {
         if (correctWrong <= 0 || !autoCorrect) return null
+        if (english) CONTRACTIONS[typed.lowercase()]?.let { fix ->
+            return if (typed.first().isUpperCase() && fix.first().isLowerCase()) fix.replaceFirstChar { it.uppercase() } else fix
+        }
         val fix = models?.fixWrongWord(typed, strong = correctWrong >= 2) ?: return null
         return if (typed.firstOrNull()?.isUpperCase() == true) fix.replaceFirstChar { it.uppercase() } else fix
     }
@@ -812,6 +821,24 @@ class Typist(
          * "2nd" or an address.
          */
         private val WORD_END = Regex("(?<![^\\s(\\[{\"“«])\\p{L}[\\p{L}\\p{M}]*$")
+
+        /**
+         * English words typed without their apostrophe, and "i": only those that are no word
+         * themselves ("its", "ill", "were", "well", "lets", "hell" stay).
+         */
+        private val CONTRACTIONS = mapOf(
+            "i" to "I", "im" to "I'm", "ive" to "I've",
+            "dont" to "don't", "doesnt" to "doesn't", "didnt" to "didn't", "isnt" to "isn't",
+            "arent" to "aren't", "wasnt" to "wasn't", "werent" to "weren't", "cant" to "can't",
+            "couldnt" to "couldn't", "shouldnt" to "shouldn't", "wouldnt" to "wouldn't",
+            "wont" to "won't", "havent" to "haven't", "hasnt" to "hasn't", "hadnt" to "hadn't",
+            "mustnt" to "mustn't", "neednt" to "needn't", "aint" to "ain't",
+            "youre" to "you're", "theyre" to "they're", "youve" to "you've", "theyve" to "they've",
+            "weve" to "we've", "youll" to "you'll", "theyll" to "they'll", "youd" to "you'd",
+            "theyd" to "they'd", "thats" to "that's", "whats" to "what's", "theres" to "there's",
+            "heres" to "here's", "wheres" to "where's", "whos" to "who's", "hows" to "how's",
+            "shes" to "she's", "hes" to "he's", "itll" to "it'll", "thatll" to "that'll",
+        )
 
         /** Characters that join letters into one word: no word opens right before them. */
         private const val JOINERS = "'’-_@"

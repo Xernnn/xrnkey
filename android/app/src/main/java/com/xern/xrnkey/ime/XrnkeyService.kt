@@ -17,7 +17,6 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.core.view.WindowCompat
 import com.xern.xrnkey.Options
@@ -56,6 +55,8 @@ class XrnkeyService :
     private var vi: Model? = null
     private var en: Model? = null
     private var models: Models? = null
+    /** The English model alone, for the English keyboard: it suggests and fixes English only. */
+    private var english: Models? = null
     private var emoji: EmojiIndex? = null
     private var state: TypingState? = null
     /** Internal: the tests read its context. */
@@ -142,6 +143,7 @@ class XrnkeyService :
         Log.i("xrnkey", "models: " + loaded.joinToString("; "))
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
+        english = en?.let { Models(null, it) }
         emoji = try {
             // The strip's keyword table goes with the index; without it the strip offers no emoji.
             val keywords = try {
@@ -184,6 +186,7 @@ class XrnkeyService :
         clipboard().removePrimaryClipChangedListener(clipListener)
         state?.close()
         models?.close()
+        english?.close()
         emoji?.close()
         vi?.close()
         en?.close()
@@ -247,9 +250,15 @@ class XrnkeyService :
                 "off" -> false
                 else -> resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
             }
-            strip = Strip.Tools
+            strip = idleStrip()
         }
     }
+
+    /**
+     * What the strip shows with nothing to suggest: the tool row, or, folded away by its ≡, the
+     * bare strip (≡ and emoji), as on Laban Key.
+     */
+    private fun idleStrip(): Strip = if (options.toolsHidden) BARE else Strip.Tools
 
     /** The keyboard shows: the band is weighed again (the window's insets may have changed). */
     override fun onWindowShown() {
@@ -323,6 +332,9 @@ class XrnkeyService :
 
     /** The space bar is moving the cursor (from [onCursorStart] to [onCursorEnd]). */
     private var movingCursor = false
+
+    /** The strip has nothing to suggest: the tool row's place ([idleStrip]). */
+    private var idle = true
 
     /**
      * One edit of the field by this keyboard: one selection update from the editor, at the
@@ -430,7 +442,7 @@ class XrnkeyService :
     override fun onCursorStart() {
         movingCursor = true
         typist.finish()
-        keyboard?.strip = Strip.Tools
+        keyboard?.strip = idleStrip()
     }
 
     override fun onCursor(dx: Int, dy: Int) {
@@ -452,12 +464,29 @@ class XrnkeyService :
         refresh(-1, reopen = true)
     }
 
+    /** The strip's ≡: the tool row. Where it was folded away, it stays out again. */
     override fun onStripMenu() {
+        if (idle && options.toolsHidden) saveOptions(options.copy(toolsHidden = false))
         keyboard?.strip = Strip.Tools
     }
 
-    override fun onPickKeyboard() {
-        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
+    /**
+     * Holding the comma: Vietnamese to English and back, as on Laban Key. The word in progress
+     * ends first; the field's text stays as it is, and the new keyboard goes on from the cursor.
+     */
+    override fun onSwitchLanguage() {
+        val at = typist.cursor()
+        typist.finish()
+        saveOptions(options.copy(english = !options.english))
+        expected.clear()
+        typist.reset(at)
+        showStrip()
+    }
+
+    /** The keyboard's own switches (language, the tool row folded) kept as settings. */
+    private fun saveOptions(o: Options) {
+        o.save(prefs())
+        applyOptions(o)
     }
 
     override fun onTool(tool: Tool) {
@@ -465,14 +494,9 @@ class XrnkeyService :
             Tool.SETTINGS -> startActivity(
                 Intent(this, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
-            Tool.THEME -> {
-                val next = if (keyboard?.palette == Palette.LIGHT) Palette.DARK else Palette.LIGHT
-                keyboard?.palette = next
-                emojiPanel?.palette = next
-                clipPanel?.palette = next
-                inputFrame?.palette = next
-                navBarButtons(next)
-                prefs().edit().putString("palette", if (next == Palette.LIGHT) "light" else "dark").apply()
+            Tool.HIDE -> {
+                saveOptions(options.copy(toolsHidden = true))
+                keyboard?.strip = idleStrip()
             }
             Tool.EMOJI -> showEmoji()
             Tool.CLIPBOARD -> showClipboard()
@@ -482,7 +506,9 @@ class XrnkeyService :
 
     private val handler = Handler(Looper.getMainLooper())
     private val stripTask = Runnable {
-        keyboard?.strip = strip.make(typist)
+        val made = strip.make(typist)
+        idle = made == Strip.Tools
+        keyboard?.strip = if (idle) idleStrip() else made
         autoCapitalise()
     }
 
@@ -657,13 +683,27 @@ class XrnkeyService :
      * method needs a new core state (and a typist around it).
      */
     private fun applyOptions(o: Options) {
+        val languageChanged = o.english != options.english
         options = o
-        val mode = if (o.vni) TypingState.VNI else TypingState.TELEX
+        // The English keyboard: no marks, and the English model alone.
+        val mode = if (o.english) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
+        val scoring = if (o.english) english else models
         if (state?.mode != mode) {
             typist.finish()
             state?.close()
-            state = TypingState(mode).also { it.useModels(models) }
-            typist = Typist(state, editor, models)
+            state = TypingState(mode).also { it.useModels(scoring) }
+            val old = typist
+            typist = Typist(state, editor, scoring).also {
+                it.raw = old.raw
+                it.autoCorrect = old.autoCorrect
+                it.personal = old.personal
+                it.shortcuts = old.shortcuts
+                it.learnHere = old.learnHere
+            }
+        }
+        if (languageChanged) {
+            val hidden = strip.hidden
+            strip = StripMaker(scoring, emoji).also { it.hidden = hidden }
         }
         state?.setOption(TypingState.OPT_MODERN_STYLE, o.modernTones)
         typist.keepForeign = o.keepForeign
@@ -671,9 +711,11 @@ class XrnkeyService :
         state?.setOption(TypingState.OPT_W_SHORTCUT, o.wShortcut)
         // The typo channel inside restoration only works where Space restores every word.
         models?.correction = if (o.tonesOnSpace == Typist.TONES_ALWAYS) o.correction else Models.CORRECT_OFF
-        typist.tonesOnSpace = o.tonesOnSpace
+        // English words aren't restored, only fixed ("teh" -> "the").
+        typist.tonesOnSpace = if (o.english) Typist.TONES_OFF else o.tonesOnSpace
         typist.correctWrong = o.correction
         typist.doubleSpace = o.doubleSpace
+        typist.english = o.english
         strip.suggestions = o.suggestions
         strip.emojiSuggestions = o.emojiSuggestions
         strip.nextWords = o.nextWord
@@ -684,8 +726,8 @@ class XrnkeyService :
             holdMillis = o.holdMillis.toLong()
             holdDigits = o.holdDigits
             spaceSwipe = o.spaceSwipe
-            spaceHold = o.spaceHold
             commaHold = o.commaHold
+            english = o.english
             heightPercent = o.height
         }
         emojiPanel?.palette = palette
@@ -695,6 +737,9 @@ class XrnkeyService :
     }
 
     companion object {
+        /** The bare strip: ≡ and the emoji button, nothing between. */
+        val BARE = Strip.Candidates(null, null, null)
+
         /** ClipDescription.EXTRA_IS_SENSITIVE (API 33), by name so older phones read it too. */
         const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
 
