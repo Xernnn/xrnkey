@@ -259,6 +259,27 @@ TEST_CASE("Telex still composes real Vietnamese syllables", "[telex]") {
     }
 }
 
+/* Chat spells some words outside quốc ngữ, typing their marks on purpose:
+ * "đơu" for đâu, "zậy" and "dzậy" for vậy. They used to fall back to their
+ * keys as an English word does once the u came ("ddowu"), or never took the
+ * mark ("zaa"). Laban Key keeps them. English words that start the same way
+ * still end as English. */
+TEST_CASE("Telex keeps the spellings chat uses", "[telex]") {
+    struct Case { const char* keys; const char* want; };
+    const Case cases[] = {
+        {"ddowu", "đơu "},   {"ddowus", "đớu "},  {"ddoou", "đôu "},
+        {"zaayj", "zậy "},   {"dzaayj", "dzậy "}, {"zeef", "zề "},
+        {"zui", "zui "},     {"zoom", "zoom "},   {"zone", "zone "},
+        {"zero", "zero "},
+    };
+    for (const auto& c : cases) {
+        XKState* s = make_telex();
+        INFO("typing " << c.keys);
+        REQUIRE(process_string(s, c.keys) == c.want);
+        xk_state_free(s);
+    }
+}
+
 /* Enter used to be unhandled: it reached the application while the composing
  * block was still pending, so the word was silently abandoned. It then
  * registered the word but swallowed the Enter, so every line needed two.

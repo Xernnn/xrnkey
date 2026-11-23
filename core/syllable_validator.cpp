@@ -1,4 +1,5 @@
 #include "xrnkey_internal.h"
+#include <iterator>
 #include <unordered_set>
 #include <string>
 #include <vector>
@@ -18,6 +19,14 @@ static const char* const ONSETS[] = {
     "", "b", "c", "ch", "d", "đ", "g", "gh", "gi", "h", "k", "kh", "l", "m",
     "n", "ng", "ngh", "nh", "p", "ph", "qu", "r", "s", "t", "th", "tr", "v", "x",
 };
+
+/* Spellings chat uses that quốc ngữ doesn't, typed with their marks on
+ * purpose: z and dz for the v/d/gi sound ("zậy", "dzậy", "zui"), and ơu, ôu
+ * for âu ("đơu", "đôu"). Laban Key keeps them as typed. Words built with them
+ * take marks and tones and stay as shown; anything else still has to be a
+ * quốc ngữ syllable. */
+static const char* const CHAT_ONSETS[] = {"z", "dz"};
+static const char* const CHAT_RIMES[] = {"ơu", "ôu"};
 
 /* Every rime (vowels plus final consonant). Rimes that begin with the glide
  * o/u ("medial") are listed after the others. */
@@ -127,10 +136,17 @@ struct Syllables {
     std::unordered_set<std::u32string> all;
     std::vector<Node> trie;
 
-    Syllables() {
+    /* `chat`: with chat's spellings too. */
+    explicit Syllables(bool chat) {
         trie.emplace_back();
-        for (const char* o : ONSETS) {
-            for (const char* rm : RIMES) {
+        std::vector<const char*> onsets(std::begin(ONSETS), std::end(ONSETS));
+        std::vector<const char*> rimes(std::begin(RIMES), std::end(RIMES));
+        if (chat) {
+            onsets.insert(onsets.end(), std::begin(CHAT_ONSETS), std::end(CHAT_ONSETS));
+            rimes.insert(rimes.end(), std::begin(CHAT_RIMES), std::end(CHAT_RIMES));
+        }
+        for (const char* o : onsets) {
+            for (const char* rm : rimes) {
                 std::u32string r = u32_of(rm);
                 if (!onset_takes(o, r)) continue;
                 std::u32string s = u32_of(o) + r;
@@ -164,7 +180,12 @@ struct Syllables {
 };
 
 const Syllables& syllables() {
-    static const Syllables s;
+    static const Syllables s(false);
+    return s;
+}
+
+const Syllables& chat_syllables() {
+    static const Syllables s(true);
     return s;
 }
 
@@ -209,6 +230,15 @@ bool syllable_valid(const std::u32string& letters, int tone) {
 
 bool syllable_prefix_ok(const std::u32string& letters, int tone) {
     return prefix_walk(syllables(), 0, letters, 0, tone_needs_open(tone));
+}
+
+bool chat_syllable_valid(const std::u32string& letters, int tone) {
+    if (!chat_syllables().all.count(letters)) return false;
+    return !is_stop_end(letters) || tone == XK_TONE_SAC || tone == XK_TONE_NANG;
+}
+
+bool chat_syllable_prefix_ok(const std::u32string& letters, int tone) {
+    return prefix_walk(chat_syllables(), 0, letters, 0, tone_needs_open(tone));
 }
 
 /* Lowercase form and tone of one Vietnamese letter; false if `cp` is not one. */

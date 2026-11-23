@@ -191,6 +191,9 @@ bool syllable_valid(const std::u32string& letters, int tone);
 /* True while more keys could still turn `letters` into a valid syllable:
  * more letters after it, marks on the letters it has, a different tone. */
 bool syllable_prefix_ok(const std::u32string& letters, int tone);
+/* The same with the spellings chat uses too ("zậy", "đơu"): what typing takes. */
+bool chat_syllable_valid(const std::u32string& letters, int tone);
+bool chat_syllable_prefix_ok(const std::u32string& letters, int tone);
 /* Split any UTF-8 syllable ("Hoà", "hòa", "thuở") into lowercase letters and
  * its tone. False if it is not made of Vietnamese letters. */
 bool syllable_split(const std::string& utf8, std::u32string* letters, int* tone);
