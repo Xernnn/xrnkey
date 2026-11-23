@@ -6,6 +6,7 @@ import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 /**
@@ -69,6 +70,24 @@ class AutoCorrectTest {
         t.text("ó"); t.text(" ")
         t.text("cups ")
         assertEquals("cúp ó cúp ", f.text)
+    }
+
+    /**
+     * Chat words and laughs stay as typed on Space: with the phone's models the wrong-word fix
+     * made "hehe" "here" and "oke" "one". A slip is still fixed.
+     */
+    @Test
+    fun chatWordsAndLaughsStayAsTyped() {
+        assumeTrue(TestModels.realAvailable)
+        TestModels.real().use { m ->
+            TypingState().use { s ->
+                s.useModels(m.models)
+                val f = FakeEditor()
+                val t = Typist(s, f, m.models).also { it.reset() }
+                t.text("hehe oke hahaha hjhj teh ")
+                assertEquals("hehe oke hahaha hjhj the ", f.text)
+            }
+        }
     }
 
     @Test

@@ -224,6 +224,10 @@ bool bilingual_ready(const XKStateImpl& s);
 /* The English reading `en` is likelier than the Vietnamese `vi` here. */
 bool bilingual_prefers_english(const XKStateImpl& s, const std::string& vi, const std::string& en);
 
+/* restore.cpp */
+/* `w` (lowercase ASCII) is chat meant as typed ("oke", "hehe", "hahaha"): never corrected. */
+bool keep_as_typed(const std::string& w);
+
 /* Utility */
 bool is_vowel_char(char c);
 bool has_vietnamese_vowel_pattern(const std::string& s);

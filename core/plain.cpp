@@ -106,6 +106,8 @@ extern "C" char* xk_fix_wrong_word(const XKModels* models, const char* typed, fl
     /* No vowel: an abbreviation ("thx", "pls") or letters typed for their own sake ("fff"),
      * not a word with a slip in it. Laban Key leaves them as typed; "thx" used to be "the". */
     if (w.find_first_of("aeiouy") == std::string::npos) return nullptr;
+    /* Chat meant as typed: "hehe" used to become "here" and "oke" "one". */
+    if (xrnkey::keep_as_typed(w)) return nullptr;
     /* A shape with Vietnamese readings is Vietnamese typed without marks, not a typo. */
     float plain, best;
     if (m.vi && readings(*m.vi, w, &plain, &best)) return nullptr;
