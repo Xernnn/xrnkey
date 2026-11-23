@@ -51,7 +51,8 @@ class SettingsTest {
         assertEquals(1, d.correction)
         assertEquals("auto", d.numberRow)
         assertTrue(d.holdDigits && d.keyPopup && d.spaceSwipe && d.commaHold && d.clipboard && d.shortcuts)
-        assertFalse(d.english || d.toolsHidden)
+        assertEquals("vi", d.language)
+        assertFalse(d.toolsHidden)
         assertEquals(400, d.holdMillis)
         val p = app().getSharedPreferences("o", Context.MODE_PRIVATE)
         assertEquals(d, Options.load(p))  // nothing saved yet: the defaults
@@ -122,23 +123,26 @@ class SettingsTest {
     }
 
     /**
-     * Holding the comma switches to the English keyboard and back, and it stays chosen: the space
-     * bar says which.
+     * A language from the comma's menu stays chosen, and the space bar says which. 0.7.0's
+     * saved English (a yes or no) is read as the language.
      */
     @Test
-    fun holdingTheCommaSwitchesTheKeyboardsLanguage() {
+    fun theCommasMenuSwitchesTheKeyboardsLanguage() {
         val (s, keys) = keyboardOn()
         keys.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
         keys.layout(0, 0, 1080, keys.measuredHeight)
         assertEquals("Tiếng Việt", keys.spaceLabel)
-        s.onSwitchLanguage()
-        assertTrue(keys.english)
+        assertEquals(listOf("vi", "en"), keys.languages)
+        s.onLanguage("en")
+        assertEquals("en", keys.language)
         assertEquals("English", keys.spaceLabel)
-        assertTrue(Options.load(Options.prefs(app())).english)
-        s.onSwitchLanguage()
-        assertFalse(keys.english)
+        assertEquals("en", Options.load(Options.prefs(app())).language)
+        s.onLanguage("vi")
         assertEquals("Tiếng Việt", keys.spaceLabel)
         s.onDestroy()
+        val old = app().getSharedPreferences("old", Context.MODE_PRIVATE)
+        old.edit().putBoolean("english", true).commit()
+        assertEquals("en", Options.load(old).language)
     }
 
     @Test

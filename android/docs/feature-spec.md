@@ -74,7 +74,7 @@ Swipe typing is not used.
    stop from a double Space.
 6. Keys and gestures as the owner set them up: the number row, long-press on the top letter row
    for digits, a key-press popup, a 400 ms long-press, swiping the space bar to move the cursor,
-   and holding the comma to switch between Vietnamese and English.
+   and holding the comma for a menu: Android's keyboard menu, or the keyboard's language.
 7. Emoji panel: recents, categories, search and skin tones.
 8. Clipboard panel: history, pin, delete and paste.
 9. Personal words learned on the phone, which can be viewed, deleted, exported and imported.
@@ -126,7 +126,7 @@ large, in MiSans Latin.
    - Shift (1.5 keys wide), `z x c v b n m`, then Backspace (1.5 keys wide).
 4. **Bottom row**:
    - `?123`.
-   - Comma, with a small globe above it, because holding it switches Vietnamese and English.
+   - Comma, with a small globe above it, because holding it opens the keyboard and language menu.
    - The space bar, about 5 keys wide. It shows only a small, faint xrnkey tile, where the
      reference shows its name.
    - Full stop.
@@ -190,9 +190,10 @@ keyboard's hide button.
   word, a number (`1␠␠` → `1. `) or closing punctuation, and never in password, URL or email
   fields.
 - **Comma**: types `,`, which ends the word like Space does, without a space. **Holding the
-  comma** switches between the Vietnamese and the English keyboard, as on Laban Key (its 🌐
-  says so); the space bar names the one in use, and it stays chosen (see "The English
-  keyboard"). Android's own keyboard switcher picks another keyboard.
+  comma** opens a menu over it, one row to the right: ⌨, then the languages (VI, EN), the one
+  in use underlined. Slide to a choice and lift: ⌨ opens Android's keyboard menu, a language
+  switches the keyboard to it (see "The English keyboard"); the space bar names the one in
+  use, and it stays chosen. Lifting where it opened is ⌨.
 - **Full stop**: types `.` and ends the word. **Holding it** gives the common punctuation,
   `, ? ! ' " : - ; ( ) / @ & % + #`, the comma under the finger, as on the reference.
 - **Enter**: ends the word, then sends the field's action or a newline.
@@ -347,7 +348,7 @@ with nothing between, as on Laban Key, in every field after, until ≡ brings it
 
 ## The English keyboard
 
-Holding the comma switches to it and back; the space bar says "English".
+Chosen from the comma's menu (EN); the space bar says "English".
 
 - **No marks**: Telex's keys are letters ("vieetj", "off" stay as typed), and a digit or an
   apostrophe after letters stays in the word ("mp3", "don't").

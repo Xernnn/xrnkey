@@ -267,10 +267,10 @@ class ServiceTypingTest {
     @Test
     fun theEnglishKeyboardTypesWithoutTelex() {
         val (s, edit) = field()
-        s.onSwitchLanguage()
+        s.onLanguage("en")
         s.typeReported(edit, "vieetj teh ")
         assertEquals("vieetj the ", edit.text.toString())
-        s.onSwitchLanguage()
+        s.onLanguage("vi")
         s.typeReported(edit, "vieetj ")
         assertEquals("vieetj the việt ", edit.text.toString())
         s.onDestroy()

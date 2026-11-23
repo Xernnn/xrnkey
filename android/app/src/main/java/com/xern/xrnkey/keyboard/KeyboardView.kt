@@ -32,7 +32,10 @@ class KeyboardView(context: Context) : View(context) {
         fun onEnter() {}
         fun onCandidate(slot: Int) {}
         fun onTool(tool: Tool) {}
-        fun onSwitchLanguage() {}
+        /** Holding the comma, then ⌨: Android's keyboard menu. */
+        fun onKeyboardMenu() {}
+        /** Holding the comma, then a language ("vi", "en", ...). */
+        fun onLanguage(code: String) {}
         fun onStripMenu() {}
         /** The space bar became a cursor pad: the word in progress ends. */
         fun onCursorStart() {}
@@ -92,12 +95,18 @@ class KeyboardView(context: Context) : View(context) {
         private set(value) { if (field != value) { field = value; relayout() } }
     /** Sliding along the space bar moves the cursor. */
     var spaceSwipe = true
-    /** Holding the comma switches between Vietnamese and English. */
+    /**
+     * Holding the comma opens a menu to slide to: ⌨ (Android's keyboard menu), then each of
+     * [languages], as on Laban Key's globe.
+     */
     var commaHold = true
 
-    /** The English keyboard is on: the space bar says so. */
-    var english = false
+    /** The keyboard's language ("vi", "en", ...): the space bar says which. */
+    var language = "vi"
         set(value) { if (field != value) { field = value; relayout() } }
+
+    /** The languages the comma's menu offers, in its order. */
+    var languages = listOf("vi", "en")
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -213,7 +222,11 @@ class KeyboardView(context: Context) : View(context) {
      * centre was from the finger when it opened. The finger chooses relative to that, so it starts
      * on the first form even where the popup had to move to stay inside the keyboard.
      */
-    private class Popup(val forms: List<String>, val cells: List<RectF>, val dx: Float, val dy: Float) {
+    private class Popup(
+        val forms: List<String>, val cells: List<RectF>, val dx: Float, val dy: Float,
+        /** The comma's menu: its forms are choices, not text. */
+        val menu: Boolean = false,
+    ) {
         val bounds: List<FloatArray> = cells.map { floatArrayOf(it.left, it.top, it.right, it.bottom) }
     }
 
@@ -228,8 +241,7 @@ class KeyboardView(context: Context) : View(context) {
      * The popup over a held key: its bottom row on the key's row, the first form under the
      * finger, the cells a key wide and a little shorter than a row, so a slide to any form is short.
      */
-    private fun openPopup(h: Hit) {
-        val forms = h.key.variants
+    private fun openPopup(h: Hit, forms: List<String> = h.key.variants, menu: Boolean = false) {
         val n = forms.size
         val columns = PopupGrid.columns(n)
         val rows = PopupGrid.rows(n)
@@ -238,12 +250,18 @@ class KeyboardView(context: Context) : View(context) {
         val home = PopupGrid.home(n, h.rect.left, h.rect.right, cw, width.toFloat())
         val left = (h.rect.left - home * cw).coerceIn(0f, maxOf(0f, width - columns * cw))
         val top = (h.rect.centerY() - ch / 2 - (rows - 1) * ch).coerceIn(0f, maxOf(0f, height - rows * ch))
-        val cells = PopupGrid.cells(n, home).map { (c, r) ->
+        val cells = if (menu) {
+            // The comma's menu: one row from over the key, to the right, in its order.
+            val start = h.rect.centerX() - cw / 2
+            val first = start.coerceIn(0f, maxOf(0f, width - n * cw))
+            val y = (h.rect.centerY() - ch / 2).coerceIn(0f, maxOf(0f, height - ch))
+            List(n) { i -> RectF(first + i * cw, y, first + (i + 1) * cw, y + ch) }
+        } else PopupGrid.cells(n, home).map { (c, r) ->
             val x = left + c * cw
             val y = top + (rows - 1 - r) * ch
             RectF(x, y, x + cw, y + ch)
         }
-        popup = Popup(forms, cells, cells[0].centerX() - fingerX, cells[0].centerY() - fingerY)
+        popup = Popup(forms, cells, cells[0].centerX() - fingerX, cells[0].centerY() - fingerY, menu)
         popupChoice = 0
     }
 
@@ -257,8 +275,38 @@ class KeyboardView(context: Context) : View(context) {
                 fill.color = palette.accent
                 canvas.drawRoundRect(r, 8 * dp, 8 * dp, fill)
             }
-            drawLabel(canvas, v, r.centerX(), r.centerY(), 24 * sp, if (i == popupChoice) palette.onAccent else palette.glyph)
+            val color = if (i == popupChoice) palette.onAccent else palette.glyph
+            when {
+                p.menu && v == KEYBOARD_MENU -> drawKeyboardIcon(canvas, r.centerX(), r.centerY(), 9 * dp, color)
+                p.menu -> {
+                    drawLabel(canvas, v, r.centerX(), r.centerY(), 17 * sp, color)
+                    // The language in use: a short bar under it.
+                    if (v == LANGUAGE_LABELS[language]) {
+                        stroke(color, 2 * dp)
+                        canvas.drawLine(r.centerX() - 7 * dp, r.bottom - 7 * dp, r.centerX() + 7 * dp, r.bottom - 7 * dp, line)
+                    }
+                }
+                else -> drawLabel(canvas, v, r.centerX(), r.centerY(), 24 * sp, color)
+            }
         }
+    }
+
+    private fun drawKeyboardIcon(canvas: Canvas, cx: Float, cy: Float, s: Float, color: Int) {
+        stroke(color, 1.8f * dp)
+        canvas.drawRoundRect(RectF(cx - s * 1.25f, cy - s * 0.8f, cx + s * 1.25f, cy + s * 0.8f), s * 0.25f, s * 0.25f, line)
+        fill.color = color
+        for (row in 0..1) for (k in -2..2) canvas.drawCircle(cx + k * s * 0.42f, cy - s * 0.38f + row * s * 0.4f, 1.2f * dp, fill)
+        canvas.drawLine(cx - s * 0.5f, cy + s * 0.45f, cx + s * 0.5f, cy + s * 0.45f, line)
+    }
+
+    /** A choice of the comma's menu: Android's keyboard menu, or a language. */
+    private fun menuChoice(form: String) {
+        if (form == KEYBOARD_MENU) {
+            listener?.onKeyboardMenu()
+            return
+        }
+        val code = LANGUAGE_LABELS.entries.firstOrNull { it.value == form }?.key ?: return
+        if (code != language) listener?.onLanguage(code)
     }
 
     /** Letters as large as Laban Key's (their "o" is 41 px tall at 2.5 px a dp, ours 30 sp). */
@@ -279,10 +327,14 @@ class KeyboardView(context: Context) : View(context) {
         private set
 
     private fun spaceLabelFor(barWidth: Float): String {
-        val full = if (english) "English" else resources.getString(R.string.subtype)
+        val full = when (language) {
+            "en" -> "English"
+            "ja" -> "日本語"
+            else -> resources.getString(R.string.subtype)
+        }
         glyph.textSize = 14 * sp
         glyph.typeface = font
-        return if (glyph.measureText(full) <= barWidth - 24 * dp) full else if (english) "EN" else "VI"
+        return if (glyph.measureText(full) <= barWidth - 24 * dp) full else LANGUAGE_LABELS[language] ?: language.uppercase()
     }
 
     private fun spaceBar(r: RectF): RectF {
@@ -685,7 +737,10 @@ class KeyboardView(context: Context) : View(context) {
     private val hold = Runnable {
         val h = pressed ?: return@Runnable
         when {
-            h.key.kind == KeyKind.COMMA -> if (commaHold) { holdFired = true; listener?.onSwitchLanguage() }
+            h.key.kind == KeyKind.COMMA -> if (commaHold) {
+                holdFired = true
+                openPopup(h, listOf(KEYBOARD_MENU) + languages.map { LANGUAGE_LABELS[it] ?: it }, menu = true)
+            }
             h.key.variants.isNotEmpty() -> { holdFired = true; openPopup(h) }
         }
         invalidate()
@@ -888,7 +943,9 @@ class KeyboardView(context: Context) : View(context) {
                 cursor = Cursor.OFF
                 listener?.onCursorEnd()
             }
-            shown != null -> if (act) typeChar(shown.forms[popupChoice])
+            shown != null -> if (act) {
+                if (shown.menu) menuChoice(shown.forms[popupChoice]) else typeChar(shown.forms[popupChoice])
+            }
             h != null && act && !holdFired -> tap(h.key)
         }
         holdFired = false
@@ -1131,6 +1188,14 @@ class KeyboardView(context: Context) : View(context) {
     }
 
     private fun RectF.insetBy(dx: Float, dy: Float) = RectF(left + dx, top + dy, right - dx, bottom - dy)
+
+    companion object {
+        /** The comma menu's first choice: Android's keyboard menu (drawn as a keyboard). */
+        const val KEYBOARD_MENU = "⌨"
+
+        /** The comma menu's label of each language. */
+        val LANGUAGE_LABELS = mapOf("vi" to "VI", "en" to "EN", "ja" to "JA")
+    }
 }
 
 /**
