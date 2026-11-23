@@ -39,6 +39,15 @@ python3 -I data/ja/build_dict.py eval ~/.cache/xrnkey-lm/models/ja.xkdic \
 - `eval` says how often the best conversion is the one Mozc gave, for the sentences of Mozc's
   own evaluation set (`evaluation.tsv`).
 
+The Android tests run the same set through the keyboard's own converter, which converts as
+`convert()` does (505 of 683), and say how often Mozc's conversion is among the strip's three
+(547) or in the strip or its panel (553):
+
+```bash
+cd android && ./gradlew :app:testDebugUnitTest --tests '*ConverterTest*' \
+    -Pxrnkey.jaEval=$HOME/.cache/xrnkey-lm/downloads/mozc/evaluation.tsv
+```
+
 The Android build bundles `ja.xkdic` from the models folder (`~/.cache/xrnkey-lm/models`, or
 `-Pxrnkey.models=<dir>`), uncompressed, next to `vi.xklm` and `en.xklm`, and maps it in place.
 

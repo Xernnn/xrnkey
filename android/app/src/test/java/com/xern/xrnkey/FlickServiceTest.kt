@@ -179,9 +179,14 @@ class FlickServiceTest {
         assertFalse(f.keys.composing)
         assertEquals("空白", f.keys.spaceLabel)
         assertNull(f.keys.enterLabel)
+        // What follows 私 comes next, as after a QWERTY conversion; a tap puts it in.
+        val next = f.strip() as Strip.Candidates
+        assertEquals("は", next.centre)
+        f.service.onCandidate(1)
+        assertEquals("私は", f.edit.text.toString())
         // Space with nothing composing: a full-width space.
         f.tap("SPACE")
-        assertEquals("私　", f.edit.text.toString())
+        assertEquals("私は　", f.edit.text.toString())
         f.service.onDestroy()
     }
 

@@ -135,8 +135,8 @@ android {
         applicationId = "com.xern.xrnkey"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.8.0"
+        versionCode = 20
+        versionName = "0.9.0"
         ndk { abiFilters += "arm64-v8a" }
         externalNativeBuild {
             cmake {
@@ -206,6 +206,8 @@ android {
                 test.systemProperty("xrnkey.emojiIndex", repoDir.resolve("data/emoji/emoji-index.tsv").path)
                 test.systemProperty("xrnkey.emojiKeywords", repoDir.resolve("data/emoji/keywords.tsv").path)
                 (findProperty("xrnkey.shots") as String?)?.let { test.systemProperty("xrnkey.shots", it) }
+                // Mozc's evaluation set (data/ja/README.md), for the Japanese converter's numbers.
+                (findProperty("xrnkey.jaEval") as String?)?.let { test.systemProperty("xrnkey.jaEval", it) }
                 test.maxHeapSize = "1536m"
                 // A native library binds to one class loader: the Robolectric tests and the plain
                 // JNI tests each need a JVM of their own.

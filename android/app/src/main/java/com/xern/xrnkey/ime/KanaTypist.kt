@@ -16,6 +16,10 @@ import com.xern.xrnkey.ja.Romaji
  * 、 and 。 come from their keys; ? and ! are typed full-width. Inside a reading they join it, as
  * digits and other symbols do; with nothing composing they go straight in. No Android types here,
  * so the tests drive it with a fake editor.
+ *
+ * What the owner chooses, by Space or by a tap, is learned in the converter's history where the
+ * field allows it ([learnHere]), each word with the one before it. Right after a word goes in, the
+ * strip offers what may follow it ([nextWords]); a tap on one puts it in, with no space.
  */
 class KanaTypist(private val editor: Editor, private val converter: Converter) : Input {
     private val romaji = Romaji()
@@ -28,10 +32,16 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         private set
 
     /**
-     * The part of speech the reading follows: that of a piece of it already taken from the strip
-     * (0: none, the reading starts afresh).
+     * The word right before the reading (or the cursor) that it follows: the last one put in by
+     * Space, Enter or a tap, while nothing else went in after it (null: none, at the field's
+     * start, after a space or punctuation). The reading converts after its part of speech ("は"
+     * after 私 is the particle), and the next words follow it.
      */
-    private var left = 0
+    var context: Converter.Segment? = null
+        private set
+
+    /** This field allows learning (off in incognito fields and this app's own). */
+    var learnHere = true
 
     /** What was committed lately, right before the composing text (at most [TAIL] characters). */
     private val tail = StringBuilder()
@@ -46,8 +56,16 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
     /** Space converted the reading, and the field shows one of [cycle]. */
     val converting: Boolean get() = selected >= 0
 
-    /** The candidates for the reading typed, or null with nothing composing. */
-    fun conversion(): Conversion? = if (romaji.isEmpty()) null else converter.convert(romaji.reading, left)
+    /** The candidates for the reading typed, after [context], or null with nothing composing. */
+    fun conversion(): Conversion? =
+        if (romaji.isEmpty()) null else converter.convert(romaji.reading, context?.rid ?: 0, context?.takeIf { it.word }?.surface)
+
+    /** With nothing composing, right after a word: what may follow it, likeliest first (else none). */
+    fun nextWords(): List<Candidate> {
+        val c = context
+        if (composing.isNotEmpty() || !romaji.isEmpty() || c == null) return emptyList()
+        return converter.next(c)
+    }
 
     override fun cursor(): Int = if (anchor < 0) -1 else anchor + tail.length + composing.length
 
@@ -69,8 +87,8 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         }
         val ch = WIDE[c] ?: c
         when {
-            c == ' ' -> if (romaji.isEmpty()) commit(SPACE) else startConverting()
-            romaji.isEmpty() && c !in 'a'..'z' && c !in 'A'..'Z' -> commit(ch.toString())
+            c == ' ' -> if (romaji.isEmpty()) commitOther(SPACE) else startConverting()
+            romaji.isEmpty() && c !in 'a'..'z' && c !in 'A'..'Z' -> commitOther(ch.toString())
             else -> {
                 romaji.type(ch)
                 show(romaji.shown)
@@ -94,21 +112,28 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         return if (c.length >= r.length) c.text else c.text + converter.bestText(r.substring(c.length), c.rid)
     }
 
+    /** The words of what the field shows for a candidate: its own, then those of the rest after it. */
+    private fun segmentsFor(c: Candidate): List<Converter.Segment> {
+        val r = romaji.reading
+        return if (c.length >= r.length) c.segments else c.segments + converter.best(r.substring(c.length), c.rid)
+    }
+
     /**
      * A candidate from the strip: it goes in, in place of the part of the reading it stands for;
-     * the rest of the reading stays composing, as typed.
+     * the rest of the reading stays composing, as typed. With nothing composing, a next word: it
+     * goes in after the word before, with no space.
      */
     fun pick(c: Candidate) {
         val rest = romaji.reading.length - c.length
         stopConverting()
+        learn(c.segments)
+        commit(c.text)
+        context = c.segments.lastOrNull()
         if (rest <= 0) {
             clearReading()
-            commit(c.text)
             return
         }
-        commit(c.text)
         romaji.drop(c.length)
-        left = c.rid
         show(romaji.shown)
     }
 
@@ -120,10 +145,10 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
             }
             !romaji.isEmpty() -> {
                 romaji.backspace()
-                if (romaji.isEmpty()) left = 0
                 show(romaji.shown)
             }
             else -> {
+                context = null
                 val n = tail.length
                 val last = Typist.lastCharacter(tail)
                 editor.backspace(last)
@@ -139,10 +164,14 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         when {
             converting -> commitShown()
             !romaji.isEmpty() -> {
-                commit(romaji.reading)
+                // The reading as typed: not a choice to learn, but a word the next ones follow.
+                val r = romaji.reading
+                commit(r)
                 clearReading()
+                context = converter.asTyped(r)
             }
             else -> {
+                context = null
                 editor.enter()
                 tail.append('\n')
             }
@@ -151,6 +180,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
 
     /** Commits what the field shows (a last lone n as ん), as it is. */
     override fun finish() {
+        context = null
         if (composing.isEmpty()) return
         val text = if (converting) composing else romaji.reading
         if (text == composing) {
@@ -164,16 +194,29 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         stopConverting()
     }
 
+    /** Commits what Space shows, as chosen: learned, and the word the next ones follow. */
     private fun commitShown() {
         val text = composing
+        val chosen = segmentsFor(cycle[selected])
+        learn(chosen)
         clearReading()
         stopConverting()
         commit(text)
+        context = chosen.lastOrNull()
+    }
+
+    /**
+     * The owner chose these words, after [context]: learned where this field allows it (the
+     * converter has a history only while learning is on).
+     */
+    private fun learn(chosen: List<Converter.Segment>) {
+        val h = converter.history ?: return
+        if (!learnHere || chosen.isEmpty()) return
+        h.learn(context?.takeIf { it.word }?.surface, chosen)
     }
 
     private fun clearReading() {
         romaji.clear()
-        left = 0
     }
 
     private fun stopConverting() {
@@ -184,6 +227,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
     override fun reset(cursor: Int) {
         clearReading()
         stopConverting()
+        context = null
         composing = ""
         tail.clear()
         val before = editor.textBefore(TAIL)
@@ -201,7 +245,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
 
     override fun insert(text: String) {
         finish()
-        commit(text)
+        commitOther(text)
     }
 
     override fun deleteWord() {
@@ -212,6 +256,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
             stopConverting()
             return
         }
+        context = null
         val before = editor.textBefore(TAIL)
         val n = Typist.wordBefore(before)
         if (n == 0) return
@@ -234,6 +279,12 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         editor.commit(text)
         composing = ""
         append(text)
+    }
+
+    /** Text that is no word (a space, punctuation, an emoji): nothing follows a word across it. */
+    private fun commitOther(text: String) {
+        commit(text)
+        context = null
     }
 
     private fun append(text: String) {

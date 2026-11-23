@@ -9,6 +9,7 @@ import com.xern.xrnkey.ime.KanaTypist
 import com.xern.xrnkey.ime.StripMaker
 import com.xern.xrnkey.ime.Typist
 import com.xern.xrnkey.ja.Converter
+import com.xern.xrnkey.ja.UserHistory
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Palette
 import org.junit.Test
@@ -71,17 +72,27 @@ class StripShotsTest {
 
     /**
      * The Japanese keyboard: composing, and after one and two Spaces (the candidate shown on the
-     * accent), whole, with its 、 and 。 keys. Mozc's dictionary where it is built.
+     * accent), whole, with its 、 and 。 keys; the likeliest while typing (こんにちは, ありが), the
+     * words that follow one put in (私, ありがとう), and a word chosen before coming first (紙).
+     * Mozc's dictionary where it is built.
      */
     @Test
     fun theJapaneseStrips() {
         val dir = File(System.getProperty("xrnkey.shots") ?: return)
         dir.mkdirs()
         val dict = if (TestModels.realJapaneseAvailable) TestModels.realJapanese() else TestModels.japanese()
-        val cases = listOf("composing-kami" to "kami", "converted-kami" to "kami ", "next-kami" to "kami  ", "sentence" to "watashihagakuseidesu")
+        val cases = listOf(
+            "composing-kami" to "kami", "converted-kami" to "kami ", "next-kami" to "kami  ", "sentence" to "watashihagakuseidesu",
+            "composing-konnichiha" to "konnichiha", "composing-ariga" to "ariga", "after-watashi" to "watashi \n",
+            "after-arigatou" to "arigatou \n", "chosen-kami" to "kami",
+        )
         for ((name, keys) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
-            val t = KanaTypist(FakeEditor(), Converter(dict)).also { it.reset() }
-            t.text(keys)
+            val conv = Converter(dict)
+            if (name.startsWith("chosen")) {
+                conv.history = UserHistory().also { h -> h.learn(null, conv.convert("かみ").words.first { it.text == "紙" }.segments) }
+            }
+            val t = KanaTypist(FakeEditor(), conv).also { it.reset() }
+            for (k in keys) if (k == '\n') t.enter() else t.text(k.toString())
             val v = KeyboardView(RuntimeEnvironment.getApplication())
             v.palette = palette
             v.language = "ja"

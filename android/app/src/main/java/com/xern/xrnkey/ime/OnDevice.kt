@@ -3,11 +3,13 @@ package com.xern.xrnkey.ime
 import android.content.SharedPreferences
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
+import com.xern.xrnkey.ja.UserHistory
 import java.io.File
 
 /**
  * What the keyboard keeps about its owner, on the phone only: the personal words it learned, the
- * suggestions the owner hid, and the shortcuts table. Both are files in credential-encrypted storage ([dir]), so they exist only
+ * suggestions the owner hid, the shortcuts table, and what was chosen on the Japanese keyboard
+ * ([japanese]). All are files in credential-encrypted storage ([dir]), so they exist only
  * after the first unlock and survive restarts and app updates. The settings screen changes them
  * through the same files; [refresh] picks the changes up when a field starts.
  */
@@ -15,6 +17,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     val wordsFile get() = File(dir, WORDS)
     val shortcutsFile get() = File(dir, SHORTCUTS)
     val hiddenFile get() = File(dir, HIDDEN)
+    val japaneseFile get() = File(dir, JAPANESE)
 
     var words: PersonalWords? = null
         private set
@@ -23,9 +26,14 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     var hidden: HiddenWords? = null
         private set
 
+    /** The words chosen on the Japanese keyboard, each for its reading and after the one before. */
+    var japanese: UserHistory? = null
+        private set
+
     private var wordsCleared = -1L
     private var shortcutsStamp = -1L
     private var hiddenStamp = -1L
+    private var japaneseCleared = -1L
 
     /** Loads what isn't loaded yet, or changed since. Old habits fade once a month. */
     fun refresh(now: Long = System.currentTimeMillis()) {
@@ -57,12 +65,19 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             hidden = HiddenWords(hiddenFile)
             hiddenStamp = hiddenNow
         }
+        val jaCleared = japaneseStamp(prefs)
+        if (japanese == null || jaCleared != japaneseCleared) {
+            japanese = UserHistory().also { it.load(japaneseFile) }
+            japaneseCleared = jaCleared
+        }
     }
 
-    /** Writes the personal words, if any were learned since the last save. */
+    /** Writes the personal words and the Japanese choices, if any were learned since the last save. */
     fun save() {
-        val w = words ?: return
         // Cleared in the settings since these were loaded: what is held is what was cleared.
+        val j = japanese
+        if (j != null && j.unsaved > 0 && japaneseStamp(prefs) == japaneseCleared) j.save(japaneseFile)
+        val w = words ?: return
         if (prefs.getLong(KEY_CLEARED, 0L) != wordsCleared) return
         if (w.unsaved > 0) w.save(wordsFile)
     }
@@ -73,6 +88,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         shortcuts?.close()
         words = null
         shortcuts = null
+        japanese = null
     }
 
     companion object {
@@ -80,6 +96,8 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         /** The laptop's macros.txt format, so one file can serve both (feature-spec, "Shortcuts"). */
         const val SHORTCUTS = "shortcuts.txt"
         const val HIDDEN = "hidden-suggestions.txt"
+        const val JAPANESE = "japanese-history.tsv"
+        private const val KEY_JA_CLEARED = "japanese-cleared"
         private const val KEY_CLEARED = "words-cleared"
         private const val KEY_DECAYED = "words-decayed"
         private const val MONTH = 30L * 24 * 3600 * 1000
@@ -99,6 +117,21 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         fun wordsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
             prefs.edit().putLong(KEY_CLEARED, maxOf(now, prefs.getLong(KEY_CLEARED, 0L) + 1)).commit()
         }
+
+        /**
+         * Forgets what was chosen on the Japanese keyboard (from the settings screen); or, with a
+         * changed file (a word deleted), makes the keyboard read it again at its next field.
+         */
+        fun clearJapanese(dir: File, prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
+            File(dir, JAPANESE).delete()
+            japaneseChanged(prefs, now)
+        }
+
+        fun japaneseChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
+            prefs.edit().putLong(KEY_JA_CLEARED, maxOf(now, japaneseStamp(prefs) + 1)).commit()
+        }
+
+        private fun japaneseStamp(prefs: SharedPreferences) = prefs.getLong(KEY_JA_CLEARED, 0L)
 
         /** The clipboard history was cleared in the settings: the keyboard reads it again. */
         fun clipsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
