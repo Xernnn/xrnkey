@@ -534,11 +534,28 @@ is JA). Password, email and URL fields get plain QWERTY letters, and number fiel
   kana after a reading of punctuation alone commits it first.
 - **◀ and ▶** move the cursor a character, and repeat while held. ◀ with a reading commits it as
   shown, as the space bar's slide does; ▶ at the end of a reading stays put (it ends a toggle).
-- **?123** opens the symbols, whose way back says あいう. **🌐** opens the comma's menu at once:
-  slide to a choice and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap
-  elsewhere closes it.
-- **Not yet**: a 12-key number pad (the symbols serve), godan and other kana layouts, flick for
-  Latin letters, ↺ undoing a commit, and moving the cursor inside a reading.
+- **?123** opens the number pad below. **🌐** opens the comma's menu at once: slide to a choice
+  and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap elsewhere closes it.
+- **The number pad**, as Gboard's (Google Japanese Input's 12-key numbers): the same grid and
+  side keys, with the digits where the kana are:
+
+  | | | | | |
+  |---|---|---|---|---|
+  | 記号 | 1 | 2 | 3 | ⌫ |
+  | ◀ | 4 | 5 | 6 | ▶ |
+  | あいう | 7 | 8 | 9 | 空白 |
+  | 🌐 | ()[] | 0 | .,-/ | Enter |
+
+  - a tap types the digit, a flick left, up or right a symbol, each shown small under its
+    digit: 1 `☆ ♪ →`, 2 `¥ $ €`, 3 `% ° #`, 4 `○ * ・`, 5 `+ × ÷`, 6 `< = >`, 7 `「 」 :`,
+    8 `〒 々 〆`, 9 `^ | \`, 0 `~ …`; `()[]` taps `(` and flicks `) [ ]`, `.,-/` taps `.` and
+    flicks `, - /`. The guide shows them as the kana's does;
+  - they type as the QWERTY keys' digits and symbols do: straight in with nothing composing,
+    into the reading while one is (`か3`). No toggle: 1 tapped twice is `11`;
+  - あいう goes back to the kana, 記号 opens the symbols (their way back says あいう too); a
+    language chosen from 🌐 switches the letters, as from the kana.
+- **Not yet**: godan and other kana layouts, flick for Latin letters, ↺ undoing a commit, and
+  moving the cursor inside a reading.
 
 ## Auto-correct (Space and punctuation)
 

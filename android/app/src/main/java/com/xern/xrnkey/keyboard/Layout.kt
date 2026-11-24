@@ -75,9 +75,15 @@ enum class Page {
     NUMBER, PHONE, DATETIME,
 
     /** The Japanese 12-key pad (flick input): kana in a 3 by 4 grid, function keys either side. */
-    KANA;
+    KANA,
+
+    /** The 12-key pad's numbers: digits in its grid, each flicked for symbols, as Gboard's. */
+    KANA_NUMBERS;
 
     val isPad: Boolean get() = this == NUMBER || this == PHONE || this == DATETIME
+
+    /** A page of the 12-key pad: its tiles, flicks and side columns. */
+    val isFlick: Boolean get() = this == KANA || this == KANA_NUMBERS
 }
 
 /** What a number field allows besides digits: its decimal separator, and a minus sign. */
@@ -310,6 +316,7 @@ object Layouts {
             symbolBottom(home, symbols("< >")),
         )
         Page.KANA -> Flick.rows
+        Page.KANA_NUMBERS -> Flick.numberRows
         // , 1 2 3 - / ( 4 5 6 . / ) 7 8 9 ⌫ / ABC ?123 0 space ↵, two letter keys a cell.
         Page.NUMPAD -> listOf(
             Row(listOf(cell(","), cell("1"), cell("2"), cell("3"), cell("-"))),
@@ -463,6 +470,42 @@ object Flick {
         Row(listOf(side(KeyKind.LEFT)) + keys.subList(3, 6) + side(KeyKind.RIGHT)),
         Row(listOf(side(KeyKind.SYMBOLS, "?123")) + keys.subList(6, 9) + Key(KeyKind.SPACE, width = SIDE, text = " ")),
         Row(listOf(side(KeyKind.GLOBE), Key(KeyKind.KANA_MARK, "゛゜小", WIDE)) + keys.subList(9, 11) + side(KeyKind.ENTER)),
+    )
+
+    /**
+     * The number pad's keys, as Gboard's (Google Japanese Input's 12-key numbers): a tap types the
+     * digit, a flick left, up or right a symbol (1: ☆ ♪ →, 2: ¥ $ €, 3: % ° #, 4: ○ * ・,
+     * 5: + × ÷, 6: < = >, 7: 「 」 :, 8: 〒 々 〆, 9: ^ | \, 0: ~ …), and the last row's brackets
+     * and ., - / beside the 0. No toggle: a digit tapped twice is two digits.
+     */
+    private fun number(label: String, flicks: List<String>, text: String = label) = Key(
+        KeyKind.KANA, label, WIDE, text, flicks = flicks + List(4 - flicks.size) { "" },
+    )
+
+    val numberKeys: List<Key> = listOf(
+        number("1", listOf("☆", "♪", "→")),
+        number("2", listOf("¥", "$", "€")),
+        number("3", listOf("%", "°", "#")),
+        number("4", listOf("○", "*", "・")),
+        number("5", listOf("+", "×", "÷")),
+        number("6", listOf("<", "=", ">")),
+        number("7", listOf("「", "」", ":")),
+        number("8", listOf("〒", "々", "〆")),
+        number("9", listOf("^", "|", "\\")),
+        number("()[]", listOf(")", "[", "]"), text = "("),
+        number("0", listOf("~", "…")),
+        number(".,-/", listOf(",", "-", "/"), text = "."),
+    )
+
+    /**
+     * The number pad: its digits where the kana are, ◀ ▶ ⌫ space Enter and 🌐 where they are on
+     * the kana pad, あいう back to the kana where ?123 was, and 記号 (the symbols' pages) where ↺ was.
+     */
+    val numberRows: List<Row> = listOf(
+        Row(listOf(side(KeyKind.SYMBOLS, "記号")) + numberKeys.subList(0, 3) + side(KeyKind.BACKSPACE)),
+        Row(listOf(side(KeyKind.LEFT)) + numberKeys.subList(3, 6) + side(KeyKind.RIGHT)),
+        Row(listOf(side(KeyKind.LETTERS, "あいう")) + numberKeys.subList(6, 9) + Key(KeyKind.SPACE, width = SIDE, text = " ")),
+        Row(listOf(side(KeyKind.GLOBE)) + numberKeys.subList(9, 12) + side(KeyKind.ENTER)),
     )
 
     /** The toggle a kana is on (each is on one), for ↺: null for one no key types (が). */

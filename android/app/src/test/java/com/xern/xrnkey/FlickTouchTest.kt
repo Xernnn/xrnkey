@@ -213,7 +213,10 @@ class FlickTouchTest {
         assertEquals(listOf("cursor", "move -1 0", "end"), events)
     }
 
-    /** ⌫, space, Enter and ?123: as on the letters; the symbols lead back to the pad as あいう. */
+    /**
+     * ⌫, space and Enter: as on the letters. ?123 opens the number pad, whose 記号 opens the
+     * symbols; they lead back to the kana as あいう, and so does the number pad's あいう.
+     */
     @Test
     fun theRightColumnAndTheSymbols() {
         val v = pad()
@@ -227,12 +230,52 @@ class FlickTouchTest {
         assertEquals("変換", v.spaceLabel)
         assertEquals("確定", v.enterLabel)
         tap(v, 0, 2)
+        assertEquals(Page.KANA_NUMBERS, v.page)
+        assertEquals("変換", v.spaceLabel)
+        tap(v, 0, 2)                                  // あいう
+        assertEquals(Page.KANA, v.page)
+        tap(v, 0, 2)
+        tap(v, 0, 0)                                  // 記号
         assertEquals(Page.SYMBOLS, v.page)
         assertEquals("日本語", v.spaceLabel)
         assertNull(v.enterLabel)
         touch(v, MotionEvent.ACTION_DOWN, 81f, 954f)  // the symbols' bottom-left: あいう
         touch(v, MotionEvent.ACTION_UP, 81f, 954f)
         assertEquals(Page.KANA, v.page)
+    }
+
+    /**
+     * The number pad, as Gboard's: a tap types a digit as a letter key types (no toggle: 1 twice
+     * is 11), a flick left, up or right a symbol, and the bottom row's brackets and ., - /. Its
+     * guide shows the symbols in a cross, as the kana's does.
+     */
+    @Test
+    fun theNumberPadTypesDigitsAndFlicksSymbols() {
+        for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+            events.clear()
+            val v = pad(palette) { page = Page.KANA_NUMBERS }
+            shot("flick-numbers-$theme", v)
+            val keys = listOf(
+                Triple(1, 0, "1☆♪→"), Triple(2, 0, "2¥$€"), Triple(3, 0, "3%°#"),
+                Triple(1, 1, "4○*・"), Triple(2, 1, "5+×÷"), Triple(3, 1, "6<=>"),
+                Triple(1, 2, "7「」:"), Triple(2, 2, "8〒々〆"), Triple(3, 2, "9^|\\"),
+                Triple(1, 3, "()[]"), Triple(2, 3, "0~…"), Triple(3, 3, ".,-/"),
+            )
+            for ((col, row, typed) in keys) {
+                events.clear()
+                tap(v, col, row)
+                for ((dx, dy) in listOf(left, up, right, down)) flick(v, col, row, dx, dy)
+                assertEquals(typed, typed.map { it.toString() }, events)
+            }
+            events.clear()
+            repeat(2) { tap(v, 1, 0) }
+            assertEquals(listOf("1", "1"), events)
+            touch(v, MotionEvent.ACTION_DOWN, cols[1], rows[0])
+            touch(v, MotionEvent.ACTION_MOVE, cols[1], rows[0] - 100f)
+            shot("flick-numbers-guide-$theme", v)
+            touch(v, MotionEvent.ACTION_UP, cols[1], rows[0] - 100f)
+            assertEquals(listOf("1", "1", "♪"), events)
+        }
     }
 
     /**

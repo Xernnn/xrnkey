@@ -551,7 +551,7 @@ class XrnkeyService :
             kana = input is KanaTypist
             // Between QWERTY and the 12-key pad: the letters' page changes (a field's pad stays).
             if (!home.isPad) {
-                val onLetters = page == Page.LETTERS || page == Page.KANA
+                val onLetters = page == Page.LETTERS || page.isFlick
                 home = lettersPage()
                 if (onLetters) page = home
             }
