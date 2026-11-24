@@ -126,7 +126,7 @@ class XrnkeyService :
     private val justCopied = JustCopied()
 
     /** The field that has the keyboard is a password field (no chip there). */
-    private var passwordField = false
+    private var maskedField = false
 
     /** The field that has the keyboard, as it started: what it takes besides text. */
     private var fieldInfo: EditorInfo? = null
@@ -314,9 +314,9 @@ class XrnkeyService :
         inputFrame?.claimInsets()
         // Numbers, PINs, phone numbers and dates get a pad; what is typed there goes in as it is.
         val home = Layouts.pageFor(info.inputType)
-        passwordField = isPassword(info)
+        maskedField = isPassword(info)
         fieldInfo = info
-        typist.raw = passwordField || home.isPad
+        typist.raw = maskedField || home.isPad
         // No auto-correct where words are addresses, not language.
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
@@ -352,7 +352,7 @@ class XrnkeyService :
      * clipboard history off, nor while a word is in progress).
      */
     private fun idleStrip(): Strip {
-        val copied = justCopied.current()?.takeIf { options.clipboard && !passwordField && input.shown.isEmpty() }
+        val copied = justCopied.current()?.takeIf { options.clipboard && !maskedField && input.shown.isEmpty() }
         if (copied != null) return Strip.Copied(copied)
         return if (options.toolsHidden) BARE else Strip.Tools
     }
