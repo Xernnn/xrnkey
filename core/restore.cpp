@@ -159,7 +159,12 @@ bool keep_as_typed(const std::string& w) {
                                         "ny", "cx", "ak", "ok", "oke", "oki", "okie", "okela",
                                         "okla", "hic", "hix", "hicc", "kkk", "thx", "pls", "plz",
                                         "lol", "omg", "ntn", "bth", "uk", "ukm", "uhm", "haiz",
-                                        "haizz", "haizzz"};
+                                        "haizz", "haizzz",
+                                        /* Teen code ending in k for a syllable's final sound:
+                                         * thích, anh, biết, mình, nha, nhé. English would read
+                                         * "thik" as "this" and "ank" as "and". */
+                                        "thik", "ank", "bik", "mik", "nhak", "nhek", "nka",
+                                        "ik", "thjk", "bjk"};
     for (const char* c : kChat)
         if (w == c) return true;
     if (w.size() >= 4 && w.size() % 2 == 0) {
