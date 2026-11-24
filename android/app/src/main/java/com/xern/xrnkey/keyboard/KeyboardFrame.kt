@@ -18,11 +18,27 @@ import androidx.core.view.WindowInsetsCompat
  * lies over the bottom of it. The frame keeps the keys above the bar and the gesture area, and
  * fills the band behind them with the keyboard's own background, as other keyboards do.
  * Every panel is exactly as tall as the keys it replaces.
+ *
+ * One-handed ([hand]), the keys and every panel are [ONE_HAND] of the width, against one edge,
+ * and the free column on the other side holds the [OneHandBar].
  */
 @SuppressLint("ViewConstructor")
 class KeyboardFrame(context: Context) : FrameLayout(context) {
     var palette: Palette = Palette.DARK
-        set(value) { field = value; setBackgroundColor(value.background) }
+        set(value) { field = value; setBackgroundColor(value.background); bar.palette = value }
+
+    /** The column beside the one-handed keyboard (gone at full width). */
+    val bar = OneHandBar(context).also { it.visibility = GONE }
+
+    /** One-handed, the side the keyboard sits against; null: full width. */
+    var hand: Hand? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            bar.visibility = if (value == null) GONE else VISIBLE
+            if (value != null) bar.hand = value
+            requestLayout()
+        }
 
     /**
      * The window's own insets, from the window manager rather than the views: they don't
@@ -48,6 +64,7 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
 
     init {
         setBackgroundColor(palette.background)
+        addView(bar, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT))
         // Every dispatch, the first and every change after it.
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             viewInsets = insets.getInsets(BAND)
@@ -106,10 +123,16 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
         }
     }
 
-    private companion object {
+    companion object {
         /** The bar (the hide-keyboard arrow, the pill) and the gesture area: the larger of them. */
-        val BAND = WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.mandatorySystemGestures() or
+        private val BAND = WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.mandatorySystemGestures() or
             WindowInsetsCompat.Type.tappableElement()
+
+        /** The one-handed keyboard's share of the width, as Gboard's (about 80 %). */
+        const val ONE_HAND = 0.82f
+
+        /** The keys' width in [inner] px: all of it, or [ONE_HAND] of it one-handed. */
+        fun keysWidth(inner: Int, hand: Hand?): Int = if (hand == null) inner else Math.round(inner * ONE_HAND)
     }
 
     /**
@@ -124,15 +147,31 @@ class KeyboardFrame(context: Context) : FrameLayout(context) {
             return
         }
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        val inner = MeasureSpec.makeMeasureSpec(maxOf(0, width - paddingLeft - paddingRight), MeasureSpec.EXACTLY)
+        val all = maxOf(0, width - paddingLeft - paddingRight)
+        val keysWidth = keysWidth(all, hand)
+        val inner = MeasureSpec.makeMeasureSpec(keysWidth, MeasureSpec.EXACTLY)
         // Measured even while a panel hides them: they are what the panel replaces.
         keys.measure(inner, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         val height = keys.measuredHeight
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (child === keys || child.visibility == GONE) continue
-            child.measure(inner, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+            val w = if (child === bar) all - keysWidth else keysWidth
+            child.measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
         }
         setMeasuredDimension(width, height + paddingTop + paddingBottom)
+    }
+
+    /** The keys and the panels against [hand]'s edge (or across), the bar in the free column. */
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        val all = maxOf(0, right - left - paddingLeft - paddingRight)
+        val keysLeft = paddingLeft + if (hand == Hand.RIGHT) all - keysWidth(all, hand) else 0
+        val barLeft = if (hand == Hand.RIGHT) paddingLeft else paddingLeft + keysWidth(all, hand)
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (child.visibility == GONE) continue
+            val x = if (child === bar) barLeft else keysLeft
+            child.layout(x, paddingTop, x + child.measuredWidth, paddingTop + child.measuredHeight)
+        }
     }
 }

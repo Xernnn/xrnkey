@@ -48,7 +48,9 @@ Swipe typing is not used.
 - **Revert**: Backspace right after an auto-correct, which puts back what was typed (after Space,
   as the word in progress).
 - **Tool row**: the strip's other face, a row of buttons: ≡ (folds the row away), settings,
-  clipboard, cursor pad and emoji.
+  clipboard, cursor pad, one-handed and emoji.
+- **Chip**: the strip's pill for a text just copied, which pastes it.
+- **One-handed**: the keys, the strip and the panels narrowed against one edge of the screen.
 - **Panel**: a full-keyboard-height view in place of the keys: emoji, clipboard, cursor pad or
   the expanded candidate list.
 - **Personal words**: words and word pairs learned from what the owner types. They are kept on
@@ -87,14 +89,13 @@ Swipe typing is not used.
 ## Later (agreed, not now)
 
 - Haptics and key sound. The owner has both off.
-- Clipboard images, and a chip in the strip for a just-copied item.
 - Typing whole words in a Unicode style as they are typed (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉). The `Aa` tab
   has the styled letters one at a time, as Laban Key's.
 - Smart space after punctuation, and moving the cursor to a word's end. The owner has these off
   in the reference. (Auto-capitalise came, on the English keyboard only by default: see "The
   English keyboard".)
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
-- Split and one-handed layouts, and a tablet layout.
+- Split layouts, and a tablet layout.
 
 ## Out of scope
 
@@ -294,6 +295,21 @@ Key for key as the reference has them.
   - The part of a candidate already in the field is drawn grey, the rest in the slot's colour
     (`bạn` of `bạn bè` while `bạn` is typed).
 - On the right, an **emoji button**.
+- **The chip of a text just copied**, as Gboard's: in the place of the tool row (or of the bare
+  strip, the tool row folded away), a pill after ≡ with the clipboard's icon and the start of the
+  text on one line, as much as fits between ≡ and the emoji button. Its rule:
+  - it is offered when a text is copied in any app (or with the cursor pad), and it shows while
+    the strip has nothing better: no word in progress and no next words, the strip that would
+    show the tool row. A copy while the strip has words leaves them, and the chip shows once it
+    is idle, in this field or the next, if nothing was typed meanwhile;
+  - it lasts a minute from the copy, until the text is pasted (the chip or the clipboard panel),
+    until anything is typed (any key, a candidate, an emoji), or until anything else is copied.
+    A word opened again where the cursor stopped is not typing;
+  - never for what the history doesn't keep (a sensitive clip, `ClipDescription.EXTRA_IS_SENSITIVE`,
+    which password managers set; a copy while a password field has the keyboard), never in a
+    password field, and never with the clipboard history off. A copy that may not be offered
+    still ends the chip before it: that text isn't on the clipboard any more;
+  - a copied image has no chip; it goes to the clipboard panel.
 
 What the slots hold, by situation (the centre in bold only where Space commits it):
 
@@ -314,6 +330,7 @@ What the slots hold, by situation (the centre in bold only where Space commits i
 | just after Space, following `cam on` | `các` | `bạn` | 🙏 |
 | just after Space, following `chuc mung sinh nhat` | a row of five: 🎈 🎁 🥳 🎉 🎂 |  |  |
 | field empty, nothing typed | the tool row instead |  |  |
+| field empty, a text copied in the last minute | the chip instead |  |  |
 
 ### What you can do
 
@@ -336,6 +353,8 @@ What the slots hold, by situation (the centre in bold only where Space commits i
   suggestions are kept with the personal words (Settings → Personal words lists them under
   "Hidden", each with Show; Clear all clears them too) and are never learned from.
 - **Tap ≡**: the tool row replaces the strip until the next key.
+- **Tap the chip**: pastes the text at the cursor (as the clipboard panel does), and the chip
+  goes. ≡ beside it shows the tool row, the emoji button the emoji panel.
 
 The strip never shows a sentence of explanation, only candidates.
 
@@ -343,7 +362,8 @@ The strip never shows a sentence of explanation, only candidates.
 
 ### What it shows
 
-Five buttons, evenly spaced: ≡, settings, clipboard, cursor pad and emoji. There is no mic:
+Six buttons, evenly spaced: ≡, settings, clipboard, cursor pad, one-handed (a keyboard outline
+narrowed by a line) and emoji; in landscape five, without one-handed. There is no mic:
 the keyboard is fully offline and has no voice typing, and no theme button (the theme is in
 Settings). The tool row shows whenever there is no word in progress and no prediction to show,
 and whenever ≡ is tapped. Folded away by its ≡, it gives way to the bare strip, ≡ and emoji
@@ -355,7 +375,37 @@ with nothing between, as on Laban Key, in every field after, until ≡ brings it
 - **Settings**: opens Settings.
 - **Clipboard**: opens the clipboard panel.
 - **Cursor pad**: opens the cursor pad.
+- **One-handed**: turns the one-handed keyboard on, or off again (see "One-handed").
 - **Emoji**: opens the emoji panel.
+
+## One-handed
+
+As Gboard's one-handed mode, in portrait only.
+
+### What it shows
+
+- The keys, the strip and every panel (emoji, clipboard, the cursor pad, the more-suggestions
+  panel, the comma's menu and the held keys' popups) are 82 % of the width, against the left or
+  the right edge, as tall as at full width. The keys keep their proportions of the width: each
+  letter key is a tenth of the narrowed keyboard.
+- The free column on the other side, in the keyboard's background, holds two icons: full width
+  (|←→|) above, and an arrow pointing to the free side below.
+- In landscape the keyboard is always full width, and the tool row has no one-handed button.
+
+### What you can do
+
+- **The tool row's one-handed button** turns it on, on the side last used (the right at first),
+  and off again.
+- **The column's arrow** (its lower half) moves the keyboard to the other edge; **full width**
+  (its upper half) turns one-handed off.
+- **Settings → Keyboard → One-handed**: Off, Left or Right.
+- It is remembered for the next field and the next start, with its side kept while it is off.
+- Everything types as at full width: taps, holds and their popups, flicks, the space bar's slide,
+  the swipe from Backspace (a key and a half of the narrowed keys), the number row's swipe, the
+  pads and the 12-key pad. A tap reports where it landed in the narrowed key's own widths and
+  heights (see "Typos"), so the same place on a key is the same offset; the key's height in its
+  widths grows (about 1.7 instead of 1.4 on the owner's phone), and the spatial model sees the
+  rows as far apart as they are.
 
 ## The English keyboard
 
@@ -792,7 +842,7 @@ fixes slips there. It works the way AOSP LatinIME's typing scorer does.
 
 - **Where the tap landed.** A letter tap reports its offset from its key's centre, in key widths
   across and key heights down, and the key's height (the phone's keys are about 1.4 key widths
-  tall). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
+  tall; one-handed, about 1.7 of the narrowed keys' widths). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
   with their touches, wherever they were in the word; a word opened again has none; a word
   Backspace opened right after a fix gets its own back. Text with no touches (the laptop, `adb
   input text`, a form from a held key) counts as tapped at the key's centre, so the layout alone
@@ -1086,8 +1136,9 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
 
 ### What it shows
 
-- A list, newest first, of text the owner copied while this was the keyboard. Each item shows up
-  to two lines.
+- A list, newest first, of text and images the owner copied while this was the keyboard. A
+  text's card shows up to three lines; an image's card is its picture, cut to the card, the
+  middle kept, and dimmed where the field can't take it.
 - Pinned items sit above the rest, under a pin icon.
 - A trash button at the top clears every unpinned item.
 - When the history is empty, the panel shows only the clipboard icon, greyed out.
@@ -1095,14 +1146,30 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
 ### What you can do
 
 - **Tap an item**: pastes it at the cursor (`commitText`) and closes the panel.
+- **Tap an image**: where the field takes its type (`EditorInfo.contentMimeTypes`, `image/*`
+  and the like), it goes in through `InputConnectionCompat.commitContent`, as a content URI of
+  the keyboard's own FileProvider (`<package>.clips`, not exported) that the app is granted to
+  read, that URI alone. Where the field doesn't take it, the card is dimmed and a tap does
+  nothing.
 - **Long-press an item**: pin or unpin it, or delete it.
-- **What is kept**: plain text only, at most 50 unpinned items (the oldest goes first), with no
-  time limit. Pinned items are kept until they are unpinned. These rules are settings.
+- **What is kept**: text, at most 50 unpinned (the oldest goes first), and images, at most 10
+  unpinned, with no time limit. Pinned items are kept until they are unpinned. These rules are
+  settings.
+- **Images** come from the system clipboard only (the keyboard has no network): a screenshot
+  copied from the screenshot editor, an image copied in a browser or a gallery, read once
+  through the content URI the app put on the clipboard, off the main thread. One no bigger than
+  1600 pixels on its longest side and 3 MB is kept as it came (PNG, JPEG, GIF or WebP); a bigger
+  one is downscaled to 1600 pixels and written again, a JPEG as JPEG and anything else as PNG.
+  Each gets a 320-pixel thumbnail for its card. The file is named by a hash of what was copied,
+  so the same image copied twice is one entry. An image's files go with its entry (deleted, or
+  pushed out by newer ones), with Clear, and with the settings' "Clear history"; a file no entry
+  names is deleted when the history is read.
 - **What is never kept**:
   - a clip marked sensitive (`ClipDescription.EXTRA_IS_SENSITIVE`, which password managers set);
   - a clip copied from a password field;
   - anything copied while the clipboard setting is off.
-- Storage is a JSON file in credential-encrypted private storage. It is read only after unlock.
+- Storage is a list file and a folder of images (`clip-images/`) in credential-encrypted private
+  storage. They are read only after unlock.
 
 ## The cursor pad
 
@@ -1158,6 +1225,7 @@ opens on the settings list.
 | | Hold comma to switch keyboard | on |
 | | Toggle input (the 12-key pad) | on |
 | | Keyboard height: 80–120 % | 100 % |
+| | One-handed: off / left / right (portrait) | off |
 | Clipboard | Keep history | on |
 | | History size | 50 |
 | Shortcuts | The table: add, edit, delete, import, export | — |
@@ -1341,7 +1409,7 @@ Rules:
   - the owner's own Japanese words and their readings;
   - the revert memory;
   - the shortcut table;
-  - the clipboard history and pins;
+  - the clipboard history and pins, and its images (at most 10 unpinned, downscaled);
   - emoji recents and skin tones;
   - settings.
 
@@ -1352,7 +1420,8 @@ Rules:
   - sensitive clips;
   - whole messages. Only word counts and word-pair counts are learned, never sentences.
 - **Leaves the phone**: nothing, except files the owner exports by hand through the system
-  picker, and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
+  picker, an image the owner pastes from the clipboard panel (to the app it is pasted into, which
+  is granted that one URI), and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
   which the owner's hub app reads to sync them through the owner's server. Never sentences,
   never the Japanese history, the shortcuts, the clipboard or anything typed in a password field.
 - **No microphone**: there is no voice input, and nothing is ever recorded.
@@ -1550,7 +1619,7 @@ Steps 1 to 10 are built, with these differences from the text above:
   keyboard's theme. Personal words: the list, search, delete one and clear all; adding a word,
   export and import are not built.
 - **Theme:** dark slate, light and system. True black is not built.
-- **Clipboard:** history size is fixed at 50; no time limit.
+- **Clipboard:** history size is fixed at 50 texts and 10 images; no time limit.
 - **Look-back** has no setting; it is always on.
 - **Next words** come from `xk_predict` (core/predict.cpp). The expanded list (≡ with more
   candidates) is not built; ≡ shows the tool row.

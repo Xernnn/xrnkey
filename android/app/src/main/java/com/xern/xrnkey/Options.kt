@@ -53,6 +53,10 @@ data class Options(
     val commaHold: Boolean = true,
     /** Keyboard height, in percent. */
     val height: Int = 100,
+    /** One-handed (portrait only): the keys narrowed against [oneHandSide]'s edge. */
+    val oneHanded: Boolean = false,
+    /** "left" or "right": where the one-handed keyboard sits, kept while it is off. */
+    val oneHandSide: String = "right",
     val clipboard: Boolean = true,
     val shortcuts: Boolean = true,
     /** "dark", "light" or "system". */
@@ -92,6 +96,8 @@ data class Options(
             .putBoolean("space_swipe", spaceSwipe)
             .putBoolean("comma_hold", commaHold)
             .putInt("height", height)
+            .putBoolean("one_handed", oneHanded)
+            .putString("one_hand_side", oneHandSide)
             .putBoolean("clipboard", clipboard)
             .putBoolean("shortcuts", shortcuts)
             .putString("palette", theme)
@@ -147,6 +153,8 @@ data class Options(
                 spaceSwipe = p.getBoolean("space_swipe", d.spaceSwipe),
                 commaHold = p.getBoolean("comma_hold", d.commaHold),
                 height = p.getInt("height", d.height).coerceIn(70, 130),
+                oneHanded = p.getBoolean("one_handed", d.oneHanded),
+                oneHandSide = p.getString("one_hand_side", d.oneHandSide)!!.takeIf { it in listOf("left", "right") } ?: d.oneHandSide,
                 clipboard = p.getBoolean("clipboard", d.clipboard),
                 shortcuts = p.getBoolean("shortcuts", d.shortcuts),
                 theme = p.getString("palette", d.theme)!!.takeIf { it in listOf("dark", "light", "system") } ?: d.theme,

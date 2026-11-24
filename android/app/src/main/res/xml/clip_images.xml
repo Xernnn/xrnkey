@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the clipboard images' FileProvider serves: the history's image folder, nothing else
+     (clip/ClipImages.kt). -->
+<paths>
+    <files-path name="images" path="clip-images/" />
+</paths>

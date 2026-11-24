@@ -2,9 +2,11 @@ package com.xern.xrnkey.keyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.Layout
@@ -22,16 +24,20 @@ import com.xern.xrnkey.clip.Clip
 
 /**
  * The clipboard panel, in place of the strip and the keys: a header (back to the keys, clear),
- * then the clips as cards, two to a row, newest first. A tap pastes; holding a card offers pin
- * and delete over it.
+ * then the clips as cards, two to a row, newest first; an image's card is its picture. A tap
+ * pastes (an image only where the field takes it: elsewhere its card is dimmed and a tap does
+ * nothing); holding a card offers pin and delete over it.
  */
 @SuppressLint("ViewConstructor")
 class ClipboardPanelView(context: Context) : View(context) {
 
     interface Listener {
         fun onPaste(text: String) {}
-        fun onPin(text: String, pinned: Boolean) {}
-        fun onDelete(text: String) {}
+        /** An image's card tapped, where the field takes it. */
+        fun onPasteImage(clip: Clip) {}
+        /** Pin or unpin the clip of [key] ([Clip.key]: a text's own text). */
+        fun onPin(key: String, pinned: Boolean) {}
+        fun onDelete(key: String) {}
         fun onClearClips() {}
         fun onClosePanel() {}
     }
@@ -41,6 +47,14 @@ class ClipboardPanelView(context: Context) : View(context) {
         set(value) { field = value; invalidate() }
     var clips: List<Clip> = emptyList()
         set(value) { field = value; layouts.clear(); actions = null; scrollGrid(offset); invalidate() }
+
+    /** An image clip's picture (its thumbnail), or null while there is none. */
+    var thumbnail: (Clip) -> Bitmap? = { null }
+        set(value) { field = value; invalidate() }
+
+    /** Whether a tap can paste the clip here: an image only where the field takes its type. */
+    var canPaste: (Clip) -> Boolean = { true }
+        set(value) { field = value; invalidate() }
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -117,7 +131,7 @@ class ClipboardPanelView(context: Context) : View(context) {
         if (clips.any { !it.pinned }) drawBin(canvas, clearRect().centerX(), headerHeight / 2, 9 * dp, palette.dim)
     }
 
-    private fun layoutOf(clip: Clip, width: Int): StaticLayout = layouts.getOrPut(clip.text) {
+    private fun layoutOf(clip: Clip, width: Int): StaticLayout = layouts.getOrPut(clip.key) {
         val shown = clip.text.trim().replace(Regex("\\s*\n\\s*"), " ⏎ ")
         StaticLayout.Builder.obtain(shown, 0, minOf(shown.length, 400), text, width)
             .setMaxLines(3)
@@ -130,13 +144,24 @@ class ClipboardPanelView(context: Context) : View(context) {
         fill.color = palette.space
         canvas.drawRoundRect(r, 12 * dp, 12 * dp, fill)
         val pad = 12 * dp
-        val room = (r.width() - 2 * pad - if (clip.pinned) 18 * dp else 0f).toInt()
-        text.color = palette.glyph
-        canvas.save()
-        canvas.translate(r.left + pad, r.top + pad)
-        layoutOf(clip, room).draw(canvas)
-        canvas.restore()
-        if (clip.pinned) drawPin(canvas, r.right - 14 * dp, r.top + 14 * dp, 6 * dp, palette.accent)
+        if (clip.image != null) {
+            drawPicture(canvas, clip, r)
+        } else {
+            val room = (r.width() - 2 * pad - if (clip.pinned) 18 * dp else 0f).toInt()
+            text.color = palette.glyph
+            canvas.save()
+            canvas.translate(r.left + pad, r.top + pad)
+            layoutOf(clip, room).draw(canvas)
+            canvas.restore()
+        }
+        if (clip.pinned) {
+            if (clip.image != null) {
+                // On a picture: on a disc of the card's colour, so it shows on any image.
+                fill.color = palette.space
+                canvas.drawCircle(r.right - 14 * dp, r.top + 14 * dp, 10 * dp, fill)
+            }
+            drawPin(canvas, r.right - 14 * dp, r.top + 14 * dp, 6 * dp, palette.accent)
+        }
         if (showActions) {
             fill.color = palette.preview
             canvas.drawRoundRect(r, 12 * dp, 12 * dp, fill)
@@ -148,6 +173,38 @@ class ClipboardPanelView(context: Context) : View(context) {
             drawPin(canvas, p.centerX(), p.centerY(), 8 * dp, if (clip.pinned) palette.accent else palette.glyph)
             drawBin(canvas, d.centerX(), d.centerY(), 9 * dp, palette.glyph)
         }
+    }
+
+    private val picture = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+    /**
+     * An image's card: its thumbnail filling the card (cut to it, the middle kept), dimmed where
+     * the field doesn't take it; a mountain-and-sun outline while there is no thumbnail.
+     */
+    private fun drawPicture(canvas: Canvas, clip: Clip, r: RectF) {
+        val bmp = thumbnail(clip)
+        val usable = canPaste(clip)
+        if (bmp == null) {
+            val c = if (usable) palette.dim else palette.preview
+            line.color = c
+            val s = 12 * dp
+            val cx = r.centerX()
+            val cy = r.centerY()
+            canvas.drawRoundRect(RectF(cx - s * 1.3f, cy - s, cx + s * 1.3f, cy + s), 3 * dp, 3 * dp, line)
+            canvas.drawLine(cx - s * 1.3f, cy + s * 0.6f, cx - s * 0.3f, cy - s * 0.2f, line)
+            canvas.drawLine(cx - s * 0.3f, cy - s * 0.2f, cx + s * 1.3f, cy + s * 0.9f, line)
+            canvas.drawCircle(cx + s * 0.6f, cy - s * 0.45f, s * 0.22f, line)
+            return
+        }
+        val scale = maxOf(r.width() / bmp.width, r.height() / bmp.height)
+        val w = r.width() / scale
+        val h = r.height() / scale
+        val src = Rect(((bmp.width - w) / 2).toInt(), ((bmp.height - h) / 2).toInt(), ((bmp.width + w) / 2).toInt(), ((bmp.height + h) / 2).toInt())
+        canvas.save()
+        canvas.clipPath(Path().apply { addRoundRect(r, 12 * dp, 12 * dp, Path.Direction.CW) })
+        picture.alpha = if (usable) 255 else 70
+        canvas.drawBitmap(bmp, src, r, picture)
+        canvas.restore()
     }
 
     private fun drawClipboard(canvas: Canvas, cx: Float, cy: Float, s: Float, color: Int) {
@@ -269,8 +326,8 @@ class ClipboardPanelView(context: Context) : View(context) {
             val r = cardRect(shown)
             when {
                 clip == null -> Unit
-                pinRect(r).contains(x, y) -> l?.onPin(clip.text, !clip.pinned)
-                deleteRect(r).contains(x, y) -> l?.onDelete(clip.text)
+                pinRect(r).contains(x, y) -> l?.onPin(clip.key, !clip.pinned)
+                deleteRect(r).contains(x, y) -> l?.onDelete(clip.key)
             }
             invalidate()
             return
@@ -278,7 +335,12 @@ class ClipboardPanelView(context: Context) : View(context) {
         when {
             backRect().contains(x, y) -> l?.onClosePanel()
             clearRect().contains(x, y) -> if (clips.any { !it.pinned }) l?.onClearClips()
-            else -> clips.getOrNull(cardAt(x, y))?.let { l?.onPaste(it.text) }
+            else -> clips.getOrNull(cardAt(x, y))?.let {
+                when {
+                    it.image == null -> l?.onPaste(it.text)
+                    canPaste(it) -> l?.onPasteImage(it)
+                }
+            }
         }
     }
 }
