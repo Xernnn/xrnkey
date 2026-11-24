@@ -33,9 +33,9 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
 
     /**
      * The word right before the reading (or the cursor) that it follows: the last one put in by
-     * Space, Enter or a tap, while nothing else went in after it (null: none, at the field's
-     * start, after a space or punctuation). The reading converts after its part of speech ("は"
-     * after 私 is the particle), and the next words follow it.
+     * Space, Enter or a tap, or the 、 or 。 after it, while nothing else went in after it (null:
+     * none, at the field's start, after a space). The reading converts after its part of speech
+     * ("は" after 私 is the particle), and the next words follow it.
      */
     var context: Converter.Segment? = null
         private set
@@ -60,7 +60,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
     fun conversion(): Conversion? =
         if (romaji.isEmpty()) null else converter.convert(romaji.reading, context?.rid ?: 0, context?.takeIf { it.word }?.surface)
 
-    /** With nothing composing, right after a word: what may follow it, likeliest first (else none). */
+    /** With nothing composing, right after a word or 、 。: what may follow it, likeliest first (else none). */
     fun nextWords(): List<Candidate> {
         val c = context
         if (composing.isNotEmpty() || !romaji.isEmpty() || c == null) return emptyList()
@@ -88,7 +88,11 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         val ch = WIDE[c] ?: c
         when {
             c == ' ' -> if (romaji.isEmpty()) commitOther(SPACE) else startConverting()
-            romaji.isEmpty() && c !in 'a'..'z' && c !in 'A'..'Z' -> commitOther(ch.toString())
+            romaji.isEmpty() && c !in 'a'..'z' && c !in 'A'..'Z' -> {
+                commitOther(ch.toString())
+                // After 、 and 。: the next words are what a clause or a sentence starts with.
+                context = converter.punctuation(ch.toString())
+            }
             else -> {
                 romaji.type(ch)
                 show(romaji.shown)

@@ -426,15 +426,24 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
   `は学生です`, the particle).
 - **The word before**: a reading converts after the last word put in by Space, Enter or a tap,
-  while nothing else went in after it: `は` after `私` is the particle, not `葉`. A space,
-  punctuation, Backspace into the text, an emoji or a moved cursor ends it.
+  or the `、`, `。`, `？` or `！` typed after it, while nothing else went in after it: `は` after
+  `私` is the particle, not `葉`. A space, Backspace into the text, an emoji or a moved cursor
+  ends it.
 - **Next words**: with nothing composing, right after a word goes in, the strip offers what may
   follow it, the likeliest in the middle, not bold (Space doesn't take it):
   - the words the owner put in after it before, the latest first;
-  - then the short words its part of speech goes on with best, by the connection cost plus the
-    word's own: particles, the copula and auxiliaries, and the commonest verbs and nouns that
-    follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`, `ます`).
-    Only those under a limit, so after a particle there may be none, and the tool row shows;
+  - then the words its part of speech goes on with best, by the connection cost plus the word's
+    own, each kind under a limit:
+    - the short words: particles, the copula and auxiliaries, and the commonest verbs and nouns
+      that follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`,
+      `ます`);
+    - about 100 common content words: nouns, adjectives, verbs and adverbs (`何`, `私`, `今日`,
+      `いい`, `ない`, `する`, `見る` …), which a particle is followed by (`を`: `する`, `思う`,
+      `見る`; `が`: `ある`, `できる`, `ない`; `の`: `よう`, `こと`, `人`), and a noun far less;
+  - after `、`, `。`, `？` or `！` (typed, or the end of a conversion): what a clause or a
+    sentence starts with, by the same costs after that punctuation (`。`: `この`, `その`,
+    `また`, `これ`, `そして`, `それ`, `私`);
+  - worked out once for each part of speech, the first time it comes, so no key costs more;
   - a tap puts it in with no space, and the strip goes on from it;
   - the settings' "Next word" turns it off, as on the other keyboards.
 - **Learning** (the owner's choices, on the phone only):
@@ -466,8 +475,8 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
 - **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
   types them; nothing converts.
 - **Not on this keyboard**: no learning of new words the dictionary lacks (only of choices
-  among its words and the kana), no next words beyond the owner's and the short words that
-  follow, no Telex, and no emoji in the strip (the emoji panel is there).
+  among its words and the kana), no next words beyond the owner's and the lists above, no
+  Telex, and no emoji in the strip (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first

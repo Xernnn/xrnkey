@@ -318,34 +318,82 @@ class Converter(private val dict: Dictionary) {
         return Candidate(text, n, w?.rid ?: noun, listOf(Segment(text, reading, w?.rid ?: noun, w?.lid ?: noun)))
     }
 
-    /** The reading committed as typed, as a segment (for what follows it). */
-    fun asTyped(reading: String): Segment? = kanaForm(reading, reading, reading.length).segments.singleOrNull()
+    /** The reading committed as typed, as a segment (for what follows it): punctuation as itself. */
+    fun asTyped(reading: String): Segment? =
+        punctuation(reading) ?: kanaForm(reading, reading, reading.length).segments.singleOrNull()
 
     /**
-     * What may come next after the word `after`, with nothing typed yet: the words the owner chose
-     * after it before, the latest first, then the short words that follow its part of speech
-     * best ("私": は, の, が; "ありがとう": ございます; "行き": たい, ます).
+     * Punctuation that ends a clause or a sentence (、 。 ？ ！), as a segment with its part of
+     * speech, which the next words and the next reading follow; null for anything else.
+     */
+    fun punctuation(text: String): Segment? {
+        if (text.isEmpty() || text.any { it !in PUNCTUATION }) return null
+        val id = dict.literal(literalKind(text.last()))
+        return Segment(text, text, id, id, word = false)
+    }
+
+    /**
+     * What may come next after `after`, with nothing typed yet: the words the owner chose after it
+     * before, the latest first, then the words its part of speech goes on with best, by the
+     * connection cost plus the word's own: the short ones (particles, the copula, auxiliaries:
+     * "私": は, の, が; "ありがとう": ございます; "行き": たい, ます) and common content words
+     * ("を": する, 思う, 見る; "が": ある, できる, ない). After 、 or 。, the words a clause or a
+     * sentence starts with ("。": この, その, また, そして).
      */
     fun next(after: Segment, n: Int = NEXT): List<Candidate> {
         val out = LinkedHashMap<String, Candidate>()
         history?.after(after.surface, n)?.forEach { e ->
             out.putIfAbsent(e.surface, Candidate(e.surface, 0, e.rid, listOf(Segment(e.surface, e.reading, e.rid, e.lid))))
         }
-        if (after.word && after.rid < dict.parts) {
-            val scored = following.map { w -> w to dict.connection(after.rid, w.lid) + w.cost }
-                .filter { it.second <= NEXT_LIMIT }
-                .sortedBy { it.second }
-            for ((w, _) in scored) {
-                if (out.size >= n) break
-                out.putIfAbsent(w.surface, Candidate(w.surface, 0, w.rid, listOf(Segment(w.surface, w.reading, w.rid, w.lid))))
-            }
+        val pool = when {
+            after.rid !in 0 until dict.parts -> emptyList()
+            after.word -> following(after.rid)
+            after.surface.all { it in PUNCTUATION } -> starting(after.rid)
+            else -> emptyList()
+        }
+        for (w in pool) {
+            if (out.size >= n) break
+            out.putIfAbsent(w.surface, Candidate(w.surface, 0, w.rid, listOf(Segment(w.surface, w.reading, w.rid, w.lid))))
         }
         return out.values.take(n)
     }
 
-    /** The short words the next words are found among: each, with each part of speech it has in kana. */
-    private val following: List<Word> by lazy {
-        FOLLOWING.flatMap { r -> dict.lookup(r).filter { it.surface == r } }
+    /** Each word of a list ("reading:surface", or a reading written in kana), with each part of speech it has. */
+    private fun wordsOf(list: List<String>): List<Word> = list.flatMap { e ->
+        val reading = e.substringBefore(':')
+        val surface = e.substringAfter(':')
+        dict.lookup(reading).filter { it.surface == surface }
+    }
+
+    private val shortWords: List<Word> by lazy { wordsOf(FOLLOWING) }
+    private val contentWords: List<Word> by lazy { wordsOf(CONTENT) }
+    private val starterWords: List<Word> by lazy { wordsOf(STARTERS) }
+
+    /**
+     * The words that may follow each part of speech, best first: worked out once for each, the
+     * first time it is asked for, so the strip costs no more on each key.
+     */
+    private val followingCache = HashMap<Int, List<Word>>()
+    private val startingCache = HashMap<Int, List<Word>>()
+
+    private fun following(rid: Int): List<Word> = followingCache.getOrPut(rid) {
+        ranked(rid, listOf(shortWords to NEXT_LIMIT, contentWords to CONTENT_LIMIT))
+    }
+
+    private fun starting(rid: Int): List<Word> = startingCache.getOrPut(rid) {
+        ranked(rid, listOf(starterWords to CONTENT_LIMIT, contentWords to CONTENT_LIMIT))
+    }
+
+    /** The words of `pools` after `rid`, each under its pool's limit, cheapest first, each text once. */
+    private fun ranked(rid: Int, pools: List<Pair<List<Word>, Int>>): List<Word> {
+        val scored = ArrayList<Pair<Word, Int>>()
+        for ((words, limit) in pools) {
+            for (w in words) {
+                val cost = dict.connection(rid, w.lid) + w.cost
+                if (cost <= limit) scored += w to cost
+            }
+        }
+        return scored.sortedBy { it.second }.map { it.first }.distinctBy { it.surface }.take(NEXT)
     }
 
     /**
@@ -409,9 +457,17 @@ class Converter(private val dict: Dictionary) {
         /** The strip's candidates before the kana and the pieces: its three, and three rows of the panel. */
         private const val SHOWN = 12
 
-        /** Next words offered, and how dear the dearest may be after the word before. */
+        /**
+         * Next words offered, and how dear the dearest may be after the word before: a short word,
+         * and a content word (after a particle they cost 1,600 to 4,500 with Mozc's dictionary;
+         * after a noun, more).
+         */
         const val NEXT = 15
         private const val NEXT_LIMIT = 2600
+        private const val CONTENT_LIMIT = 4500
+
+        /** What ends a clause or a sentence: after it, the words one starts with. */
+        private const val PUNCTUATION = "、。，．！？!?"
 
         /**
          * The short words written in kana that may follow a word: particles, the copula and
@@ -421,6 +477,35 @@ class Converter(private val dict: Dictionary) {
             "は が を に で と の も へ や から まで より って けど ので のに か ね よ な わ だけ しか など なら ても でも " +
                 "です ます だ た て ない たい ました ません でした でしょう だった じゃ ん れる られる そう よう " +
                 "する した して います いる ある あります ございます ございました ください なる さん たち こと もの"
+            ).split(' ')
+
+        /**
+         * Common content words that follow a particle ("を": する, 見る; "が": ある, いい): nouns,
+         * adjectives, verbs and adverbs, "reading:surface" (a word written in kana: its reading).
+         */
+        private val CONTENT = (
+            "なに:何 わたし:私 きょう:今日 あした:明日 きのう:昨日 いま:今 じかん:時間 しごと:仕事 ひと:人 " +
+                "ともだち:友達 いえ:家 がっこう:学校 かいしゃ:会社 でんわ:電話 れんらく:連絡 しゃしん:写真 えいが:映画 " +
+                "ごはん:ご飯 おかね:お金 にほん:日本 にほんご:日本語 えいご:英語 ほんとう:本当 だいじょうぶ:大丈夫 " +
+                "いっしょ:一緒 ぜんぶ:全部 みんな はなし:話 もんだい:問題 てんき:天気 すき:好き だいすき:大好き " +
+                "たのしみ:楽しみ げんき:元気 " +
+                "いい ない たのしい:楽しい うれしい:嬉しい おいしい:美味しい おおきい:大きい ちいさい:小さい " +
+                "あたらしい:新しい はやい:早い いそがしい:忙しい むずかしい:難しい かわいい:可愛い さむい:寒い " +
+                "あつい:暑い おおい:多い すくない:少ない たかい:高い やすい:安い " +
+                "する ある いる なる いく:行く くる:来る みる:見る いう:言う おもう:思う たべる:食べる のむ:飲む " +
+                "かう:買う つかう:使う わかる:分かる できる もつ:持つ まつ:待つ きく:聞く よむ:読む かく:書く " +
+                "つくる:作る あう:会う かえる:帰る はいる:入る でる:出る おくる:送る かんがえる:考える しる:知る " +
+                "よく すごく とても ちょっと まだ もう すこし:少し たくさん また ほんとうに:本当に ぜんぜん:全然 " +
+                "いちばん:一番 すぐ ずっと はやく:早く もっと けっこう:結構"
+            ).split(' ')
+
+        /** What a clause or a sentence often starts with, after 、 or 。, "reading:surface" as above. */
+        private val STARTERS = (
+            "わたし:私 ぼく:僕 おれ:俺 あなた きょう:今日 あした:明日 きのう:昨日 いま:今 こんど:今度 でも それ " +
+                "そう この その あの これ じゃあ だから なので それで そして しかし また もし まず じつは:実は " +
+                "たぶん:多分 やっぱり ちなみに ところで はい いいえ うん ありがとう すみません ごめん おはよう " +
+                "こんにちは よろしく おつかれさま:お疲れ様 ちょっと ほんとうに:本当に みんな なに:何 どう なんで " +
+                "いつ どこ"
             ).split(' ')
 
         fun literalKind(c: Char): Literal = when {

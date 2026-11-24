@@ -164,8 +164,9 @@ class KanaTypistTest {
 
     /**
      * Right after a word goes in, the strip offers what may follow it, not bold (Space doesn't take
-     * it); a tap puts it in with no space, and the strip goes on from it. A space, punctuation or
-     * Backspace ends it.
+     * it); a tap puts it in with no space, and the strip goes on from it, after a particle too
+     * (content words). After 、 or 。 it offers what a sentence starts with. A space or Backspace
+     * ends it.
      */
     @Test
     fun theNextWordsFollowACommit() {
@@ -180,13 +181,19 @@ class KanaTypistTest {
         typist.pick(strip.pick(1)!!)
         assertEquals("私は", editor.committed.toString())
         assertEquals("", editor.composing)
-        assertTrue(strip.make(typist) is Strip.Candidates)
+        val afterWa = strip.make(typist) as Strip.Candidates
+        assertTrue(afterWa.toString(), listOf(afterWa.left, afterWa.centre, afterWa.right).none { it in listOf("は", "が", "を", "です") })
         type(" ")
         assertEquals(Strip.Tools, strip.make(typist))
         type("ikimasu")
         typist.enter()
         type("、")
-        assertEquals(Strip.Tools, strip.make(typist))
+        assertEquals("私", (strip.make(typist) as Strip.Candidates).centre)
+        assertEquals(Converter.Segment("、", "、", typist.context!!.rid, typist.context!!.lid, word = false), typist.context)
+        typist.pick(strip.pick(1)!!)
+        assertEquals("私は　いきます、私", editor.committed.toString())
+        type("。")
+        assertEquals("私", (strip.make(typist) as Strip.Candidates).centre)
         type("ikimasu")
         typist.enter()
         typist.backspace()
