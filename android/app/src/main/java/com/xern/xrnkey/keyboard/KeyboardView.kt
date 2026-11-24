@@ -29,6 +29,12 @@ class KeyboardView(context: Context) : View(context) {
 
     interface Listener {
         fun onText(text: String) {}
+        /**
+         * A letter key tapped, and where the finger landed on it: [dx] key widths right of its
+         * centre, [dy] key heights below it; [keyHeight] is the key's height in key widths. For
+         * the typo fixes; by default, text like any other.
+         */
+        fun onLetter(text: String, dx: Float, dy: Float, keyHeight: Float) = onText(text)
         fun onBackspace() {}
         fun onEnter() {}
         fun onCandidate(slot: Int) {}
@@ -1206,10 +1212,28 @@ class KeyboardView(context: Context) : View(context) {
                 if (shown.menu) menuChoice(shown.forms[popupChoice]) else typeChar(shown.forms[popupChoice])
             }
             h != null && act && h.key.kind == KeyKind.KANA -> liftKana(h.key)
-            h != null && act && !holdFired -> tap(h.key)
+            h != null && act && !holdFired -> if (!tapLetter(h)) tap(h.key)
         }
         holdFired = false
         invalidate()
+    }
+
+    /**
+     * A letter key's tap on the letters page, with where the finger landed on it: where it went
+     * down, or, when it slid onto this key, where it was last. False for any other key.
+     */
+    private fun tapLetter(h: Hit): Boolean {
+        val k = h.key
+        if (k.kind != KeyKind.CHAR || page != Page.LETTERS || k.label.length != 1 || !k.label[0].isLetter()) return false
+        val r = h.rect
+        if (r.width() <= 0f || r.height() <= 0f) return false
+        val down = r.contains(anchorX, anchorY)
+        val x = if (down) anchorX else fingerX
+        val y = if (down) anchorY else fingerY
+        toggleKey = null
+        listener?.onLetter(k.label, (x - r.centerX()) / r.width(), (y - r.centerY()) / r.height(), r.height() / r.width())
+        if (shift == Shift.ONCE) shift = Shift.OFF
+        return true
     }
 
     /** A tap, as the keyboard acts on it (public for the tests and the service). */

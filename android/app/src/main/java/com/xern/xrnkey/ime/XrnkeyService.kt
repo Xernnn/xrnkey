@@ -415,6 +415,13 @@ class XrnkeyService :
         showStrip()
     }
 
+    /** A letter tapped, with where on its key: the Latin typist weighs it for its typo fixes. */
+    override fun onLetter(text: String, dx: Float, dy: Float, keyHeight: Float) {
+        if (searchQuery != null || input !== typist) return onText(text)
+        edit { typist.text(text, Touch(dx, dy, keyHeight)) }
+        showStrip()
+    }
+
     override fun onBackspace() {
         val q = searchQuery
         if (q != null) {
@@ -701,6 +708,7 @@ class XrnkeyService :
         strip.hidden = od.hidden?.let { h -> { text: String -> text in h } } ?: { false }
         val learning = options.learn
         typist.personal = if (learning) od.words else null
+        typist.touchSpots = if (learning) od.spots else null
         models?.user = if (learning) od.words else null
         typist.shortcuts = if (options.shortcuts) od.shortcuts else null
         // Incognito fields ask for nothing to be learned, and nothing typed in this app's own
@@ -806,6 +814,7 @@ class XrnkeyService :
                 it.raw = old.raw
                 it.autoCorrect = old.autoCorrect
                 it.personal = old.personal
+                it.touchSpots = old.touchSpots
                 it.shortcuts = old.shortcuts
                 it.learnHere = old.learnHere
             }
