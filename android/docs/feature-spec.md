@@ -185,7 +185,13 @@ keyboard's hide button.
   it as typed, since the rest of the word is after it. Not before a digit, nor inside `don't`
   or `e-mail`.
 - **Space**: ends the word (see "Auto-correct"). A **horizontal swipe** that starts on the space
-  bar moves the cursor one character per 12 dp. The word in progress is committed first.
+  bar moves the cursor one character per 10 dp, once it has slid half a key sideways (and more
+  sideways than up or down): a thumb rolling on a quick tap still types the space. The word in
+  progress is committed first.
+- **Where a tap counts**: the key it lands on, as on the reference (AOSP's keyboard): the home
+  row's end keys reach the screen's edges (a tap left of a is a), and a key gives way to the one
+  under the finger only after a slide of 0.4 of a key, so a thumb rolling over a key's edge
+  still types the key it landed on.
 - **Holding the space bar** types a space, nothing more. (It used to turn the keys into a
   trackpad; the owner doesn't use that. The tool row's cursor pad does the same.)
 - **Double Space**: replaces "␠␠" after a word with ". ". This happens only straight after a

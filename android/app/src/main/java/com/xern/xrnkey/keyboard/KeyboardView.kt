@@ -906,6 +906,12 @@ class KeyboardView(context: Context) : View(context) {
     private val lineStep get() = 28 * dp
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
 
+    /** How far a finger must slide before a key gives way to the one under it: 0.4 of a key. */
+    private val slideAway get() = 0.4f * width / 10f
+
+    /** How far a finger must slide along the space bar before it moves the cursor: half a key. */
+    private val spaceSlide get() = maxOf(slop.toFloat(), 0.5f * width / 10f)
+
     /** Where the pressed key's finger is now (where a popup opens around). */
     private var fingerX = 0f
     private var fingerY = 0f
@@ -1026,10 +1032,14 @@ class KeyboardView(context: Context) : View(context) {
     /** The finger moved while the space bar is held or swiped. */
     private fun moveCursor(x: Float, y: Float) {
         if (cursor == Cursor.OFF) {
-            if (!spaceSwipe || Math.abs(x - anchorX) < slop) return
+            // A slide, not a thumb's roll on a quick tap: half a key sideways, and more sideways
+            // than up or down. At the touch slop (8 dp) a fast Space often lost its space and
+            // moved the cursor a character, so the next letters went in the wrong place.
+            val dx = Math.abs(x - anchorX)
+            if (!spaceSwipe || dx < spaceSlide || dx < Math.abs(y - anchorY)) return
             removeCallbacks(hold)
             startCursor(Cursor.SWIPE)
-            anchorX += if (x > anchorX) slop.toFloat() else -slop.toFloat()
+            anchorX += if (x > anchorX) spaceSlide else -spaceSlide
         }
         val dx = ((x - anchorX) / cursorStep).toInt()
         val dy = if (cursor == Cursor.PAD) ((y - anchorY) / lineStep).toInt() else 0
@@ -1052,7 +1062,19 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
+    /**
+     * The key a touch is on: the one whose cell holds it, else the nearest key of its row. The
+     * home row is inset half a key at each end, and a tap left of a or right of l typed nothing;
+     * on the reference (AOSP's keyboard) the end keys reach the screen's edges.
+     */
     private fun hitAt(x: Float, y: Float): Hit? = hits.firstOrNull { it.rect.contains(x, y) }
+        ?: hits.filter { y >= it.rect.top && y < it.rect.bottom }.minByOrNull { h ->
+            when {
+                x < h.rect.left -> h.rect.left - x
+                x >= h.rect.right -> x - h.rect.right
+                else -> 0f
+            }
+        }
 
     /** The cursor pad from the tool row: it stays until a tap that doesn't drag. */
     private var padOpen = false
@@ -1181,7 +1203,11 @@ class KeyboardView(context: Context) : View(context) {
             else -> {
                 val h = hitAt(x, y)
                 val kind = p?.key?.kind
-                if (h != null && h !== p && (kind == KeyKind.CHAR || kind == KeyKind.EMOTICON) && !holdFired) {
+                // Only a slide moves the key: a thumb rolls a little as it taps, and over a key's
+                // edge that used to type its neighbour ("e" became "r"). AOSP's keyboard has the
+                // same hysteresis.
+                val slid = Math.hypot((x - anchorX).toDouble(), (y - anchorY).toDouble()) > slideAway
+                if (h != null && h !== p && slid && (kind == KeyKind.CHAR || kind == KeyKind.EMOTICON) && !holdFired) {
                     removeCallbacks(hold)
                     pressed = h
                     if (h.key.hold != null) postDelayed(hold, holdMillis)
