@@ -241,6 +241,10 @@ TEST_CASE("Space's fix leaves words, chat and codes alone", "[typos][touch]") {
     CHECK(t.fix({"<s>", "tôi"}, "khpng", {}, XK_CORRECT_FLEXIBLE, &known) == "không");
     CHECK(known == 0);
     CHECK(t.fix({"<s>"}, "oke").empty());                // chat meant as typed
+    // Chat spelt with its marks on purpose: no key added or taken away makes it a word.
+    CHECK(t.fix({"<s>", "tôi"}, "dzaayj", {}, XK_CORRECT_STRONG).empty());
+    CHECK(t.fix({"<s>", "bạn"}, "uwaf", {}, XK_CORRECT_STRONG).empty());
+    CHECK(t.fix({"<s>", "tôi"}, "zaayj", {}, XK_CORRECT_STRONG).empty());
     CHECK(t.fix({"<s>"}, "thx").empty());                // no vowel: an abbreviation
     CHECK(t.fix({"<s>"}, "KHPNG").empty());              // capitals throughout: a code
     CHECK(t.fix({"<s>", "tôi"}, "khpng", {}, XK_CORRECT_OFF).empty());

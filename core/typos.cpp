@@ -12,7 +12,8 @@
  * marks, the accented readings of letters typed without any, an English word. Each word is
  * scored in context by the models' mixture (score.cpp) plus what its slips cost, LatinIME's
  * noisy channel, and so is leaving the word as typed: the models' share for a word they don't
- * know. The best fix replaces the word only when it leads leaving it by the level's margin and
+ * know. A syllable typed with its marks that no dictionary has may be chat spelt so on purpose
+ * ("dzậy", "ừa"): it is fixed only by a neighbour's key, and by a wider margin. The best fix replaces the word only when it leads leaving it by the level's margin and
  * is the likely one among the rest. */
 #include "keys.h"
 #include "learn.h"
@@ -52,9 +53,10 @@ constexpr double kChannelFloor = -6.0;
 constexpr double kVowelEdge = -0.6;
 /* A neighbour that likely (the tap near its edge) may come with a second slip of another kind. */
 constexpr double kPairedSub = -1.2;
-/* Leaving the word as typed scores the models' share for a word they don't know; a spelling
- * chat uses ("kà") is likelier typed so on purpose, by this much. */
-constexpr double kChatSpelling = 1.5;
+/* Leaving the word as typed scores the models' share for a word they don't know; a syllable
+ * typed with its marks that chat may spell so ("dzậy", "ừa"), this much more. With it, none of
+ * a list of made-up chat spellings typed with taps on their keys' centres is changed. */
+constexpr double kChatSpelling = 2.0;
 /* A syllable the Vietnamese model knows counts as a word from this unigram up: the model holds
  * the odd typo from web text as a token of its own. */
 constexpr float kKnownSyllable = -6.5f;
@@ -201,7 +203,7 @@ struct Fix {
  * to it) and count. */
 std::unordered_map<std::string, std::pair<double, int>> sequences(const std::string& keys,
                                                                   const std::vector<std::array<double, 26>>& w,
-                                                                  int max_slips) {
+                                                                  int max_slips, bool other_slips) {
     std::unordered_map<std::string, std::pair<double, int>> out;
     auto add = [&](std::string k, double cost, int slips) {
         if (cost < kChannelFloor || k.empty()) return;
@@ -259,9 +261,9 @@ std::unordered_map<std::string, std::pair<double, int>> sequences(const std::str
                     t2[j] = c2;
                     add(std::move(t2), cost + cost2, 2);
                 }
-            if (cost >= kPairedSub) others(t, cost, 1, i);
+            if (other_slips && cost >= kPairedSub) others(t, cost, 1, i);
         }
-    others(keys, 0.0, 0, n);
+    if (other_slips) others(keys, 0.0, 0, n);
     return out;
 }
 
@@ -270,7 +272,7 @@ bool find_fix(const XKStateImpl& s, const Models& m, const Context& ctx, const s
               const std::vector<std::array<double, 26>>& w, int level, const std::string& as_typed, bool chat,
               Fix* fix) {
     const int max_slips = keys.size() >= 4 ? 2 : 1;
-    const auto seqs = sequences(keys, w, max_slips);
+    const auto seqs = sequences(keys, w, max_slips, !chat);
     Resolver resolve(s, m);
     std::vector<Cand> cands;
     for (const auto& [k, cost] : seqs) resolve.words(k, cost.first, cost.second, cands);
@@ -345,7 +347,8 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
         keys += c;
     }
     /* What Space commits as things stand, and whether that is a word. */
-    const std::string as_typed = context_token(word_final(s->word, s->opt, s));
+    const std::string ends = word_final(s->word, s->opt, s);
+    const std::string as_typed = context_token(ends);
     level = std::clamp(level, XK_CORRECT_OFF, XK_CORRECT_STRONG);
     const Case cs = upper == 0 ? Case::Lower : (raw[0] >= 'A' && raw[0] <= 'Z') ? Case::Capital : Case::Lower;
     /* The English typos common enough that web text, and so the models, have them. */
@@ -357,6 +360,12 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
             return kFixed;
         }
     if (is_word(m, as_typed)) return kWord;
+    /* A syllable typed with its marks, though no dictionary's, may be chat spelt so on purpose
+     * ("dzậy", "ừa", "ùi"), or a slip onto a key chat spells with ("fặng" for "gặng"): only a
+     * neighbour's key fixes it, never a key added or taken away, and only by a wider margin. */
+    std::u32string letters;
+    int tone;
+    const bool chat = !az(as_typed) && syllable_split(ends, &letters, &tone) && chat_syllable_valid(letters, tone);
     if (level == XK_CORRECT_OFF || keys.size() < 2 || keys.size() > 24) return kNone;
     /* Capitals throughout: an acronym or a code. Chat abbreviations stay, and letters with no
      * vowel are one unless there are four of them ("khpng" is a slip, "thx" is not). */
@@ -377,9 +386,6 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
             for (char v : std::string_view("aeiouy")) edge = edge || t[static_cast<size_t>(v - 'a')] >= kVowelEdge;
         if (!edge) return kNone;
     }
-    std::u32string letters;
-    int tone;
-    const bool chat = !az(as_typed) && syllable_split(as_typed, &letters, &tone) && chat_syllable_valid(letters, tone);
     const Context ctx = context_from(&m, context, ctx_len, false);
     const bool ok = find_fix(*s, m, ctx, keys, w, level, as_typed, chat, fix);
     fix->text = with_case(styled(fix->text, s->opt.modern_style), cs);
