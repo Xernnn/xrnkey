@@ -417,20 +417,39 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     ー, a small vowel (`ふぁ`, `てぃ`) or ゔ, or with a kana no word reads;
   - no remove marks: the dictionary's words are not the owner's to forget.
 - **Space**:
-  - while composing, it converts: the field shows the best conversion, and the strip shows it
-    in the middle on the accent, with the candidate before it on the left and the next on the
-    right. Each further Space shows the next one, after the last the first again. The order is
-    the strip's, without the predictions: the best conversion, the owner's choices, the next
-    likeliest conversions, and after the first eight of those the hiragana, the katakana (and
-    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then
-    the words for the reading's start. A start converted another way shows with the rest of the
-    reading converted after it (`渡し` + `は学生です`). Predictions are not in the round; they
-    stay in the panel;
+  - while composing, it converts, as Mozc and Gboard do, in **phrases** (bunsetsu: a word and
+    what goes with it): the field shows the best conversion split into phrases, the first in
+    focus, on a tint of the accent (the whole underlined, as composing text is):
+    `わたしはがくせいです` is `私は` / `学生です`, `きょうはいいてんきですね` `今日は` / `いい天気ですね`,
+    `しごとがおわったらでんわします` `仕事が` / `終わったら` / `電話します`. A particle, an
+    auxiliary, a suffix, a dependent word (`いる` of `ている`) or punctuation goes with the word
+    before it, a prefix (`お`) with the word after it, a form of `する` with a noun that takes it
+    (`勉強します`), by each part of speech Mozc's dictionary has (`data/ja/build_dict.py`,
+    `KINDS`);
+  - the strip shows the focused phrase's candidates: the one the field shows in the middle on
+    the accent, the one before it on the left and the next on the right, the others in the
+    panel. Each further Space shows the focused phrase's next, after the last the first again;
+    the other phrases stay. The order: the phrase as the whole conversion has it, then the
+    phrase's reading converted alone after the phrase before (its owner's choices, the next
+    likeliest conversions, and after the first eight of those the hiragana, the katakana, and
+    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters, then the rest, then the
+    words for the phrase's start). A start converted another way shows with the rest of its
+    phrase converted after it (`渡し葉`). The whole reading's predictions are in the panel while
+    it is one phrase;
+  - the focus moves a phrase with ◀ and ▶ on the 12-key pad, and on QWERTY by sliding along
+    the space bar, a phrase per 30 dp, no further than the ends; the conversion stays;
+  - the strip's sides are ⇤ and ⇥ while converting, in place of ≡ and the emoji button: ⇤
+    shrinks the focused phrase by a kana, which starts the next phrase (or a new one at the
+    end), ⇥ stretches it by one taken from the next (as Mozc's Shift+arrows). Both are converted
+    again, the focused one after the phrase before and the next after it; the phrases further
+    on stay. A phrase of one kana doesn't shrink, the last doesn't stretch;
   - with nothing composing, it types a full-width space `　`, Gboard's default.
-- **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
-  stands for, with no space after it. A word for the reading's start leaves the rest composing,
-  as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
-  `は学生です`, the particle).
+- **Tap a candidate** (a slot or the panel): after Space, the focused phrase's: the field shows
+  it, and the focus moves to the next phrase; on the last phrase everything goes in, as shown.
+  While composing: it goes in, in place of the part of the reading it stands for, with no space
+  after it. A word for the reading's start leaves the rest composing, as typed, and its
+  candidates follow that word (`私`, then `はがくせいです` converts to `は学生です`, the
+  particle).
 - **The word before**: a reading converts after the last word put in by Space, Enter or a tap,
   or the `、`, `。`, `？` or `！` typed after it, while nothing else went in after it: `は` after
   `私` is the particle, not `葉`. A space, Backspace into the text, an emoji or a moved cursor
@@ -453,8 +472,9 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   - a tap puts it in with no space, and the strip goes on from it;
   - the settings' "Next word" turns it off, as on the other keyboards.
 - **Learning** (the owner's choices, on the phone only):
-  - what Space or a tap puts in is learned: each word with its reading, and each pair of a word
-    and the one before it, with how often and when. Not what Enter commits as typed, nor Latin
+  - what Space or a tap puts in is learned: each word with its reading (after Space, each
+    phrase's choice, as its words), and each pair of a word and the one before it, with how
+    often and when. Not what Enter commits as typed, nor Latin
     letters, digits, punctuation or a kana no word has;
   - a word chosen for a reading is offered right after what Space gives, and it costs less than
     every other word read so (more, the more often it was chosen; of two chosen, the later), so
@@ -485,7 +505,7 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     learned); at most 5,000, kept in `japanese-words.tsv` next to the personal words, and read
     again at the next field once the settings change them.
 - **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
-  after Space the conversion shown), with no new line; otherwise the field's action or a new
+  after Space every phrase as shown), with no new line; otherwise the field's action or a new
   line.
 - **Backspace**: takes the last letter waiting or the last kana; after Space, it goes back to the
   reading, unconverted; with nothing composing, the character before the cursor. A swipe from it
@@ -550,6 +570,7 @@ is JA). Password, email and URL fields get plain QWERTY letters, and number fiel
   kana after a reading of punctuation alone commits it first.
 - **◀ and ▶** move the cursor a character, and repeat while held. ◀ with a reading commits it as
   shown, as the space bar's slide does; ▶ at the end of a reading stays put (it ends a toggle).
+  After Space (変換) they move the focus between the phrases instead, both ways.
 - **?123** opens the number pad below. **🌐** opens the comma's menu at once: slide to a choice
   and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap elsewhere closes it.
 - **The number pad**, as Gboard's (Google Japanese Input's 12-key numbers): the same grid and

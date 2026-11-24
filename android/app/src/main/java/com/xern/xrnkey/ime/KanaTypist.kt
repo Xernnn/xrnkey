@@ -8,10 +8,13 @@ import com.xern.xrnkey.ja.Romaji
 /**
  * The Japanese keyboard's keys, as Gboard's Japanese QWERTY has them (android/docs/feature-spec.md,
  * "The Japanese keyboard"). Letters spell a reading in romaji ([Romaji]), shown as composing
- * hiragana. Space converts it: the field shows the best conversion, and each Space after it the
- * next candidate. Enter commits what the field shows; so does the next letter, which starts a new
- * reading. Backspace takes the last letter or kana, or, after Space, goes back to the reading.
- * With nothing composing, Space types a full-width space and Enter reaches the field.
+ * hiragana. Space converts it: the field shows the best conversion, split into phrases
+ * ([phrases]: a word and what goes with it, as Mozc's segments), the first in focus. Each Space
+ * after it shows the focused phrase's next candidate; a tap on one takes it and moves the focus
+ * on; [moveFocus] moves it, [resize] stretches or shrinks the focused phrase. Enter commits what
+ * the field shows; so does the next letter, which starts a new reading. Backspace takes the last
+ * letter or kana, or, after Space, goes back to the reading. With nothing composing, Space types a
+ * full-width space and Enter reaches the field.
  *
  * 、 and 。 come from their keys; ? and ! are typed full-width. Inside a reading they join it, as
  * digits and other symbols do; with nothing composing they go straight in. No Android types here,
@@ -24,12 +27,33 @@ import com.xern.xrnkey.ja.Romaji
 class KanaTypist(private val editor: Editor, private val converter: Converter) : Input {
     private val romaji = Romaji()
     private var composing = ""
+    private var composingFocus: IntRange? = null
 
-    /** After Space: the candidates it goes through, and the one the field shows (else -1). */
-    var cycle: List<Candidate> = emptyList()
+    /**
+     * A phrase of the reading Space converted (a bunsetsu: a word and the particles and endings
+     * that go with it): where it is in the reading, what it may be (the conversion's own first,
+     * then the phrase's reading converted alone, in Space's order, worked out when it is first
+     * focused), and which of them the field shows.
+     */
+    class Phrase internal constructor(val from: Int, val to: Int, first: Candidate) {
+        internal var options: List<Candidate> = listOf(first)
+        internal var full = false
+        var chosen = 0
+            internal set
+        val shown: Candidate get() = options[chosen]
+    }
+
+    /** After Space: the phrases the field shows (else none), and the one in focus. */
+    var phrases: List<Phrase> = emptyList()
         private set
-    var selected = -1
+    var focus = 0
         private set
+
+    /** After Space: the focused phrase's candidates, in Space's order (else none). */
+    val cycle: List<Candidate> get() = if (converting) options(focus) else emptyList()
+
+    /** After Space: which of [cycle] the field shows (else -1). */
+    val selected: Int get() = if (converting) phrases[focus].chosen else -1
 
     /**
      * The word right before the reading (or the cursor) that it follows: the last one put in by
@@ -53,8 +77,8 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
     /** The reading as conversion takes it (a last lone n as ん). */
     val reading: String get() = romaji.reading
 
-    /** Space converted the reading, and the field shows one of [cycle]. */
-    val converting: Boolean get() = selected >= 0
+    /** Space converted the reading, and the field shows its [phrases]. */
+    val converting: Boolean get() = phrases.isNotEmpty()
 
     /** The candidates for the reading typed, after [context], or null with nothing composing. */
     fun conversion(): Conversion? =
@@ -100,34 +124,109 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         }
     }
 
+    /** Space: the best conversion, in phrases, the first in focus. */
     private fun startConverting() {
-        cycle = conversion()!!.cycle
-        select(0)
+        val best = conversion()!!.best
+        var at = 0
+        phrases = converter.phrases(best.segments).map { words ->
+            val n = words.sumOf { it.reading.length }
+            Phrase(at, at + n, Candidate(words.joinToString("") { it.surface }, n, words.last().rid, words)).also { at += n }
+        }
+        // Text no word stands for, as one candidate (a wide form, say): one phrase of it.
+        if (phrases.isEmpty() || at != romaji.reading.length) phrases = listOf(Phrase(0, romaji.reading.length, best))
+        focus = 0
+        showPhrases()
     }
 
+    /** The focused phrase shows its candidate `i`. */
     private fun select(i: Int) {
-        selected = i
-        show(shownFor(cycle[i]))
+        phrases[focus].chosen = i
+        showPhrases()
     }
 
-    /** What the field shows for a candidate: it, and the rest of the reading converted after it. */
-    private fun shownFor(c: Candidate): String {
-        val r = romaji.reading
-        return if (c.length >= r.length) c.text else c.text + converter.bestText(r.substring(c.length), c.rid)
+    /** The word before phrase `i`: the context, or the last word the phrase before shows. */
+    private fun before(i: Int): Converter.Segment? = if (i == 0) context else phrases[i - 1].shown.segments.lastOrNull()
+
+    /** Phrase `i`'s candidates: its own, then those of its reading converted after the phrase before. */
+    private fun options(i: Int): List<Candidate> {
+        val p = phrases[i]
+        if (p.full) return p.options
+        val r = romaji.reading.substring(p.from, p.to)
+        val b = before(i)
+        val conv = converter.convert(r, b?.rid ?: 0, b?.takeIf { it.word }?.surface)
+        p.options = (listOf(p.options[0]) + conv.cycle.map { whole(it, r) }).distinctBy { it.text }
+        p.full = true
+        return p.options
     }
 
-    /** The words of what the field shows for a candidate: its own, then those of the rest after it. */
-    private fun segmentsFor(c: Candidate): List<Converter.Segment> {
-        val r = romaji.reading
-        return if (c.length >= r.length) c.segments else c.segments + converter.best(r.substring(c.length), c.rid)
+    /** A candidate for a phrase's reading `r` as the whole phrase: it, and the rest of `r` converted after it. */
+    private fun whole(c: Candidate, r: String): Candidate {
+        if (c.length >= r.length) return c
+        val rest = converter.path(r.substring(c.length), c.rid)
+        return Candidate(c.text + rest.text, r.length, if (rest.segments.isEmpty()) c.rid else rest.rid, c.segments + rest.segments)
+    }
+
+    /** A phrase of the reading from `from` to `to`, converted after `before`. */
+    private fun phraseOf(from: Int, to: Int, before: Converter.Segment?): Phrase {
+        val words = converter.best(romaji.reading.substring(from, to), before?.rid ?: 0)
+        return Phrase(from, to, Candidate(words.joinToString("") { it.surface }, to - from, words.lastOrNull()?.rid ?: 0, words))
+    }
+
+    /** The field shows each phrase's candidate, the focused one marked. */
+    private fun showPhrases() {
+        val texts = phrases.map { it.shown.text }
+        val start = texts.take(focus).sumOf { it.length }
+        show(texts.joinToString(""), start until start + texts[focus].length)
+    }
+
+    /** After Space: the focus moves `by` phrases (◀ ▶, the space bar's slide), no further than the ends. */
+    fun moveFocus(by: Int) {
+        if (!converting) return
+        val f = (focus + by).coerceIn(0, phrases.lastIndex)
+        if (f == focus) return
+        focus = f
+        showPhrases()
     }
 
     /**
-     * A candidate from the strip: it goes in, in place of the part of the reading it stands for;
-     * the rest of the reading stays composing, as typed. With nothing composing, a next word: it
-     * goes in after the word before, with no space.
+     * After Space: the focused phrase stretches (`by` > 0) or shrinks by `by` kana, as Mozc's
+     * Shift+arrows do. The kana it gives up start the next phrase (or a new one at the end), the
+     * kana it takes come off the next; both are converted again, the focused one after the phrase
+     * before and the next after it, and the phrases further on stay. False when it can't (a phrase
+     * of one kana shrinking, the last one stretching).
+     */
+    fun resize(by: Int): Boolean {
+        if (!converting || by == 0) return false
+        val p = phrases[focus]
+        val to = p.to + by
+        val next = phrases.getOrNull(focus + 1)
+        if (to <= p.from || to > romaji.reading.length || (by > 0 && next == null)) return false
+        val end = next?.to ?: romaji.reading.length
+        val mine = phraseOf(p.from, to, before(focus))
+        val rest = if (to < end) phraseOf(to, end, mine.shown.segments.lastOrNull()) else null
+        phrases = phrases.subList(0, focus) + listOfNotNull(mine, rest) + phrases.subList(minOf(phrases.size, focus + 2), phrases.size)
+        showPhrases()
+        return true
+    }
+
+    /**
+     * A candidate from the strip: after Space, the focused phrase's, which it shows, the focus
+     * moving on (on the last phrase, everything is committed). While composing, it goes in, in
+     * place of the part of the reading it stands for; the rest of the reading stays composing, as
+     * typed. With nothing composing, a next word: it goes in after the word before, with no space.
      */
     fun pick(c: Candidate) {
+        if (converting) {
+            val o = options(focus)
+            val i = o.indexOfFirst { it === c }.takeIf { it >= 0 } ?: o.indexOfFirst { it.text == c.text }
+            if (i >= 0) {
+                phrases[focus].chosen = i
+                if (focus == phrases.lastIndex) commitShown() else moveFocus(1)
+                return
+            }
+            // Not the focused phrase's: a prediction for the whole reading (one phrase), else stale.
+            if (phrases.size > 1) return
+        }
         val rest = romaji.reading.length - c.length
         stopConverting()
         learn(c.segments)
@@ -191,6 +290,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
             editor.finishComposing()
             append(composing)
             composing = ""
+            composingFocus = null
         } else {
             commit(text)
         }
@@ -198,15 +298,16 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         stopConverting()
     }
 
-    /** Commits what Space shows, as chosen: learned, and the word the next ones follow. */
+    /** Commits what Space shows, as chosen: each phrase's words learned, and the word the next ones follow. */
     private fun commitShown() {
         val text = composing
-        val chosen = segmentsFor(cycle[selected])
+        val chosen = phrases.flatMap { it.shown.segments }
+        val last = phrases.last().shown.segments.lastOrNull()
         learn(chosen)
         clearReading()
         stopConverting()
         commit(text)
-        context = chosen.lastOrNull()
+        context = last
     }
 
     /**
@@ -224,8 +325,8 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
     }
 
     private fun stopConverting() {
-        selected = -1
-        cycle = emptyList()
+        phrases = emptyList()
+        focus = 0
     }
 
     override fun reset(cursor: Int) {
@@ -233,6 +334,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         stopConverting()
         context = null
         composing = ""
+        composingFocus = null
         tail.clear()
         val before = editor.textBefore(TAIL)
         tail.append(before)
@@ -256,6 +358,7 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
         if (composing.isNotEmpty()) {
             editor.setComposing("")
             composing = ""
+            composingFocus = null
             clearReading()
             stopConverting()
             return
@@ -273,15 +376,18 @@ class KanaTypist(private val editor: Editor, private val converter: Converter) :
 
     override fun atSentenceStart(): Boolean = false
 
-    private fun show(text: String) {
-        if (text == composing) return
-        editor.setComposing(text)
+    /** The field's composing text is `text`, with the part `focus` marked (after Space, the focused phrase). */
+    private fun show(text: String, focus: IntRange? = null) {
+        if (text == composing && focus == composingFocus) return
+        if (focus == null) editor.setComposing(text) else editor.setComposing(text, focus)
         composing = text
+        composingFocus = focus
     }
 
     private fun commit(text: String) {
         editor.commit(text)
         composing = ""
+        composingFocus = null
         append(text)
     }
 

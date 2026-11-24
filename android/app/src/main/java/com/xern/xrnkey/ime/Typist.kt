@@ -15,6 +15,12 @@ interface Editor {
     /** Show `text` as the word in progress ("" clears it). */
     fun setComposing(text: String)
 
+    /**
+     * Show `text` as the text in progress with the part `focus` marked, as the phrase being
+     * changed of a Japanese conversion is (by default, unmarked).
+     */
+    fun setComposing(text: String, focus: IntRange) = setComposing(text)
+
     /** Put `text` in the field, in place of the word in progress if there is one. */
     fun commit(text: String)
 

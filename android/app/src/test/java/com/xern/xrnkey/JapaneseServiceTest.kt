@@ -143,6 +143,50 @@ class JapaneseServiceTest {
         f.service.onDestroy()
     }
 
+    /** The field's span on the focused phrase: where it is, as the field shows it. */
+    private fun Field.focused(): String {
+        val e = edit.text
+        val span = e.getSpans(0, e.length, android.text.style.BackgroundColorSpan::class.java).singleOrNull() ?: return ""
+        return e.substring(e.getSpanStart(span), e.getSpanEnd(span))
+    }
+
+    /**
+     * Space splits the reading into phrases in the field, the focused one on a tint: the space
+     * bar's slide (or ◀ ▶) moves the focus without ending the conversion, the strip's ⇤ shrinks
+     * the focused phrase, a tap on the last phrase's candidate commits it all and the tint goes.
+     */
+    @Test
+    fun spaceConvertsInPhrasesAndTheFieldMarksTheFocusedOne() {
+        val f = field()
+        f.service.onLanguage("ja")
+        f.type("watashihagakuseidesu ")
+        assertEquals("私は学生です", f.composing)
+        assertEquals("私は", f.focused())
+        val s = f.strip() as Strip.Candidates
+        assertTrue(s.resize && s.highlight)
+        assertTrue(f.keys.converting)
+        val old = f.edit.selectionStart
+        f.service.onCursorStart()
+        f.service.onCursor(1, 0)
+        f.service.onCursorEnd()
+        f.report(old)
+        assertEquals("私は学生です", f.composing)
+        assertEquals("学生です", f.focused())
+        assertEquals("学生です", (f.strip() as Strip.Candidates).centre)
+        f.service.onResize(-1)
+        f.report(old)
+        assertEquals("学生で", f.focused())
+        f.strip()
+        f.service.onCandidate(1)
+        f.strip()
+        f.service.onCandidate(1)
+        assertEquals("私は学生です", f.edit.text.toString())
+        assertEquals("", f.composing)
+        assertEquals("", f.focused())
+        assertFalse(f.keys.converting)
+        f.service.onDestroy()
+    }
+
     /**
      * A candidate from the strip, or from the panel, commits it in place of the part of the reading
      * it stands for: a piece leaves the rest composing.

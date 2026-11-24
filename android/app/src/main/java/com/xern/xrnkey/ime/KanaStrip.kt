@@ -9,8 +9,9 @@ import com.xern.xrnkey.keyboard.Strip
  *   likeliest on the left and the right, predictions included ("ありが": ありがとう); the more panel
  *   holds the others, then the hiragana and katakana, then the pieces for converting piece by
  *   piece ([com.xern.xrnkey.ja.Conversion.offered]);
- * - after Space: the candidate the field shows in the middle, highlighted, with the one before it
- *   on the left and the next on the right; the panel holds the others;
+ * - after Space: the focused phrase's candidate the field shows in the middle, highlighted, with
+ *   the one before it on the left and the next on the right; the panel holds the others. Its
+ *   sides are ⇤ and ⇥, which shrink and stretch the focused phrase;
  * - with nothing composing, right after a word went in: what may follow it ("私": は, の, が), the
  *   likeliest in the middle, not bold (Space doesn't take it). With nothing to offer, the tool row.
  */
@@ -39,8 +40,10 @@ class KanaStrip {
             val i = k.selected
             slots = listOf(c.getOrNull(i - 1), c[i], c.getOrNull(i + 1))
             val shown = slots.mapNotNull { it?.text }.toSet()
-            extra = (c.filterIndexed { j, _ -> j !in i - 1..i + 1 } + conv.predictions).filter { it.text !in shown }.distinctBy { it.text }
-            return candidates(highlight = true)
+            // The predictions are the whole reading's: offered while it is one phrase.
+            val predictions = if (k.phrases.size == 1) conv.predictions else emptyList()
+            extra = (c.filterIndexed { j, _ -> j !in i - 1..i + 1 } + predictions).filter { it.text !in shown }.distinctBy { it.text }
+            return candidates(highlight = true, resize = true)
         }
         val all = conv.offered
         slots = listOf(all.getOrNull(1), all[0], all.getOrNull(2))
@@ -48,10 +51,10 @@ class KanaStrip {
         return candidates(highlight = false)
     }
 
-    private fun candidates(highlight: Boolean, bold: Boolean = true) = Strip.Candidates(
+    private fun candidates(highlight: Boolean, bold: Boolean = true, resize: Boolean = false) = Strip.Candidates(
         slots[0]?.text, slots[1]?.text, slots[2]?.text,
         more = extra.isNotEmpty(), bold = bold, extra = extra.map { it.text }.take(MOST), highlight = highlight,
-        most = MOST, removable = false,
+        most = MOST, removable = false, resize = resize,
     )
 
     /** The candidate in slot 0 (left), 1 (centre) or 2 (right). */

@@ -3,7 +3,9 @@
 # not taken from any dictionary. build_dict.py text turns it into a .xkdic as it turns Mozc's.
 #
 # Lines:
-#   @id NAME               a part of speech (the first is 1; 0 starts and ends a sentence)
+#   @id NAME [KIND]        a part of speech (the first is 1; 0 starts and ends a sentence),
+#                          and how its words join a phrase: word (the default), attach,
+#                          prefix, suru or sahen (build_dict.py, KINDS)
 #   @conn LEFT RIGHT COST  what RIGHT costs after LEFT: names, * for any, BOS and EOS for the
 #                          sentence's start and end; a later line overrides an earlier one
 #   @literal KIND NAME     the part of speech of text no word reads (noun, number, alphabet,
@@ -13,18 +15,21 @@
 
 @id noun
 @id pronoun
-@id wa
-@id case
-@id copula
+@id wa attach
+@id case attach
+@id copula attach
 @id verb
-@id masu
+@id masu attach
 @id number
 @id alphabet
-@id comma
-@id period
+@id comma attach
+@id period attach
 @id symbol
 @id thanks
-@id polite
+@id polite attach
+@id sahen sahen
+@id suru suru
+@id prefix prefix
 
 @literal noun noun
 @literal number number
@@ -70,6 +75,11 @@
 @conn case masu 6000
 @conn case polite 6000
 @conn case verb 0
+@conn case sahen 0
+@conn sahen suru 0
+@conn suru masu 0
+@conn prefix noun 0
+@conn BOS prefix 0
 
 わたし	pronoun	500	私
 わたし	verb	2500	渡し
@@ -113,3 +123,7 @@
 ありがとう	thanks	1000	ありがとう
 ございます	polite	0	ございます
 よむ	verb	500	読む
+べんきょう	sahen	1500	勉強
+し	suru	300	し
+お	prefix	500	お
+ちゃ	noun	2500	茶

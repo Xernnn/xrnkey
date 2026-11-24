@@ -63,6 +63,8 @@ class FlickTouchTest {
             override fun onKanaBack() { events += "back" }
             override fun onKanaMark() { events += "mark" }
             override fun onCandidate(slot: Int) { events += "slot $slot" }
+            override fun onResize(by: Int) { events += "resize $by" }
+            override fun onStripMenu() { events += "menu" }
         }
         activity.setContentView(v)
         shadowOf(Looper.getMainLooper()).idle()
@@ -211,6 +213,36 @@ class FlickTouchTest {
         assertEquals(emptyList<String>(), events)
         tap(v, 0, 1)
         assertEquals(listOf("cursor", "move -1 0", "end"), events)
+    }
+
+    /**
+     * After Space the reading is in phrases: ▶ moves the focus too (not only ◀), and the strip's
+     * sides are ⇤ and ⇥, which shrink and stretch the focused phrase; otherwise ≡ and emoji.
+     */
+    @Test
+    fun whileConvertingTheArrowsMoveThePhraseAndTheStripResizesIt() {
+        for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+            events.clear()
+            val v = pad(palette)
+            v.composing = true
+            v.converting = true
+            v.strip = Strip.Candidates("わたしは", "私は", "ワタシハ", more = true, highlight = true, resize = true)
+            shot("flick-phrases-strip-$theme", v)
+            tap(v, 4, 1)
+            tap(v, 0, 1)
+            assertEquals(listOf("cursor", "move 1 0", "end", "cursor", "move -1 0", "end"), events)
+            events.clear()
+            for (x in listOf(30f, 1050f, 540f)) {
+                touch(v, MotionEvent.ACTION_DOWN, x, 72f)
+                touch(v, MotionEvent.ACTION_UP, x, 72f)
+            }
+            assertEquals(listOf("resize -1", "resize 1", "slot 1"), events)
+            events.clear()
+            v.strip = Strip.Candidates("わたしは", "私は", "ワタシハ", more = true)
+            touch(v, MotionEvent.ACTION_DOWN, 30f, 72f)
+            touch(v, MotionEvent.ACTION_UP, 30f, 72f)
+            assertEquals(listOf("menu"), events)
+        }
     }
 
     /**

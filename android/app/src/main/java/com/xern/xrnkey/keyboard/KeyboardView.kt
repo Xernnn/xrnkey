@@ -61,6 +61,8 @@ class KeyboardView(context: Context) : View(context) {
         fun onKanaBack() {}
         /** The 12-key pad's ゛゜小: the last kana in its next form. */
         fun onKanaMark() {}
+        /** A Japanese conversion's ⇤ (-1) or ⇥ (1) on the strip: the focused phrase shrinks or stretches. */
+        fun onResize(by: Int) {}
     }
 
     var listener: Listener? = null
@@ -130,6 +132,12 @@ class KeyboardView(context: Context) : View(context) {
      */
     var composing = false
         set(value) { if (field != value) { field = value; invalidate() } }
+
+    /**
+     * A Japanese reading is converted into phrases (the service says so): ◀ and ▶, and the space
+     * bar's slide (a phrase per 30 dp), move the focus between them, so ▶ moves too.
+     */
+    var converting = false
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -709,6 +717,16 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
+    /** ⇤ ([dir] -1) or ⇥ (1): an arrow to a bar, in the strip's quiet colour. */
+    private fun drawEdgeArrow(canvas: Canvas, cx: Float, cy: Float, s: Float, dir: Int) {
+        stroke(palette.dim, 1.8f * dp)
+        val bar = cx + dir * s
+        canvas.drawLine(bar, cy - s * 0.8f, bar, cy + s * 0.8f, line)
+        canvas.drawLine(cx - dir * s, cy, bar - dir * 2 * dp, cy, line)
+        canvas.drawLine(bar - dir * 2 * dp, cy, bar - dir * (2 * dp + s * 0.6f), cy - s * 0.6f, line)
+        canvas.drawLine(bar - dir * 2 * dp, cy, bar - dir * (2 * dp + s * 0.6f), cy + s * 0.6f, line)
+    }
+
     private fun drawSmile(canvas: Canvas, cx: Float, cy: Float, s: Float) {
         stroke(palette.dim, 1.8f * dp)
         canvas.drawCircle(cx, cy, s, line)
@@ -745,8 +763,14 @@ class KeyboardView(context: Context) : View(context) {
         val side = 48 * dp
         val cy = stripHeight / 2
         stroke(palette.dim, 1.8f * dp)
-        for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
-        drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        if (s.resize) {
+            // A conversion's phrases: ⇤ shrinks the focused one, ⇥ stretches it.
+            drawEdgeArrow(canvas, side / 2, cy, 8 * dp, -1)
+            drawEdgeArrow(canvas, width - side / 2, cy, 8 * dp, 1)
+        } else {
+            for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
+            drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        }
         if (s.row.isNotEmpty()) {
             // A row of emoji: each in its place, none above the others.
             stripSlots(s).forEachIndexed { i, r ->
@@ -872,7 +896,7 @@ class KeyboardView(context: Context) : View(context) {
     private var cursor = Cursor.OFF
     private var anchorX = 0f
     private var anchorY = 0f
-    private val cursorStep get() = 10 * dp
+    private val cursorStep get() = if (converting) 30 * dp else 10 * dp
     private val lineStep get() = 28 * dp
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
 
@@ -952,7 +976,7 @@ class KeyboardView(context: Context) : View(context) {
 
     /** ◀ or ▶ on the 12-key pad: the cursor a character. At the end of a reading ▶ stays put. */
     private fun cursorKey(dx: Int) {
-        if (dx > 0 && composing) return
+        if (dx > 0 && composing && !converting) return
         listener?.onCursorStart()
         listener?.onCursor(dx, 0)
         listener?.onCursorEnd()
@@ -1294,7 +1318,10 @@ class KeyboardView(context: Context) : View(context) {
             }
             is Strip.Candidates -> {
                 val side = 48 * dp
+                val resize = (strip as Strip.Candidates).resize
                 when {
+                    x < side && resize -> listener?.onResize(-1)
+                    x > width - side && resize -> listener?.onResize(1)
                     x < side -> listener?.onStripMenu()
                     x > width - side -> listener?.onTool(Tool.EMOJI)
                     else -> stripSlots(strip as Strip.Candidates).indexOfFirst { x >= it.left && x < it.right }.let {

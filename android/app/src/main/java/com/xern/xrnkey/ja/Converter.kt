@@ -198,6 +198,36 @@ class Converter(private val dict: Dictionary) {
         return Path(out.asReversed(), last.cost + dict.connection(last.rid, 0))
     }
 
+    /**
+     * A conversion's words in phrases (bunsetsu), as Space splits it to be changed piece by piece:
+     * each word starts one, but a particle, an auxiliary, a suffix or punctuation goes with the
+     * word before it, a prefix takes the word after it, a form of する goes with a noun that takes
+     * it, and a kana no word reads goes with such a kana before it (わたしはがくせいです: 私は /
+     * 学生です; べんきょうします: 勉強します), by the dictionary's [Kind]s. A build without them
+     * has a word written as its hiragana reading, and punctuation, go with the word before.
+     */
+    fun phrases(words: List<Segment>): List<List<Segment>> {
+        val out = ArrayList<MutableList<Segment>>()
+        var prev: Segment? = null
+        for (w in words) {
+            if (prev == null || startsPhrase(prev, w)) out += mutableListOf(w) else out.last() += w
+            prev = w
+        }
+        return out
+    }
+
+    private fun startsPhrase(prev: Segment, w: Segment): Boolean {
+        val kana = { s: Segment -> s.surface.all { Dictionary.kanaCode(it) != 0 } }
+        if (!w.word && !prev.word && kana(w) && kana(prev)) return false
+        if (!dict.hasKinds) return !(w.surface.all { it in PUNCTUATION } || (w.word && w.surface == w.reading && kana(w)))
+        if (dict.kind(prev.rid) == Kind.PREFIX) return false
+        return when (dict.kind(w.lid)) {
+            Kind.ATTACH -> false
+            Kind.SURU -> dict.kind(prev.rid) != Kind.SAHEN
+            else -> true
+        }
+    }
+
     /** The cheapest conversion of `reading` after `left`, as one text. */
     fun bestText(reading: String, left: Int = 0): String = path(reading, left).text
 

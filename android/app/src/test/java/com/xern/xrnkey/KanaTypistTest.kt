@@ -45,12 +45,13 @@ class KanaTypistTest {
         assertTrue(typist.converting)
         assertEquals("紙", editor.composing)
         val first = strip.make(typist) as Strip.Candidates
-        assertEquals(Strip.Candidates(null, "紙", "神", more = true, extra = listOf("髪", "上", "かみ", "カミ", "蚊"), highlight = true, most = KanaStrip.MOST, removable = false), first)
+        // A piece shows with the rest of the reading converted after it, as the field would (蚊身).
+        assertEquals(Strip.Candidates(null, "紙", "神", more = true, extra = listOf("髪", "上", "かみ", "カミ", "蚊身"), highlight = true, most = KanaStrip.MOST, removable = false, resize = true), first)
         type(" ")
         assertEquals("神", editor.composing)
         val second = strip.make(typist) as Strip.Candidates
         assertEquals(listOf("紙", "神", "髪"), listOf(second.left, second.centre, second.right))
-        assertEquals(listOf("上", "かみ", "カミ", "蚊"), second.extra)
+        assertEquals(listOf("上", "かみ", "カミ", "蚊身"), second.extra)
         repeat(4) { type(" ") }
         assertEquals("カミ", editor.composing)
         repeat(2) { type(" ") }
@@ -270,19 +271,22 @@ class KanaTypistTest {
     }
 
     /**
-     * While Space shows a piece, the field shows it with the rest converted after it; a tap on the
-     * piece takes the piece alone.
+     * While Space shows a piece of a phrase, the field shows it with the rest of the phrase
+     * converted after it (渡し葉); a tap on it takes it for the phrase.
      */
     @Test
-    fun aPieceAfterSpaceShowsTheRestConverted() {
+    fun aPieceAfterSpaceShowsTheRestOfItsPhrase() {
         type("watashihagakuseidesu ")
         assertEquals("私は学生です", editor.composing)
-        repeat(3) { type(" ") }
-        assertEquals("渡し", typist.cycle[typist.selected].text)
-        assertEquals("渡しは学生です", editor.composing)
+        val i = typist.cycle.indexOfFirst { it.text.startsWith("渡し") }
+        repeat(i) { type(" ") }
+        val shown = typist.cycle[typist.selected].text
+        assertTrue(shown, shown.startsWith("渡し") && shown.length == 3)
+        assertEquals(shown + "学生です", editor.composing)
         typist.pick(typist.cycle[typist.selected])
-        assertEquals("渡し", editor.committed.toString())
-        assertEquals("はがくせいです", editor.composing)
+        assertEquals("", editor.committed.toString())
+        assertEquals(shown + "学生です", editor.composing)
+        assertEquals(1, typist.focus)
     }
 
     /** Backspace takes the last letter or kana; after Space, it goes back to the reading. */

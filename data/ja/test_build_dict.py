@@ -63,5 +63,40 @@ class Built(unittest.TestCase):
         self.assertEqual(build_dict.from_utf16(head), "𠮷野家")
 
 
+    def test_each_part_of_speech_says_how_it_joins_a_phrase(self):
+        kinds = {w[0]: build_dict.KINDS[self.d.kinds[w[1]]] for r in ("わたし", "は", "です", "べんきょう", "し", "お")
+                 for w in self.d.lookup(r)}
+        self.assertEqual(kinds, {"私": "word", "渡し": "word", "は": "attach", "葉": "word", "歯": "word", "です": "attach",
+                                 "勉強": "sahen", "し": "suru", "お": "prefix"})
+        self.assertEqual(build_dict.KINDS[self.d.kinds[self.d.literals["period"]]], "attach")
+
+    def test_a_dictionary_without_kinds_still_reads(self):
+        # As 0.9.0's builds were: the six literal ids end the file.
+        with open(self.path, "rb") as f:
+            data = bytearray(f.read())
+        cut = len(data) - self.d.k
+        data = data[:cut]
+        data[8:12] = cut.to_bytes(4, "little")
+        old = os.path.join(self.tmp.name, "old.xkdic")
+        with open(old, "wb") as f:
+            f.write(data)
+        d = build_dict.Dictionary(old)
+        self.assertIsNone(d.kinds)
+        self.assertEqual("".join(s for s, _ in build_dict.convert(d, "わたしはがくせいです")), "私は学生です")
+
+    def test_mozcs_parts_of_speech_have_their_kinds(self):
+        k = lambda name: build_dict.KINDS[build_dict.kind_of(name)]
+        self.assertEqual(k("助詞,係助詞,*,*,*,*,は"), "attach")
+        self.assertEqual(k("助動詞,*,*,*,特殊・マス,基本形,ます"), "attach")
+        self.assertEqual(k("動詞,非自立,*,*,一段,基本形,いる"), "attach")
+        self.assertEqual(k("名詞,接尾,助数詞,*,*,*,*"), "attach")
+        self.assertEqual(k("記号,句点,*,*,*,*,。"), "attach")
+        self.assertEqual(k("接頭詞,名詞接続,*,*,*,*,お"), "prefix")
+        self.assertEqual(k("動詞,自立,*,*,サ変・スル,連用形,*"), "suru")
+        self.assertEqual(k("名詞,サ変接続,*,*,*,*,*"), "sahen")
+        self.assertEqual(k("名詞,一般,*,*,*,*,*"), "word")
+        self.assertEqual(k("動詞,自立,*,*,五段・カ行イ音便,基本形,*"), "word")
+
+
 if __name__ == "__main__":
     unittest.main()

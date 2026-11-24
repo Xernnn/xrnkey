@@ -12,6 +12,9 @@ import android.os.Looper
 import android.os.UserManager
 import android.text.InputType
 import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.UnderlineSpan
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -111,6 +114,12 @@ class XrnkeyService :
         override fun setComposing(text: String) {
             // A Spannable with no spans of its own gets no underline from the editor's theme.
             currentInputConnection?.setComposingText(if (options.underline) text else SpannableString(text), 1)
+        }
+
+        /** A Japanese conversion's phrases, the focused one marked ([phrasesText]). */
+        override fun setComposing(text: String, focus: IntRange) {
+            val accent = (keyboard?.palette ?: savedPalette()).accent
+            currentInputConnection?.setComposingText(phrasesText(text, focus, options.underline, accent), 1)
         }
 
         override fun commit(text: String) {
@@ -501,13 +510,24 @@ class XrnkeyService :
         showStrip()
     }
 
+    /** The space bar's slide, or ◀ ▶, moves the focus between a Japanese conversion's phrases. */
+    private var phraseSlide = false
+
     override fun onCursorStart() {
+        if ((input as? KanaTypist)?.converting == true) {
+            phraseSlide = true
+            return
+        }
         movingCursor = true
         input.finish()
         keyboard?.strip = idleStrip()
     }
 
     override fun onCursor(dx: Int, dy: Int) {
+        if (phraseSlide) {
+            kanaEdit { it.moveFocus(dx) }
+            return
+        }
         val ic = currentInputConnection ?: return
         fun press(code: Int, times: Int) = repeat(times) {
             ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
@@ -522,9 +542,16 @@ class XrnkeyService :
      * stopped at opens, as after a tap.
      */
     override fun onCursorEnd() {
+        if (phraseSlide) {
+            phraseSlide = false
+            return
+        }
         movingCursor = false
         refresh(-1, reopen = true)
     }
+
+    /** The strip's ⇤ or ⇥ after Space: the focused phrase shrinks or stretches by a kana. */
+    override fun onResize(by: Int) = kanaEdit { it.resize(by) }
 
     /** The strip's ≡: the tool row. Where it was folded away, it stays out again. */
     override fun onStripMenu() {
@@ -601,6 +628,7 @@ class XrnkeyService :
      */
     private fun showStrip() {
         keyboard?.composing = input.shown.isNotEmpty()
+        keyboard?.converting = (input as? KanaTypist)?.converting == true
         handler.removeCallbacks(stripTask)
         handler.post(stripTask)
     }
@@ -867,6 +895,21 @@ class XrnkeyService :
 
         /** The Japanese dictionary's asset (data/ja/README.md). */
         const val JAPANESE = "ja.xkdic"
+
+        /**
+         * A Japanese conversion's composing text: the focused phrase on a tint of [accent], as
+         * Gboard marks it, the whole underlined if [underline]. Framework spans only (they cross
+         * to the app), flagged as composing, so the editor drops them with the composing text.
+         */
+        fun phrasesText(text: String, focus: IntRange, underline: Boolean, accent: Int): SpannableString {
+            val s = SpannableString(text)
+            val flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE or Spanned.SPAN_COMPOSING
+            if (underline) s.setSpan(UnderlineSpan(), 0, text.length, flags)
+            if (!focus.isEmpty() && focus.last < text.length) {
+                s.setSpan(BackgroundColorSpan((accent and 0x00FFFFFF) or 0x55000000), focus.first, focus.last + 1, flags)
+            }
+            return s
+        }
 
         /** Edits whose selection updates may still be on their way. */
         private const val EXPECTED = 32

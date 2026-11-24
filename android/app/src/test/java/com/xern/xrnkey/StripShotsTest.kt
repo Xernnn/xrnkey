@@ -105,4 +105,56 @@ class StripShotsTest {
             File(dir, "japanese-$name-$theme.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
     }
+
+    /**
+     * A sentence converted in phrases: the field above the keyboard as the service marks it (the
+     * focused phrase on a tint), and the strip with the focused phrase's candidates and ⇤ ⇥: the
+     * first focused, the focus moved on, the next candidate, and a phrase shrunk. Mozc's
+     * dictionary where it is built.
+     */
+    @Test
+    fun theJapanesePhrases() {
+        val dir = File(System.getProperty("xrnkey.shots") ?: return)
+        dir.mkdirs()
+        val dict = if (TestModels.realJapaneseAvailable) TestModels.realJapanese() else TestModels.japanese()
+        val cases = listOf<Pair<String, (KanaTypist) -> Unit>>(
+            "first" to {},
+            "moved" to { it.moveFocus(1) },
+            "next" to { it.text(" ") },
+            "shrunk" to { it.moveFocus(1); it.resize(-2) },
+        )
+        for ((name, act) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+            val ed = FakeEditor()
+            val t = KanaTypist(ed, Converter(dict)).also { it.reset() }
+            t.text("kyouhaiitenkidesune ")
+            act(t)
+            val app = RuntimeEnvironment.getApplication()
+            val field = android.widget.TextView(app).apply {
+                text = com.xern.xrnkey.ime.XrnkeyService.phrasesText(ed.composing, ed.focus!!, true, palette.accent)
+                textSize = 22f
+                setPadding(48, 36, 48, 36)
+                setTextColor(if (palette == Palette.DARK) 0xFFECEFF1.toInt() else 0xFF1F2428.toInt())
+                setBackgroundColor(if (palette == Palette.DARK) 0xFF121212.toInt() else 0xFFFFFFFF.toInt())
+            }
+            field.measure(MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+            field.layout(0, 0, field.measuredWidth, field.measuredHeight)
+            val v = KeyboardView(app)
+            v.palette = palette
+            v.language = "ja"
+            v.kana = true
+            v.strip = KanaStrip().make(t)
+            v.measure(MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+            v.layout(0, 0, v.measuredWidth, v.measuredHeight)
+            val keys = (v.measuredHeight * 0.4f).toInt()
+            val bmp = Bitmap.createBitmap(1080, field.height + keys, Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            field.draw(c)
+            c.save()
+            c.translate(0f, field.height.toFloat())
+            c.clipRect(0, 0, 1080, keys)
+            v.draw(c)
+            c.restore()
+            File(dir, "japanese-phrases-$name-$theme.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+    }
 }

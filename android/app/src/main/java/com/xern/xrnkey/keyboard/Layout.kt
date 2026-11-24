@@ -558,6 +558,11 @@ sealed interface Strip {
         val most: Int = MorePanelView.MOST,
         /** Its words get the panel's remove marks (not the Japanese keyboard's). */
         val removable: Boolean = true,
+        /**
+         * A Japanese conversion's phrases (after Space): the strip's sides are ⇤ and ⇥, which
+         * shrink and stretch the focused phrase, in place of ≡ and the emoji button.
+         */
+        val resize: Boolean = false,
     ) : Strip {
         companion object {
             /** The places of a [row]. */
