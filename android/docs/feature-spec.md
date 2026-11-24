@@ -7,7 +7,8 @@ An Android keyboard for one owner's phone (Android 15, HyperOS) that replaces th
 Vietnamese keyboard they have used for years. The owner's verdict on it: it is so good that
 nothing open source has matched it. Three things make it worth replacing anyway: it is closed
 source, it has internet access, and it syncs the words it learns to an online account. This
-keyboard has **no INTERNET permission**, keeps everything it learns on the phone, and shares one
+keyboard has **no INTERNET permission**, keeps what it learns on the phone (unless the owner turns
+on Sync, which hands the personal words to their own hub app for their own server), and shares one
 engine with the Fcitx5 input method in this repo, so an improvement reaches both the phone and
 the laptop.
 
@@ -80,7 +81,8 @@ Swipe typing is not used.
 9. Personal words learned on the phone, which can be viewed, deleted, exported and imported.
 10. Shortcuts, with import and export as a file in the laptop's `macros.txt` format.
 11. Settings for each of the above, plus the cursor pad and dark, light or system theme.
-12. No INTERNET permission, and no other permission at all.
+12. No INTERNET permission, and no other permission asked for. It declares one of its own, for
+    the owner's hub app (see Sync).
 
 ## Later (agreed, not now)
 
@@ -92,8 +94,6 @@ Swipe typing is not used.
   owner has these off in the reference.
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
 - Split and one-handed layouts, and a tablet layout.
-- Moving personal words between the phone and the laptop automatically. Day one only does it by
-  hand, as files.
 
 ## Out of scope
 
@@ -101,7 +101,9 @@ Swipe typing is not used.
 - **Voice input**: no mic key; the keyboard stays fully offline.
 - **Stickers, GIFs and a theme store**: they need the network and third-party artwork.
 - **Drawing tone marks by hand**: the reference has it, but the owner doesn't use it.
-- **Any account, sign-in, cloud sync or telemetry**: the point of the project is to have none.
+- **Any account, sign-in, third-party cloud sync or telemetry**: the point of the project is to
+  have none. The one sync there is goes to the owner's own server, through their own hub app, and
+  only when they turn it on (see Sync).
 - **Importing the reference keyboard's learned words**: they live in its online account, and no
   export is known. The new keyboard learns from scratch. The **shortcut table** does come over
   later, as a file.
@@ -732,7 +734,7 @@ spellings a key away.
 
 ### Where it is kept
 
-- One text file, `learned.txt`, in the app's credential-encrypted private storage. The core
+- One text file, `personal-words.tsv`, in the app's credential-encrypted private storage. The core
   reads it and writes it atomically (a temporary file, then rename).
   - A word's line is `word<TAB>count`, the same shape as the laptop's
     `~/.local/share/xrnkey/user-dict.txt`.
@@ -741,7 +743,9 @@ spellings a key away.
     rarest go first.
 - It is read only after the phone is first unlocked. Before that, the keyboard types with the
   shipped model alone.
-- `allowBackup="false"`. Nothing is synced. Export and import are by hand (see Settings).
+- `allowBackup="false"`. Nothing leaves the phone unless Settings → Personal words → **Sync
+  through xrnhub** is on, which hands the words and pairs to the owner's hub app (see Sync).
+  Export and import by hand are planned (see Settings).
 
 ## Shortcuts
 
@@ -1137,9 +1141,11 @@ Rules:
 
 ## Data and privacy
 
-- **Permissions**: none, and **no `android.permission.INTERNET`**. A CI test fails the build if
-  the merged manifest declares any `uses-permission`. The service only *requires*
-  `BIND_INPUT_METHOD` of the system that binds it.
+- **Permissions**: none asked for, and **no `android.permission.INTERNET`**. A CI test fails the
+  build if the merged manifest declares any `uses-permission`, and the release script refuses an
+  APK that asks for one. The service only *requires* `BIND_INPUT_METHOD` of the system that binds
+  it. The keyboard *declares* one permission of its own, `com.xern.xrnkey.permission.SYNC_WORDS`,
+  which guards the personal words' provider for the hub app (see Sync).
 - **On the phone** (credential-encrypted private storage):
   - personal words and pairs;
   - the words chosen on the Japanese keyboard, and pairs of them;
@@ -1156,14 +1162,53 @@ Rules:
   - sensitive clips;
   - whole messages. Only word counts and word-pair counts are learned, never sentences.
 - **Leaves the phone**: nothing, except files the owner exports by hand through the system
-  picker.
+  picker, and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
+  which the owner's hub app reads to sync them through the owner's server. Never sentences,
+  never the Japanese history, the shortcuts, the clipboard or anything typed in a password field.
 - **No microphone**: there is no voice input, and nothing is ever recorded.
 
 ## Sync
 
-There is none. The keyboard has no network. Personal words and shortcuts move between the phone
-and the laptop only as files the owner exports and imports. Both files use the laptop IME's
-formats (`user-dict.txt`, `macros.txt`), so the same file works on both devices.
+The keyboard has no network. Its personal words move between the phone and the laptop through the
+owner's hub app (xrnhub, a separate app of theirs that already signs in to their home server), and
+only while Settings → Personal words has both **Learn words** and **Sync through xrnhub** on. Sync
+is off until the owner turns it on.
+
+- **The door.** A content provider, `sync/WordsProvider.kt` (authority `com.xern.xrnkey.words`),
+  guarded by the keyboard's own permission `com.xern.xrnkey.permission.SYNC_WORDS`.
+  - The permission is `signature|knownSigner`. The hub app is signed with another key (the shared
+    debug key its family of apps uses), so the keyboard names that key's certificate digest in
+    `android:knownCerts` (`res/values/hub.xml`). Android 12 and later grant it to an app signed
+    with that certificate, and to no other.
+  - The provider also checks that the caller is the hub's package, `com.xern.xrnhub`: every debug
+    build on the owner's laptop is signed with that same key, so the digest alone would let any of
+    them in if it asked.
+  - `call()` isn't covered by a manifest permission, so each entry point checks for itself.
+- **What it offers.** `call("state")` says whether learning and sync are on, and gives the table's
+  id. `openFile(.../words, "r")` hands over `personal-words.tsv` after the keyboard in use has saved
+  what it learned. `call("put")` and `call("commit")` take a patch in parts (`key<TAB>count` sets a
+  count, `key<TAB>-` deletes) and apply it at once, on the keyboard's main thread: the file is
+  changed and moved into place, and the table the keyboard is typing with reads it again in place.
+- **The table's id** is made with the words and kept beside them, so it changes only when the
+  keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
+  deletion to sync. A new id tells the hub app that the table lost its words rather than had them
+  all deleted, so its first sync only adds.
+- **The merge**, on the hub's server: a word or pair is a row with a count, or a tombstone once
+  deleted, so a word removed on any device goes from all of them. A device sends what changed since
+  its last sync; a row nobody else wrote meanwhile takes its value (so the monthly fade goes
+  through), and a row two devices changed at once keeps the larger count, or the later of a count
+  and a deletion.
+- **The laptop.** `xk-sync` (in `cli-tools/`, run every hour by the systemd user timer
+  `xk-sync.timer`) merges the single words, in lower case, into `user-dict.txt`, as
+  1000 × the phone's count; phrases and capitalised entries there stay on the laptop, and the
+  phone's word pairs stay off it. Words added or removed with `xk-dict` go back to the phone the
+  same way.
+- **Not synced**: the Japanese history (the laptop has no Japanese keyboard, and its entries carry
+  a recency order and the dictionary's part-of-speech ids, which a count merge would scramble), the
+  hidden suggestions, the shortcuts and the clipboard. Shortcuts still move as a file in the
+  laptop's `macros.txt` format.
+- **On the server** the words sit behind the owner's sync login, in the hub's own database, as its
+  health records do: not end-to-end encrypted.
 
 ## Updates
 
@@ -1171,17 +1216,23 @@ A keyboard with no internet can't update itself, so the owner's hub app (a separ
 theirs that already has network access and lists every project) does it. The keyboard never
 gets INTERNET.
 
-- The release APK is published to the owner's own server next to the hub app's other release
-  files.
-- The hub app checks the server, and when a newer keyboard is there it shows **Keyboard update
-  ready**. The owner taps **Install**.
-- It installs the APK with a `PackageInstaller` session, the same way the owner's rules app
-  already updates itself. After its first install the hub app is the installer of record, so
-  later updates need no extra confirmation (`USER_ACTION_NOT_REQUIRED`).
+- `android/scripts/release.py` builds the release APK from the main checkout and publishes it with
+  an `app.json` (versionCode, versionName, the APK's name, size and SHA-256) to the hub's data on
+  the owner's server. Its address, ssh host and the pinned signer come from
+  `~/.config/xrnkey/release.json`, never the repo. It refuses a branch other than main, uncommitted
+  work, a versionCode the server already has (it bumps nothing: versions are bumped in their own
+  commits), an APK signed by any other certificate than the pinned one, and an APK that asks for
+  any permission.
+- The hub serves them behind the sync login (`GET /api/keyboard/update`, and the APK beside it).
+- The hub app checks when it comes to the front, and when a newer keyboard is there its Apps page
+  shows **Keyboard update ready** with the version, and a dot on the Apps tab. No notification.
+- A tap downloads the APK, checks its size and SHA-256 against `app.json` and that it is this
+  package at that versionCode, and installs it with a `PackageInstaller` session, the same way the
+  owner's rules app updates itself. After its first install the hub app is the installer of
+  record, so later updates may need no extra confirmation (`USER_ACTION_NOT_REQUIRED`).
 - Android installs an update only if it is signed with the keyboard's key, so a compromised
   server can't push a different keyboard.
 - An IME update keeps the keyboard enabled and chosen as the default.
-- Until the hub app has this, a release is installed with adb from the laptop.
 
 ## Signing key
 
@@ -1196,8 +1247,10 @@ Why:
   key, which the owner's key backup already covers.
 - Every debug build on the laptop is signed with the debug keystore, and its password is the
   well-known default. Anything that ever trusted "same signature" would trust them all.
-- A signature permission may be needed later between the keyboard and an updater or a sibling
-  app, which is the family's rule for using the release key.
+- A signature permission may be needed between the keyboard and a sibling app, which is the
+  family's rule for using the release key. The hub app is the exception: it is signed with the
+  debug key, so the sync permission trusts its certificate by name (knownSigner) and checks its
+  package as well (see Sync).
 
 Nothing about the key enters this public repo except that relative path.
 
@@ -1371,7 +1424,8 @@ The owner answered the spec's open questions:
 1. **No mic key at all.** The keyboard is fully offline, with no voice typing.
 2. **The parity run** against the reference happens later, on the phone, run by the owner's side.
 3. **Updates come through the hub app**: it shows "Keyboard update ready" and installs on a tap.
-   The keyboard itself never gets INTERNET.
+   The keyboard itself never gets INTERNET. Built, with the personal words' sync (see Updates
+   and Sync).
 4. **Look-back is on**: the previous word is fixed in place, as the reference does, and
    Backspace right after undoes the fix.
 5. **The emoji, `:-)` and `Ω` tabs stay.** Fancy text comes later. The sticker tab is left out.

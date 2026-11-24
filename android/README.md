@@ -2,9 +2,8 @@
 
 The keyboard: Telex through the shared core (`../core`), with accent restoration and the
 English/Vietnamese choice from the language models, an English keyboard, and a Japanese one
-(romaji or the 12-key flick pad to kana, kana to kanji with Mozc's dictionary). It has no
-permissions. The feature spec
-is [docs/feature-spec.md](docs/feature-spec.md).
+(romaji or the 12-key flick pad to kana, kana to kanji with Mozc's dictionary). It asks for no
+permissions, and has no network. The feature spec is [docs/feature-spec.md](docs/feature-spec.md).
 
 ## Build and test
 
@@ -35,6 +34,34 @@ cmake.dir=/usr
   native graphics).
 - **Signing.** A release build is signed with the key that `../../xrn-signing.properties`
   describes, when that file is there. A worktree's release build comes out unsigned.
+
+## Releases and the hub app
+
+The keyboard can't update itself, so the owner's hub app does it: `scripts/release.py` publishes a
+release to the hub's server, and the hub app shows **Keyboard update ready** and installs it on a
+tap (docs/feature-spec.md, "Updates").
+
+```bash
+python3 scripts/release.py --check   # build and check, upload nothing
+python3 scripts/release.py           # build, check and publish
+python3 scripts/test_release.py      # what stops it
+```
+
+It runs from the main checkout, on `main`, with nothing uncommitted, and bumps nothing: bump
+`versionCode` and `versionName` in `app/build.gradle.kts` in a commit of their own first. It reads
+`~/.config/xrnkey/release.json`:
+
+```json
+{ "server": "https://<host>/<hub path>", "ssh": ["<ssh host>"], "signer": "<SHA-256>" }
+```
+
+`signer` is the installed keyboard's signing certificate, as `apksigner verify --print-certs` prints
+it; an APK signed any other way stops there. `"dir"` names the folder on the server, under the ssh
+login's home, if it isn't `xrnhub/data/update/xrnkey`.
+
+The hub app also syncs the personal words with the laptop, while Settings → Personal words →
+**Sync through xrnhub** is on (off at first). It reads and patches them through
+`sync/WordsProvider.kt`, behind the keyboard's own signature permission (docs/feature-spec.md, "Sync").
 
 ## Credits
 
