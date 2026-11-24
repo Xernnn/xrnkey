@@ -415,6 +415,16 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     that are words, longest first), then the rest;
   - a reading that looks foreign keeps its katakana right after the best conversion: one with
     ー, a small vowel (`ふぁ`, `てぃ`) or ゔ, or with a kana no word reads;
+  - **emoji**: a reading whose best conversion is an emoji keyword, or that is one itself
+    (`data/emoji/keywords-ja.tsv`: CLDR's Japanese names and keywords, and a hand list), has
+    its emoji: `わらい` (`笑い`) 😂, `ねこ` (`猫`) 🐱, `ありがとう` 🙏, `すし` 🍣, `にほん` 🇯🇵,
+    and kaomoji for `かお` (`(^_^)`, `(´・ω・`)`) and `しょぼん`. The conversion's keyword
+    comes first (`あめ`: `雨` ☔ before the candy). The first takes the right slot, the
+    likeliest third going to the panel's start, and the others follow the panel's first row; a
+    keyword that is only an association (`本` 📕, `時間` ⌚) has them all in the panel. A tap
+    puts the emoji in place of the reading, learned as nothing, and an emoji (not a kaomoji)
+    joins the emoji panel's recents. The settings' "Emoji" turns them off, as on the other
+    keyboards;
   - no remove marks: the dictionary's words are not the owner's to forget.
 - **Space**:
   - while composing, it converts, as Mozc and Gboard do, in **phrases** (bunsetsu: a word and
@@ -517,8 +527,8 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   types them; nothing converts.
 - **Not on this keyboard**: no learning of new words the dictionary lacks by typing them (the
   owner adds them, above), no parts of speech for the owner's words (all are nouns), no next
-  words beyond the owner's and the lists above, no Telex, and no emoji in the strip (the emoji
-  panel is there).
+  words beyond the owner's and the lists above, no Telex, and no emoji after Space or among the
+  next words (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first
@@ -960,6 +970,9 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
   list of chat words, abbreviations, emoticons, feelings and wishes (`data/emoji/README.md`). Of
   1,445 Vietnamese syllables typed bare, 15 are keywords (Laban Key, measured: 34; the CLDR
   index used before: 164).
+- **The Japanese strip's emoji keywords**: `data/emoji/keywords-ja.tsv` (about 6,100), read by
+  the Japanese keyboard itself (see "The Japanese keyboard"): CLDR 48's Japanese names and
+  keywords, and a hand list with a few kaomoji (`data/emoji/README.md`).
 
 ## The clipboard panel
 
@@ -1156,6 +1169,7 @@ All of it ships in the APK and is never downloaded.
 | Unihan readings (already a source) | the syllable inventory | Unicode License v3 |
 | SCOWL (already the source of `english.txt`) | the English vocabulary | SCOWL's permissive notice |
 | Unicode CLDR annotations, `vi` and `en`, and `emoji-test.txt` | emoji names, keywords, order and groups | Unicode License v3 |
+| Unicode CLDR annotations, `ja` | the Japanese strip's emoji keywords (`data/emoji/keywords-ja.tsv`) | Unicode License v3 |
 | Mozc's open-source dictionary (`src/data/dictionary_oss`: the words and the connection costs), itself from IPAdic and the Okinawa dictionary | the Japanese keyboard's conversions (`data/ja`) | BSD 3-Clause, with the IPAdic and ICOT notices (`data/ja/NOTICE`, shown in Settings → About → Licences) |
 | A hand list of Vietnamese and English chat words, abbreviations and emoticons, written for this project (`data/emoji/keywords-hand.tsv`) | the strip's emoji keywords | MIT, with the code |
 | A made-up chat and test set, written for this project | tuning the switch cost and abbreviations; the eval set C | MIT, with the code |

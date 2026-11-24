@@ -1,0 +1,120 @@
+# The hand-written part of the Japanese keyboard's emoji keywords, part of this project (data/emoji/README.md).
+# keyword <TAB> emoji (or kaomoji) <TAB> ..., best first, at most five; or keyword <TAB> skip (a CLDR keyword left out).
+# A keyword is a reading in hiragana (わら) or a word as the conversion writes it (笑い, ハート);
+# the strip offers its emoji for a reading that is it, or converts to it. A line here takes the
+# place of CLDR's for the same keyword.
+わら	😂	🤣	(≧▽≦)	w
+わらい	😂	🤣	😆
+笑	😂	🤣	😆
+笑い	😂	🤣	😆
+草	🤣	😂	🌱
+ありがとう	🙏	😊	✨
+ありがとうございます	🙏	😊	✨
+おめでとう	🎉	🎊	🥳
+おめでとうございます	🎉	🎊
+おはよう	☀️	😊
+おはようございます	☀️	😊
+おやすみ	😴	🌙	💤
+おやすみなさい	😴	🌙	💤
+こんにちは	👋	😊
+こんばんは	🌙	👋
+ばいばい	👋
+ごめん	🙏	😢	(´・ω・`)
+ごめんなさい	🙏	😢
+すみません	🙇	🙏
+よろしく	🙏	😊
+よろしくおねがいします	🙇	🙏
+おつかれ	🍵	🙇	🍺
+おつかれさま	🍵	🙇	🍺
+お疲れ	🍵	🙇	🍺
+お疲れ様	🍵	🙇	🍺
+がんばって	💪	📣	🔥
+頑張って	💪	📣	🔥
+がんばれ	💪	📣	🔥
+頑張れ	💪	📣	🔥
+ふぁいと	💪	🔥
+ファイト	💪	🔥
+好き	😍	❤️	🥰
+大好き	😍	❤️	🥰	💕
+愛	❤️	💕	😍
+ハート	❤️	💕	💖	💗	💓
+可愛い	🥰	😍	💕
+かわいい	🥰	😍	💕
+悲しい	😢	😭	💧
+泣く	😭	😢
+えーん	😭	(´；ω；`)
+いいね	👍	✨	😊
+おっけー	👌	👍	🙆
+オッケー	👌	👍	🙆
+了解	👌	🫡	👍
+びっくり	😲	😱	‼️
+怖い	😱	😨
+怒り	😡	💢	😠
+怒る	😡	💢	😠
+おこ	😡	💢
+眠い	😪	😴	💤
+疲れた	😩	💦	😮‍💨
+楽しい	😆	🎶	😊
+嬉しい	😊	😆	✨
+美味しい	😋	🤤	✨
+おいしい	😋	🤤	✨
+暑い	🥵	☀️	🔥
+寒い	🥶	❄️
+猫	🐱	🐈	😺
+犬	🐶	🐕
+誕生日	🎂	🎉	🎁
+ケーキ	🍰	🎂
+寿司	🍣
+ラーメン	🍜
+ご飯	🍚	🍙
+ビール	🍺	🍻
+お酒	🍶	🍺	🍷
+コーヒー	☕
+お茶	🍵
+桜	🌸
+花	🌸	💐	🌷
+雨	☔	🌧️
+雪	❄️	⛄
+晴れ	☀️
+曇り	☁️
+雷	⚡
+星	⭐	✨	🌟
+月	🌙	🌕
+きらきら	✨
+キラキラ	✨
+にこにこ	😊	(^^)
+しょぼん	(´・ω・`)	😞
+かお	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)
+顔文字	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)
+かおもじ	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)
+汗	💦	😅	(^_^;)
+あせあせ	💦	😅	(^_^;)
+どや	😏	(￣ー￣)
+ピース	✌️
+パーティー	🎉	🥳
+プレゼント	🎁
+電話	📞	📱
+メール	📧	✉️
+仕事	💼	💻
+学校	🏫
+家	🏠
+電車	🚃	🚆
+車	🚗
+飛行機	✈️
+お金	💰	💴
+上	skip
+下	skip
+左	skip
+右	skip
+人	skip
+顔	skip
+手	skip
+目	skip
+男	skip
+女	skip
+丸	skip
+白	skip
+黒	skip
+赤	skip
+青	skip
+OK	skip

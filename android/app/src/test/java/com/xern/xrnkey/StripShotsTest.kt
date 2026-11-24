@@ -85,7 +85,9 @@ class StripShotsTest {
             "composing-kami" to "kami", "converted-kami" to "kami ", "next-kami" to "kami  ", "sentence" to "watashihagakuseidesu",
             "composing-konnichiha" to "konnichiha", "composing-ariga" to "ariga", "after-watashi" to "watashi \n",
             "after-arigatou" to "arigatou \n", "chosen-kami" to "kami",
+            "emoji-warai" to "warai", "emoji-neko" to "neko", "emoji-kao" to "kao", "after-wo" to "honwo \n",
         )
+        val emoji = com.xern.xrnkey.ja.JapaneseEmoji.load(File(System.getProperty("xrnkey.emojiJapanese")!!).readBytes())
         for ((name, keys) in cases) for ((theme, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
             val conv = Converter(dict)
             if (name.startsWith("chosen")) {
@@ -97,7 +99,7 @@ class StripShotsTest {
             v.palette = palette
             v.language = "ja"
             v.kana = true
-            v.strip = KanaStrip().make(t)
+            v.strip = KanaStrip().also { it.emoji = emoji }.make(t)
             v.measure(MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
             v.layout(0, 0, v.measuredWidth, v.measuredHeight)
             val bmp = Bitmap.createBitmap(v.width, v.height, Bitmap.Config.ARGB_8888)

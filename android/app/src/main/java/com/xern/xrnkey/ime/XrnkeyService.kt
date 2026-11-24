@@ -32,6 +32,7 @@ import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.ja.Converter
 import com.xern.xrnkey.ja.Dictionary
+import com.xern.xrnkey.ja.JapaneseEmoji
 import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EmojiTab
@@ -170,6 +171,12 @@ class XrnkeyService :
         // nothing said so: "teh" just stayed "teh").
         Log.i("xrnkey", "models: " + loaded.joinToString("; "))
         converter = openDictionary(JAPANESE)?.let(::Converter)
+        // The Japanese strip's emoji keywords; without them it offers no emoji.
+        kanaStrip.emoji = try {
+            assets.open("emoji-ja.tsv").use { JapaneseEmoji.load(it.readBytes()) }
+        } catch (e: IOException) {
+            null
+        }
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         english = en?.let { Models(null, it) }
@@ -447,6 +454,7 @@ class XrnkeyService :
     override fun onCandidate(slot: Int) {
         (input as? KanaTypist)?.let { k ->
             val c = kanaStrip.pick(slot) ?: return
+            japaneseEmojiPicked(c.text)
             edit { k.pick(c) }
             showStrip()
             return
@@ -463,6 +471,11 @@ class XrnkeyService :
             }
         }
         showStrip()
+    }
+
+    /** An emoji the Japanese strip offered was taken: a recent of the emoji panel (not a kaomoji). */
+    private fun japaneseEmojiPicked(text: String) {
+        if (kanaStrip.isEmoji(text) && emoji?.all?.any { it.text == text } == true) memory.addRecent(text)
     }
 
     /** A swipe left from Backspace: through the typist, so the words before the cursor stay right. */
@@ -492,6 +505,7 @@ class XrnkeyService :
         val k = input as? KanaTypist
         if (k != null) {
             val c = kanaStrip.pick(text) ?: return
+            japaneseEmojiPicked(c.text)
             edit { k.pick(c) }
         } else {
             edit { typist.pick(text) }
@@ -824,6 +838,7 @@ class XrnkeyService :
         kana = if (o.language in Options.JAPANESE) kana ?: converter?.let { KanaTypist(editor, it) } else null
         kana?.learnHere = typist.learnHere
         kanaStrip.nextWords = o.nextWord
+        kanaStrip.emojiSuggestions = o.emojiSuggestions
         val inEnglish = o.language == "en" || o.language in Options.JAPANESE
         // The English keyboard: no marks, and the English model alone.
         val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX

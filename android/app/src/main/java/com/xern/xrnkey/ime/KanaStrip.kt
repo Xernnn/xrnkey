@@ -1,6 +1,7 @@
 package com.xern.xrnkey.ime
 
 import com.xern.xrnkey.ja.Candidate
+import com.xern.xrnkey.ja.JapaneseEmoji
 import com.xern.xrnkey.keyboard.Strip
 
 /**
@@ -8,7 +9,11 @@ import com.xern.xrnkey.keyboard.Strip
  * - while a reading is composing: what Space would give in the middle, in bold, and the next
  *   likeliest on the left and the right, predictions included ("ありが": ありがとう); the more panel
  *   holds the others, then the hiragana and katakana, then the pieces for converting piece by
- *   piece ([com.xern.xrnkey.ja.Conversion.offered]);
+ *   piece ([com.xern.xrnkey.ja.Conversion.offered]). A reading that is an emoji keyword, or
+ *   converts to one ([JapaneseEmoji]: ねこ 🐱, わらい 😂), has its first emoji on the right, the
+ *   likeliest third going to the panel, and the others in the panel's second row; a keyword
+ *   that is only an association (本 📕) has them all there. A tap puts the emoji in place of the
+ *   reading;
  * - after Space: the focused phrase's candidate the field shows in the middle, highlighted, with
  *   the one before it on the left and the next on the right; the panel holds the others. Its
  *   sides are ⇤ and ⇥, which shrink and stretch the focused phrase;
@@ -22,7 +27,15 @@ class KanaStrip {
     /** The next words are offered after a word (the settings' "Next word"). */
     var nextWords = true
 
+    /** The emoji for a reading (null: none), and whether they are offered (the settings' "Emoji"). */
+    var emoji: JapaneseEmoji? = null
+    var emojiSuggestions = true
+
+    /** The emoji the strip offers now, as candidates (a pick of one is no word to learn). */
+    private var emojiShown: Set<String> = emptySet()
+
     fun make(k: KanaTypist): Strip {
+        emojiShown = emptySet()
         val conv = k.conversion()
         if (k.shown.isEmpty() || conv == null) {
             val next = if (nextWords && k.shown.isEmpty()) k.nextWords() else emptyList()
@@ -48,6 +61,18 @@ class KanaStrip {
         val all = conv.offered
         slots = listOf(all.getOrNull(1), all[0], all.getOrNull(2))
         extra = all.drop(3)
+        val hit = if (emojiSuggestions) emoji?.of(conv.reading, conv.best.text) else null
+        if (hit != null) {
+            val pics = hit.emoji.map { Candidate(it, conv.reading.length) }
+            var rest = pics
+            if (hit.strong) {
+                extra = listOfNotNull(slots[2]) + extra
+                slots = listOf(slots[0], slots[1], pics[0])
+                rest = pics.drop(1)
+            }
+            extra = extra.take(PANEL_ROW) + rest + extra.drop(PANEL_ROW)
+            emojiShown = hit.emoji.toSet()
+        }
         return candidates(highlight = false)
     }
 
@@ -60,11 +85,17 @@ class KanaStrip {
     /** The candidate in slot 0 (left), 1 (centre) or 2 (right). */
     fun pick(slot: Int): Candidate? = slots.getOrNull(slot)
 
+    /** Whether the strip offered `text` as an emoji (or a kaomoji) for the reading. */
+    fun isEmoji(text: String): Boolean = text in emojiShown
+
     /** The candidate the more panel showed as `text`. */
     fun pick(text: String): Candidate? = extra.firstOrNull { it.text == text } ?: slots.firstOrNull { it?.text == text }
 
     companion object {
         /** The more panel holds up to this many: five rows of three, for the homophones. */
         const val MOST = 15
+
+        /** The panel's rows are three across: an association's emoji start its second. */
+        private const val PANEL_ROW = 3
     }
 }

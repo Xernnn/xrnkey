@@ -1,5 +1,5 @@
 {
-  "comment": "What data/emoji/generate.py builds emoji-index.tsv from. All Unicode License v3 (data/emoji/README.md). sha256 pins the exact file.",
+  "comment": "What data/emoji/generate.py builds emoji-index.tsv from, and japanese.py keywords-ja.tsv. All Unicode License v3 (data/emoji/README.md). sha256 pins the exact file.",
   "sources": [
     {
       "name": "emoji-test-17.0",
@@ -25,6 +25,16 @@
       "name": "cldr48-derived-vi",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/48.0.0/cldr-json/cldr-annotations-derived-full/annotationsDerived/vi/annotations.json",
       "sha256": "2af5588927fb68bb01aedd28aa2947aa77d31374a53bd008844d426b6ba2f062"
+    },
+    {
+      "name": "cldr48-annotations-ja",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/48.0.0/cldr-json/cldr-annotations-full/annotations/ja/annotations.json",
+      "sha256": "737ce4bea3d52d904f7744eb7653ea55100c99232255609a913f69a5a8c3d6c1"
+    },
+    {
+      "name": "cldr48-derived-ja",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/48.0.0/cldr-json/cldr-annotations-derived-full/annotationsDerived/ja/annotations.json",
+      "sha256": "6c5496486b89d57cb6f9f0701c8052d44c23b08703d796e5e45c1d65f3902edf"
     }
   ]
 }

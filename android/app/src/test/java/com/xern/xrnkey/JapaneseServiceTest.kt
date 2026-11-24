@@ -267,6 +267,31 @@ class JapaneseServiceTest {
         f.service.onDestroy()
     }
 
+    /**
+     * The strip offers a reading's emoji from the APK's Japanese table: あめ (雨) ☔ on the right; a
+     * tap puts it in place of the reading and keeps it among the emoji panel's recents. A
+     * kaomoji goes in as well, but is no recent.
+     */
+    @Test
+    fun aReadingsEmojiIsOfferedAndGoesIn() {
+        val f = field()
+        f.service.onLanguage("ja")
+        f.type("ame")
+        assertEquals("☔", (f.strip() as Strip.Candidates).right)
+        f.service.onCandidate(2)
+        assertEquals("☔", f.edit.text.toString())
+        assertEquals("", f.composing)
+        val memory = com.xern.xrnkey.ime.EmojiMemory(Options.prefs(RuntimeEnvironment.getApplication()))
+        assertEquals("☔", memory.recents().first())
+        f.type("kao")
+        val s = f.strip() as Strip.Candidates
+        assertTrue(s.toString(), "(^_^)" in listOfNotNull(s.right) + s.extra)
+        f.service.onMorePick("(´・ω・`)")
+        assertEquals("☔(´・ω・`)", f.edit.text.toString())
+        assertFalse("(´・ω・`)" in memory.recents())
+        f.service.onDestroy()
+    }
+
     /** In an incognito field nothing chosen is learned, and nothing is written. */
     @Test
     fun anIncognitoFieldLearnsNothing() {
