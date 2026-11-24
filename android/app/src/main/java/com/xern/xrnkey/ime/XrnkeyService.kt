@@ -640,7 +640,8 @@ class XrnkeyService :
     /** With auto-capitalise on: Shift for the first letter of a sentence. */
     private fun autoCapitalise() {
         val k = keyboard ?: return
-        if (options.autoCap && k.page == Page.LETTERS && k.shift == Shift.OFF && input.atSentenceStart()) k.shift = Shift.ONCE
+        val on = options.autoCap == "always" || options.autoCap == "english" && options.language == "en"
+        if (on && k.page == Page.LETTERS && k.shift == Shift.OFF && input.atSentenceStart()) k.shift = Shift.ONCE
     }
 
     /**

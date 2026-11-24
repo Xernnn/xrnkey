@@ -181,7 +181,7 @@ class KeyboardView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
 
     private fun relayout() {
-        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow, kana = kana)
+        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow, kana = kana, english = language == "en")
         val w = width.toFloat()
         // A pad has no strip: its rows share the whole height.
         val first = if (page.isPad) 0f else stripHeight

@@ -25,7 +25,11 @@ data class Options(
      */
     val tonesOnSpace: Int = 0,
     /** Shift for a sentence's first letter. */
-    val autoCap: Boolean = false,
+    /**
+     * Shift for a sentence's first letter: "off", "english" (on the English keyboard only, the
+     * default: the owner has it off for Vietnamese, as on Laban Key) or "always".
+     */
+    val autoCap: String = "english",
     /** The next word in the strip after a Space. */
     val nextWord: Boolean = true,
     val learn: Boolean = true,
@@ -75,7 +79,7 @@ data class Options(
             .putBoolean("suggestions", suggestions)
             .putBoolean("emoji_suggestions", emojiSuggestions)
             .putInt("tones_on_space", tonesOnSpace)
-            .putBoolean("auto_cap", autoCap)
+            .putString("auto_cap_mode", autoCap)
             .putBoolean("learn", learn)
             .putBoolean("sync_words", syncWords)
             .putInt("correction", correction)
@@ -99,6 +103,9 @@ data class Options(
 
     companion object {
         val HOLD_CHOICES = listOf(200, 300, 400, 500, 600)
+
+        /** Auto-capitalise's choices, in Settings' order. */
+        val AUTO_CAPS = listOf("off", "english", "always")
 
         /** Japanese on the 12-key kana pad: its own choice in the comma's menu, after QWERTY's "ja". */
         const val FLICK = "ja-flick"
@@ -125,7 +132,9 @@ data class Options(
                 suggestions = p.getBoolean("suggestions", d.suggestions),
                 emojiSuggestions = p.getBoolean("emoji_suggestions", d.emojiSuggestions),
                 tonesOnSpace = p.getInt("tones_on_space", d.tonesOnSpace).coerceIn(0, 2),
-                autoCap = p.getBoolean("auto_cap", d.autoCap),
+                // Before 0.11 it was on or off, for every language: on stays on everywhere.
+                autoCap = p.getString("auto_cap_mode", null)?.takeIf { it in AUTO_CAPS }
+                    ?: if (p.getBoolean("auto_cap", false)) "always" else d.autoCap,
                 learn = p.getBoolean("learn", d.learn),
                 syncWords = p.getBoolean("sync_words", d.syncWords),
                 correction = p.getInt("correction", d.correction).coerceIn(0, 2),

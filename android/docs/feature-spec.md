@@ -90,8 +90,9 @@ Swipe typing is not used.
 - Clipboard images, and a chip in the strip for a just-copied item.
 - Typing whole words in a Unicode style as they are typed (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉). The `Aa` tab
   has the styled letters one at a time, as Laban Key's.
-- Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
-  owner has these off in the reference.
+- Smart space after punctuation, and moving the cursor to a word's end. The owner has these off
+  in the reference. (Auto-capitalise came, on the English keyboard only by default: see "The
+  English keyboard".)
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
 - Split and one-handed layouts, and a tablet layout.
 
@@ -368,6 +369,11 @@ Chosen from the comma's menu (EN); the space bar says "English".
 - **Space fixes English**: a typo English has no word for ("teh": the), a word typed without its
   apostrophe ("dont": don't, "im": I'm), and "i" alone is "I". Words that are words themselves
   ("its", "ill", "were") stay. Backspace right after puts back what was typed.
+- **Capitals**: a sentence's first letter gets Shift (Settings → Suggestions & auto-correct →
+  Auto-capitalise: Off, English, All; English is the default, so the Vietnamese keyboard stays
+  without, as the owner has Laban Key).
+- **Held letters** give the accents English borrows, then the capital: a gives à á â ä æ ã å ā
+  A, e è é ê ë ē ę E, n ñ ń N, c ç ć č C, s ß ś š S. None of Vietnamese's marks.
 - Everything else is as on the Vietnamese keyboard: the strip, the panels, the gestures.
 
 ## The Japanese keyboard

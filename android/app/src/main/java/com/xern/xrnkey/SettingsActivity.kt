@@ -622,7 +622,9 @@ class SettingsActivity : ComponentActivity() {
             Card {
                 Toggle("Non-Vietnamese as typed", o.keepForeign) { set(o.copy(keepForeign = it)) }
                 Toggle("Double space full stop", o.doubleSpace) { set(o.copy(doubleSpace = it)) }
-                Toggle("Auto-capitalise", o.autoCap) { set(o.copy(autoCap = it)) }
+                Choice("Auto-capitalise", listOf("Off", "English", "All"), Options.AUTO_CAPS.indexOf(o.autoCap)) {
+                    set(o.copy(autoCap = Options.AUTO_CAPS[it]))
+                }
             }
         }
 

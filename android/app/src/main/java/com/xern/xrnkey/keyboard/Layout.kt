@@ -135,6 +135,25 @@ object Layouts {
         return if (upper) forms.map { it.uppercase() } + lower.toString() else forms + lower.uppercase()
     }
 
+    /** The accented letters English text borrows, by letter, commonest first (as English keyboards offer them). */
+    private val LATIN_ACCENTS = mapOf(
+        'a' to "à á â ä æ ã å ā", 'c' to "ç ć č", 'e' to "è é ê ë ē ę", 'i' to "ì í î ï ī",
+        'l' to "ł", 'n' to "ñ ń", 'o' to "ò ó ô ö õ ø œ ō", 's' to "ß ś š", 'u' to "ù ú û ü ū",
+        'y' to "ý ÿ", 'z' to "ž ź ż", 'g' to "ğ",
+    )
+
+    /**
+     * What holding a letter offers on the English keyboard, the first under the finger: none of
+     * Vietnamese's marks, but the accents English borrows (a: à á â ä æ ã å ā, n: ñ), then the
+     * capital. [upper]: as [forms], capitals, and the small letter last (ß has no capital: it
+     * stays as it is).
+     */
+    fun englishForms(c: Char, upper: Boolean = false): List<String> {
+        val lower = c.lowercaseChar()
+        val forms = LATIN_ACCENTS[lower]?.split(' ').orEmpty()
+        return if (upper) forms.map { if (it == "ß") it else it.uppercase() } + lower.toString() else forms + lower.uppercase()
+    }
+
     /**
      * What holding the full stop offers: the common punctuation, the comma under the finger (as
      * on the keyboard the owner came from).
@@ -150,12 +169,20 @@ object Layouts {
      */
     val EMOTICON_ROW: List<String> = listOf("😂", "😊", "😍", "😫", "😢", "😞", "😨", "😁", "👌", "👍")
 
-    /** Letter keys; on the Japanese keyboard ([kana]) a held letter gives [latinForms]. */
-    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false, kana: Boolean = false) =
+    /**
+     * Letter keys; on the Japanese keyboard ([kana]) a held letter gives [latinForms], on the
+     * English one ([english]) [englishForms].
+     */
+    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false, kana: Boolean = false, english: Boolean = false) =
         s.mapIndexed { i, c ->
             val up = shift != Shift.OFF
             val label = if (up) c.uppercase() else c.toString()
-            val forms = if (!c.isLetter()) emptyList() else if (kana) latinForms(c, up) else forms(c, up)
+            val forms = when {
+                !c.isLetter() -> emptyList()
+                kana -> latinForms(c, up)
+                english -> englishForms(c, up)
+                else -> forms(c, up)
+            }
             Key(KeyKind.CHAR, label, variants = (if (digits) listOf(DIGITS[i].toString()) else emptyList()) + forms)
         }
 
@@ -256,6 +283,7 @@ object Layouts {
         home: Page = Page.LETTERS,
         emoticons: Boolean = false,
         kana: Boolean = false,
+        english: Boolean = false,
     ): List<Row> = when (page) {
         // 1 2 3 ⌫ / 4 5 6 − / 7 8 9 sep / ?123 0 ↵: the minus and the separator only where the
         // field takes them.
@@ -283,11 +311,11 @@ object Layouts {
         Page.LETTERS -> buildList {
             if (numberRow && emoticons) add(Row(EMOTICON_ROW.map { Key(KeyKind.EMOTICON, it) }))
             else if (numberRow) add(Row(chars(DIGITS)))
-            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow, kana = kana)))
-            add(Row(chars("asdfghjkl", shift, kana = kana), inset = 0.5f))
+            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow, kana = kana, english = english)))
+            add(Row(chars("asdfghjkl", shift, kana = kana, english = english), inset = 0.5f))
             add(
                 Row(
-                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift, kana = kana) +
+                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift, kana = kana, english = english) +
                         Key(KeyKind.BACKSPACE, width = 1.5f),
                 ),
             )
