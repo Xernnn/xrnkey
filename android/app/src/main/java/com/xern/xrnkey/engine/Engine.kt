@@ -88,6 +88,14 @@ class Models(vi: Model?, en: Model?) : AutoCloseable {
     fun predict(context: List<String>, max: Int = 3): List<String> =
         Native.predict(handle, context.utf8(), max).map { it.text() }
 
+    /**
+     * The touch keyboard's letter keys, for Space's typo fixes: a key's height in key widths, and
+     * where the owner's taps on each letter a..z land on average ([sweetX], [sweetY]: 26 offsets
+     * in key widths across and key heights down; null: the centres).
+     */
+    fun setKeyboard(keyHeight: Float, sweetX: FloatArray? = null, sweetY: FloatArray? = null) =
+        Native.modelsSetKeyboard(handle, keyHeight, sweetX, sweetY)
+
     /** The owner's personal words, which scoring leans towards (null: none). Not owned. */
     var user: PersonalWords? = null
         set(value) {
@@ -119,6 +127,9 @@ data class Candidate(val text: String, val type: Int, val score: Float = 0f) {
     }
 }
 
+/** What Space's typo fix made of a word: its fix (null: it stays), and whether it is a word as typed. */
+data class TypoFix(val fix: String?, val word: Boolean)
+
 /** What a key did: text to commit, the word in progress, whether the core took the key. */
 data class KeyResult(val commit: String, val preedit: String, val consumed: Boolean, val deleteBefore: Int)
 
@@ -144,6 +155,18 @@ class TypingState(val mode: Int = TELEX) : AutoCloseable {
     fun previewFinal(): String = Native.statePreviewFinal(handle).text()
 
     fun setContext(words: List<String>) = Native.stateSetContext(handle, words.utf8())
+
+    /**
+     * Space's typo fix for the word in progress (core/typos.cpp), at `level` (Models.CORRECT_*),
+     * after the words in `context`: where each of its keys was touched ([touchX], [touchY]: key
+     * widths across and key heights down from the key's centre; NaN where not known). The fix
+     * (null: the word stays), and whether the word as typed is a word.
+     */
+    fun fixTypo(context: List<String>, touchX: FloatArray, touchY: FloatArray, level: Int): TypoFix {
+        val known = IntArray(1)
+        val fix = Native.stateFixTypo(handle, context.utf8(), touchX, touchY, level, known)?.text()
+        return TypoFix(fix, known[0] != 0)
+    }
 
     fun reset() = Native.stateReset(handle)
 

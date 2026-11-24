@@ -2,15 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No permissions at all: no network, no microphone (android/docs/feature-spec.md).
-         androidx.core adds one for receivers registered as not exported; the keyboard
-         registers none, so it is taken out again. -->
+    <!-- The keyboard asks for no permission at all: no network, no microphone
+         (android/docs/feature-spec.md). androidx.core adds one for receivers registered as not
+         exported; the keyboard registers none, so it is taken out again. -->
     <permission
         android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         tools:node="remove" />
     <uses-permission
         android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         tools:node="remove" />
+    <!-- The keyboard's own permission, which guards the personal words' provider below. Only the
+         owner's hub app gets it: a signature permission, granted to the hub, which is signed with
+         another key, by that key's certificate digest (knownSigner, Android 12 and later). -->
+    <permission
+        android:name="com.xern.xrnkey.permission.SYNC_WORDS"
+        android:knownCerts="@array/hub_certs"
+        android:protectionLevel="signature|knownSigner"
+        tools:targetApi="s" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -33,6 +42,13 @@
                 android:name="android.view.im"
                 android:resource="@xml/method" />
         </service>
+
+        <!-- The personal words for the hub app's sync, while Settings has it on (sync/WordsProvider.kt). -->
+        <provider
+            android:name=".sync.WordsProvider"
+            android:authorities="com.xern.xrnkey.words"
+            android:exported="true"
+            android:permission="com.xern.xrnkey.permission.SYNC_WORDS" />
 
         <activity
             android:name=".SettingsActivity"

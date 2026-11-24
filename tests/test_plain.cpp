@@ -71,6 +71,9 @@ TEST_CASE("chat words and laughs are left as typed", "[plain]") {
     // The real models made "hehe" "here" and "oke" "one"; these never change.
     for (const char* w : {"hehe", "hehehe", "hahaha", "hihi", "hjhj", "kaka", "oke", "oki", "uk", "haizz"})
         CHECK(m.fix(w) == "");
+    // Teen code for thích and anh: English read them as "this" and "and".
+    for (const char* w : {"thik", "ank", "bik", "mik", "nhak"})
+        CHECK(m.fix(w) == "");
     CHECK(m.fix("teh") == "the");  // a slip is still fixed
 }
 

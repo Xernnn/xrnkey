@@ -355,6 +355,26 @@ class ServiceTypingTest {
         s.onDestroy()
     }
 
+    /**
+     * A letter tapped reaches the typist with where it landed on its key: Space weighs it to fix
+     * a word that is no word, and a word that ends as typed teaches where the taps land.
+     */
+    @Test
+    fun aLettersTouchReachesTheTypist() {
+        val (s, edit) = field(app = "com.example.chat")
+        s.type("tooi ")
+        "kjong".forEachIndexed { i, c -> s.onLetter(c.toString(), if (i == 1) -0.45f else 0f, 0f, 1.4f) }
+        assertEquals(-0.45f, s.typist.touchesNow()[1]?.dx)
+        s.onText(" ")
+        assertEquals("tôi không ", edit.text.toString())
+        val spots = s.typist.touchSpots!!
+        "khoong".forEach { c -> s.onLetter(c.toString(), 0.1f, 0f, 1.4f) }
+        s.onText(" ")
+        assertEquals(1, spots.count('k'))
+        assertEquals(2, spots.count('o'))
+        s.onDestroy()
+    }
+
     @Test
     fun aKnownTypoIsFixedOnSpace() {
         // Only with the bundled models: CI has the small test ones, which the APK doesn't ship.

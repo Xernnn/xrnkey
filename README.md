@@ -193,7 +193,35 @@ xk-dict lookup "hạnh phúc"  # Dictionary lookup
 xk-dict add "từ mới" 9000   # Add to the user dictionary (then fcitx5-remote -r)
 xk-macro add ko không       # Abbreviation: "ko" + Space -> "không" (needs Macro=True)
 xk-macro list               # Show them; xk-macro remove ko drops one
+xk-sync                     # Personal words with the phone keyboard (see below)
 ```
+
+## Personal words from the phone
+
+The Android keyboard (`android/`) learns the words you type. Its hub app carries them through your
+own server (the keyboard has no network), and `xk-sync` brings them into the user dictionary here
+and sends back the words you add or remove with `xk-dict`, so a word removed on one device goes from
+both. Only single words in lower case sync; a phrase or a capitalised entry stays on the laptop. A
+phone count becomes 1000 × that count here (`xk-dict add từ 9000` reaches the phone as typed 9
+times). On the phone, turn on Settings → Personal words → **Sync through xrnhub**.
+
+Write `~/.config/xrnkey/sync.json` (it never belongs in the repo):
+
+```json
+{ "server": "https://<host>/<hub path>", "user": "<account>", "password_file": "<file holding the password>" }
+```
+
+Then try it once, and let the timer that `makepkg -si` installs run it every hour:
+
+```bash
+xk-sync --dry-run                          # what would change; changes nothing
+xk-sync                                    # sync once (reloads Fcitx5 when the dictionary changed)
+systemctl --user enable --now xk-sync.timer
+```
+
+It keeps what it last synced in `~/.local/state/xrnkey/words-sync.json`. A `user-dict.txt` that is
+missing altogether is taken as lost, and its words come back; an emptied one deletes them
+everywhere. Suggestions must be on (`PredictionEnabled`) for the words to show while typing.
 
 ## Project Structure
 
@@ -202,7 +230,7 @@ xrnkey/
 ├── core/           libxrnkey: the C++20 engine behind a C API
 ├── fcitx5-addon/   the Fcitx5 input method, and its end-to-end tests (tests/)
 ├── ibus-engine/    an old IBus engine (not built by the PKGBUILD; targets python-ibus)
-├── cli-tools/      xk-setup, xk-diagnose, xk-dict, xk-macro
+├── cli-tools/      xk-setup, xk-diagnose, xk-dict, xk-macro, xk-sync (and its systemd timer)
 ├── data/           dictionary, n-gram and emoji data, icon
 ├── tests/          Catch2 tests of the core
 └── packaging/      PKGBUILD

@@ -83,6 +83,7 @@ import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.keyboard.Palette
 import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.OnDevice
+import com.xern.xrnkey.ja.UserDictionary
 import com.xern.xrnkey.ja.UserHistory
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
@@ -123,11 +124,14 @@ enum class Page(val title: String, val icon: Icon? = null) {
     LICENCES("Licences", Icon.LICENCES),
 
     /** What was chosen on the Japanese keyboard, under the personal words. */
-    JAPANESE("Japanese");
+    JAPANESE("Japanese"),
+
+    /** The owner's own Japanese words, each with its reading, under the personal words. */
+    JAPANESE_WORDS("Japanese dictionary");
 
     fun parent(): Page = when (this) {
         LICENCES -> ABOUT
-        JAPANESE -> WORDS
+        JAPANESE, JAPANESE_WORDS -> WORDS
         else -> MAIN
     }
 
@@ -211,6 +215,22 @@ class SettingsActivity : ComponentActivity() {
         OnDevice.japaneseChanged(prefs)
     }
 
+    private val japaneseWordsFile get() = File(filesDir, OnDevice.JAPANESE_WORDS)
+
+    private fun readJapaneseWords(): UserDictionary = UserDictionary().also { it.load(japaneseWordsFile) }
+
+    /** Changes the owner's Japanese words and saves them, if they changed; the keyboard reads them again at its next field. */
+    private fun <T> withJapaneseWords(change: (UserDictionary) -> T): T {
+        val d = readJapaneseWords()
+        val before = d.version
+        val r = change(d)
+        if (d.version != before) {
+            d.save(japaneseWordsFile)
+            OnDevice.japaneseWordsChanged(prefs)
+        }
+        return r
+    }
+
     private fun forgetWord(word: String) {
         PersonalWords().use { w ->
             if (wordsFile.exists()) w.load(wordsFile)
@@ -261,8 +281,9 @@ class SettingsActivity : ComponentActivity() {
                     Page.KEYBOARD -> ui.Scrolling { ui.KeyboardPage(o, set) }
                     Page.TYPING -> ui.Scrolling { ui.TypingPage(o, set) }
                     Page.SUGGESTIONS -> ui.Scrolling { ui.SuggestionsPage(o, set) }
-                    Page.WORDS -> ui.WordsPage(o, set) { page = Page.JAPANESE }
+                    Page.WORDS -> ui.WordsPage(o, set) { page = it }
                     Page.JAPANESE -> ui.JapanesePage()
+                    Page.JAPANESE_WORDS -> ui.JapaneseWordsPage()
                     Page.SHORTCUTS -> ui.ShortcutsPage(o, set)
                     Page.CLIPBOARD -> ui.Scrolling { ui.ClipboardPage(o, set) }
                     Page.THEME -> ui.Scrolling { ui.ThemePage(o, set) }
@@ -606,15 +627,22 @@ class SettingsActivity : ComponentActivity() {
         }
 
         @Composable
-        fun WordsPage(o: Options, set: (Options) -> Unit, openJapanese: () -> Unit) {
+        fun WordsPage(o: Options, set: (Options) -> Unit, open: (Page) -> Unit) {
             var words by remember { mutableStateOf(readWords()) }
             var hidden by remember { mutableStateOf(readHidden()) }
             var query by remember { mutableStateOf("") }
             var confirmClear by remember { mutableStateOf(false) }
             val japanese = remember { readJapanese().size }
+            val japaneseWords = remember { readJapaneseWords().size }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-                Card { Toggle("Learn words", o.learn) { set(o.copy(learn = it)) } }
-                Card { NavRow(Page.JAPANESE.title, "$japanese", onClick = openJapanese) }
+                Card {
+                    Toggle("Learn words", o.learn) { set(o.copy(learn = it)) }
+                    Toggle("Sync through xrnhub", o.syncWords) { set(o.copy(syncWords = it)) }
+                }
+                Card {
+                    NavRow(Page.JAPANESE.title, "$japanese") { open(Page.JAPANESE) }
+                    NavRow(Page.JAPANESE_WORDS.title, "$japaneseWords") { open(Page.JAPANESE_WORDS) }
+                }
                 Field(query, "Search", { query = it }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
                 val q = query.trim().lowercase()
                 val shown = if (q.isEmpty()) words else words.filter { it.first.contains(q) }
@@ -681,6 +709,67 @@ class SettingsActivity : ComponentActivity() {
                     chosen = readJapanese()
                     confirmClear = false
                 }) { confirmClear = false }
+            }
+        }
+
+        /**
+         * The owner's own Japanese words: Add opens a reading and a word to save; each listed with
+         * its reading, to delete. Import and Export take and give a file of reading-tab-word lines.
+         */
+        @Composable
+        fun JapaneseWordsPage() {
+            var entries by remember { mutableStateOf(readJapaneseWords().all()) }
+            var adding by remember { mutableStateOf(false) }
+            val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                val text = uri?.let { readText(it) } ?: return@rememberLauncherForActivityResult
+                withJapaneseWords { it.import(text) }
+                entries = readJapaneseWords().all()
+            }
+            val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+                uri ?: return@rememberLauncherForActivityResult
+                contentResolver.openOutputStream(uri)?.use { it.write(readJapaneseWords().export().toByteArray()) }
+            }
+            Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+                Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill("Add", true) { adding = true }
+                    Pill("Import", false) { importer.launch(arrayOf("text/*")) }
+                    Pill("Export", false) { exporter.launch("japanese-words.txt") }
+                }
+                if (adding) {
+                    var reading by remember { mutableStateOf("") }
+                    var word by remember { mutableStateOf("") }
+                    var refused by remember { mutableStateOf(false) }
+                    Column(
+                        Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(14.dp)).background(look.card).padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Field(reading, "Reading", { reading = it; refused = false }, Modifier.fillMaxWidth(), refused)
+                        Field(word, "Word", { word = it; refused = false }, Modifier.fillMaxWidth())
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Pill("Save", true) {
+                                if (withJapaneseWords { it.add(reading, word) }) {
+                                    entries = readJapaneseWords().all()
+                                    adding = false
+                                } else {
+                                    refused = true
+                                }
+                            }
+                            Pill("Cancel", false) { adding = false }
+                        }
+                    }
+                }
+                LazyColumn(Modifier.weight(1f).padding(vertical = 6.dp).clip(RoundedCornerShape(18.dp)).background(look.card).padding(horizontal = 12.dp)) {
+                    items(entries, key = { it.reading + "\t" + it.surface }) { e ->
+                        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(e.surface, style = label, modifier = Modifier.weight(1f))
+                            Text(e.reading, style = quiet)
+                            Bin("Delete ${e.surface}") {
+                                withJapaneseWords { it.remove(e.reading, e.surface) }
+                                entries = readJapaneseWords().all()
+                            }
+                        }
+                    }
+                }
             }
         }
 

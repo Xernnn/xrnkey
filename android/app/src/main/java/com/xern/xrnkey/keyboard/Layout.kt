@@ -75,9 +75,15 @@ enum class Page {
     NUMBER, PHONE, DATETIME,
 
     /** The Japanese 12-key pad (flick input): kana in a 3 by 4 grid, function keys either side. */
-    KANA;
+    KANA,
+
+    /** The 12-key pad's numbers: digits in its grid, each flicked for symbols, as Gboard's. */
+    KANA_NUMBERS;
 
     val isPad: Boolean get() = this == NUMBER || this == PHONE || this == DATETIME
+
+    /** A page of the 12-key pad: its tiles, flicks and side columns. */
+    val isFlick: Boolean get() = this == KANA || this == KANA_NUMBERS
 }
 
 /** What a number field allows besides digits: its decimal separator, and a minus sign. */
@@ -114,6 +120,21 @@ object Layouts {
         return if (upper) forms.map { it.uppercase() } + lower.toString() else forms + lower.uppercase()
     }
 
+    /** The vowels romaji writes long with a macron (Hepburn: Tōkyō). */
+    private val MACRON = mapOf('a' to "ā", 'i' to "ī", 'u' to "ū", 'e' to "ē", 'o' to "ō")
+
+    /**
+     * What holding a letter offers on the Japanese keyboard, the first under the finger: none of
+     * Vietnamese's marks, but what Japanese text uses of the Latin letters: a vowel with its
+     * macron (ā, as romaji writes a long vowel), the letter full-width (ａ), then the capital (a:
+     * ā ａ A; k: ｋ K). [upper]: as [forms], capitals, and the small letter last.
+     */
+    fun latinForms(c: Char, upper: Boolean = false): List<String> {
+        val lower = c.lowercaseChar()
+        val forms = listOfNotNull(MACRON[lower], (lower + 0xFEE0).toString())
+        return if (upper) forms.map { it.uppercase() } + lower.toString() else forms + lower.uppercase()
+    }
+
     /**
      * What holding the full stop offers: the common punctuation, the comma under the finger (as
      * on the keyboard the owner came from).
@@ -129,11 +150,12 @@ object Layouts {
      */
     val EMOTICON_ROW: List<String> = listOf("😂", "😊", "😍", "😫", "😢", "😞", "😨", "😁", "👌", "👍")
 
-    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false) =
+    /** Letter keys; on the Japanese keyboard ([kana]) a held letter gives [latinForms]. */
+    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false, kana: Boolean = false) =
         s.mapIndexed { i, c ->
             val up = shift != Shift.OFF
             val label = if (up) c.uppercase() else c.toString()
-            val forms = if (c.isLetter()) forms(c, up) else emptyList()
+            val forms = if (!c.isLetter()) emptyList() else if (kana) latinForms(c, up) else forms(c, up)
             Key(KeyKind.CHAR, label, variants = (if (digits) listOf(DIGITS[i].toString()) else emptyList()) + forms)
         }
 
@@ -222,7 +244,8 @@ object Layouts {
      * letter gives its digit first when [holdDigits] and there is no number row. A pad is a
      * dialer's grid of digits with a column beside it; [pad] says what a number pad adds. [home]
      * is the page the symbols' way back leads to (the letters, or the field's pad). On the
-     * Japanese keyboard ([kana]) the letters' comma and full stop are 、 and 。.
+     * Japanese keyboard ([kana]) the letters' comma and full stop are 、 and 。, and a held letter
+     * gives [latinForms], not Vietnamese's marks.
      */
     fun rows(
         page: Page,
@@ -260,11 +283,11 @@ object Layouts {
         Page.LETTERS -> buildList {
             if (numberRow && emoticons) add(Row(EMOTICON_ROW.map { Key(KeyKind.EMOTICON, it) }))
             else if (numberRow) add(Row(chars(DIGITS)))
-            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow)))
-            add(Row(chars("asdfghjkl", shift), inset = 0.5f))
+            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow, kana = kana)))
+            add(Row(chars("asdfghjkl", shift, kana = kana), inset = 0.5f))
             add(
                 Row(
-                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift) +
+                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift, kana = kana) +
                         Key(KeyKind.BACKSPACE, width = 1.5f),
                 ),
             )
@@ -293,6 +316,7 @@ object Layouts {
             symbolBottom(home, symbols("< >")),
         )
         Page.KANA -> Flick.rows
+        Page.KANA_NUMBERS -> Flick.numberRows
         // , 1 2 3 - / ( 4 5 6 . / ) 7 8 9 ⌫ / ABC ?123 0 space ↵, two letter keys a cell.
         Page.NUMPAD -> listOf(
             Row(listOf(cell(","), cell("1"), cell("2"), cell("3"), cell("-"))),
@@ -448,6 +472,42 @@ object Flick {
         Row(listOf(side(KeyKind.GLOBE), Key(KeyKind.KANA_MARK, "゛゜小", WIDE)) + keys.subList(9, 11) + side(KeyKind.ENTER)),
     )
 
+    /**
+     * The number pad's keys, as Gboard's (Google Japanese Input's 12-key numbers): a tap types the
+     * digit, a flick left, up or right a symbol (1: ☆ ♪ →, 2: ¥ $ €, 3: % ° #, 4: ○ * ・,
+     * 5: + × ÷, 6: < = >, 7: 「 」 :, 8: 〒 々 〆, 9: ^ | \, 0: ~ …), and the last row's brackets
+     * and ., - / beside the 0. No toggle: a digit tapped twice is two digits.
+     */
+    private fun number(label: String, flicks: List<String>, text: String = label) = Key(
+        KeyKind.KANA, label, WIDE, text, flicks = flicks + List(4 - flicks.size) { "" },
+    )
+
+    val numberKeys: List<Key> = listOf(
+        number("1", listOf("☆", "♪", "→")),
+        number("2", listOf("¥", "$", "€")),
+        number("3", listOf("%", "°", "#")),
+        number("4", listOf("○", "*", "・")),
+        number("5", listOf("+", "×", "÷")),
+        number("6", listOf("<", "=", ">")),
+        number("7", listOf("「", "」", ":")),
+        number("8", listOf("〒", "々", "〆")),
+        number("9", listOf("^", "|", "\\")),
+        number("()[]", listOf(")", "[", "]"), text = "("),
+        number("0", listOf("~", "…")),
+        number(".,-/", listOf(",", "-", "/"), text = "."),
+    )
+
+    /**
+     * The number pad: its digits where the kana are, ◀ ▶ ⌫ space Enter and 🌐 where they are on
+     * the kana pad, あいう back to the kana where ?123 was, and 記号 (the symbols' pages) where ↺ was.
+     */
+    val numberRows: List<Row> = listOf(
+        Row(listOf(side(KeyKind.SYMBOLS, "記号")) + numberKeys.subList(0, 3) + side(KeyKind.BACKSPACE)),
+        Row(listOf(side(KeyKind.LEFT)) + numberKeys.subList(3, 6) + side(KeyKind.RIGHT)),
+        Row(listOf(side(KeyKind.LETTERS, "あいう")) + numberKeys.subList(6, 9) + Key(KeyKind.SPACE, width = SIDE, text = " ")),
+        Row(listOf(side(KeyKind.GLOBE)) + numberKeys.subList(9, 12) + side(KeyKind.ENTER)),
+    )
+
     /** The toggle a kana is on (each is on one), for ↺: null for one no key types (が). */
     fun toggleOf(c: Char): String? = keys.firstOrNull { c in it.toggle }?.toggle
 
@@ -498,6 +558,11 @@ sealed interface Strip {
         val most: Int = MorePanelView.MOST,
         /** Its words get the panel's remove marks (not the Japanese keyboard's). */
         val removable: Boolean = true,
+        /**
+         * A Japanese conversion's phrases (after Space): the strip's sides are ⇤ and ⇥, which
+         * shrink and stretch the focused phrase, in place of ≡ and the emoji button.
+         */
+        val resize: Boolean = false,
     ) : Strip {
         companion object {
             /** The places of a [row]. */

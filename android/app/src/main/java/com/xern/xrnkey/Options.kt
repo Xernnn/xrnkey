@@ -29,6 +29,12 @@ data class Options(
     /** The next word in the strip after a Space. */
     val nextWord: Boolean = true,
     val learn: Boolean = true,
+    /**
+     * The personal words go to the owner's hub app, which syncs them with the laptop through the
+     * owner's server (sync/WordsProvider.kt). Off until the owner turns it on, and nothing goes while
+     * [learn] is off.
+     */
+    val syncWords: Boolean = false,
     /** 0 off, 1 flexible, 2 strong (Models.CORRECT_*). */
     val correction: Int = 1,
     val keepForeign: Boolean = true,
@@ -71,6 +77,7 @@ data class Options(
             .putInt("tones_on_space", tonesOnSpace)
             .putBoolean("auto_cap", autoCap)
             .putBoolean("learn", learn)
+            .putBoolean("sync_words", syncWords)
             .putInt("correction", correction)
             .putBoolean("keep_foreign", keepForeign)
             .putBoolean("double_space", doubleSpace)
@@ -120,6 +127,7 @@ data class Options(
                 tonesOnSpace = p.getInt("tones_on_space", d.tonesOnSpace).coerceIn(0, 2),
                 autoCap = p.getBoolean("auto_cap", d.autoCap),
                 learn = p.getBoolean("learn", d.learn),
+                syncWords = p.getBoolean("sync_words", d.syncWords),
                 correction = p.getInt("correction", d.correction).coerceIn(0, 2),
                 keepForeign = p.getBoolean("keep_foreign", d.keepForeign),
                 doubleSpace = p.getBoolean("double_space", d.doubleSpace),

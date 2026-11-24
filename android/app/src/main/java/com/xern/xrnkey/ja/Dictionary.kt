@@ -43,6 +43,9 @@ class Dictionary private constructor(private val b: ByteBuffer) {
     /** The part of speech of text no word stands for, by [Literal]. */
     private val literals: IntArray
 
+    /** How a word of each part of speech joins a phrase ([Kind]), or null: a build without them. */
+    private val kinds: ByteArray?
+
     init {
         b.order(ByteOrder.LITTLE_ENDIAN)
         val magic = ByteArray(4).also { for (i in 0 until 4) it[i] = b.get(i) }
@@ -71,7 +74,16 @@ class Dictionary private constructor(private val b: ByteBuffer) {
         predictions = b.getInt(56)
         val literalsAt = b.getInt(60)
         literals = IntArray(Literal.entries.size) { b.getShort(literalsAt + 2 * it).toInt() and 0xFFFF }
+        // After the literals, where the build wrote them: a byte per part of speech.
+        val kindsAt = literalsAt + 2 * Literal.entries.size
+        kinds = if (kindsAt + parts <= b.capacity()) ByteArray(parts) { b.get(kindsAt + it) } else null
     }
+
+    /** Whether this build says how each part of speech joins a phrase ([kind]). */
+    val hasKinds: Boolean get() = kinds != null
+
+    /** How a word whose part of speech is `id` joins a phrase (a word, when the build doesn't say). */
+    fun kind(id: Int): Kind = kinds?.getOrNull(id)?.toInt()?.let { Kind.entries.getOrNull(it) } ?: Kind.WORD
 
     /** The cost of a word whose part of speech starts `right` after one that ends `left`. */
     fun connection(left: Int, right: Int): Int {
@@ -397,3 +409,12 @@ class Dictionary private constructor(private val b: ByteBuffer) {
 
 /** What text no word stands for is, for its part of speech in a conversion. */
 enum class Literal { NOUN, NUMBER, ALPHABET, COMMA, PERIOD, SYMBOL }
+
+/**
+ * How a word of a part of speech joins a phrase (a bunsetsu: a word and what goes with it, as a
+ * conversion is split to be changed piece by piece), as build_dict.py's KINDS: a [WORD] starts
+ * one; [ATTACH] (particles, auxiliaries, suffixes, dependent words, punctuation) goes with the
+ * word before; a [PREFIX] takes the word after; [SURU] (a form of する) goes with a [SAHEN] noun
+ * before it (勉強 + します), else starts one.
+ */
+enum class Kind { WORD, ATTACH, PREFIX, SURU, SAHEN }

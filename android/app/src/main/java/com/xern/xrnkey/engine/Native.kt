@@ -67,5 +67,7 @@ internal object Native {
     external fun fixWrongWord(models: Long, typed: ByteArray, margin: Float): ByteArray?
     external fun predictScored(models: Long, context: Array<ByteArray>, scores: FloatArray): Array<ByteArray>
     external fun complete(models: Long, context: Array<ByteArray>, typed: ByteArray, scores: FloatArray): Array<ByteArray>
+    external fun stateFixTypo(state: Long, context: Array<ByteArray>, touchX: FloatArray, touchY: FloatArray, level: Int, known: IntArray): ByteArray?
+    external fun modelsSetKeyboard(models: Long, height: Float, sweetX: FloatArray?, sweetY: FloatArray?)
     external fun wordLanguages(models: Long, context: Array<ByteArray>, word: ByteArray, out: FloatArray)
 }

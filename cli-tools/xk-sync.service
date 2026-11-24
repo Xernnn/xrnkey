@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync xrnkey's personal words with the phone keyboard, through the hub
+Documentation=https://github.com/Xernnn/xrnkey
+# Nothing to do until the owner has written its config (xk-sync --help).
+ConditionPathExists=%h/.config/xrnkey/sync.json
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/xk-sync

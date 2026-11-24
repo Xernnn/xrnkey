@@ -46,6 +46,37 @@ class FlickTest {
         assertEquals("ABC", Layouts.rows(Page.SYMBOLS).last().keys.first().label)
     }
 
+    /**
+     * The number pad, as Gboard's: 1 2 3 / 4 5 6 / 7 8 9 / ()[] 0 .,-/ where the kana are, 記号
+     * and あいう where ↺ and ?123 are, the rest as on the kana pad. Each digit flicks to its
+     * symbols; none toggles.
+     */
+    @Test
+    fun theNumberPadIsTheSameGridWithDigits() {
+        val numbers = Layouts.rows(Page.KANA_NUMBERS)
+        fun label(k: com.xern.xrnkey.keyboard.Key) = if (k.label.isNotEmpty()) k.label else k.kind.name
+        assertEquals(
+            listOf(
+                listOf("記号", "1", "2", "3", "BACKSPACE"),
+                listOf("LEFT", "4", "5", "6", "RIGHT"),
+                listOf("あいう", "7", "8", "9", "SPACE"),
+                listOf("GLOBE", "()[]", "0", ".,-/", "ENTER"),
+            ),
+            numbers.map { r -> r.keys.map(::label) },
+        )
+        for (r in numbers) assertEquals(listOf(1.7f, 2.2f, 2.2f, 2.2f, 1.7f), r.keys.map { it.width })
+        assertEquals(listOf(KeyKind.SYMBOLS, KeyKind.LETTERS), listOf(numbers[0].keys[0].kind, numbers[2].keys[0].kind))
+        val want = mapOf(
+            "1" to "1☆♪→ ", "2" to "2¥$€ ", "3" to "3%°# ", "4" to "4○*・ ", "5" to "5+×÷ ", "6" to "6<=> ",
+            "7" to "7「」: ", "8" to "8〒々〆 ", "9" to "9^|\\ ", "0" to "0~…  ", "()[]" to "()[] ", ".,-/" to ".,-/ ",
+        )
+        for (k in Flick.numberKeys) {
+            assertEquals(k.label, want[k.label], (Flick.TAP..Flick.DOWN).joinToString("") { k.flick(it).ifEmpty { " " } })
+            assertEquals("", k.toggle)
+        }
+        assertTrue(Page.KANA_NUMBERS.isFlick && Page.KANA.isFlick && !Page.LETTERS.isFlick)
+    }
+
     private fun key(label: String) = Flick.keys.single { it.label == label }
 
     /** Each key's tap, then its flicks left, up, right and down ("" where it has none). */

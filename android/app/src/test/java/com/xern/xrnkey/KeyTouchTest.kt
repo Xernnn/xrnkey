@@ -186,6 +186,31 @@ class KeyTouchTest {
     }
 
     /**
+     * A letter's tap says where the finger landed on its key, for the typo fixes: in key widths
+     * across and key heights down from the key's centre, and the key's height in key widths. A
+     * finger that slid onto the key counts where it was last; a digit is text.
+     */
+    @Test
+    fun aLetterTapSaysWhereOnItsKeyItLanded() {
+        val v = keyboard()
+        val taps = mutableListOf<String>()
+        v.listener = object : KeyboardView.Listener {
+            override fun onText(text: String) { taps += text }
+            override fun onLetter(text: String, dx: Float, dy: Float, keyHeight: Float) {
+                taps += "%s %.2f %.2f %.2f".format(java.util.Locale.ROOT, text, dx, dy, keyHeight)
+            }
+        }
+        touch(v, MotionEvent.ACTION_DOWN, 310f, topRowY + 45f)  // e, right of and below its centre
+        touch(v, MotionEvent.ACTION_UP, 312f, topRowY + 45f)
+        touch(v, MotionEvent.ACTION_DOWN, 270f, topRowY)        // e, slid onto r's left side
+        touch(v, MotionEvent.ACTION_MOVE, 348f, topRowY)
+        touch(v, MotionEvent.ACTION_UP, 348f, topRowY)
+        touch(v, MotionEvent.ACTION_DOWN, 54f, 234f)            // 1, on the number row
+        touch(v, MotionEvent.ACTION_UP, 54f, 234f)
+        assertEquals(listOf("e 0.37 0.25 1.67", "r -0.28 0.00 1.67", "1"), taps)
+    }
+
+    /**
      * o is in the top row: its four rows don't fit above it, so the popup sits lower and the
      * finger still starts on ò; a cell up from there is ô, not the row the finger is over.
      */

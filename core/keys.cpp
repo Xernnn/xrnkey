@@ -8,9 +8,21 @@
  *   P(t | i) = 1 - e                         when t == i
  *            = e * w(i, t) / sum_t' w(i, t')  otherwise, w = exp(-d^2 / 2s^2)
  *
- * for the keys t within 1.5 key widths of i, and 0 further away. A touch
- * keyboard that knows where the finger landed can do better (the spec's
- * per-tap neighbour weights); this is the layout's default. */
+ * for the keys t within 1.5 key widths of i, and 0 further away. That is
+ * the layout's default, for accent restoration's typo channel.
+ *
+ * A touch keyboard knows where each finger landed (tap_weights), as
+ * LatinIME's proximity info does: the chance that a tap aimed at key i lands
+ * at point p is a Gaussian around i's centre, in key widths, plus the
+ * outright slips onto i's neighbours,
+ *
+ *   L(p | i) = (1 - e) g(p; c_i) + e * sum_j w(i, j) g(p; c_j)
+ *
+ * where g(p; c) = exp(-dx^2 / 2sx^2 - dy^2 / 2sy^2) and c_k is key k's
+ * centre moved by where the owner's own taps on it land (Keyboard::sweet).
+ * A tap on the edge between two keys then counts for both, one in the
+ * middle of its key mostly for that key. The rows are as far apart as a key
+ * is tall: the phone's keys are about 1.4 key widths tall. */
 #include "keys.h"
 
 #include <array>
@@ -84,6 +96,67 @@ const std::vector<char>& keys_near(char typed) {
     static const std::vector<char> none;
     if (typed < 'a' || typed > 'z') return none;
     return near[static_cast<size_t>(typed - 'a')];
+}
+
+namespace {
+
+/* Where the finger lands around the point it aims at, in key widths: measured spreads of
+ * thumb taps are about a third of a key across and a little more up and down. */
+constexpr double kSigmaX = 0.36, kSigmaY = 0.42;
+/* An outright slip onto a neighbour, and how far one reaches (key widths). */
+constexpr double kSlip = 0.02, kSlipReach = 1.6, kSlipSigma = 0.6;
+
+/* Each letter's centre on a keyboard whose rows are `h` key widths apart. */
+std::array<Pos, 26> centres(double h) {
+    auto p = positions();
+    for (auto& c : p) c.y *= h;
+    return p;
+}
+
+}  // namespace
+
+void tap_weights(const Keyboard& kb, char typed, double dx, double dy, bool known, double out[26]) {
+    for (int i = 0; i < 26; ++i) out[i] = kFar;
+    if (typed < 'a' || typed > 'z') return;
+    const double h = kb.key_height > 0.2 ? kb.key_height : 1.0;
+    const auto at = centres(h);
+    const int t = typed - 'a';
+    /* Where the tap landed, and each key's centre as the owner hits it. */
+    const double px = at[static_cast<size_t>(t)].x + (known ? dx : 0.0);
+    const double py = at[static_cast<size_t>(t)].y + (known ? dy * h : 0.0);
+    Pos aim[26];
+    for (int k = 0; k < 26; ++k)
+        aim[k] = {at[static_cast<size_t>(k)].x + kb.sweet[k][0], at[static_cast<size_t>(k)].y + kb.sweet[k][1] * h};
+    double g[26];
+    for (int k = 0; k < 26; ++k) {
+        const double ex = (px - aim[k].x) / kSigmaX, ey = (py - aim[k].y) / kSigmaY;
+        g[k] = std::exp(-0.5 * (ex * ex + ey * ey));
+    }
+    /* L(p | i) for every letter: its own Gaussian, and its slips onto its neighbours. */
+    double like[26];
+    for (int i = 0; i < 26; ++i) {
+        double w[26]{}, sum = 0;
+        for (int j = 0; j < 26; ++j) {
+            if (j == i) continue;
+            const double ddx = at[static_cast<size_t>(i)].x - at[static_cast<size_t>(j)].x;
+            const double ddy = at[static_cast<size_t>(i)].y - at[static_cast<size_t>(j)].y;
+            const double d2 = ddx * ddx + ddy * ddy;
+            if (d2 > kSlipReach * kSlipReach) continue;
+            w[j] = std::exp(-d2 / (2 * kSlipSigma * kSlipSigma));
+            sum += w[j];
+        }
+        double slips = 0;
+        for (int j = 0; j < 26; ++j)
+            if (w[j] > 0) slips += w[j] / sum * g[j];
+        like[i] = (1 - kSlip) * g[i] + kSlip * slips;
+    }
+    const double base = like[t];
+    for (int i = 0; i < 26; ++i) {
+        if (like[i] <= 0 || base <= 0) continue;
+        const double r = std::log10(like[i] / base);
+        out[i] = r < -8.0 ? kFar : r;
+    }
+    out[t] = 0.0;
 }
 
 double typo_cost(char meant, char typed) {

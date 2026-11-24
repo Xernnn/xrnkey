@@ -29,6 +29,12 @@ class KeyboardView(context: Context) : View(context) {
 
     interface Listener {
         fun onText(text: String) {}
+        /**
+         * A letter key tapped, and where the finger landed on it: [dx] key widths right of its
+         * centre, [dy] key heights below it; [keyHeight] is the key's height in key widths. For
+         * the typo fixes; by default, text like any other.
+         */
+        fun onLetter(text: String, dx: Float, dy: Float, keyHeight: Float) = onText(text)
         fun onBackspace() {}
         fun onEnter() {}
         fun onCandidate(slot: Int) {}
@@ -61,6 +67,8 @@ class KeyboardView(context: Context) : View(context) {
         fun onKanaBack() {}
         /** The 12-key pad's ゛゜小: the last kana in its next form. */
         fun onKanaMark() {}
+        /** A Japanese conversion's ⇤ (-1) or ⇥ (1) on the strip: the focused phrase shrinks or stretches. */
+        fun onResize(by: Int) {}
     }
 
     var listener: Listener? = null
@@ -130,6 +138,12 @@ class KeyboardView(context: Context) : View(context) {
      */
     var composing = false
         set(value) { if (field != value) { field = value; invalidate() } }
+
+    /**
+     * A Japanese reading is converted into phrases (the service says so): ◀ and ▶, and the space
+     * bar's slide (a phrase per 30 dp), move the focus between them, so ▶ moves too.
+     */
+    var converting = false
 
     private val dp = resources.displayMetrics.density
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
@@ -355,10 +369,10 @@ class KeyboardView(context: Context) : View(context) {
      * What the space bar says: the language, or its code where the bar is too narrow; on the
      * 12-key pad 空白, and 変換 while a reading is composing, as Gboard's.
      */
-    val spaceLabel: String get() = if (page == Page.KANA) (if (composing) "変換" else "空白") else languageLabel
+    val spaceLabel: String get() = if (page.isFlick) (if (composing) "変換" else "空白") else languageLabel
 
     /** What the 12-key pad's Enter says while a reading is composing (確定), else null: its icon. */
-    val enterLabel: String? get() = if (page == Page.KANA && composing) "確定" else null
+    val enterLabel: String? get() = if (page.isFlick && composing) "確定" else null
 
     private var languageLabel = ""
 
@@ -414,7 +428,7 @@ class KeyboardView(context: Context) : View(context) {
             // A pad's keys are tiles, as a dialer's are: big targets for a thumb.
             fill.color = if (down) palette.preview else palette.space
             canvas.drawRoundRect(r.insetBy(4 * dp, 4 * dp), 12 * dp, 12 * dp, fill)
-        } else if (page == Page.KANA && k.kind != KeyKind.ENTER) {
+        } else if (page.isFlick && k.kind != KeyKind.ENTER) {
             // The 12-key pad's keys are tiles, as Gboard's: the kana a shade lighter than the rest.
             fill.color = when {
                 down -> palette.preview
@@ -442,13 +456,21 @@ class KeyboardView(context: Context) : View(context) {
                 drawLabel(canvas, "12", cx, cy - 7 * dp, 12 * sp, palette.glyph)
                 drawLabel(canvas, "34", cx, cy + 7 * dp, 12 * sp, palette.glyph)
             }
-            KeyKind.KANA -> if (k.label.length > 1) drawTight(canvas, k.label, cx, cy, 20 * sp) else drawLabel(canvas, k.label, cx, cy, 26 * sp, palette.glyph)
+            KeyKind.KANA -> when {
+                // The number pad's digit, with its flicks small under it, as Gboard's.
+                page == Page.KANA_NUMBERS && k.label.length == 1 -> {
+                    drawLabel(canvas, k.label, cx, cy - 7 * dp, 26 * sp, palette.glyph)
+                    drawLabel(canvas, k.flicks.joinToString(""), cx, cy + 17 * dp, 12 * sp, palette.dim)
+                }
+                k.label.length > 1 -> drawTight(canvas, k.label, cx, cy, 20 * sp)
+                else -> drawLabel(canvas, k.label, cx, cy, 26 * sp, palette.glyph)
+            }
             KeyKind.KANA_MARK -> drawTight(canvas, k.label, cx, cy, 20 * sp)
             KeyKind.UNDO -> drawUndo(canvas, cx, cy, 10 * dp)
             KeyKind.LEFT -> drawChevron(canvas, cx, cy, 9 * dp, -1)
             KeyKind.RIGHT -> drawChevron(canvas, cx, cy, 9 * dp, 1)
             KeyKind.GLOBE -> drawGlobe(canvas, cx, cy, 10 * dp, palette.glyph, 1.8f * dp)
-            KeyKind.SPACE -> if (page == Page.KANA) {
+            KeyKind.SPACE -> if (page.isFlick) {
                 drawLabel(canvas, spaceLabel, cx, cy, 16 * sp, palette.glyph)
             } else if (page.isPad) {
                 // On a pad's tile: the space mark.
@@ -701,6 +723,16 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
+    /** ⇤ ([dir] -1) or ⇥ (1): an arrow to a bar, in the strip's quiet colour. */
+    private fun drawEdgeArrow(canvas: Canvas, cx: Float, cy: Float, s: Float, dir: Int) {
+        stroke(palette.dim, 1.8f * dp)
+        val bar = cx + dir * s
+        canvas.drawLine(bar, cy - s * 0.8f, bar, cy + s * 0.8f, line)
+        canvas.drawLine(cx - dir * s, cy, bar - dir * 2 * dp, cy, line)
+        canvas.drawLine(bar - dir * 2 * dp, cy, bar - dir * (2 * dp + s * 0.6f), cy - s * 0.6f, line)
+        canvas.drawLine(bar - dir * 2 * dp, cy, bar - dir * (2 * dp + s * 0.6f), cy + s * 0.6f, line)
+    }
+
     private fun drawSmile(canvas: Canvas, cx: Float, cy: Float, s: Float) {
         stroke(palette.dim, 1.8f * dp)
         canvas.drawCircle(cx, cy, s, line)
@@ -737,8 +769,14 @@ class KeyboardView(context: Context) : View(context) {
         val side = 48 * dp
         val cy = stripHeight / 2
         stroke(palette.dim, 1.8f * dp)
-        for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
-        drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        if (s.resize) {
+            // A conversion's phrases: ⇤ shrinks the focused one, ⇥ stretches it.
+            drawEdgeArrow(canvas, side / 2, cy, 8 * dp, -1)
+            drawEdgeArrow(canvas, width - side / 2, cy, 8 * dp, 1)
+        } else {
+            for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
+            drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        }
         if (s.row.isNotEmpty()) {
             // A row of emoji: each in its place, none above the others.
             stripSlots(s).forEachIndexed { i, r ->
@@ -864,7 +902,7 @@ class KeyboardView(context: Context) : View(context) {
     private var cursor = Cursor.OFF
     private var anchorX = 0f
     private var anchorY = 0f
-    private val cursorStep get() = 10 * dp
+    private val cursorStep get() = if (converting) 30 * dp else 10 * dp
     private val lineStep get() = 28 * dp
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
 
@@ -944,7 +982,7 @@ class KeyboardView(context: Context) : View(context) {
 
     /** ◀ or ▶ on the 12-key pad: the cursor a character. At the end of a reading ▶ stays put. */
     private fun cursorKey(dx: Int) {
-        if (dx > 0 && composing) return
+        if (dx > 0 && composing && !converting) return
         listener?.onCursorStart()
         listener?.onCursor(dx, 0)
         listener?.onCursorEnd()
@@ -953,8 +991,13 @@ class KeyboardView(context: Context) : View(context) {
     /** A kana key tapped: its kana, or with the toggle, the next step when it was tapped last, in time. */
     private fun tapKana(k: Key) {
         val now = SystemClock.uptimeMillis()
-        if (toggleInput && toggleKey == k && toggling(now)) listener?.onKanaToggle(k.toggle) else listener?.onKana(k.text)
-        toggleKey = if (toggleInput) k else null
+        when {
+            // The number pad's keys type as letters' do, and have no toggle.
+            page == Page.KANA_NUMBERS -> listener?.onText(k.text)
+            toggleInput && toggleKey == k && toggling(now) -> listener?.onKanaToggle(k.toggle)
+            else -> listener?.onKana(k.text)
+        }
+        toggleKey = if (toggleInput && k.toggle.isNotEmpty()) k else null
         toggleAt = now
     }
 
@@ -965,7 +1008,7 @@ class KeyboardView(context: Context) : View(context) {
             return
         }
         toggleKey = null
-        k.flick(flickDirection).takeIf { it.isNotEmpty() }?.let { listener?.onKana(it) }
+        k.flick(flickDirection).takeIf { it.isNotEmpty() }?.let { if (page == Page.KANA_NUMBERS) listener?.onText(it) else listener?.onKana(it) }
     }
 
     private fun startCursor(mode: Cursor) {
@@ -1206,10 +1249,28 @@ class KeyboardView(context: Context) : View(context) {
                 if (shown.menu) menuChoice(shown.forms[popupChoice]) else typeChar(shown.forms[popupChoice])
             }
             h != null && act && h.key.kind == KeyKind.KANA -> liftKana(h.key)
-            h != null && act && !holdFired -> tap(h.key)
+            h != null && act && !holdFired -> if (!tapLetter(h)) tap(h.key)
         }
         holdFired = false
         invalidate()
+    }
+
+    /**
+     * A letter key's tap on the letters page, with where the finger landed on it: where it went
+     * down, or, when it slid onto this key, where it was last. False for any other key.
+     */
+    private fun tapLetter(h: Hit): Boolean {
+        val k = h.key
+        if (k.kind != KeyKind.CHAR || page != Page.LETTERS || k.label.length != 1 || !k.label[0].isLetter()) return false
+        val r = h.rect
+        if (r.width() <= 0f || r.height() <= 0f) return false
+        val down = r.contains(anchorX, anchorY)
+        val x = if (down) anchorX else fingerX
+        val y = if (down) anchorY else fingerY
+        toggleKey = null
+        listener?.onLetter(k.label, (x - r.centerX()) / r.width(), (y - r.centerY()) / r.height(), r.height() / r.width())
+        if (shift == Shift.ONCE) shift = Shift.OFF
+        return true
     }
 
     /** A tap, as the keyboard acts on it (public for the tests and the service). */
@@ -1239,7 +1300,8 @@ class KeyboardView(context: Context) : View(context) {
                 lastShiftTap = now
             }
             KeyKind.BACKSPACE -> Unit
-            KeyKind.SYMBOLS -> page = Page.SYMBOLS
+            // The 12-key pad's ?123: its number pad; that pad's 記号, the symbols.
+            KeyKind.SYMBOLS -> page = if (page == Page.KANA) Page.KANA_NUMBERS else Page.SYMBOLS
             KeyKind.MORE_SYMBOLS -> page = Page.MORE_SYMBOLS
             KeyKind.LETTERS -> page = home
             KeyKind.ENTER -> l?.onEnter()
@@ -1280,7 +1342,10 @@ class KeyboardView(context: Context) : View(context) {
             }
             is Strip.Candidates -> {
                 val side = 48 * dp
+                val resize = (strip as Strip.Candidates).resize
                 when {
+                    x < side && resize -> listener?.onResize(-1)
+                    x > width - side && resize -> listener?.onResize(1)
                     x < side -> listener?.onStripMenu()
                     x > width - side -> listener?.onTool(Tool.EMOJI)
                     else -> stripSlots(strip as Strip.Candidates).indexOfFirst { x >= it.left && x < it.right }.let {

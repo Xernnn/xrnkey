@@ -159,6 +159,44 @@ class SettingsPagesTest {
         rule.onNodeWithText("Japanese").assertIsDisplayed()
     }
 
+    /**
+     * The owner's own Japanese words, next to the Japanese page: Add takes a reading (romaji or
+     * kana) and a word, a reading that isn't one is refused, each is listed with its reading and
+     * can be deleted, and the keyboard reads the file again at its next field.
+     */
+    @Test
+    fun ownJapaneseWordsAreAddedListedAndDeleted() {
+        val file = File(rule.activity.filesDir, OnDevice.JAPANESE_WORDS)
+        rule.onNodeWithText("Personal words").performClick()
+        rule.onNodeWithText("Japanese dictionary").assertIsDisplayed()
+        rule.onNodeWithText("Japanese dictionary").performClick()
+        rule.onNodeWithText("Add").performClick()
+        rule.onNodeWithTag("Reading").performTextInput("田中")
+        rule.onNodeWithTag("Word").performTextInput("田仲")
+        rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("Reading").assertExists()           // refused: the form stays
+        assertFalse(file.exists())
+        rule.onNodeWithTag("Reading").performTextReplacement("tanaka")
+        val before = prefs().getLong("japanese-words-changed", 0L)
+        rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("Reading").assertDoesNotExist()
+        rule.onNodeWithText("田仲").assertIsDisplayed()
+        rule.onNodeWithText("たなか").assertIsDisplayed()
+        assertTrue(prefs().getLong("japanese-words-changed", 0L) != before)
+        rule.onNodeWithText("Add").performClick()
+        rule.onNodeWithTag("Reading").performTextInput("ぜるだ")
+        rule.onNodeWithTag("Word").performTextInput("ゼルダ")
+        rule.onNodeWithText("Save").performClick()
+        assertEquals(listOf("ゼルダ", "田仲"), com.xern.xrnkey.ja.UserDictionary().also { it.load(file) }.all().map { it.surface })
+        shot("settings-japanese-words")
+        rule.onNodeWithContentDescription("Delete 田仲").performClick()
+        rule.onNodeWithText("田仲").assertDoesNotExist()
+        assertEquals(listOf("ゼルダ"), com.xern.xrnkey.ja.UserDictionary().also { it.load(file) }.all().map { it.surface })
+        back()
+        rule.onNodeWithText("Japanese dictionary").assertIsDisplayed()
+        shot("settings-words-japanese-dictionary")
+    }
+
     /** What the strip's remove mark hid is listed under the personal words, each to show again. */
     @Test
     fun hiddenSuggestionsAreListedAndShownAgain() {

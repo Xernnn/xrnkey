@@ -7,7 +7,8 @@ An Android keyboard for one owner's phone (Android 15, HyperOS) that replaces th
 Vietnamese keyboard they have used for years. The owner's verdict on it: it is so good that
 nothing open source has matched it. Three things make it worth replacing anyway: it is closed
 source, it has internet access, and it syncs the words it learns to an online account. This
-keyboard has **no INTERNET permission**, keeps everything it learns on the phone, and shares one
+keyboard has **no INTERNET permission**, keeps what it learns on the phone (unless the owner turns
+on Sync, which hands the personal words to their own hub app for their own server), and shares one
 engine with the Fcitx5 input method in this repo, so an improvement reaches both the phone and
 the laptop.
 
@@ -80,7 +81,8 @@ Swipe typing is not used.
 9. Personal words learned on the phone, which can be viewed, deleted, exported and imported.
 10. Shortcuts, with import and export as a file in the laptop's `macros.txt` format.
 11. Settings for each of the above, plus the cursor pad and dark, light or system theme.
-12. No INTERNET permission, and no other permission at all.
+12. No INTERNET permission, and no other permission asked for. It declares one of its own, for
+    the owner's hub app (see Sync).
 
 ## Later (agreed, not now)
 
@@ -92,8 +94,6 @@ Swipe typing is not used.
   owner has these off in the reference.
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
 - Split and one-handed layouts, and a tablet layout.
-- Moving personal words between the phone and the laptop automatically. Day one only does it by
-  hand, as files.
 
 ## Out of scope
 
@@ -101,7 +101,9 @@ Swipe typing is not used.
 - **Voice input**: no mic key; the keyboard stays fully offline.
 - **Stickers, GIFs and a theme store**: they need the network and third-party artwork.
 - **Drawing tone marks by hand**: the reference has it, but the owner doesn't use it.
-- **Any account, sign-in, cloud sync or telemetry**: the point of the project is to have none.
+- **Any account, sign-in, third-party cloud sync or telemetry**: the point of the project is to
+  have none. The one sync there is goes to the owner's own server, through their own hub app, and
+  only when they turn it on (see Sync).
 - **Importing the reference keyboard's learned words**: they live in its online account, and no
   export is known. The new keyboard learns from scratch. The **shortcut table** does come over
   later, as a file.
@@ -384,6 +386,12 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   - letters that spell nothing yet wait at the end, as typed (`かk`).
 - **Shift**: a capital goes in as it is, and so do the letters after it until the reading ends
   (`Tokyo`), for names. Auto-capitalise never gives Shift here.
+- **Holding a letter** gives what Japanese text uses of it, not Vietnamese's marks: a vowel
+  with its macron, as romaji writes a long vowel (`ā ī ū ē ō`), the letter full-width (`ａ`),
+  then its capital (a: `ā ａ A`; k: `ｋ K`); with Shift, the same as capitals and the small
+  letter last. Without the number row the top row's digit comes first, as on the other
+  keyboards. Inside a reading they join it, as digits do; with nothing composing they go
+  straight in.
 - **Digits** stay ASCII. Inside a reading they join it (`3じ`), as other symbols do; with nothing
   composing they go straight in.
 - **The comma and full stop keys** are `、` and `。`. Holding `。` gives `、 ？ ！ ・ ー 「 」 … ～ ：
@@ -409,37 +417,76 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     that are words, longest first), then the rest;
   - a reading that looks foreign keeps its katakana right after the best conversion: one with
     ー, a small vowel (`ふぁ`, `てぃ`) or ゔ, or with a kana no word reads;
+  - **emoji**: a reading whose best conversion is an emoji keyword, or that is one itself
+    (`data/emoji/keywords-ja.tsv`: CLDR's Japanese names and keywords, and a hand list), has
+    its emoji: `わらい` (`笑い`) 😂, `ねこ` (`猫`) 🐱, `ありがとう` 🙏, `すし` 🍣, `にほん` 🇯🇵,
+    and kaomoji for `かお` (`(^_^)`, `(´・ω・`)`) and `しょぼん`. The conversion's keyword
+    comes first (`あめ`: `雨` ☔ before the candy). The first takes the right slot, the
+    likeliest third going to the panel's start, and the others follow the panel's first row; a
+    keyword that is only an association (`本` 📕, `時間` ⌚) has them all in the panel. A tap
+    puts the emoji in place of the reading, learned as nothing, and an emoji (not a kaomoji)
+    joins the emoji panel's recents. The settings' "Emoji" turns them off, as on the other
+    keyboards;
   - no remove marks: the dictionary's words are not the owner's to forget.
 - **Space**:
-  - while composing, it converts: the field shows the best conversion, and the strip shows it
-    in the middle on the accent, with the candidate before it on the left and the next on the
-    right. Each further Space shows the next one, after the last the first again. The order is
-    the strip's, without the predictions: the best conversion, the owner's choices, the next
-    likeliest conversions, and after the first eight of those the hiragana, the katakana (and
-    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then
-    the words for the reading's start. A start converted another way shows with the rest of the
-    reading converted after it (`渡し` + `は学生です`). Predictions are not in the round; they
-    stay in the panel;
+  - while composing, it converts, as Mozc and Gboard do, in **phrases** (bunsetsu: a word and
+    what goes with it): the field shows the best conversion split into phrases, the first in
+    focus, on a tint of the accent (the whole underlined, as composing text is):
+    `わたしはがくせいです` is `私は` / `学生です`, `きょうはいいてんきですね` `今日は` / `いい天気ですね`,
+    `しごとがおわったらでんわします` `仕事が` / `終わったら` / `電話します`. A particle, an
+    auxiliary, a suffix, a dependent word (`いる` of `ている`) or punctuation goes with the word
+    before it, a prefix (`お`) with the word after it, a form of `する` with a noun that takes it
+    (`勉強します`), by each part of speech Mozc's dictionary has (`data/ja/build_dict.py`,
+    `KINDS`);
+  - the strip shows the focused phrase's candidates: the one the field shows in the middle on
+    the accent, the one before it on the left and the next on the right, the others in the
+    panel. Each further Space shows the focused phrase's next, after the last the first again;
+    the other phrases stay. The order: the phrase as the whole conversion has it, then the
+    phrase's reading converted alone after the phrase before (its owner's choices, the next
+    likeliest conversions, and after the first eight of those the hiragana, the katakana, and
+    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters, then the rest, then the
+    words for the phrase's start). A start converted another way shows with the rest of its
+    phrase converted after it (`渡し葉`). The whole reading's predictions are in the panel while
+    it is one phrase;
+  - the focus moves a phrase with ◀ and ▶ on the 12-key pad, and on QWERTY by sliding along
+    the space bar, a phrase per 30 dp, no further than the ends; the conversion stays;
+  - the strip's sides are ⇤ and ⇥ while converting, in place of ≡ and the emoji button: ⇤
+    shrinks the focused phrase by a kana, which starts the next phrase (or a new one at the
+    end), ⇥ stretches it by one taken from the next (as Mozc's Shift+arrows). Both are converted
+    again, the focused one after the phrase before and the next after it; the phrases further
+    on stay. A phrase of one kana doesn't shrink, the last doesn't stretch;
   - with nothing composing, it types a full-width space `　`, Gboard's default.
-- **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
-  stands for, with no space after it. A word for the reading's start leaves the rest composing,
-  as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
-  `は学生です`, the particle).
+- **Tap a candidate** (a slot or the panel): after Space, the focused phrase's: the field shows
+  it, and the focus moves to the next phrase; on the last phrase everything goes in, as shown.
+  While composing: it goes in, in place of the part of the reading it stands for, with no space
+  after it. A word for the reading's start leaves the rest composing, as typed, and its
+  candidates follow that word (`私`, then `はがくせいです` converts to `は学生です`, the
+  particle).
 - **The word before**: a reading converts after the last word put in by Space, Enter or a tap,
-  while nothing else went in after it: `は` after `私` is the particle, not `葉`. A space,
-  punctuation, Backspace into the text, an emoji or a moved cursor ends it.
+  or the `、`, `。`, `？` or `！` typed after it, while nothing else went in after it: `は` after
+  `私` is the particle, not `葉`. A space, Backspace into the text, an emoji or a moved cursor
+  ends it.
 - **Next words**: with nothing composing, right after a word goes in, the strip offers what may
   follow it, the likeliest in the middle, not bold (Space doesn't take it):
   - the words the owner put in after it before, the latest first;
-  - then the short words its part of speech goes on with best, by the connection cost plus the
-    word's own: particles, the copula and auxiliaries, and the commonest verbs and nouns that
-    follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`, `ます`).
-    Only those under a limit, so after a particle there may be none, and the tool row shows;
+  - then the words its part of speech goes on with best, by the connection cost plus the word's
+    own, each kind under a limit:
+    - the short words: particles, the copula and auxiliaries, and the commonest verbs and nouns
+      that follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`,
+      `ます`);
+    - about 100 common content words: nouns, adjectives, verbs and adverbs (`何`, `私`, `今日`,
+      `いい`, `ない`, `する`, `見る` …), which a particle is followed by (`を`: `する`, `思う`,
+      `見る`; `が`: `ある`, `できる`, `ない`; `の`: `よう`, `こと`, `人`), and a noun far less;
+  - after `、`, `。`, `？` or `！` (typed, or the end of a conversion): what a clause or a
+    sentence starts with, by the same costs after that punctuation (`。`: `この`, `その`,
+    `また`, `これ`, `そして`, `それ`, `私`);
+  - worked out once for each part of speech, the first time it comes, so no key costs more;
   - a tap puts it in with no space, and the strip goes on from it;
   - the settings' "Next word" turns it off, as on the other keyboards.
 - **Learning** (the owner's choices, on the phone only):
-  - what Space or a tap puts in is learned: each word with its reading, and each pair of a word
-    and the one before it, with how often and when. Not what Enter commits as typed, nor Latin
+  - what Space or a tap puts in is learned: each word with its reading (after Space, each
+    phrase's choice, as its words), and each pair of a word and the one before it, with how
+    often and when. Not what Enter commits as typed, nor Latin
     letters, digits, punctuation or a kana no word has;
   - a word chosen for a reading is offered right after what Space gives, and it costs less than
     every other word read so (more, the more often it was chosen; of two chosen, the later), so
@@ -454,8 +501,23 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     of speech are the dictionary's, looked up again when another build of it comes;
   - Settings → Personal words → Japanese lists them with their count; each can be deleted, or
     all cleared.
+- **The owner's own words** (a user dictionary, for what Mozc's lacks: a name, a place):
+  - Settings → Personal words → Japanese dictionary, under Japanese, with their count: Add takes
+    a reading and a word (the reading in hiragana, katakana or romaji: `tanaka`, `タナカ` and
+    `たなか` are all `たなか`; one that isn't kana is refused, the form stays); each is listed
+    with its reading, to delete. Import takes a file of a reading, a tab and a word per line
+    (more columns, as Mozc's and Gboard's exports have, are ignored; `#` lines are comments),
+    Export gives one;
+  - each is a word of the dictionary for its reading, a noun, costing 3,000 less than the
+    cheapest word the dictionary reads so (nothing, where it has none): it wins its reading,
+    alone and inside a sentence (`たなか` is `田中` in Mozc's dictionary; with `田仲` added,
+    `たなかさんはがくせいです` is `田仲さんは学生です`), is in the words read so, first, and is
+    predicted from the reading's start (`ぜる`: `ゼルダ`). Chosen, it is learned as any word;
+  - used whether learning is on or off, in every field but passwords (they are the owner's, not
+    learned); at most 5,000, kept in `japanese-words.tsv` next to the personal words, and read
+    again at the next field once the settings change them.
 - **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
-  after Space the conversion shown), with no new line; otherwise the field's action or a new
+  after Space every phrase as shown), with no new line; otherwise the field's action or a new
   line.
 - **Backspace**: takes the last letter waiting or the last kana; after Space, it goes back to the
   reading, unconverted; with nothing composing, the character before the cursor. A swipe from it
@@ -465,9 +527,10 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   committed as it is (a last n as ん).
 - **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
   types them; nothing converts.
-- **Not on this keyboard**: no learning of new words the dictionary lacks (only of choices
-  among its words and the kana), no next words beyond the owner's and the short words that
-  follow, no Telex, and no emoji in the strip (the emoji panel is there).
+- **Not on this keyboard**: no learning of new words the dictionary lacks by typing them (the
+  owner adds them, above), no parts of speech for the owner's words (all are nouns), no next
+  words beyond the owner's and the lists above, no Telex, and no emoji after Space or among the
+  next words (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first
@@ -519,11 +582,29 @@ is JA). Password, email and URL fields get plain QWERTY letters, and number fiel
   kana after a reading of punctuation alone commits it first.
 - **◀ and ▶** move the cursor a character, and repeat while held. ◀ with a reading commits it as
   shown, as the space bar's slide does; ▶ at the end of a reading stays put (it ends a toggle).
-- **?123** opens the symbols, whose way back says あいう. **🌐** opens the comma's menu at once:
-  slide to a choice and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap
-  elsewhere closes it.
-- **Not yet**: a 12-key number pad (the symbols serve), godan and other kana layouts, flick for
-  Latin letters, ↺ undoing a commit, and moving the cursor inside a reading.
+  After Space (変換) they move the focus between the phrases instead, both ways.
+- **?123** opens the number pad below. **🌐** opens the comma's menu at once: slide to a choice
+  and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap elsewhere closes it.
+- **The number pad**, as Gboard's (Google Japanese Input's 12-key numbers): the same grid and
+  side keys, with the digits where the kana are:
+
+  | | | | | |
+  |---|---|---|---|---|
+  | 記号 | 1 | 2 | 3 | ⌫ |
+  | ◀ | 4 | 5 | 6 | ▶ |
+  | あいう | 7 | 8 | 9 | 空白 |
+  | 🌐 | ()[] | 0 | .,-/ | Enter |
+
+  - a tap types the digit, a flick left, up or right a symbol, each shown small under its
+    digit: 1 `☆ ♪ →`, 2 `¥ $ €`, 3 `% ° #`, 4 `○ * ・`, 5 `+ × ÷`, 6 `< = >`, 7 `「 」 :`,
+    8 `〒 々 〆`, 9 `^ | \`, 0 `~ …`; `()[]` taps `(` and flicks `) [ ]`, `.,-/` taps `.` and
+    flicks `, - /`. The guide shows them as the kana's does;
+  - they type as the QWERTY keys' digits and symbols do: straight in with nothing composing,
+    into the reading while one is (`か3`). No toggle: 1 tapped twice is `11`;
+  - あいう goes back to the kana, 記号 opens the symbols (their way back says あいう too); a
+    language chosen from 🌐 switches the letters, as from the kana.
+- **Not yet**: godan and other kana layouts, flick for Latin letters, ↺ undoing a commit, and
+  moving the cursor inside a reading.
 
 ## Auto-correct (Space and punctuation)
 
@@ -533,7 +614,11 @@ unless Settings says otherwise.
 1. **A shortcut matches** (the keys, ignoring case): commit its expansion, cased like the keys
    (`ko` → `không`, `Ko` → `Không`, `KO` → `KHÔNG`).
 2. **The keys used Telex marks or tones** (`dduowcj`, `khoong`): the owner is accenting by hand,
-   so the Telex result is committed. There are three exceptions:
+   so the Telex result is committed. There are these exceptions:
+   - The result is no word, and a slip or two away is one (`chapf`, `ddeeoj`, a slip in
+     `nguwowif`): Space's fix from where each tap landed (see "Typos") runs those keys through
+     Telex again (`chapf` → `chào`). A syllable chat may spell so on purpose (`dzậy`, `ừa`) is
+     fixed only by a neighbour's key the taps make likely.
    - The Telex result is not a valid syllable (`đươc`: a stop coda with no tone). Auto-correct
      takes the best valid syllable that keeps every mark that was typed (`được`).
    - The keys are also an English word, and the context says English (see "Mixed English and
@@ -560,9 +645,12 @@ unless Settings says otherwise.
      typed form itself.
    - A typo correction (a different ASCII shape) is committed only if it beats the keys as typed
      by the level's margin. Otherwise the keys stay.
+   - With tones on Space off or "when needed", a word that is no word (`khpng`, `cjao`) is first
+     given Space's fix from where each tap landed (see "Typos"), toward Vietnamese or English; the
+     English-only one-edit fix (`xk_fix_wrong_word`) comes after, when that finds nothing sure.
 4. **Neither a syllable nor a known word, and no close correction** (`dc`, `ns`, `vs`, a name):
    commit as typed. Short chat abbreviations are never "corrected" into words: letters with no
-   vowel (`thx`, `fff`, `strs`) never are, and a hand-written list in the core's lexicon holds
+   vowel (`thx`, `fff`, `strs`) never are unless a tap landed by a vowel's key, and a hand-written list in the core's lexicon holds
    the ones with a vowel (`idk`, `rofl`) and the contractions typed without the apostrophe
    (`youre`, `isnt`, `dont`), which stay as typed rather than gaining one.
 
@@ -571,8 +659,8 @@ Levels:
 | Level | Accent restoration on Space | Typo correction on Space |
 |---|---|---|
 | Off | no: the Telex result is committed | no |
-| Flexible (default) | yes | edit distance 1, words of 3 or more letters, wide margin |
-| Strong | yes | edit distance 2 for words of 7 or more letters, smaller margin |
+| Flexible (default) | yes | a word that is no word: one slip, or two from 4 keys; leads by 0.75 (log10) and holds 80 % |
+| Strong | yes | the same, leading by 0.5 and holding 60 % |
 
 - **Revert**: Backspace as the very next key after an auto-correct on Space takes it back with
   the space, and the word is in progress again as it was typed (`không␠` → `khong`, as Laban
@@ -681,17 +769,99 @@ the Telex result whatever the context, like `AutoRestore=False` on the laptop.
 
 ## Typos
 
-Built in the core (`core/keys.cpp`, `core/restore.cpp`) as a noisy channel over the QWERTY
-layout. Accent restoration offers, beside the readings of what was typed, the readings of the
-spellings a key away.
+Two typo channels live in the core: Space's fix of a word that is no word, which knows where each
+finger landed (`core/typos.cpp`, `core/keys.cpp`), and the layout's channel inside accent
+restoration (`core/restore.cpp`).
+
+### Space's fix, from where each tap landed
+
+This is the one the owner's settings use (tones on Space off, "Fix typos" Flexible), as Laban Key
+fixes slips there. It works the way AOSP LatinIME's typing scorer does.
+
+- **Where the tap landed.** A letter tap reports its offset from its key's centre, in key widths
+  across and key heights down, and the key's height (the phone's keys are about 1.4 key widths
+  tall). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
+  with their touches, wherever they were in the word; a word opened again has none; a word
+  Backspace opened right after a fix gets its own back. Text with no touches (the laptop, `adb
+  input text`, a form from a held key) counts as tapped at the key's centre, so the layout alone
+  decides.
+- **The spatial model.** The chance that a tap aimed at key i lands at point p is a Gaussian
+  around i's centre plus the outright slips onto i's neighbours:
+  L(p | i) = (1 − e) · g(p; c_i) + e · Σ_j w(i, j) · g(p; c_j), with
+  g = exp(−dx² / 2·0.36² − dy² / 2·0.42²) in key widths, e = 2 %, and the rows as far apart as a
+  key is tall. A tap on the edge between two keys counts for both; one in the middle of its key
+  makes a neighbour about 50 times less likely than the key itself (log10 −1.7).
+- **Only a word that is no word is fixed.** What Space would commit as things stand must be none
+  of these: a Vietnamese syllable (attested, or one the model knows), letters typed without marks
+  that stand for one (`khong`), English, a personal word, chat meant as typed (`oke`, `hihi`).
+  A real word is never changed, whatever slip made it. Also left alone: capitals throughout (a
+  code), letters with no vowel unless a tap landed by a vowel's key (`thx` stays, `pwn` is `ơn`
+  when the p was hit at its left edge), a form picked from a held key, a word Backspace refused
+  (`refused`, `kept`).
+- **The fixes tried** are the key sequences one or two slips away (two from 4 keys): a
+  neighbour's key, weighed by the spatial model; a key left out (log10 −2.6, −2.2 for a doubled
+  letter); a key too many (−2.6; −2.0 for the same key twice, −2.3 for a neighbour of the key
+  before or after); two keys swapped (−2.4). Each sequence goes through Telex again, so marks
+  typed keep their meaning (`chapf` → `chaof` → `chào`), and stands for what it spells: a
+  syllable with its marks, the accented readings of plain letters (`cjao` → `chao` → `chào`), an
+  English word.
+- **Ranking**, as LatinIME's noisy channel: each candidate scores the models' mixture in context
+  (the same as restoration and the English/Vietnamese choice, personal words included) plus its
+  slips' cost. Leaving the word scores the models' share for a word they don't know.
+- **When to replace.** The best fix must lead leaving the word by the level's margin and hold the
+  level's share of all the readings (leaving the word included): Flexible 0.75 (log10) and 80 %,
+  Strong 0.5 and 60 %. A syllable typed with its marks that chat may spell so (`dzậy`, `ừa`, `ùi`)
+  is tried only with neighbours' keys, and leaving it scores 2 higher: the deliberate spellings
+  were "fixed" by keys added or taken away, which no tap position speaks for.
+- **Shown and taken back.** The strip's middle shows the fix in bold before Space, as it shows
+  whatever Space commits. Backspace right after takes it back with the space, the word open as
+  typed with its taps; the next Space keeps it ("Auto-correct", Revert).
+- **The owner's own taps.** Words that end as typed and are words teach where the owner's taps
+  land on each letter: a running mean per letter, its count stopping at 200, drawn toward the
+  centre by 20 taps' worth (halfway at 20 taps; nothing before 10), at most 0.3 off. The models then
+  measure taps from those points (LatinIME's sweet spots). They are learned only where personal
+  words are ("Personal words").
+- **Speed.** About 1.5 ms per word that isn't one on the laptop's JVM (worst 3 ms, long Telex
+  words with two slips); a word that is one costs next to nothing. The result is kept per keys,
+  touches and context, so the strip and Space search once.
+
+### Measured (tools/xk-typos)
+
+Set C typed as the owner types (Vietnamese with full Telex, the tone key last; English as spelt),
+every key a tap aimed at its key's centre, landing with a spread of 0.33 key widths across and
+0.40 up and down, plus 1 % outright slips aimed at a neighbour; three seeds. "Before" is what
+Space committed until now with the owner's settings (the Telex result; plain letters as typed or
+fixed into English). The margins were picked on the dev text (the small models' made-up
+training text), and C measured only after.
+
+| Set C, Flexible | typo words | of them real words | fixed before | fixed after | no touch data | to a wrong word | clean words changed |
+|---|---|---|---|---|---|---|---|
+| Vietnamese | 3,891 | 806 | 0.1 % | **62.9 %** | 46.9 % | 1.6 % | 0.00 % of 2,829 |
+| English | 199 | 32 | 19.6 % | **52.3 %** | 30.2 % | 2.5 % | 0.00 % of 137 |
+
+- About a fifth of the typo words are another real word (`banj` slipped to `vanj`, `vạn`), which
+  the fix leaves by design; of the rest, four in five Vietnamese ones come out as meant.
+- Strong: 66.3 % and 55.3 %, with 3.0 % and 6.5 % to a wrong word.
+- The spread matters most: 0.25/0.30 key widths gives 68.8 % and 63.7 % (0.6 % wrong); 0.40/0.48,
+  48.4 % and 33.2 %.
+- Fingers with a habit (0.1 key widths toward the middle, 0.15 key heights low): 56.2 % and 47.3 %,
+  then 57.7 % and 51.8 % once the keyboard learned where they land from the dev text.
+- None of 117 made-up chat spellings (`dzậy`, `zậy`, `ừa`, `ùi`, `nàm`, `hok`, `khum`, `iu` …)
+  typed with taps on their keys' centres, in four contexts, is changed that wasn't before.
+- Real models, by hand: `tôi khpng` → không, `xin cjao` → chào, `em chapf` → chào, `cô ấy ddeeoj`
+  → đẹp, `mọi nhuowif` → người, `hôm nsy` → nay, `the meetimg` → meeting; `khong`, `banf`, `helo`,
+  `oke`, `dzậy` stay (`TouchTypoTest`).
+
+### The layout's channel in accent restoration
+
+Where Space restores every word (tones on Space "always"), restoration also offers the readings
+of the spellings a key away, each scored down by how unlikely the slip is on the layout.
 
 - **Key geometry.** The phone's rows are laid out in key widths: q..p from 0, a..l from 0.5,
   z..m from 1.5. Aiming at a key, the finger lands on a neighbour within 1.5 key widths with
   probability e · w / Σw, where w = exp(−d² / 2·0.6²), and e = 2 % is the typo rate.
 - **Cost.** Each slip costs log10 of that probability against typing the key right, about −2.2.
   A correction wins only when the words around it are worth more than that.
-- **Later.** A touch keyboard knows where each finger landed, and can send per-tap neighbour
-  weights instead of the layout's default. That comes with the Android keyboard.
 - **Levels:**
   - flexible allows one slip, or two from 5 letters;
   - strong allows two from 4 letters.
@@ -705,9 +875,8 @@ spellings a key away.
   0.49 %.
 - **Measured on T**, made-up chat with 3 % typos and only then: 86.4 % of the mistyped words are
   fixed (target ≥ 85 %), and 0.34 % of correct words change (target ≤ 1 %).
-- **Insertions, deletions and swaps** are not corrected yet. Set T has only substitutions. The
-  core's older `xk_autocorrect` (Damerau–Levenshtein) still serves the laptop's suggestion
-  window.
+- This channel doesn't use the touches yet. Set T has only substitutions. The core's older
+  `xk_autocorrect` (Damerau–Levenshtein) still serves the laptop's suggestion window.
 
 ## Personal words (learning, on the phone only)
 
@@ -725,6 +894,8 @@ spellings a key away.
   - With the real models, the five pairs they get wrong (`ngắn tủn`, `đôi bốt` …) all come out
     right once each has been typed twice, and every English context stays English (xk-eval).
 - **Counts of single words** are kept for listing and completing the owner's words.
+- **Where the taps land**: the taps of words that end as typed and are words teach where the
+  owner's taps on each letter land, one mean offset per letter, for Space's typo fixes ("Typos").
 - **Reverts**: a typed form reverted twice in a similar context is kept as typed from then on.
 - **Strip picks**: picking a side slot over the centre pick raises that candidate in that
   context.
@@ -732,7 +903,7 @@ spellings a key away.
 
 ### Where it is kept
 
-- One text file, `learned.txt`, in the app's credential-encrypted private storage. The core
+- One text file, `personal-words.tsv`, in the app's credential-encrypted private storage. The core
   reads it and writes it atomically (a temporary file, then rename).
   - A word's line is `word<TAB>count`, the same shape as the laptop's
     `~/.local/share/xrnkey/user-dict.txt`.
@@ -741,7 +912,11 @@ spellings a key away.
     rarest go first.
 - It is read only after the phone is first unlocked. Before that, the keyboard types with the
   shipped model alone.
-- `allowBackup="false"`. Nothing is synced. Export and import are by hand (see Settings).
+- Where the taps land is `touch-spots.tsv` beside it, one `letter<TAB>dx<TAB>dy<TAB>count` line
+  per letter, cleared with the personal words.
+- `allowBackup="false"`. Nothing leaves the phone unless Settings → Personal words → **Sync
+  through xrnhub** is on, which hands the words and pairs to the owner's hub app (see Sync).
+  Export and import by hand are planned (see Settings).
 
 ## Shortcuts
 
@@ -891,6 +1066,9 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
   list of chat words, abbreviations, emoticons, feelings and wishes (`data/emoji/README.md`). Of
   1,445 Vietnamese syllables typed bare, 15 are keywords (Laban Key, measured: 34; the CLDR
   index used before: 164).
+- **The Japanese strip's emoji keywords**: `data/emoji/keywords-ja.tsv` (about 6,100), read by
+  the Japanese keyboard itself (see "The Japanese keyboard"): CLDR 48's Japanese names and
+  keywords, and a hand list with a few kaomoji (`data/emoji/README.md`).
 
 ## The clipboard panel
 
@@ -954,6 +1132,7 @@ opens on the settings list.
 | | Emoji suggestions | on |
 | | Personal words: the list, search, add, delete one, clear all (with confirm), export, import | — |
 | | Japanese (under Personal words): the words chosen, delete one, clear all (with confirm) | — |
+| | Japanese dictionary (under Personal words): the owner's words with their readings, add, delete one, export, import | — |
 | Auto-correct | Level: off / flexible / strong | flexible |
 | | Keep non-Vietnamese words as typed | on |
 | | Double space for full stop | on |
@@ -1086,6 +1265,7 @@ All of it ships in the APK and is never downloaded.
 | Unihan readings (already a source) | the syllable inventory | Unicode License v3 |
 | SCOWL (already the source of `english.txt`) | the English vocabulary | SCOWL's permissive notice |
 | Unicode CLDR annotations, `vi` and `en`, and `emoji-test.txt` | emoji names, keywords, order and groups | Unicode License v3 |
+| Unicode CLDR annotations, `ja` | the Japanese strip's emoji keywords (`data/emoji/keywords-ja.tsv`) | Unicode License v3 |
 | Mozc's open-source dictionary (`src/data/dictionary_oss`: the words and the connection costs), itself from IPAdic and the Okinawa dictionary | the Japanese keyboard's conversions (`data/ja`) | BSD 3-Clause, with the IPAdic and ICOT notices (`data/ja/NOTICE`, shown in Settings → About → Licences) |
 | A hand list of Vietnamese and English chat words, abbreviations and emoticons, written for this project (`data/emoji/keywords-hand.tsv`) | the strip's emoji keywords | MIT, with the code |
 | A made-up chat and test set, written for this project | tuning the switch cost and abbreviations; the eval set C | MIT, with the code |
@@ -1137,12 +1317,16 @@ Rules:
 
 ## Data and privacy
 
-- **Permissions**: none, and **no `android.permission.INTERNET`**. A CI test fails the build if
-  the merged manifest declares any `uses-permission`. The service only *requires*
-  `BIND_INPUT_METHOD` of the system that binds it.
+- **Permissions**: none asked for, and **no `android.permission.INTERNET`**. A CI test fails the
+  build if the merged manifest declares any `uses-permission`, and the release script refuses an
+  APK that asks for one. The service only *requires* `BIND_INPUT_METHOD` of the system that binds
+  it. The keyboard *declares* one permission of its own, `com.xern.xrnkey.permission.SYNC_WORDS`,
+  which guards the personal words' provider for the hub app (see Sync).
 - **On the phone** (credential-encrypted private storage):
   - personal words and pairs;
+  - where the owner's taps land on each letter (26 mean offsets);
   - the words chosen on the Japanese keyboard, and pairs of them;
+  - the owner's own Japanese words and their readings;
   - the revert memory;
   - the shortcut table;
   - the clipboard history and pins;
@@ -1156,14 +1340,53 @@ Rules:
   - sensitive clips;
   - whole messages. Only word counts and word-pair counts are learned, never sentences.
 - **Leaves the phone**: nothing, except files the owner exports by hand through the system
-  picker.
+  picker, and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
+  which the owner's hub app reads to sync them through the owner's server. Never sentences,
+  never the Japanese history, the shortcuts, the clipboard or anything typed in a password field.
 - **No microphone**: there is no voice input, and nothing is ever recorded.
 
 ## Sync
 
-There is none. The keyboard has no network. Personal words and shortcuts move between the phone
-and the laptop only as files the owner exports and imports. Both files use the laptop IME's
-formats (`user-dict.txt`, `macros.txt`), so the same file works on both devices.
+The keyboard has no network. Its personal words move between the phone and the laptop through the
+owner's hub app (xrnhub, a separate app of theirs that already signs in to their home server), and
+only while Settings → Personal words has both **Learn words** and **Sync through xrnhub** on. Sync
+is off until the owner turns it on.
+
+- **The door.** A content provider, `sync/WordsProvider.kt` (authority `com.xern.xrnkey.words`),
+  guarded by the keyboard's own permission `com.xern.xrnkey.permission.SYNC_WORDS`.
+  - The permission is `signature|knownSigner`. The hub app is signed with another key (the shared
+    debug key its family of apps uses), so the keyboard names that key's certificate digest in
+    `android:knownCerts` (`res/values/hub.xml`). Android 12 and later grant it to an app signed
+    with that certificate, and to no other.
+  - The provider also checks that the caller is the hub's package, `com.xern.xrnhub`: every debug
+    build on the owner's laptop is signed with that same key, so the digest alone would let any of
+    them in if it asked.
+  - `call()` isn't covered by a manifest permission, so each entry point checks for itself.
+- **What it offers.** `call("state")` says whether learning and sync are on, and gives the table's
+  id. `openFile(.../words, "r")` hands over `personal-words.tsv` after the keyboard in use has saved
+  what it learned. `call("put")` and `call("commit")` take a patch in parts (`key<TAB>count` sets a
+  count, `key<TAB>-` deletes) and apply it at once, on the keyboard's main thread: the file is
+  changed and moved into place, and the table the keyboard is typing with reads it again in place.
+- **The table's id** is made with the words and kept beside them, so it changes only when the
+  keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
+  deletion to sync. A new id tells the hub app that the table lost its words rather than had them
+  all deleted, so its first sync only adds.
+- **The merge**, on the hub's server: a word or pair is a row with a count, or a tombstone once
+  deleted, so a word removed on any device goes from all of them. A device sends what changed since
+  its last sync; a row nobody else wrote meanwhile takes its value (so the monthly fade goes
+  through), and a row two devices changed at once keeps the larger count, or the later of a count
+  and a deletion.
+- **The laptop.** `xk-sync` (in `cli-tools/`, run every hour by the systemd user timer
+  `xk-sync.timer`) merges the single words, in lower case, into `user-dict.txt`, as
+  1000 × the phone's count; phrases and capitalised entries there stay on the laptop, and the
+  phone's word pairs stay off it. Words added or removed with `xk-dict` go back to the phone the
+  same way.
+- **Not synced**: the Japanese history (the laptop has no Japanese keyboard, and its entries carry
+  a recency order and the dictionary's part-of-speech ids, which a count merge would scramble), the
+  hidden suggestions, the shortcuts and the clipboard. Shortcuts still move as a file in the
+  laptop's `macros.txt` format.
+- **On the server** the words sit behind the owner's sync login, in the hub's own database, as its
+  health records do: not end-to-end encrypted.
 
 ## Updates
 
@@ -1171,17 +1394,23 @@ A keyboard with no internet can't update itself, so the owner's hub app (a separ
 theirs that already has network access and lists every project) does it. The keyboard never
 gets INTERNET.
 
-- The release APK is published to the owner's own server next to the hub app's other release
-  files.
-- The hub app checks the server, and when a newer keyboard is there it shows **Keyboard update
-  ready**. The owner taps **Install**.
-- It installs the APK with a `PackageInstaller` session, the same way the owner's rules app
-  already updates itself. After its first install the hub app is the installer of record, so
-  later updates need no extra confirmation (`USER_ACTION_NOT_REQUIRED`).
+- `android/scripts/release.py` builds the release APK from the main checkout and publishes it with
+  an `app.json` (versionCode, versionName, the APK's name, size and SHA-256) to the hub's data on
+  the owner's server. Its address, ssh host and the pinned signer come from
+  `~/.config/xrnkey/release.json`, never the repo. It refuses a branch other than main, uncommitted
+  work, a versionCode the server already has (it bumps nothing: versions are bumped in their own
+  commits), an APK signed by any other certificate than the pinned one, and an APK that asks for
+  any permission.
+- The hub serves them behind the sync login (`GET /api/keyboard/update`, and the APK beside it).
+- The hub app checks when it comes to the front, and when a newer keyboard is there its Apps page
+  shows **Keyboard update ready** with the version, and a dot on the Apps tab. No notification.
+- A tap downloads the APK, checks its size and SHA-256 against `app.json` and that it is this
+  package at that versionCode, and installs it with a `PackageInstaller` session, the same way the
+  owner's rules app updates itself. After its first install the hub app is the installer of
+  record, so later updates may need no extra confirmation (`USER_ACTION_NOT_REQUIRED`).
 - Android installs an update only if it is signed with the keyboard's key, so a compromised
   server can't push a different keyboard.
 - An IME update keeps the keyboard enabled and chosen as the default.
-- Until the hub app has this, a release is installed with adb from the laptop.
 
 ## Signing key
 
@@ -1196,8 +1425,10 @@ Why:
   key, which the owner's key backup already covers.
 - Every debug build on the laptop is signed with the debug keystore, and its password is the
   well-known default. Anything that ever trusted "same signature" would trust them all.
-- A signature permission may be needed later between the keyboard and an updater or a sibling
-  app, which is the family's rule for using the release key.
+- A signature permission may be needed between the keyboard and a sibling app, which is the
+  family's rule for using the release key. The hub app is the exception: it is signed with the
+  debug key, so the sync permission trusts its certificate by name (knownSigner) and checks its
+  package as well (see Sync).
 
 Nothing about the key enters this public repo except that relative path.
 
@@ -1371,7 +1602,8 @@ The owner answered the spec's open questions:
 1. **No mic key at all.** The keyboard is fully offline, with no voice typing.
 2. **The parity run** against the reference happens later, on the phone, run by the owner's side.
 3. **Updates come through the hub app**: it shows "Keyboard update ready" and installs on a tap.
-   The keyboard itself never gets INTERNET.
+   The keyboard itself never gets INTERNET. Built, with the personal words' sync (see Updates
+   and Sync).
 4. **Look-back is on**: the previous word is fixed in place, as the reference does, and
    Backspace right after undoes the fix.
 5. **The emoji, `:-)` and `Ω` tabs stay.** Fancy text comes later. The sticker tab is left out.

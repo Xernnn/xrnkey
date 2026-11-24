@@ -49,9 +49,9 @@ jobs:
       - name: Syntax-check the scripts
         run: |
           python3 -m py_compile ibus-engine/*.py ibus-engine/xrnkey-ibus \
-            cli-tools/xk-dict.py cli-tools/xk-macro.py data/emoji/generate.py data/ngram/train.py \
+            cli-tools/xk-dict.py cli-tools/xk-macro.py cli-tools/xk-sync.py data/emoji/generate.py data/ngram/train.py \
             fcitx5-addon/tests/dbus_driver.py data/lm/build.py data/lm/xklm_text.py tools/xk-eval \
-            data/ja/build_dict.py android/host/check_apk_models.py
+            data/ja/build_dict.py android/host/check_apk_models.py android/scripts/release.py
           for f in cli-tools/*.sh data/dict/build_dict.sh \
                    fcitx5-addon/tests/*.sh; do bash -n "$f"; done
 
@@ -82,6 +82,10 @@ jobs:
 
       - name: JVM tests and a debug APK
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+
+      # What stops the release script before anything reaches the server.
+      - name: Release script tests
+        run: python3 scripts/test_release.py
 
       - name: The APK asks for no permission
         run: |

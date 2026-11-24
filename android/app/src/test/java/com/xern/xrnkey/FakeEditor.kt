@@ -17,11 +17,26 @@ class FakeEditor(initial: String = "") : Editor {
 
     override fun setComposing(text: String) {
         composing = text
+        focus = null
         log += "compose:$text"
+    }
+
+    /** The part of [composing] marked as in focus (a Japanese conversion's phrase), or null. */
+    var focus: IntRange? = null
+        private set
+
+    /** What [focus] marks of [composing] ("" for nothing). */
+    val focused: String get() = focus?.let { composing.substring(it.first, it.last + 1) } ?: ""
+
+    override fun setComposing(text: String, focus: IntRange) {
+        composing = text
+        this.focus = focus
+        log += "compose:$text[$focus]"
     }
 
     override fun commit(text: String) {
         composing = ""
+        focus = null
         committed.append(text)
         log += "commit:$text"
     }
@@ -29,6 +44,7 @@ class FakeEditor(initial: String = "") : Editor {
     override fun finishComposing() {
         committed.append(composing)
         composing = ""
+        focus = null
         log += "finish"
     }
 

@@ -38,6 +38,12 @@ python3 -I data/ja/build_dict.py eval ~/.cache/xrnkey-lm/models/ja.xkdic \
   no conversion of Mozc's evaluation set. It takes about ten seconds.
 - `eval` says how often the best conversion is the one Mozc gave, for the sentences of Mozc's
   own evaluation set (`evaluation.tsv`).
+- Each part of speech also says how its words join a phrase (a bunsetsu), from its name in
+  Mozc's `id.def`: particles, auxiliaries, suffixes, dependent words and punctuation go with the
+  word before, prefixes with the word after, する with a noun that takes it (`KINDS`). The
+  keyboard splits a conversion so after Space. They are a byte per part of speech after the
+  last section, which 0.9.0's reader never reads, so its builds and this one open each other's
+  files; a dictionary built before them converts as before, its phrases split more roughly.
 
 The Android tests run the same set through the keyboard's own converter, which converts as
 `convert()` does (505 of 683), and say how often Mozc's conversion is among the strip's three

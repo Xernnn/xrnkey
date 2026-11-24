@@ -66,6 +66,7 @@ add_dependencies(test_learn test_lm_models)
 
 add_executable(test_typos test_typos.cpp)
 target_link_libraries(test_typos PRIVATE xrnkey Catch2::Catch2WithMain)
+target_include_directories(test_typos PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
 target_compile_definitions(test_typos PRIVATE XRNKEY_TEST_LM_DIR="${CMAKE_BINARY_DIR}/data/lm")
 add_dependencies(test_typos test_lm_models)
 

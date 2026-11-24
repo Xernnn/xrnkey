@@ -1,0 +1,6153 @@
+# xrnkey's Japanese emoji keywords: CLDR 48 Japanese annotations (Unicode License v3) and this project's hand list (data/emoji/README.md). Built by japanese.py.
+!	‼️	⁉️	❕	❗	cldr
+!?	⁉️	cldr
++	➕	cldr
+-	➖	cldr
+/	➗	cldr
+0	0️⃣	cldr
+0系	🚅	cldr
+0系新幹線	🚅	name
+1	1️⃣	cldr
+100	💯	cldr
+100点	💯	cldr
+100点満点	💯	name
+10:00	🕙	cldr
+10:30	🕥	cldr
+10時	🕙	name
+10時30分	🕥	cldr
+10時半	🕥	name
+11:00	🕚	cldr
+11:30	🕦	cldr
+11時	🕚	name
+11時30分	🕦	cldr
+11時半	🕦	name
+1234	🔢	cldr
+12:00	🕛	cldr
+12:30	🕧	cldr
+12時	🕛	name
+12時30分	🕧	cldr
+12時半	🕧	name
+18歳未満禁止	🔞	name
+18禁	🔞	cldr
+1:00	🕐	cldr
+1:30	🕜	cldr
+1人	👤	cldr
+1位	🥇	cldr
+1時	🕐	name
+1時30分	🕜	cldr
+1時半	🕜	name
+1曲リピートボタン	🔂	name
+2	2️⃣	cldr
+24時間営業	🏪	cldr
+2:00	🕑	cldr
+2:30	🕝	cldr
+2つのハート	💕	name
+2人	👥	cldr
+2人でキス	💏	name
+2人のシルエット	👥	name
+2位	🥈	cldr
+2時	🕑	name
+2時30分	🕝	cldr
+2時半	🕝	name
+3	3️⃣	cldr
+3:00	🕒	cldr
+3:30	🕞	cldr
+3位	🥉	cldr
+3時	🕒	name
+3時30分	🕞	cldr
+3時半	🕞	name
+4	4️⃣	🍀	cldr
+4:00	🕓	cldr
+4:30	🕟	cldr
+4時	🕓	name
+4時30分	🕟	cldr
+4時半	🕟	name
+5	5️⃣	✋	cldr
+5:00	🕔	cldr
+5:30	🕠	cldr
+5時	🕔	name
+5時30分	🕠	cldr
+5時半	🕠	name
+6	6️⃣	cldr
+6:00	🕕	cldr
+6:30	🕡	cldr
+6時	🕕	name
+6時30分	🕡	cldr
+6時半	🕡	name
+7	7️⃣	cldr
+7:00	🕖	cldr
+7:30	🕢	cldr
+7時	🕖	name
+7時30分	🕢	cldr
+7時半	🕢	name
+8	8️⃣	cldr
+8:00	🕗	cldr
+8:30	🕣	cldr
+8分音符	🎵	🎶	cldr
+8時	🕗	name
+8時30分	🕣	cldr
+8時半	🕣	name
+9	9️⃣	cldr
+9:00	🕘	cldr
+9:30	🕤	cldr
+9時	🕘	name
+9時30分	🕤	cldr
+9時半	🕤	name
+?	⁉️	❓	❔	cldr
+ABCD	🔠	cldr
+AB型	🆎	cldr
+ATM	🏧	name
+A型	🅰️	cldr
+BACK	🔙	cldr
+BACK矢印	🔙	name
+Blu-ray	📀	💿	cldr
+B型	🅱️	cldr
+CD	💿	📀	name
+CL	🆑	cldr
+CLマーク	🆑	name
+COOL	🆒	cldr
+COOLマーク	🆒	name
+Cマーク	©️	cldr
+DNA	🧬	name
+DVD	📀	💿	name
+END	🔚	cldr
+END矢印	🔚	name
+Eメール	📧	✉️	📨	📩	📤	name
+F1	🏎️	cldr
+FAX	📠	cldr
+FD	💾	cldr
+FREEマーク	🆓	name
+GLBT	🌈	🏳️‍🌈	cldr
+GLBTQ	🌈	cldr
+ID	🆔	🪪	cldr
+IDマーク	🆔	name
+LGBT	⚧️	🏳️‍⚧️	🌈	🏳️‍🌈	cldr
+LGBTQ	🌈	🏳️‍🌈	cldr
+LGBTQIA	🏳️‍🌈	cldr
+M	Ⓜ️	cldr
+MD	💽	name
+MO	💽	cldr
+NEW	🆕	cldr
+NEWマーク	🆕	name
+NG	🆖	🙅‍♀️	👎	🙅‍♂️	🙅	cldr
+NGマーク	🆖	name
+OKのポーズをする人	🙆	name
+OKのポーズをする女	🙆‍♀️	name
+OKのポーズをする男	🙆‍♂️	name
+OKの手	👌	name
+OKマーク	🆗	name
+OL	👩‍💼	cldr
+ON	🔛	cldr
+ON矢印	🔛	name
+O型	🅾️	cldr
+P	🅿️	cldr
+PC	⌨️	🖱️	🖲️	💻	🖥️	cldr
+Pマーク	🅿️	name
+RV車	🚙	cldr
+Rマーク	®️	cldr
+SL	🚂	cldr
+SOON	🔜	cldr
+SOON矢印	🔜	name
+SOS	🆘	cldr
+SOSマーク	🆘	name
+SUV車	🚙	cldr
+TG	⚧️	🏳️‍⚧️	cldr
+TMマーク	™️	cldr
+TOP	🔝	cldr
+TOP矢印	🔝	name
+TV	📺	cldr
+Tシャツ	👕	name
+UFO	👽	🛸	cldr
+UP	🆙	cldr
+UPマーク	🆙	name
+U字型磁石	🧲	name
+VHS	📼	cldr
+VSマーク	🆚	name
+Vサイン	✌️	name
+WC	🚾	🚻	🚹	🚺	name
+Wi-Fi	🛜	name
+X線	🩻	name
+abc	🔤	cldr
+abcd	🔡	cldr
+i	ℹ️	cldr
+iマーク	ℹ️	name
+zzz	💤	😴	cldr
+〒♪&%	🔣	cldr
+あいさつ	👋	cldr
+あいす	🍨	🍦	🍧	cldr
+あいすくりーむ	🍨	name
+あいすすけーと	⛸️	name
+あいすほっけー	🏒	name
+あいすらんど	🇮🇸	name
+あいでぃー	🆔	cldr
+あいらぶゆー	🤟	name
+あいるらんど	🇮🇪	name
+あうたー	🧥	cldr
+あうとどあ	🥾	cldr
+あおぐ	🪭	cldr
+あきらめ	😩	😮‍💨	name
+あきれた	🙄	cldr
+あきれ顔	😦	name
+あくびした顔	🥱	name
+あこーでぃおん	🪗	name
+あごひげ	🧔	🧔‍♂️	🧔‍♀️	cldr
+あごひげの人	🧔	name
+あごひげの女性	🧔‍♀️	name
+あごひげの男性	🧔‍♂️	name
+あざらし	🦭	name
+あしか	🦭	cldr
+あじあ	🌏	cldr
+あすたりすく	✳️	❇️	cldr
+あすりーと	🤾	cldr
+あせあせ	💦	😅	(^_^;)	hand
+あぜるばいじゃん	🇦🇿	name
+あぜん	🫪	cldr
+あちゃー	🤦	🤦‍♂️	🤦‍♀️	cldr
+あっかんべー	😜	name
+あっぷ	🆙	cldr
+あっぷる	🍎	🍏	cldr
+あっぷるぱい	🥧	cldr
+あなぐま	🦡	name
+あはは	😆	🤣	😂	cldr
+あばかす	🧮	cldr
+あひる	🪿	cldr
+あふがにすたん	🇦🇫	name
+あふりか	🌍	cldr
+あふろ	🪮	cldr
+あふろこーむ	🪮	name
+あぶく	🫧	cldr
+あぼかど	🥑	name
+あみゅーずめんとぱーく	🎡	🎢	cldr
+あめ	🍬	🍭	cldr
+あめふと	🏈	name
+あめりか	🌎	🗽	cldr
+あめりかんふっとぼーる	🏈	cldr
+あめーば	🦠	cldr
+あらいぐま	🦝	name
+あらーむ	⏰	cldr
+あり	🐜	name
+ありがとう	🙏	😊	✨	hand
+ありがとうございます	🙏	😊	✨	hand
+あるこーる	🍷	🍹	🍻	🍸	🍺	cldr
+あるじぇりあ	🇩🇿	name
+あるぜんちん	🇦🇷	name
+あるてぃめっと	🥏	cldr
+あるば	🇦🇼	name
+あるばにあ	🇦🇱	name
+あるぱか	🦙	cldr
+あるふぁべっと	🔤	🔠	🔡	cldr
+あるめにあ	🇦🇲	name
+あれぱ	🫓	cldr
+あんぎら	🇦🇮	name
+あんごら	🇦🇴	name
+あんてな	📡	cldr
+あんてなまーく	📶	name
+あんでっど	🧟	cldr
+あんどら	🇦🇩	name
+あーてぃすと	🧑‍🎨	🧑‍🎤	👨‍🎨	👩‍🎨	👨‍🎤	cldr
+あーと	🖼️	cldr
+いいえ	🙂‍↔️	cldr
+いいね	👍	✨	😊	hand
+いえてぃ	🫈	cldr
+いえめん	🇾🇪	name
+いえろーきゃぶ	🚕	🚖	cldr
+いおりてん	〽️	name
+いか	🦑	name
+いかり	⚓	cldr
+いぎりす	🇬🇧	name
+いこーる	🟰	cldr
+いじぇくと	⏏️	cldr
+いすらえる	🇮🇱	name
+いたりあ	🇮🇹	name
+いちご	🍓	name
+いて座	♐	name
+いぬ	🐕	🐶	name
+いのしし	🐗	name
+いびき	💤	cldr
+いも	🥔	cldr
+いもむし	🐛	cldr
+いやほん	🎧	cldr
+いらく	🇮🇶	name
+いらん	🇮🇷	name
+いるか	🐬	name
+いんぐらんど	🏴󠁧󠁢󠁥󠁮󠁧󠁿	name
+いんたーねっと	🌐	🛜	cldr
+いんでっくす	🗂️	cldr
+いんど	🇮🇳	name
+いんどねしあ	🇮🇩	name
+いんふぉめーしょん	ℹ️	cldr
+いんべーだー	👾	name
+いんやん	☯️	cldr
+いー	😬	cldr
+いーぐる	🦅	cldr
+うぃすきー	🥃	cldr
+うぃんく	😉	😜	cldr
+うぃんどう	🪟	cldr
+ういすきー	🥃	cldr
+ういるす	🦠	🦟	cldr
+ういんく	😉	name
+うぇいとりふてぃんぐ	🏋️‍♂️	🏋️‍♀️	🏋️	cldr
+うぇでぃんぐ	👰	cldr
+うぇぶ	🕸️	cldr
+うぇーるず	🏴󠁧󠁢󠁷󠁬󠁳󠁿	name
+うぉっち	⌚	cldr
+うぉーきんぐ	🚶‍♂️	🚶‍♀️	🚶	cldr
+うお座	♓	🐟	name
+うがんだ	🇺🇬	name
+うくらいな	🇺🇦	name
+うけるね	😆	🤣	cldr
+うさぎ	🐇	🐰	name
+うさ耳	👯‍♀️	👯‍♂️	👯	cldr
+うし	🐮	🐂	🐄	cldr
+うずべきすたん	🇺🇿	name
+うそつきの顔	🤥	name
+うそでしょ	🤦	🤦‍♂️	🤦‍♀️	cldr
+うつろな目	🥴	cldr
+うま	🐴	🐎	cldr
+うまい	😋	cldr
+うるうる	🥹	cldr
+うるぐあい	🇺🇾	name
+うわの空	😶‍🌫️	cldr
+うんこ	💩	cldr
+うんち	💩	name
+うーる	🐑	🦙	cldr
+うーん	🤔	🙄	cldr
+えいとぼーる	🎱	cldr
+えいりあん	👽	👾	name
+えきすぱーと	🤓	cldr
+えくあどる	🇪🇨	name
+えくささいず	🙆	cldr
+えくすくらめーしょんまーく	❣️	‼️	❕	❗	cldr
+えじぷと	🇪🇬	name
+えすおーえす	🆘	cldr
+えすかるご	🐌	cldr
+えすて	💆‍♀️	💆‍♂️	💆	cldr
+えすとにあ	🇪🇪	name
+えすわてぃに	🇸🇿	name
+えちおぴあ	🇪🇹	name
+えぬじー	🆖	cldr
+えび	🦐	🍤	name
+えびふらい	🍤	name
+えりとりあ	🇪🇷	name
+えるく	🫎	cldr
+えるさるばどる	🇸🇻	name
+えるふ	🧝	🧝‍♂️	🧝‍♀️	name
+えれきぎたー	🎸	cldr
+えれべーたー	🛗	name
+えんじぇる	👼	cldr
+えんぜる	👼	cldr
+えんたーていなー	👨‍🎤	👩‍🎤	cldr
+えんど	🔚	cldr
+えんぶれむ	🔱	⚜️	cldr
+えーっ	😳	😲	cldr
+えーん	😭	(´；ω；`)	hand
+おいしい	😋	🤤	✨	hand
+おいしそう	😋	cldr
+おいすたー	🦪	cldr
+おいで	🫴	cldr
+おいる	🛢️	🪔	cldr
+おうし座	♉	🐂	name
+おうむ	🦜	name
+おおかみ	🐺	cldr
+おかしい	🤪	cldr
+おかゆ	🥣	cldr
+おくとぱす	🐙	cldr
+おくとーばーふぇすと	🍺	cldr
+おけ	🪣	cldr
+おこ	😡	💢	hand
+おさげ	👧	cldr
+おじいさん	👴	name
+おじいちゃん	👴	cldr
+おじぎ	🙇‍♂️	🙇‍♀️	🙇	cldr
+おじぎする人	🙇	name
+おじぎする女	🙇‍♀️	name
+おじぎする男	🙇‍♂️	name
+おそれ	🫢	cldr
+おたく	🤓	name
+おだいり様	🎎	cldr
+おっけー	👌	👍	🙆	hand
+おっと	🤭	cldr
+おっとせい	🦭	cldr
+おっはー	👐	cldr
+おつかれ	🍵	🙇	🍺	hand
+おつかれさま	🍵	🙇	🍺	hand
+おでん	🍢	name
+おとぎ話	🧌	🧜	🧚	cldr
+おとめ座	♍	name
+おにぎり	🍙	name
+おの	🪓	cldr
+おののき	🫢	cldr
+おはし	🥢	cldr
+おはよう	☀️	😊	hand
+おはようございます	☀️	😊	hand
+おばあさん	👵	name
+おばあちゃん	👵	cldr
+おひつじ座	♈	🐏	name
+おひな様	🎎	cldr
+おびき寄せる	🪤	cldr
+おふ	📴	cldr
+おふぃすびる	🏢	name
+おべろん	🧚	cldr
+おまえだ	🫵	cldr
+おまーん	🇴🇲	name
+おみくじ	🥠	cldr
+おむすび	🍙	cldr
+おめでとう	🎉	🎊	🥳	hand
+おめでとうございます	🎉	🎊	hand
+おもちゃ	🪀	🪁	🧸	cldr
+おやすみ	😴	🌙	💤	hand
+おやすみなさい	😴	🌙	💤	hand
+おやつ	🧁	cldr
+おらんうーたん	🦧	name
+おらんだ	🇳🇱	name
+おりえんてーりんぐ	🧭	cldr
+おりーぶ	🫒	name
+おれんじ	🧡	🟠	🟧	🔶	🔸	cldr
+おれんじのはーと	🧡	name
+おわん帽	👲	cldr
+おん	🔛	cldr
+おんどり	🐓	name
+おーけすとら	🪉	🪈	cldr
+おーけー	🆗	🫡	👌	🙆‍♀️	🙆‍♂️	cldr
+おーすとらりあ	🇦🇺	🌏	🦘	🪃	name
+おーすとりあ	🇦🇹	name
+おーとばい	🏍️	🛵	name
+おーとみーる	🥣	cldr
+おーとりくしゃー	🛺	cldr
+おーとれーす	🏍️	cldr
+おーばー	🧥	cldr
+おーむ	🕉️	name
+おーる	🚣	cldr
+お別れ	🫂	cldr
+お化け	👻	name
+お団子	🍡	cldr
+お墓	🪦	cldr
+お姫さま	👸	cldr
+お守り	🧿	🪬	cldr
+お宝	🪎	cldr
+お寿司	🍣	cldr
+お巡りさん	👮	👮‍♂️	👮‍♀️	cldr
+お年寄り	🧓	👵	👴	name
+お年玉	🧧	cldr
+お得	🉐	cldr
+お手上げ	🤷	🤷‍♂️	🤷‍♀️	cldr
+お手上げする人	🤷	name
+お手上げする女	🤷‍♀️	name
+お手上げする男	🤷‍♂️	name
+お手入れ	🪥	cldr
+お手洗い	🚽	🚻	🚾	🚹	🚺	cldr
+お断り	🙅	cldr
+お札	💴	💵	💶	💸	💷	cldr
+お疲れ	🍵	🙇	🍺	hand
+お疲れ様	🍵	🙇	🍺	hand
+お皿	🍽️	cldr
+お祝い	🎀	🎏	🎊	🎗️	🎖️	cldr
+お祭り	🎇	🎆	cldr
+お腹	🫄	cldr
+お茶	🍵	hand
+お菓子	🍿	🍘	🍩	🍬	🍪	cldr
+お酒	🍶	🍺	🍷	hand
+お金	💰	💴	hand
+お金の顔	🤑	name
+お面	👺	👹	cldr
+お願い	🙏	🙇	🥺	cldr
+かいと	🪁	cldr
+かうがーる	🤠	cldr
+かうぼーい	🤠	cldr
+かえで	🍁	name
+かえる	🐸	cldr
+かお	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)	hand
+かおもじ	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)	hand
+かき	🦪	cldr
+かき氷	🍧	name
+かぎ針	🧶	cldr
+かくてる	🍸	🍹	cldr
+かくてるぐらす	🍸	name
+かご	🧺	name
+かざふすたん	🇰🇿	name
+かじの	🎰	cldr
+かじゅある	👖	cldr
+かすたーど	🍮	cldr
+かたつむり	🐌	name
+かたーる	🇶🇦	name
+かちんこ	🎬	name
+かっと	✂️	💇	💇‍♂️	cldr
+かっぷけーき	🧁	name
+かっぷる	💑	💏	🧑‍🤝‍🧑	👭	👬	cldr
+かっぷるとはーと	💑	name
+かとらりー	🥄	🍴	cldr
+かなだ	🇨🇦	name
+かなづち	🔨	⚒️	🛠️	cldr
+かに	🦀	name
+かに座	♋	name
+かぬー	🛶	🚣‍♂️	🚣‍♀️	🚣	name
+かば	🦛	name
+かばん	💼	👜	cldr
+かふぇ	☕	cldr
+かふぇいん	☕	cldr
+かぶ	🫜	cldr
+かぶとむし	🪲	name
+かぷせる	💊	cldr
+かぼちゃ	🎃	cldr
+かみそり	🪒	cldr
+かめ	🐢	🏺	name
+かめら	📷	📸	📹	🎥	🎦	name
+かめらふらっしゅ	📸	cldr
+かめるーん	🇨🇲	name
+かも	🦆	name
+かやっく	🛶	🚣‍♂️	🚣‍♀️	🚣	cldr
+からおけ	🎤	cldr
+からす	🐦‍⬛	cldr
+からだ	👃	👂	👀	👁️	👅	cldr
+かりうむ	🍌	cldr
+かるさ	🪯	cldr
+かれんだー	📅	📆	🗓️	name
+かれー	🍛	cldr
+かれーらいす	🍛	name
+かわいい	🥰	😍	💕	hand
+かわうそ	🦦	name
+かんかん	😡	👿	cldr
+かんがるー	🦘	name
+かんだ	🪯	name
+かんぼじあ	🇰🇭	name
+かーかー	🐦‍⬛	cldr
+かーと	🛒	cldr
+かーど	💳	🗃️	♠️	♥️	🎴	cldr
+かーどいんでっくす	📇	name
+かーどふぁいるぼっくす	🗃️	name
+かーどふぉるだー	🗂️	name
+かーば	🕋	name
+かーぶ	↩️	↪️	⤴️	⤵️	cldr
+かーぼべるで	🇨🇻	name
+かーりんぐ	🥌	name
+かーる	📃	cldr
+かーれーす	🏎️	cldr
+がいあな	🇬🇾	name
+がそりん	⛽	cldr
+がそりんすたんど	⛽	name
+がそりんのずる	⛽	cldr
+がちょう	🪿	name
+がっかり	😔	😞	cldr
+がっくり	😞	cldr
+がぼん	🇬🇦	name
+がま口	👛	name
+がらす	🫗	cldr
+がんばって	💪	📣	🔥	hand
+がんばれ	💪	📣	🔥	hand
+がんびあ	🇬🇲	name
+がーがー	🪿	cldr
+がーでなー	🧑‍🌾	cldr
+がーな	🇬🇭	name
+がーりっく	🧄	cldr
+がーん	😨	😱	🙀	🫨	cldr
+がーんじー	🇬🇬	name
+きうい	🥝	cldr
+きういふるーつ	🥝	name
+きす	😗	💋	😙	😽	💏	name
+きすまーく	💋	name
+きっく	🦵	🦶	cldr
+きっくすくーたー	🛴	cldr
+きっくすけーたー	🛴	cldr
+きっくぼーど	🛴	name
+きっず	🧒	cldr
+きっちんぺーぱー	🧻	cldr
+きつね	🦊	🤘	cldr
+きどにーびーんず	🫘	cldr
+きのこ	🍄	🍄‍🟫	name
+きぷろす	🇨🇾	name
+きゃっしゅ	💰	cldr
+きゃっしゅかーど	💳	cldr
+きゃっする	🏰	cldr
+きゃっち	🤾	🤾‍♀️	cldr
+きゃっぷ	🧢	name
+きゃびねっと	🗄️	cldr
+きゃべつ	🥬	cldr
+きゃりーけーす	🧳	cldr
+きゃんせる	✖️	❌	❎	cldr
+きゃんでぃ	🍬	🍭	name
+きゃんどる	🕯️	cldr
+きゃんぷ	🏕️	⛺	🥾	name
+きゃー	😆	name
+きゅうり	🥒	name
+きゅらそー	🇨🇼	name
+きゅーば	🇨🇺	name
+きゅーぴっど	💘	🪉	cldr
+きらきら	✨	hand
+きらきらはーと	💖	name
+きらきらハート	💖	name
+きらきら星	🌟	name
+きりばす	🇰🇮	name
+きりん	🦒	name
+きるぎす	🇰🇬	name
+きんぽうげ	🌼	cldr
+きー	🔑	🗝️	🔐	cldr
+きーぼーど	⌨️	🎹	name
+ぎあ	⚙️	cldr
+ぎたー	🎸	name
+ぎにあ	🇬🇳	name
+ぎにあびさう	🇬🇼	name
+ぎふと	🎁	cldr
+ぎゃんぶる	🎰	cldr
+ぎょうざ	🥟	cldr
+ぎょーざ	🥟	cldr
+ぎりしゃ	🇬🇷	name
+くいーん	👸	cldr
+くうぇーと	🇰🇼	name
+くえすちょんまーく	❓	❔	cldr
+くさり	⛓️	⛓️‍💥	cldr
+くし	🪮	cldr
+くしゃみ	🤧	😫	cldr
+くしゃみする顔	🤧	name
+くじゃく	🦚	name
+くじら	🐋	🐳	🫍	name
+くすくす	🤭	cldr
+くす玉	🎊	name
+くずかご	🗑️	🚮	cldr
+くちばし	🐦‍⬛	cldr
+くっきー	🍪	name
+くつろぎ	🧘	cldr
+くつろぐ	🧖	cldr
+くま	🫩	🐻	🐻‍❄️	🧸	cldr
+くも	🕷️	🕸️	name
+くらうん	👑	cldr
+くらくら	💫	😵‍💫	name
+くらげ	🪼	name
+くらっかー	🎉	name
+くらっちばっぐ	👝	cldr
+くらぶ	♣️	🍸	name
+くらんぷ	🗜️	cldr
+くり	🌰	name
+くりあ	🆑	cldr
+くりけっと	🏏	name
+くりすたる	🔮	cldr
+くりすます	🎄	🎅	🤶	🧑‍🎄	cldr
+くりすますいぶ	🎄	cldr
+くりすますつりー	🎄	name
+くりっぷ	📎	📋	🖇️	name
+くりっぷぼーど	📋	name
+くりーむちーず	🥯	cldr
+くるぶし	🦶	cldr
+くれじっとかーど	💳	name
+くれよん	🖍️	name
+くれーん	🏗️	cldr
+くろあちあ	🇭🇷	name
+くろこだいる	🐊	cldr
+くろす	✝️	cldr
+くろわっさん	🥐	name
+くろーばー	☘️	🍀	♣️	name
+くろーる	🏊	cldr
+くーる	🆒	😎	cldr
+ぐあてまら	🇬🇹	name
+ぐあどるーぷ	🇬🇵	name
+ぐあなこ	🦙	cldr
+ぐあむ	🇬🇺	name
+ぐっど	👍	cldr
+ぐらす	🍷	🥃	🍸	🥂	🥛	cldr
+ぐらふ	📊	📈	💹	cldr
+ぐりーん	🥗	cldr
+ぐりーんさらだ	🥗	name
+ぐりーんぴーす	🫛	cldr
+ぐりーんらんど	🇬🇱	name
+ぐれなだ	🇬🇩	name
+ぐれー	🩶	cldr
+ぐれーぷ	🍇	cldr
+ぐろーぶ	🥊	cldr
+ぐー	👊	✊	name
+ぐーぐー	💤	🛌	😴	name
+けが	🤕	❤️‍🩹	🩹	🩸	cldr
+けってい	🫏	cldr
+けにあ	🇰🇪	name
+けばぶ	🥙	cldr
+けばぶさんど	🥙	name
+けんか	🫯	cldr
+けーき	🍰	🧁	🎂	cldr
+けーぶるかー	🚠	name
+けーる	🥬	cldr
+げい	🌈	🏳️‍🌈	cldr
+げろ	🤮	cldr
+げんこつ	✊	👊	name
+げーむ	🎮	🎲	🎴	🥌	🀄	cldr
+こあら	🐨	name
+こいのぼり	🎏	name
+こいん	🪙	name
+こいんろっかー	🛅	cldr
+こうもり	🦇	name
+こおろぎ	🦗	cldr
+こくちょう	🐦‍⬛	cldr
+ここ	🈁	cldr
+ここなっつ	🥥	cldr
+ここなつ	🥥	name
+ここのまーく	🈁	name
+こすたりか	🇨🇷	name
+こすめ	💄	cldr
+こそぼ	🇽🇰	name
+こっく	🧑‍🍳	👨‍🍳	👩‍🍳	name
+こっぷ	🥛	🥤	cldr
+こぴーらいと	©️	cldr
+こぶ	🐫	🐪	cldr
+こぶし	🤛	🤜	✊	👊	cldr
+こぼす	🫗	cldr
+こもろ	🇰🇲	name
+こるく	🍾	cldr
+ころっけ	🧆	cldr
+ころんびあ	🇨🇴	name
+こわごわ	🫣	cldr
+こんが	🪘	name
+こんせんと	🔌	name
+こんとろーら	🎮	🕹️	cldr
+こんとろーる	🎛️	cldr
+こんとろーるつまみ	🎛️	name
+こんにちは	👋	😊	hand
+こんばんは	🌙	👋	hand
+こんぱす	🧭	name
+こんびに	🏪	name
+こんびにえんすすとあ	🏪	cldr
+こんぴゅーた	🧑‍💻	👨‍💻	👩‍💻	cldr
+こんぴゅーたー	⌨️	🖱️	🖲️	💽	💻	cldr
+こーと	🧥	name
+こーとじぼわーる	🇨🇮	name
+こーひー	☕	cldr
+こーむ	🪮	cldr
+こーん	🌽	cldr
+ごきぶり	🪳	name
+ごしっぷ	💁	cldr
+ごちそう	🍴	cldr
+ごはん	🍚	name
+ごみ	🚯	cldr
+ごみかご	🗑️	cldr
+ごみ箱	🗑️	🚮	name
+ごむぞうり	🩴	cldr
+ごめん	🙏	😢	(´・ω・`)	hand
+ごめんなさい	🙏	😢	hand
+ごりら	🦍	name
+ごるふ	⛳	🏌️	🏌️‍♂️	🏌️‍♀️	🚩	name
+ごるふぁー	🏌️	🏌️‍♂️	🏌️‍♀️	cldr
+ごんどら	🚡	🚠	cldr
+ごーぐる	🥽	name
+ごーすと	👻	cldr
+ごーる	🥅	🥍	cldr
+ごーるど	🥇	cldr
+ごーるねっと	🥅	name
+ご来光	🌄	cldr
+ご祝儀	🧧	cldr
+ご飯	🍚	🍙	hand
+さあね	🤷	🤷‍♂️	🤷‍♀️	cldr
+さい	🦏	name
+さいえんす	🔬	🔭	cldr
+さいくりすと	🚵‍♀️	🚴	🚵	🚴‍♀️	cldr
+さいくりんぐ	🚲	🚴‍♂️	🚵‍♂️	🚵‍♀️	🚴	cldr
+さいくろん	🌀	cldr
+さいころ	🎲	name
+さいれん	🚨	🧜	cldr
+さいん	🚧	cldr
+さうじあらびあ	🇸🇦	name
+さうな	🧖‍♂️	🧖‍♀️	🧖	cldr
+さかさま	🙃	cldr
+さかさまの顔	🙃	name
+さきそふぉん	🎷	cldr
+さくそふぉん	🎷	cldr
+さくら	🌸	cldr
+さくらんぼ	🍒	name
+さすかっち	🫈	cldr
+さそり	🦂	name
+さそり座	♏	🦂	name
+さっかー	⚽	name
+さっかーぼーる	⚽	cldr
+さっくす	🎷	name
+さつまいも	🍠	cldr
+さのまーく	🈂️	name
+さぼてん	🌵	🏜️	name
+さむけ	😓	cldr
+さむずあっぷ	👍	name
+さむずだうん	👎	name
+さめ	🦈	name
+さもあ	🇼🇸	name
+さや	🫛	cldr
+さようなら	👋	🫂	cldr
+さらだ	🥗	🥬	cldr
+さらりーまん	🧑‍💼	👨‍💼	👩‍💼	cldr
+さりー	🥻	name
+さる	🐒	🐵	🦧	name
+さるさ	🕺	💃	cldr
+さろん	💆	cldr
+さわやか	🍋‍🟩	cldr
+さんぐらす	🕶️	😎	name
+さんご	🪸	name
+さんた	🎅	🧑‍🎄	name
+さんたくろーす	🎅	🤶	🧑‍🎄	cldr
+さんたさん	🧑‍🎄	name
+さんだる	👡	🩴	name
+さんどいっち	🥪	name
+さんまりの	🇸🇲	name
+さーかす	🎪	name
+さーびす	🐕‍🦺	cldr
+さーふぁー	🏄‍♂️	🏄‍♀️	🏄	cldr
+さーふぃん	🏄	cldr
+ざりがに	🦞	name
+ざんびあ	🇿🇲	name
+しあん	🩵	cldr
+しいたけ	🍄‍🟫	cldr
+しぇいかー	🪇	cldr
+しぇいぶあいす	🍧	cldr
+しぇふ	🧑‍🍳	👨‍🍳	👩‍🍳	cldr
+しえられおね	🇸🇱	name
+しおり	🔖	name
+しおれた	🥀	cldr
+しおれた花	🥀	name
+しか	🦌	name
+しかめっ面	😬	🙍‍♀️	🙍	🙍‍♂️	cldr
+しかめ面	😬	🙁	☹️	😕	😦	name
+しかめ面の人	🙍	name
+しかめ面の女	🙍‍♀️	name
+しかめ面の男	🙍‍♂️	name
+しかめ顔	😬	🙍‍♀️	🙍	🙍‍♂️	😦	cldr
+しし座	♌	🦁	name
+しずく	💦	💧	cldr
+しちゅー	🍲	cldr
+しっ	🤫	cldr
+しっくい	🧱	cldr
+しなごーぐ	🕍	name
+しねま	🎞️	🎥	cldr
+しぶき	🫟	cldr
+しまうま	🦓	name
+しましま	🦓	cldr
+しまりす	🐿️	cldr
+しもやけ	🥶	cldr
+しゃち	🫍	name
+しゃっふる	🔀	cldr
+しゃっふるぼたん	🔀	name
+しゃつ	👕	👚	👔	cldr
+しゃとる	🏸	cldr
+しゃべる	🪏	🦜	name
+しゃわー	🚿	name
+しゃんぱん	🍾	🥂	name
+しゃんぷー	🧴	cldr
+しゃんぺん	🥂	🍾	cldr
+しゅのーけりんぐ	🤿	cldr
+しゅりんぷ	🦐	cldr
+しゅーず	🩰	cldr
+しょうが	🫚	name
+しょっく	🤯	🫪	😱	🙀	🤦	cldr
+しょっと	🥃	cldr
+しょっぱい	🧂	cldr
+しょっぴんぐ	🛒	👜	cldr
+しょっぴんぐかーと	🛒	name
+しょっぴんぐばっぐ	🛍️	cldr
+しょべる	🪏	cldr
+しょぼん	(´・ω・`)	😞	hand
+しょぼーん	😔	name
+しょんぼり	😔	cldr
+しょーつ	🩳	name
+しょーとけーき	🍰	name
+しらけ	😒	cldr
+しらけた	😒	name
+しらける	😒	cldr
+しりあ	🇸🇾	name
+しりある	🥣	cldr
+しるえっと	🗣️	👤	👥	cldr
+しるくはっと	🎩	name
+しるばー	🥈	cldr
+しろくま	🐻‍❄️	name
+しんがぽーる	🇸🇬	name
+しんがー	🧑‍🎤	👨‍🎤	👩‍🎤	cldr
+しんぼる	♀️	♂️	⚧️	cldr
+しー	🤫	cldr
+しーっ	🤫	name
+しーと	💺	🪑	cldr
+しーふーど	🥘	🦑	🦐	🦞	🦪	cldr
+しーるど	🛡️	cldr
+じぇっとこーすたー	🎢	name
+じぐそーぱずる	🧩	name
+じじ	🃏	cldr
+じにー	🧞	cldr
+じぶち	🇩🇯	name
+じぶらるたる	🇬🇮	name
+じゃがいも	🥔	name
+じゃぐらー	🤹‍♀️	🤹	🤹‍♂️	cldr
+じゃぐりんぐ	🤹‍♀️	🤹	🤹‍♂️	cldr
+じゃけっと	🧥	cldr
+じゃず	🪊	cldr
+じゃばら	🪗	cldr
+じゃまいか	🇯🇲	name
+じゃんぷ	🦘	cldr
+じゃー	🫙	cldr
+じゃーじー	🇯🇪	name
+じゅえりー	💎	💍	🪎	cldr
+じゅーす	🧃	🥤	cldr
+じょいすてぃっく	🕹️	name
+じょぎんぐ	🏃‍♂️	🏃	🏃‍♀️	cldr
+じょぎんぐしゅーず	👟	cldr
+じょっき	🍺	🍻	cldr
+じょっきー	🏇	cldr
+じょーい	🦘	cldr
+じょーかー	🃏	name
+じょーく	🤪	😜	cldr
+じょーじあ	🇬🇪	name
+じんじゃー	🫚	cldr
+じんばぶえ	🇿🇼	name
+じーん	🥲	cldr
+じーんず	👖	name
+すいか	🍉	name
+すいす	🇨🇭	🫕	name
+すいまー	🏊‍♂️	🏊‍♀️	🏊	cldr
+すいみんぐ	🏊‍♂️	🏊‍♀️	🏊	cldr
+すいむ	🏊‍♂️	🏊‍♀️	🏊	cldr
+すいむうぇあ	🩱	🩲	🩳	cldr
+すいーつ	🍨	🍩	🍦	🍪	🍰	cldr
+すい星	☄️	cldr
+すうぇーでん	🇸🇪	name
+すかいだいびんぐ	🪂	cldr
+すかる	💀	☠️	cldr
+すかんく	🦨	name
+すかーふ	🧕	🧣	cldr
+すきゅーば	🤿	🥽	cldr
+すきー	🎿	⛷️	name
+すきーやー	⛷️	name
+すくりゅーどらいばー	🪛	cldr
+すくーたー	🛵	name
+すくーるばす	🚌	cldr
+すぐ	🔜	cldr
+すけじゅーる	📅	📆	🗓️	cldr
+すけぼー	🛹	cldr
+すけるとん	🛷	cldr
+すけーと	🛼	⛸️	cldr
+すけーとぼーど	🛹	name
+すこあ	🎼	cldr
+すこっち	🥃	cldr
+すこっとらんど	🏴󠁧󠁢󠁳󠁣󠁴󠁿	name
+すこっぷ	🪏	cldr
+すごいね	😯	cldr
+すし	🍣	name
+すすき	🎑	🌾	cldr
+すたじあむ	🏟️	cldr
+すたじおまいく	🎙️	name
+すたー	⭐	🧑‍🎤	🌠	✨	🌟	name
+すっぽん	🪠	cldr
+すてぃっく	🕹️	🏑	🏒	🥍	cldr
+すてっき	🩼	cldr
+すてっち	🪡	cldr
+すてっぱー	🪜	cldr
+すてーき	🥩	cldr
+すてーしょん	🚉	cldr
+すとっく	⛷️	🎿	cldr
+すとっぷ	🖐️	✋	🛑	⏹️	🫷	cldr
+すとっぷうぉっち	⏱️	name
+すとらいく	🎳	cldr
+すとらでぃばりうす	🎻	cldr
+すとろべりー	🍓	cldr
+すとろー	🧃	cldr
+すとろーかっぷ	🥤	name
+すとーん	🥌	cldr
+すにーかー	👟	name
+すのぼ	🏂	cldr
+すのーぼーだー	🏂	name
+すのーぼーど	🏂	cldr
+すぱ	🧖	💆	cldr
+すぱい	🕵️	🥷	cldr
+すぱいす	🫚	cldr
+すぱいだー	🕷️	🕸️	cldr
+すぱげってぃ	🍝	name
+すぱげってぃー	🍝	cldr
+すぱげてぃ	🍝	cldr
+すぱな	🔧	🧑‍🔧	🛠️	👨‍🔧	👩‍🔧	cldr
+すぱーくりんぐわいん	🥂	🍾	cldr
+すぱーくる	❇️	name
+すぴーかー	🔈	🔉	🔇	🔊	📢	name
+すぴーどぼーと	🚤	name
+すぷまんて	🥂	🍾	cldr
+すぷらっしゅ	🫟	cldr
+すぷーん	🥄	name
+すべり台	🛝	name
+すぺいん	🇪🇸	name
+すぺしゃる	🩷	cldr
+すぺーすいんべーだー	👾	cldr
+すぺーど	♠️	name
+すぼめる	🤌	cldr
+すぽんじ	🧽	name
+すぽーく	🛞	cldr
+すまいりー	☺️	name
+すまほ	🤳	📱	📳	📶	📴	cldr
+すまーとふぉん	📱	📳	📶	📴	📲	cldr
+すみません	🙇	🙏	hand
+すらいだー	🎚️	cldr
+すらいど	🪊	cldr
+すりっぽん	🥿	cldr
+すりなむ	🇸🇷	name
+すりらんか	🇱🇰	name
+すりーせぶん	🎰	cldr
+すれーとぐれー	🩶	cldr
+すろっと	🎰	cldr
+すろっとましん	🎰	name
+すろばきあ	🇸🇰	name
+すろべにあ	🇸🇮	name
+すろーする	🤾	🤾‍♀️	cldr
+すーだん	🇸🇩	name
+すーつ	🕴️	cldr
+すーつけーす	🧳	🛄	🛅	name
+すーぱー	🛒	cldr
+すーぱーひーろー	🦸	name
+すーぱーまん	🦸	cldr
+すーぷ	🍲	🍜	cldr
+ずっ友	👯	cldr
+ずぼん	👖	cldr
+ずる賢い	🦝	cldr
+せきゅりてぃ	🫆	🪪	🔐	cldr
+せくしー	💋	🫦	cldr
+せねがる	🇸🇳	name
+せらぴすと	🧑‍⚕️	👨‍⚕️	👩‍⚕️	cldr
+せらぴー	💆	cldr
+せりふ	🗨️	💬	cldr
+せるびあ	🇷🇸	name
+せるふぃー	🤳	name
+せんとへれな	🇸🇭	name
+せんとるしあ	🇱🇨	name
+せんべい	🍘	name
+せーしぇる	🇸🇨	name
+せーりんぐ	⛵	cldr
+ぜぶら	🦓	cldr
+ぜむくりっぷ	📎	cldr
+そっくす	🧦	name
+そっくり	👯	cldr
+そふぁ	🛋️	cldr
+そふぁとらんぷ	🛋️	name
+そふと	🍦	cldr
+そふとくりーむ	🍦	name
+そふとたこす	🌯	cldr
+そふとどりんく	🥤	cldr
+そふとぼーる	🥎	name
+そまりあ	🇸🇴	name
+そり	🛷	cldr
+そり競技	🛷	name
+そろばん	🧮	name
+そーいんぐ	🧵	cldr
+そーせーじ	🌭	cldr
+そーだ	🥤	cldr
+そーぷ	🧼	cldr
+ぞう	🐘	name
+ぞんび	🧟	🧟‍♂️	🧟‍♀️	name
+たい	🇹🇭	name
+たいがー	🐅	cldr
+たいまー	⏲️	⌛	⏳	name
+たいむ	⏱️	cldr
+たいや	🛞	cldr
+たきしーど	🤵‍♂️	🤵‍♀️	🤵	cldr
+たくしー	🚕	🚖	🛺	name
+たぐ	🏷️	🔖	cldr
+たこ	🐙	🪁	name
+たこす	🌮	name
+たじきすたん	🇹🇯	name
+たすき	🎽	cldr
+ただ	🆓	🈚	cldr
+たばこ	🚬	🚭	cldr
+たぴおか	🧋	cldr
+たぴおかどりんく	🧋	name
+たまねぎ	🧅	name
+たまる	🫔	name
+たまれす	🫔	cldr
+ため息	😮‍💨	cldr
+たらーっ	💧	cldr
+たると	🥧	cldr
+たわー	🗼	cldr
+たんご	🕺	💃	cldr
+たんざにあ	🇹🇿	name
+たんぶらー	🥃	cldr
+たんぶらーぐらす	🥃	name
+たーきー	🦃	cldr
+たーばん	👳	👳‍♂️	👳‍♀️	cldr
+だいあ	♦️	💠	💎	🔶	🔷	cldr
+だいす	🎲	cldr
+だいなまいと	🧨	cldr
+だいびんぐ	🤿	🥽	🦪	cldr
+だいや	♦️	💠	💎	🔶	🔷	name
+だいやもんど	💎	💍	cldr
+だがー	🗡️	cldr
+だっしゅ	💨	name
+だびで	🔯	cldr
+だぶるるーぷ	➿	name
+だめ	👎	🙅	cldr
+だんご	🍡	name
+だんさー	🧑‍🩰	👯‍♀️	👯‍♂️	🕺	💃	cldr
+だんす	🪩	🦶	🩰	🕺	💃	cldr
+だんまり	😶	cldr
+だーつ	🎯	cldr
+だーびー	🐎	cldr
+ちぇあ	🪑	cldr
+ちぇこ	🇨🇿	name
+ちぇす	♟️	cldr
+ちぇっかーふらっぐ	🏁	name
+ちぇっく	✅	☑️	✔️	cldr
+ちぇっくぼっくす	☑️	name
+ちぇっくまーく	✅	☑️	✔️	cldr
+ちぇりー	🍒	cldr
+ちぇーん	⛓️	⛓️‍💥	cldr
+ちきん	🍗	cldr
+ちけっと	🎫	🎟️	name
+ちっ	🫦	cldr
+ちまき	🫔	cldr
+ちゃっく	🤐	cldr
+ちゃど	🇹🇩	name
+ちゃぺる	⛪	💒	cldr
+ちゃんぴおん	🏆	cldr
+ちゃーと	📊	📉	💹	📈	cldr
+ちゅっ	😚	😗	😘	💋	😙	name
+ちゅにじあ	🇹🇳	name
+ちゅーりっぷ	🌷	name
+ちょう	🦋	name
+ちょうだい	🫴	cldr
+ちょうちん	🏮	cldr
+ちょき	✌️	cldr
+ちょこ	🍫	🫕	cldr
+ちょこれーと	🍫	name
+ちょこれーとちっぷ	🍪	cldr
+ちょっき	🦺	cldr
+ちょっと	🤏	cldr
+ちょっと待って	🫷	🫸	cldr
+ちらっ	🫣	cldr
+ちり	🇨🇱	name
+ちーず	🧀	🍕	🪤	🫕	name
+ちーずふぉんでゅ	🫕	cldr
+つえ	🦯	🪄	cldr
+つながったくりっぷ	🖇️	name
+つながったクリップ	🖇️	name
+つなぐ	🧑‍🤝‍🧑	cldr
+つの	🪲	cldr
+つばる	🇹🇻	name
+つまみ	🎛️	cldr
+つまむ	👌	cldr
+つまらない	😒	cldr
+つまんでいる指	🤏	name
+つらら	🥶	cldr
+つりー	🎄	cldr
+つるぎ	⚔️	cldr
+つるはし	⛏️	⚒️	name
+つーるぼっくす	🧰	cldr
+てぃらのさうるす	🦖	name
+てぃーぽっと	🫖	name
+てぃーるぶるー	🩵	cldr
+てこんどー	🥋	cldr
+てでぃべあ	🧸	name
+てにす	🎾	name
+てにすしゅーず	👟	cldr
+てにすぼーる	🎾	cldr
+てれび	📺	name
+てれびげーむ	🎮	🕹️	name
+てんと	⛺	🏕️	🎪	name
+てんとうむし	🐞	name
+てんとう虫	🐞	cldr
+てんびん座	♎	name
+てーぷ	📼	cldr
+でぃすかうんと	🈹	cldr
+でぃすく	💾	📀	💿	cldr
+でぃすこ	🪩	cldr
+でぃなー	🍽️	🍴	cldr
+でぃぷろどくす	🦕	cldr
+でぃやらんぷ	🪔	name
+でざーと	🍨	🍩	🍡	🍦	🍪	cldr
+ですくとっぷ	🖥️	cldr
+ですくとっぷぱそこん	🖥️	name
+でっどりふと	🏋️	cldr
+でにむ	👖	cldr
+でぱーと	🏬	name
+でびる	😈	👿	cldr
+でべろっぱ	👨‍💻	👩‍💻	cldr
+でも	🪧	cldr
+でゅえる	🤼	🤼‍♂️	🤼‍♀️	cldr
+でりばりー	🥡	cldr
+でんでん虫	🐌	cldr
+でんまーく	🇩🇰	name
+でーた	📊	📉	📈	cldr
+でーと	😗	💕	😚	cldr
+といれ	🚻	🚹	🚺	🚽	🚾	name
+といれっとぺーぱー	🧻	name
+とぅくとぅく	🛺	cldr
+とうがらし	🌶️	🫑	name
+とうしゅーず	🩰	name
+とうもろこし	🌽	name
+とかげ	🦎	name
+ときめき	💗	cldr
+とけらう	🇹🇰	name
+とげ	🦔	cldr
+とっぷ	🔝	cldr
+とど	🦭	cldr
+とほほ	😅	cldr
+とぼがん	🛷	cldr
+とまと	🍅	name
+とまどい	😳	cldr
+とら	🐅	🐯	name
+とらいあすろん	🏊	cldr
+とらいでんと	🔱	name
+とらくたー	🚜	name
+とらっく	🚚	🛻	🚛	name
+とらっくぼーる	🖲️	name
+とらんすじぇんだー	🏳️‍⚧️	🌈	🏳️‍🌈	cldr
+とらんすじぇんだーのまーく	⚧️	name
+とらんすじぇんだーふらっぐ	🏳️‍⚧️	name
+とらんぷ	♠️	♥️	♦️	♣️	🃏	cldr
+とらんぺっと	🎺	name
+とりゅふ	🍄‍🟫	cldr
+とるくめにすたん	🇹🇲	name
+とるこ	🇹🇷	name
+とるねーど	🌪️	cldr
+とれい	📤	📥	cldr
+とれーどまーく	™️	cldr
+とれーらー	🚛	name
+とろける	🫠	cldr
+とろぴかる	🍹	🍍	🥭	🍋‍🟩	cldr
+とろぴかるどりんく	🍹	name
+とろふぃー	🏆	name
+とろりーばす	🚎	🚋	🚃	name
+とろんぼーん	🪊	name
+とろーる	🧌	name
+とんかち	🔨	⚒️	🛠️	cldr
+とんが	🇹🇴	name
+とんぐさんだる	🩴	cldr
+とーく	💬	cldr
+とーご	🇹🇬	name
+どあ	🚪	name
+どいつ	🇩🇪	name
+どうしよう	😥	name
+どうでもいい	🫥	cldr
+どきどき	💓	💗	cldr
+どきどきするはーと	💓	name
+どきゅめんと	📄	📃	cldr
+どくたー	👨‍⚕️	👩‍⚕️	😷	cldr
+どくろ	💀	☠️	name
+どや	😏	(￣ー￣)	hand
+どらいばー	🪛	cldr
+どらいぶ	🚗	🚘	cldr
+どらきゅら	🧛‍♂️	🧛‍♀️	🧛	cldr
+どらごん	🐉	🐲	name
+どらむ	🥁	🪘	name
+どらむすてぃっく	🥁	cldr
+どりぶる	⛹️	⛹️‍♀️	cldr
+どりんく	🧋	🧉	🧃	cldr
+どる	💲	💵	💰	💸	💱	cldr
+どるふぃん	🐬	cldr
+どれす	👗	🥻	cldr
+どんっ	💥	cldr
+どんぶり	🍜	cldr
+どーどー	🦤	name
+どーなつ	🍩	name
+どーん	🎆	cldr
+ないじぇりあ	🇳🇬	name
+ないす	😁	😀	cldr
+ないふ	🍽️	🍴	🔪	🗡️	cldr
+ないふとふぉーく	🍴	name
+なうる	🇳🇷	name
+なざーる	🧿	cldr
+なし	🍐	cldr
+なす	🍆	name
+なっつ	🥜	cldr
+なっと	🔩	cldr
+なべ	🍲	name
+なまけもの	🦥	name
+なまはげ	👹	cldr
+なみびあ	🇳🇦	name
+なると	🍥	name
+なん	🫓	cldr
+なんてこった	🫨	cldr
+にうえ	🇳🇺	name
+におい	🧄	cldr
+にからぐあ	🇳🇮	name
+にこにこ	😊	(^^)	hand
+にこにこぺろり	😋	name
+にじぇーる	🇳🇪	name
+にっこり	😀	cldr
+にっこりきす	😙	name
+にっこりキス	😙	name
+にっこり笑う	😀	name
+にっこり笑う猫	😺	name
+にっと	🧶	cldr
+にやっと笑う	😁	name
+にやっと笑う猫	😸	name
+にやり	😼	😏	cldr
+にやりとする猫	😼	name
+にゅーかれどにあ	🇳🇨	name
+にゅーじーらんど	🇳🇿	name
+にゅーす	📰	🗞️	cldr
+にゅーよーく	🗽	cldr
+にわとり	🐔	🐓	name
+にんじん	🥕	cldr
+にんにく	🧄	name
+ぬいぐるみ	🧸	cldr
+ぬーどる	🍜	cldr
+ねいる	💅	cldr
+ねぎ	🧅	cldr
+ねくたい	👔	name
+ねくたりん	🍊	cldr
+ねこ	🐈	🐱	🐈‍⬛	name
+ねじり	🥨	cldr
+ねじれ	🪢	cldr
+ねじ回し	🪛	name
+ねずみ	🐀	🐭	🐁	🐹	name
+ねずみ捕り	🪤	name
+ねっくれす	📿	cldr
+ねっと	🥅	cldr
+ねっとわーく	🛜	cldr
+ねぱーる	🇳🇵	name
+のこ	🪚	cldr
+のこぎり	🪚	name
+のぞき見	🫣	cldr
+のっと	🪢	cldr
+ののしり	🤬	cldr
+ののしる	🤬	name
+のぶ	🎛️	cldr
+のるうぇー	🇳🇴	name
+のんびり	🦥	cldr
+のーと	📓	📒	📔	🗒️	name
+のーとぱそこん	💻	name
+はい	🙂‍↕️	cldr
+はいうぇい	🛣️	cldr
+はいきんぐ	🥾	🚶‍♀️	🚶	cldr
+はいきんぐしゅーず	🥾	name
+はいたっち	🙏	🫷	🫸	cldr
+はいち	🇭🇹	name
+はいひーる	👠	name
+はいびすかす	🌺	name
+はえ	🪰	name
+はかり	⚖️	cldr
+はぐ	🤗	🫂	name
+はさみ	✂️	🦞	name
+はし	🥢	name
+はしご	🪜	name
+はち	🐝	cldr
+はちぇっと	🪓	cldr
+はちみつ	🍯	name
+はっぴー	😄	😃	☺️	😁	🙂	cldr
+はっぴーばーすでー	🎂	🥳	cldr
+はつかねずみ	🐁	name
+はてなまーく	⁉️	❓	❔	cldr
+はてなマーク	⁉️	❓	❔	cldr
+はと	🕊️	name
+はなまる	💮	cldr
+はにー	🍯	cldr
+はぬかー	🕎	cldr
+はむさ	🪬	name
+はむすたー	🐹	cldr
+はりうっど	🎥	cldr
+はりけーん	🌀	cldr
+はりねずみ	🦔	name
+はろうぃん	🎃	cldr
+はろうぃんかぼちゃ	🎃	name
+はろうぃーん	🎃	👻	🧟	🧛	cldr
+はろー	👋	cldr
+はんがりー	🇭🇺	name
+はんぐぐらいだー	🪂	cldr
+はんどばっぐ	👜	👝	name
+はんどぼーる	🤾‍♂️	🤾	🤾‍♀️	cldr
+はんばーがー	🍔	name
+はんまー	🔨	⚒️	👷	👷‍♂️	👷‍♀️	name
+はんまーとつるはし	⚒️	name
+はんまーとれんち	🛠️	name
+はーとでこ	💟	name
+はーとでこれーしょん	💟	cldr
+はーとにりぼん	💝	name
+はーとのびっくり	❣️	name
+はーとぶれいく	💔	cldr
+はーとぽーず	🫶	cldr
+はーぶ	🌿	🫚	name
+はーぷ	🪉	name
+ばいおはざーど	☣️	name
+ばいおりん	🎻	name
+ばいく	🛵	🏍️	cldr
+ばいす	🗜️	cldr
+ばいせくしゅある	🌈	🏳️‍🌈	cldr
+ばいそん	🦬	name
+ばいばい	👋	hand
+ばくてりあ	🦠	🧫	cldr
+ばけつ	🪣	name
+ばげっじくれーむ	🛄	cldr
+ばげっと	🥖	name
+ばす	🚌	🚍	🚎	🚐	name
+ばすけ	🏀	⛹️‍♂️	⛹️	⛹️‍♀️	cldr
+ばすけっとぼーる	🏀	⛹️‍♂️	⛹️	⛹️‍♀️	name
+ばすたぶ	🛁	🛀	name
+ばたふらい	🦋	cldr
+ばたー	🧈	name
+ばっく	🔙	cldr
+ばっくぱっく	🎒	name
+ばっぐ	👜	👝	🛍️	cldr
+ばっじ	📛	cldr
+ばった	🦗	name
+ばってりー	🪫	🔋	cldr
+ばっと	🏏	cldr
+ばっふぁろー	🐃	🦬	cldr
+ばつ	❌	❎	🙅‍♀️	✖️	🙅‍♂️	name
+ばとる	🫯	cldr
+ばどみんとん	🏸	name
+ばなな	🍌	name
+ばにー	👯	name
+ばにーがーる	👯‍♀️	name
+ばにーぼーい	👯‍♂️	name
+ばぬあつ	🇻🇺	name
+ばね	🪤	cldr
+ばはま	🇧🇸	name
+ばば	🃏	cldr
+ばぶる	🫧	cldr
+ばぶるてぃー	🧋	cldr
+ばみゅーだ	🇧🇲	name
+ばら	🌹	name
+ばらんす	⚖️	cldr
+ばりあふりー	♿	🛗	cldr
+ばりやふりー	♿	cldr
+ばるかんさいん	🖖	cldr
+ばるばどす	🇧🇧	name
+ばるーん	🎈	cldr
+ばれえ	🧑‍🩰	🩰	cldr
+ばれえしゅーず	🥿	🩰	cldr
+ばれえだんさー	🧑‍🩰	name
+ばれんたいんでー	💝	💌	cldr
+ばれー	🏐	cldr
+ばれーぼーる	🏐	name
+ばんがろー	🛖	cldr
+ばんぐらでしゅ	🇧🇩	name
+ばんざい	🙌	name
+ばんじょー	🪕	name
+ばんそうこう	🩹	cldr
+ばんど	🪈	cldr
+ばんぱいあ	🦇	🧛‍♂️	🧛‍♀️	🧛	cldr
+ばー	🍷	🍹	🍻	🍸	🍺	cldr
+ばーがー	🍔	cldr
+ばーげん	🉐	cldr
+ばーさす	🆚	cldr
+ばーすでー	🎂	cldr
+ばーすでーけーき	🎂	name
+ばーばー	💈	cldr
+ばーべる	🏋️	cldr
+ばーれーん	🇧🇭	name
+ぱい	🥧	name
+ぱいなっぷる	🍍	name
+ぱいろっと	🧑‍✈️	👨‍✈️	name
+ぱいん	🍍	cldr
+ぱえりあ	🥘	name
+ぱきすたん	🇵🇰	name
+ぱすた	🍝	cldr
+ぱすぽーとこんとろーる	🛂	cldr
+ぱすわーど	🔑	🗝️	cldr
+ぱずる	🧩	cldr
+ぱそこん	💻	🖥️	⌨️	🖱️	🖲️	cldr
+ぱたぱた	🪭	cldr
+ぱちぱち	👏	cldr
+ぱっきんぐ	🧳	cldr
+ぱっく	🏒	🧚	cldr
+ぱとかー	🚓	🚔	🚨	name
+ぱとらんぷ	🚨	name
+ぱとろーる	🚓	cldr
+ぱどる	🚣	cldr
+ぱなま	🇵🇦	name
+ぱにっく	🫨	cldr
+ぱぱ	👨‍🍼	cldr
+ぱぷあにゅーぎにあ	🇵🇬	name
+ぱぷりか	🫑	cldr
+ぱもーにゃ	🫔	cldr
+ぱらお	🇵🇼	name
+ぱらぐあい	🇵🇾	name
+ぱらぐらいだー	🪂	cldr
+ぱらしゅーと	🪂	name
+ぱらせーりんぐ	🪂	cldr
+ぱらそる	⛱️	🏖️	name
+ぱらぼら	📡	cldr
+ぱらぼらあんてな	📡	name
+ぱれっと	🎨	👩‍🎨	cldr
+ぱわーりふてぃんぐ	🏋️	cldr
+ぱん	🍞	🥪	🥨	🥐	🥖	cldr
+ぱんけーき	🥞	name
+ぱんだ	🐼	cldr
+ぱんち	👊	🤛	🤜	cldr
+ぱんつ	🩲	🩳	👖	cldr
+ぱんぷきんぱい	🥧	cldr
+ぱー	🖐️	✋	cldr
+ぱーきんぐ	🅿️	cldr
+ぱーてぃ	👯	cldr
+ぱーてぃー	🥳	🎊	🎉	🪩	👯‍♀️	cldr
+ぱーてぃーくらっかー	🎉	cldr
+ひげ	🧔	🧔‍♂️	🧔‍♀️	🥸	cldr
+ひげそり	🪒	cldr
+ひざまずく	🧎	🧎‍♂️	🧎‍♀️	cldr
+ひし形	💠	🔶	🔷	🔸	🔹	cldr
+ひじゃぶ	🧕	cldr
+ひたいに手	🤦	🤦‍♂️	🤦‍♀️	cldr
+ひたいに手をあてる人	🤦	name
+ひたいに手をあてる女	🤦‍♀️	name
+ひたいに手をあてる男	🤦‍♂️	name
+ひつじ	🐏	🐑	cldr
+ひとこぶらくだ	🐪	cldr
+ひどい	😢	cldr
+ひな	🐥	🦢	🐤	🐣	cldr
+ひな人形	🎎	cldr
+ひな祭り	🎎	name
+ひまわり	🌻	name
+ひも	🧵	🪢	cldr
+ひやしんす	🪻	name
+ひょう	🐆	name
+ひよこ	🐤	🐥	🐣	name
+ひよこまめ	🧆	cldr
+ひらめき	💡	cldr
+ひろいん	🦸‍♀️	🦸	cldr
+ひーろー	🦸‍♂️	🦸‍♀️	🦸	cldr
+びきに	👙	name
+びくーな	🦙	cldr
+びじねすぱーそん	🧑‍💼	👨‍💼	👩‍💼	cldr
+びじねすまん	🕴️	👨‍💼	cldr
+びすく	🦞	cldr
+びっくり	😲	😱	‼️	hand
+びっくりした顔	😲	cldr
+びっくりまーく	❣️	‼️	⁉️	❕	❗	cldr
+びっくりマーク	❣️	‼️	⁉️	❕	❗	cldr
+びっくり顔	😯	cldr
+びっぐふっと	🫈	cldr
+びでお	📹	📼	📺	📽️	cldr
+びでおかせっと	📼	cldr
+びでおかめら	📹	name
+びでおげーむ	🎮	🕹️	cldr
+びでおてーぷ	📼	name
+びりやーど	🎱	name
+びる	🏬	🌆	🌇	cldr
+びるべりー	🫐	cldr
+びん	🫙	cldr
+びーさん	🩴	cldr
+びーず	🧿	cldr
+びーち	🏖️	👙	🌴	⛱️	cldr
+びーちさんだる	🩴	name
+びーちぱらそる	🏖️	name
+びーつ	🫜	cldr
+びーと	🪘	cldr
+びーばー	🦫	name
+びーふ	🥩	cldr
+びーる	🍻	🍺	cldr
+びーるじょっき	🍺	name
+びーんず	🫘	cldr
+ぴあの	🎹	cldr
+ぴえろ	🤡	cldr
+ぴえん	🥺	cldr
+ぴかぴか	✨	cldr
+ぴくにっく	🧺	cldr
+ぴくるす	🥒	cldr
+ぴこーん	💡	cldr
+ぴざ	🍕	name
+ぴすとる	🔫	cldr
+ぴたぱん	🥙	🫓	cldr
+ぴっくあっぷとらっく	🛻	cldr
+ぴっころ	🪈	cldr
+ぴっつぁ	🍕	cldr
+ぴにゃーた	🪅	name
+ぴん	📍	cldr
+ぴんく	🩷	cldr
+ぴんくのはーと	🩷	name
+ぴんひーる	👠	cldr
+ぴんぽん	🏓	cldr
+ぴーこっく	🦚	cldr
+ぴーす	✌️	🧩	cldr
+ぴーすまーく	☮️	name
+ぴーち	🍑	cldr
+ぴーなっつ	🥜	name
+ぴーまん	🫑	name
+ふぁいあー	🔥	cldr
+ふぁいと	💪	🔥	hand
+ふぁいやー	🔥	cldr
+ふぁいる	🗄️	🗃️	📁	📂	cldr
+ふぁいるきゃびねっと	🗄️	name
+ふぁくとりー	🏭	cldr
+ふぁすとふーど	🍔	🍟	cldr
+ふぁっくす	📠	name
+ふぁらふぇる	🧆	name
+ふぁんたじー	🧌	🧞	🧙	🧝	🧚	cldr
+ふぁーてぃま	🪬	cldr
+ふあ～	🥱	cldr
+ふぃぎゅあすけーと	⛸️	cldr
+ふぃじー	🇫🇯	name
+ふぃっしんぐ	🎣	🐟	cldr
+ふぃりぴん	🇵🇭	name
+ふぃるむ	🎞️	📽️	🎥	cldr
+ふぃんらんど	🇫🇮	name
+ふぃーるどほっけー	🏑	cldr
+ふぇいすまっさーじ	💆‍♀️	💆‍♂️	💆	cldr
+ふぇにっくす	🐦‍🔥	name
+ふぇりー	⛴️	name
+ふぇんしんぐ	🤺	cldr
+ふぉるだー	📁	🗂️	📂	name
+ふぉんでゅ	🫕	name
+ふぉーく	🍽️	🍴	cldr
+ふぉーちゅんくっきー	🥠	name
+ふぉーまる	🤵	cldr
+ふくれっ面	😡	name
+ふくれる	🙎	cldr
+ふくろう	🦉	name
+ふぐ	🐡	name
+ふざけ	🤪	cldr
+ふざけた顔	🤪	name
+ふせん	📑	cldr
+ふたこぶ	🐫	cldr
+ふたこぶらくだ	🐫	name
+ふたご座	♊	name
+ふっ	😏	😼	cldr
+ふっく	🪝	name
+ふっとぼーる	🏈	cldr
+ふらい	🍤	cldr
+ふらいどぽてと	🍟	name
+ふらいぱん	🍳	cldr
+ふらいんぐでぃすく	🥏	cldr
+ふらぐ	🏴	🏳️	⛳	🚩	🏳️‍⚧️	cldr
+ふらっぐ	🏳️‍⚧️	🏁	🏴	🏳️	⛳	cldr
+ふらっしゅ	📸	cldr
+ふらっとしゅーず	🥿	name
+ふらっとぶれっど	🫓	name
+ふらふら	😵	😵‍💫	cldr
+ふらふらの顔	🥴	name
+ふらみんご	🦩	name
+ふらめんこ	🕺	💃	cldr
+ふらんくふると	🌭	cldr
+ふらんす	🇫🇷	🥐	name
+ふらんすぱん	🥖	cldr
+ふりすびー	🥏	name
+ふりー	🆓	cldr
+ふりーだいやる	➿	cldr
+ふるーつ	🥭	🍋‍🟩	cldr
+ふるーと	🪈	cldr
+ふれんちふらい	🍟	cldr
+ふれーむ	🎞️	🪟	cldr
+ふろっぴー	💾	name
+ふろっぴーでぃすく	💾	cldr
+ふんっ	😤	cldr
+ふんわり	🧇	cldr
+ふーん	😑	😕	🫥	cldr
+ぶい	🛟	cldr
+ぶいえす	🆚	cldr
+ぶた	🐖	🐷	🐽	name
+ぶっくまーく	🔖	cldr
+ぶどう	🍇	name
+ぶらいとねす	🔅	🔆	cldr
+ぶらうす	👚	cldr
+ぶらうんまっしゅるーむ	🍄‍🟫	cldr
+ぶらきおさうるす	🦕	cldr
+ぶらし	🪥	cldr
+ぶらじる	🇧🇷	name
+ぶらつく	🚶	cldr
+ぶりとー	🌯	name
+ぶりーふ	🩲	name
+ぶりーふけーす	💼	name
+ぶるがりあ	🇧🇬	name
+ぶるきなふぁそ	🇧🇫	name
+ぶるずあい	🎯	cldr
+ぶるねい	🇧🇳	name
+ぶるんじ	🇧🇮	name
+ぶるーじーんず	👖	cldr
+ぶるーべりー	🫐	name
+ぶるーぼねっと	🪻	cldr
+ぶるーれい	📀	💿	cldr
+ぶろっく	🧱	cldr
+ぶろっこりー	🥦	name
+ぶろんず	🥉	cldr
+ぶろんとさうるす	🦕	cldr
+ぶろんど	👱‍♀️	👱‍♂️	👱	cldr
+ぶろーどばんど	🛜	cldr
+ぶーいんぐ	👎	cldr
+ぶーけ	💐	cldr
+ぶーたん	🇧🇹	name
+ぶーつ	👢	🥾	name
+ぶーめらん	🪃	name
+ぷえるとりこ	🇵🇷	name
+ぷっしゅぴん	📍	cldr
+ぷらいど	🏳️‍🌈	cldr
+ぷらいばしー	🔏	cldr
+ぷらかーど	🪧	name
+ぷらぐ	🔌	cldr
+ぷらす	➕	name
+ぷらんくとん	🪼	cldr
+ぷらんじゃー	🪠	cldr
+ぷりん	🍮	name
+ぷりんす	🤴	name
+ぷりんせす	👸	name
+ぷりんた	🖨️	name
+ぷりんたー	🖨️	cldr
+ぷれい	▶️	cldr
+ぷれぜんと	🎁	name
+ぷれっつぇる	🥨	name
+ぷろぐらま	🧑‍💻	👨‍💻	👩‍💻	cldr
+ぷろぐらまー	👨‍💻	👩‍💻	cldr
+ぷろじぇくたー	📽️	cldr
+ぷんぷん	😠	🙎‍♀️	😾	🙎	🙎‍♂️	name
+ぷーさん	🍯	cldr
+ぷーどる	🐩	name
+ぷーる	👙	cldr
+へあかっと	💇‍♀️	💇	💇‍♂️	cldr
+へあさろん	💈	cldr
+へっどふぉん	🎧	cldr
+へっどほん	🎧	name
+へとへと	😩	cldr
+へび	🐍	name
+へびつかい座	⛎	🐍	name
+へらじか	🫎	name
+へり	🚁	cldr
+へりこぷたー	🚁	name
+へるめっと	🪖	⛑️	👷	👷‍♂️	👷‍♀️	cldr
+へー	😮	cldr
+べすと	🦺	cldr
+べっど	🛏️	🛌	name
+べとなむ	🇻🇳	name
+べなん	🇧🇯	name
+べねずえら	🇻🇪	name
+べびー	🚼	👶	cldr
+べびーしーと	🚼	cldr
+べびーまーく	🚼	name
+べらるーし	🇧🇾	name
+べらんだ	🪴	cldr
+べりー	🫐	cldr
+べりーず	🇧🇿	name
+べる	🔔	🛎️	name
+べるぎー	🇧🇪	name
+べるぼーいべる	🛎️	name
+べろ	👅	😛	🤑	😝	cldr
+べろんべろん	🥴	cldr
+べー	😜	😝	👅	😛	🤑	cldr
+べーかりー	🍞	🥐	🥖	🥯	🧁	cldr
+べーぐる	🥯	name
+べーこん	🥓	name
+べーる	👰‍♂️	👰‍♀️	👰	🧕	cldr
+ぺあ	👯	cldr
+ぺけ	✖️	❌	❎	cldr
+ぺたんこ靴	🥿	cldr
+ぺっと	🐕	🐩	🐈	🐇	🐹	cldr
+ぺぱろに	🍕	cldr
+ぺるー	🇵🇪	name
+ぺろぺろきゃんでぃ	🍭	name
+ぺろぺろキャンディ	🍭	name
+ぺろり	😋	cldr
+ぺん	🖊️	🖋️	name
+ぺんき	🫟	cldr
+ぺんぎん	🐧	name
+ぺーじ	📄	name
+ぺーじゃー	📟	cldr
+ぺーぱーくりっぷ	📎	🖇️	cldr
+ぺーぱーたおる	🧻	cldr
+ほいーる	🛞	name
+ほうき	🧹	name
+ほっ	😌	☺️	cldr
+ほっきょくぐま	🐻‍❄️	cldr
+ほっけー	🏑	🏒	name
+ほっとけーき	🥞	cldr
+ほっとした	😮‍💨	cldr
+ほっとした顔	😌	name
+ほっとすぽっと	🛜	cldr
+ほっとどっぐ	🌭	name
+ほっとどりんく	☕	cldr
+ほてる	🏨	🏩	🛎️	🛏️	🛋️	name
+ほにゅう瓶	🍼	name
+ほほえみ	🙂	cldr
+ほらー	🧟‍♂️	🧟‍♀️	🧟	cldr
+ほろ酔い	🥴	cldr
+ほんじゅらす	🇭🇳	name
+ほーる	⛳	cldr
+ぼうりんぐ	🎳	name
+ぼうるとすぷーん	🥣	name
+ぼう然	🫪	cldr
+ぼかすか	🫯	name
+ぼくしんぐ	🥊	name
+ぼくしんぐぐろーぶ	🥊	cldr
+ぼっくす	🗃️	cldr
+ぼつ	🆖	👎	cldr
+ぼつわな	🇧🇼	name
+ぼでぃびる	💪	cldr
+ぼでぃびるだー	🏋️	cldr
+ぼとる	🍾	cldr
+ぼぶすれー	🛷	cldr
+ぼりびあ	🇧🇴	name
+ぼりゅーむ	🔈	🔉	🔊	cldr
+ぼると	🔩	cldr
+ぼるととなっと	🔩	name
+ぼんっ	💥	🤯	cldr
+ぼんやり	😶‍🌫️	cldr
+ぼーと	🛥️	🚤	🚣‍♀️	🚣	🛶	cldr
+ぼーど	🛹	cldr
+ぼーるぺん	🖊️	cldr
+ぽかーん	😯	😦	name
+ぽけっとべる	📟	cldr
+ぽけべる	📟	name
+ぽすと	📮	📫	📪	📬	📭	cldr
+ぽっぷこーん	🍿	name
+ぽてと	🍟	🥔	cldr
+ぽてとふらい	🍟	cldr
+ぽりばけつ	🪣	cldr
+ぽるとがる	🇵🇹	name
+ぽんど	💷	cldr
+ぽーかーふぇいす	😐	name
+ぽーく	🐖	🥩	cldr
+ぽーず	⏸️	cldr
+ぽーち	👝	name
+ぽーとべろー	🍄‍🟫	cldr
+ぽーらんど	🇵🇱	name
+まいく	🎤	🎙️	name
+まいくろばす	🚐	name
+まいたい	🍹	cldr
+まいった	🫨	cldr
+まいなす	➖	name
+まいなすどらいばー	🪛	cldr
+まいほーむ	🏠	🏡	cldr
+まうす	🖱️	🐁	name
+まうすとらっぷ	🪤	cldr
+まうんてんばいく	🚵	cldr
+まぐねっと	🧲	cldr
+まさか	😲	cldr
+まじっく	🪄	cldr
+ますく	🤿	😷	cldr
+ますくめろん	🍈	cldr
+またか	🤦	🤦‍♂️	🤦‍♀️	cldr
+またね	👋	cldr
+まだがすかる	🇲🇬	name
+まっさーじ	💆‍♀️	💆‍♂️	💆	cldr
+まっしゅるーむ	🍄	🍄‍🟫	cldr
+まっぷ	🗺️	cldr
+まてぃーに	🍸	cldr
+まとりょーしか	🪆	name
+まなーもーど	📳	name
+まにあ	🤓	cldr
+まにきゅあ	💅	cldr
+まぬけ	🪿	cldr
+まふらー	🧣	name
+まま	👩‍🍼	cldr
+まよっと	🇾🇹	name
+まらうい	🇲🇼	name
+まらかす	🪇	name
+まらそん	🏃‍♂️	🏃	🏃‍♀️	cldr
+まらりあ	🦟	cldr
+まり	🇲🇱	name
+まるがりーた	🍋‍🟩	cldr
+まるた	🇲🇹	name
+まるちたすく	🤹	🤹‍♂️	cldr
+まるてぃにーく	🇲🇶	name
+まれーしあ	🇲🇾	name
+まんが	💡	💢	💥	💨	💬	cldr
+まんごー	🥭	name
+まんてるくろっく	🕰️	cldr
+まんもす	🦣	name
+まーまん	🧜‍♂️	name
+まーめいど	🧜‍♀️	🧜	name
+みかん	🍊	name
+みずがめ座	♒	name
+みつあなぐま	🦡	cldr
+みつばち	🐝	name
+みにくいアヒルの子	🦢	cldr
+みにでぃすく	💽	cldr
+みにばす	🚐	cldr
+みみず	🪱	name
+みみずく	🦉	cldr
+みやまがらす	🐦‍⬛	cldr
+みゅーと	🔇	🔕	cldr
+みらー	🪞	cldr
+みらーぼーる	🪩	name
+みりあむ	🪬	cldr
+みりたりー	🪖	cldr
+みるきーうぇい	🌌	cldr
+みるく	🤱	🍼	🥛	cldr
+みるくてぃー	🧋	cldr
+みーとそーす	🍝	cldr
+みーとぱい	🥧	cldr
+むかっ	💢	name
+むきむき	💪	cldr
+むすりむ	☪️	cldr
+むっとしている人	🙍	cldr
+むっとしている男	🙍‍♂️	cldr
+むーす	🫎	cldr
+むーびー	🎞️	📽️	📹	🎥	cldr
+めかにっく	🧑‍🔧	🧰	👨‍🔧	👩‍🔧	cldr
+めがね	👓	🕶️	🧐	🥸	🤓	name
+めがほん	📣	📢	name
+めきしかん	🌮	🌯	🫔	cldr
+めきしこ	🇲🇽	🪅	name
+めだる	🏅	🥈	🥉	🥇	🎖️	name
+めっか	🕋	cldr
+めっせーじ	💬	cldr
+めとろ	🚇	cldr
+めのらー	🕎	cldr
+めのーらー	🕎	name
+めまい	😵	🥴	😵‍💫	🌀	name
+めも	📝	📋	cldr
+めりーごーらうんど	🎠	cldr
+めりーごーらんど	🎠	name
+めろめろ	🥰	cldr
+めろん	🍈	name
+めーく	🪞	💄	cldr
+めーる	📧	✉️	cldr
+もあい	🗿	name
+もくもく	💭	cldr
+もざんびーく	🇲🇿	name
+もすく	🕌	name
+もなこ	🇲🇨	name
+もにたー	🖥️	cldr
+ものぐさ	🦥	cldr
+ものさし	📏	cldr
+ものづくり	🧑‍🏭	cldr
+ものれーる	🚝	🚟	🚈	name
+もばいる	📱	📲	cldr
+もひーと	🍋‍🟩	cldr
+もみじ	🍁	cldr
+もも肉	🍗	🍖	cldr
+もや	🌁	cldr
+もやい	🗿	cldr
+もやもや	🌀	cldr
+もるたる	🧱	cldr
+もるでぃぶ	🇲🇻	name
+もるどば	🇲🇩	name
+もろっこ	🇲🇦	name
+もんごる	🇲🇳	name
+もんすたー	🧌	👾	cldr
+もんてねぐろ	🇲🇪	name
+もんとせらと	🇲🇸	name
+もーたーすぽーつ	🏍️	🏎️	cldr
+もーたーぼーと	🛥️	🚤	name
+もーりしゃす	🇲🇺	name
+もーりたにあ	🇲🇷	name
+やきもち	😑	😒	cldr
+やぎ	🐐	cldr
+やぎ座	♑	🐐	name
+やし	🌴	🏝️	cldr
+やまあらし	🦔	cldr
+やもり	🦎	cldr
+ゆがんだ顔	🫪	name
+ゆにこーん	🦄	cldr
+ゆり	⚜️	cldr
+ゆると	🛖	cldr
+ゆーふぉー	👽	cldr
+ゆーれい	👻	cldr
+ゆーろ	💶	cldr
+よが	🧘‍♂️	🧘‍♀️	🧘	cldr
+よくできました	💮	cldr
+よだれ	🤤	cldr
+よだれを垂らした顔	🤤	name
+よっと	⛵	name
+よるだん	🇯🇴	name
+よろしく	🙏	😊	hand
+よろしくおねがいします	🙇	🙏	hand
+よーよー	🪀	name
+よーろっぱ	🌍	cldr
+らいおん	🦁	cldr
+らいす	🍛	🍚	cldr
+らいと	🔦	cldr
+らいとれーる	🚈	name
+らいふせーばー	🛟	cldr
+らいむ	🍋‍🟩	name
+らいらっく	🪻	cldr
+らおす	🇱🇦	name
+らくだ	🐪	🐫	name
+らくろす	🥍	name
+らぐびー	🏉	name
+らぐびーぼーる	🏉	cldr
+らけっと	🏸	🎾	🏓	cldr
+らじお	📻	name
+らじおぼたん	🔘	name
+らっこ	🦦	cldr
+らっと	🐀	cldr
+らっぱ	📯	🎺	cldr
+らっぷさんど	🥙	🌯	cldr
+らっぷとっぷ	💻	cldr
+らとびあ	🇱🇻	name
+らとる	🪇	cldr
+らば	🫏	cldr
+らばし	🫓	cldr
+らばーかっぷ	🪠	name
+らぶ	💕	😍	🫶	🥰	🩶	cldr
+らぶほ	🏩	cldr
+らぶほてる	🏩	name
+らぶれたー	💌	name
+らべる	🏷️	cldr
+らべんだー	🪻	cldr
+らぼ	🧪	cldr
+らま	🦙	name
+らむ	🥩	cldr
+らんどせる	🎒	cldr
+らんなー	🏃‍♂️	🏃	🏃‍♀️	cldr
+らんにんぐ	🏃‍♂️	🎽	🏃	🏃‍♀️	cldr
+らんにんぐしゃつ	🎽	cldr
+らんぷ	🪔	🛋️	cldr
+らんぷをこする	🧞	cldr
+らーてる	🦡	cldr
+らーめん	🍜	name
+りくしゃー	🛺	cldr
+りこーだー	🪈	cldr
+りさいくる	♻️	cldr
+りさいくるまーく	♻️	name
+りす	🐿️	name
+りずむ	🪘	🪇	cldr
+りっぷ	💄	cldr
+りっぷすてぃっく	💄	cldr
+りとあにあ	🇱🇹	name
+りひてんしゅたいん	🇱🇮	name
+りびあ	🇱🇾	name
+りぴーと	🔂	🔁	🔄	cldr
+りぴーとぼたん	🔁	name
+りふと	🚠	🛗	cldr
+りべりあ	🇱🇷	name
+りぼるばー	🔫	cldr
+りぼん	🎀	🎗️	💝	🎁	name
+りまいんだー	🎗️	cldr
+りまいんだーりぼん	🎗️	name
+りゅっくさっく	🎒	cldr
+りゅーじゅ	🛷	cldr
+りらっくす	🧖	💆‍♂️	💆	🧘	cldr
+りろーど	🔃	cldr
+りんく	🔗	cldr
+りんくしんぼる	🔗	name
+りんぐ	🪐	💍	cldr
+りんぐのーと	📒	name
+りんぐめも	🗒️	cldr
+りんご	🍎	🍏	cldr
+るくせんぶるく	🇱🇺	name
+るわんだ	🇷🇼	name
+るーぷ	➰	➿	name
+るーぺ	🔍	🔎	cldr
+るーまにあ	🇷🇴	name
+れいんぼー	🌈	cldr
+れいんぼーふらっぐ	🏳️‍🌈	name
+れざー	🪒	cldr
+れしーと	🧾	name
+れすきゅー	🧑‍🚒	🛟	cldr
+れすとらん	🍳	🍴	cldr
+れすらー	🤼	cldr
+れすりんぐ	🤼	🤼‍♂️	🤼‍♀️	cldr
+れすりんぐをする	🤼‍♂️	🤼‍♀️	cldr
+れずびあん	🌈	🏳️‍🌈	cldr
+れそと	🇱🇸	name
+れたす	🥬	cldr
+れっどきどにー	🫘	cldr
+れっどろぶすたー	🦞	cldr
+ればのん	🇱🇧	name
+れべる	🎚️	cldr
+れべるすらいだー	🎚️	name
+れもん	🍋	name
+れゆにおん	🇷🇪	name
+れんが	🧱	name
+れんち	🔧	🛠️	name
+れんとげん	🩻	cldr
+れーざー	🪒	cldr
+れーしんぐ	🏁	cldr
+れーしんぐかー	🏎️	name
+れーす	🏎️	🏁	cldr
+ろうそく	🕯️	name
+ろぐ	🪵	cldr
+ろけっと	🚀	🧑‍🚀	name
+ろざりお	📿	cldr
+ろしあ	🇷🇺	🪆	name
+ろっかー	🧑‍🎤	🛅	cldr
+ろっく	🔏	🔒	🔓	🔐	cldr
+ろっくおん	🤘	cldr
+ろっくくらいまー	🧗	cldr
+ろっくすたー	👨‍🎤	👩‍🎤	cldr
+ろば	🫏	name
+ろぶすたー	🦞	cldr
+ろぼっと	🤖	name
+ろまんす	💒	cldr
+ろんぐぶーつ	👢	cldr
+ろーしょん	🧴	name
+ろーしょんぼとる	🧴	cldr
+ろーず	🌹	cldr
+ろーどばいく	🚴	cldr
+ろーどれーす	🚴‍♂️	🚴	🚴‍♀️	cldr
+ろーふぁー	👞	cldr
+ろーぷ	🪢	cldr
+ろーぷうぇい	🚡	name
+ろーらーすけーと	🛼	name
+ろーるぷれい	🧙	cldr
+ろーるぺーぱー	🧻	cldr
+わいしゃつ	👔	cldr
+わいん	🍷	cldr
+わいんぐらす	🍷	name
+わからない	😕	cldr
+わかりません	🤷	🤷‍♂️	🤷‍♀️	cldr
+わし	🦅	name
+わたりがらす	🐦‍⬛	cldr
+わっふる	🧇	name
+わな	🪤	cldr
+わに	🐊	name
+わら	😂	🤣	(≧▽≦)	w	hand
+わらい	😂	🤣	😆	hand
+わらぶき小屋	🛖	name
+わんぴーす	👗	name
+わーい	😃	😄	🤩	😝	name
+ゔぁーさす	🆚	cldr
+ゔぃえす	🆚	cldr
+ゔぃおら	🎻	cldr
+ゔぃらん	🦹‍♂️	🦹‍♀️	🦹	cldr
+アイス	🍨	🍦	🍧	cldr
+アイスクリーム	🍨	name
+アイススケート	⛸️	name
+アイスホッケー	🏒	name
+アイスランド	🇮🇸	name
+アイディー	🆔	cldr
+アイラブユー	🤟	name
+アイルランド	🇮🇪	name
+アウター	🧥	cldr
+アウトドア	🥾	cldr
+アコーディオン	🪗	name
+アザラシ	🦭	name
+アシカ	🦭	cldr
+アジア	🌏	cldr
+アスクレピオスの杖	⚕️	cldr
+アスタリスク	✳️	❇️	cldr
+アスリート	🤾	cldr
+アセンション島	🇦🇨	name
+アゼルバイジャン	🇦🇿	name
+アップ	🆙	cldr
+アップル	🍎	🍏	cldr
+アップルパイ	🥧	cldr
+アナグマ	🦡	name
+アバカス	🧮	cldr
+アヒル	🪿	cldr
+アフガニスタン	🇦🇫	name
+アフリカ	🌍	cldr
+アフロ	🪮	cldr
+アフロコーム	🪮	name
+アボカド	🥑	name
+アミューズメントパーク	🎡	🎢	cldr
+アメフト	🏈	name
+アメリカ	🌎	🗽	cldr
+アメリカンフットボール	🏈	cldr
+アメリカ合衆国	🇺🇸	name
+アメリカ大陸	🌎	cldr
+アメーバ	🦠	cldr
+アライグマ	🦝	name
+アラブ首長国連邦	🇦🇪	name
+アラーム	⏰	cldr
+アリ	🐜	name
+アルコール	🍷	🍹	🍻	🍸	🍺	cldr
+アルジェリア	🇩🇿	name
+アルゼンチン	🇦🇷	name
+アルティメット	🥏	cldr
+アルバ	🇦🇼	name
+アルバニア	🇦🇱	name
+アルパカ	🦙	cldr
+アルファベット	🔤	🔠	🔡	cldr
+アルメニア	🇦🇲	name
+アレパ	🫓	cldr
+アンギラ	🇦🇮	name
+アンゴラ	🇦🇴	name
+アンティグア・バーブーダ	🇦🇬	name
+アンテナ	📡	cldr
+アンテナマーク	📶	name
+アンデッド	🧟	cldr
+アンドラ	🇦🇩	name
+アーティスト	🧑‍🎨	🧑‍🎤	👨‍🎨	👩‍🎨	👨‍🎤	cldr
+アート	🖼️	cldr
+アールブイ車	🚙	name
+イエティ	🫈	cldr
+イエメン	🇾🇪	name
+イエローキャブ	🚕	🚖	cldr
+イカ	🦑	name
+イギリス	🇬🇧	name
+イコール	🟰	cldr
+イジェクト	⏏️	cldr
+イスラエル	🇮🇱	name
+イスラム教	🕌	☪️	🕋	cldr
+イタリア	🇮🇹	name
+イタリア料理	🍝	cldr
+イヌ	🐕	🐶	name
+イヌの顔	🐶	name
+イノシシ	🐗	name
+イモ	🥔	cldr
+イモムシ	🐛	cldr
+イヤホン	🎧	cldr
+イラク	🇮🇶	name
+イラン	🇮🇷	name
+イルカ	🐬	name
+イングランド	🏴󠁧󠁢󠁥󠁮󠁧󠁿	name
+インターネット	🌐	🛜	cldr
+インデックス	🗂️	cldr
+インド	🇮🇳	name
+インドネシア	🇮🇩	name
+インフォメーション	ℹ️	cldr
+インベーダー	👾	name
+インヤン	☯️	cldr
+イーグル	🦅	cldr
+ウィスキー	🥃	cldr
+ウィンク	😉	😜	cldr
+ウィンクする顔	😉	cldr
+ウィンドウ	🪟	cldr
+ウイスキー	🥃	cldr
+ウイルス	🦠	🦟	cldr
+ウインク	😉	name
+ウェイトリフティング	🏋️‍♂️	🏋️‍♀️	🏋️	cldr
+ウェディング	👰	cldr
+ウェブ	🕸️	cldr
+ウェールズ	🏴󠁧󠁢󠁷󠁬󠁳󠁿	name
+ウォッチ	⌚	cldr
+ウォリス・フツナ	🇼🇫	name
+ウォーキング	🚶‍♂️	🚶‍♀️	🚶	cldr
+ウガンダ	🇺🇬	name
+ウクライナ	🇺🇦	name
+ウサギ	🐇	🐰	name
+ウサギの顔	🐰	name
+ウシ	🐮	🐂	🐄	cldr
+ウズベキスタン	🇺🇿	name
+ウマ	🐴	🐎	cldr
+ウルグアイ	🇺🇾	name
+ウール	🐑	🦙	cldr
+エイトボール	🎱	cldr
+エイリアン	👽	👾	name
+エキスパート	🤓	cldr
+エクアドル	🇪🇨	name
+エクササイズ	🙆	cldr
+エクスクラメーションマーク	❣️	‼️	❕	❗	cldr
+エジプト	🇪🇬	name
+エスオーエス	🆘	cldr
+エスカルゴ	🐌	cldr
+エステ	💆‍♀️	💆‍♂️	💆	cldr
+エストニア	🇪🇪	name
+エスワティニ	🇸🇿	name
+エチオピア	🇪🇹	name
+エヌジー	🆖	cldr
+エビ	🦐	🍤	name
+エビフライ	🍤	name
+エビ天	🍤	cldr
+エリトリア	🇪🇷	name
+エルク	🫎	cldr
+エルサルバドル	🇸🇻	name
+エルフ	🧝	🧝‍♂️	🧝‍♀️	name
+エレキギター	🎸	cldr
+エレベーター	🛗	name
+エンジェル	👼	cldr
+エンゼル	👼	cldr
+エンターテイナー	👨‍🎤	👩‍🎤	cldr
+エンド	🔚	cldr
+エンドウ豆	🫛	name
+エンブレム	🔱	⚜️	cldr
+オイスター	🦪	cldr
+オイル	🛢️	🪔	cldr
+オウム	🦜	name
+オオカミ	🐺	cldr
+オオカミの顔	🐺	name
+オクトパス	🐙	cldr
+オクトーバーフェスト	🍺	cldr
+オタク	🤓	name
+オッケー	👌	👍	🙆	hand
+オットセイ	🦭	cldr
+オフ	📴	cldr
+オフィスビル	🏢	name
+オベロン	🧚	cldr
+オマーン	🇴🇲	name
+オランウータン	🦧	name
+オランダ	🇳🇱	name
+オランダ領カリブ	🇧🇶	name
+オリエンテーリング	🧭	cldr
+オリーブ	🫒	name
+オレンジ	🧡	🟠	🟧	🔶	🔸	cldr
+オレンジのハート	🧡	name
+オレンジの丸	🟠	name
+オレンジの四角	🟧	name
+オレンジの本	📙	name
+オン	🔛	cldr
+オーケストラ	🪉	🪈	cldr
+オーケー	🆗	🫡	👌	🙆‍♀️	🙆‍♂️	cldr
+オーストラリア	🇦🇺	🌏	🦘	🪃	name
+オーストリア	🇦🇹	name
+オートバイ	🏍️	🛵	name
+オートミール	🥣	cldr
+オートリクシャー	🛺	cldr
+オートレース	🏍️	cldr
+オーバー	🧥	cldr
+オーム	🕉️	name
+オーランド諸島	🇦🇽	name
+オール	🚣	cldr
+カイト	🪁	cldr
+カウガール	🤠	cldr
+カウボーイ	🤠	cldr
+カウボーイの顔	🤠	name
+カエデ	🍁	cldr
+カエル	🐸	cldr
+カエルの顔	🐸	name
+カキ	🦪	cldr
+カクテル	🍸	🍹	cldr
+カクテルグラス	🍸	name
+カザフスタン	🇰🇿	name
+カジノ	🎰	cldr
+カジュアル	👖	cldr
+カスタード	🍮	cldr
+カタツムリ	🐌	cldr
+カタール	🇶🇦	name
+カチンコ	🎬	name
+カット	✂️	💇	💇‍♂️	cldr
+カップケーキ	🧁	name
+カップル	💑	💏	🧑‍🤝‍🧑	👭	👬	cldr
+カップルとハート	💑	name
+カトラリー	🥄	🍴	cldr
+カナダ	🇨🇦	name
+カナリア諸島	🇮🇨	name
+カニ	🦀	name
+カヌー	🛶	🚣‍♂️	🚣‍♀️	🚣	name
+カバ	🦛	name
+カフェ	☕	cldr
+カフェイン	☕	cldr
+カブ	🫜	cldr
+カブトムシ	🪲	name
+カプセル	💊	cldr
+カメ	🐢	name
+カメラ	📷	📸	📹	🎥	🎦	name
+カメラフラッシュ	📸	cldr
+カメルーン	🇨🇲	name
+カモ	🦆	name
+カヤック	🛶	🚣‍♂️	🚣‍♀️	🚣	cldr
+カラオケ	🎤	cldr
+カラス	🐦‍⬛	cldr
+カリウム	🍌	cldr
+カルサ	🪯	cldr
+カレンダー	📅	📆	🗓️	name
+カレー	🍛	cldr
+カレーライス	🍛	name
+カワウソ	🦦	name
+カンガルー	🦘	name
+カンダ	🪯	name
+カンボジア	🇰🇭	name
+カーカー	🐦‍⬛	cldr
+カート	🛒	cldr
+カード	💳	🗃️	♠️	♥️	🎴	cldr
+カードインデックス	📇	name
+カードファイルボックス	🗃️	name
+カードフォルダー	🗂️	name
+カーバ	🕋	name
+カーブ	↩️	↪️	⤴️	⤵️	cldr
+カーボベルデ	🇨🇻	name
+カーリング	🥌	name
+カール	📃	cldr
+カーレース	🏎️	cldr
+ガイアナ	🇬🇾	name
+ガソリン	⛽	cldr
+ガソリンスタンド	⛽	name
+ガソリンノズル	⛽	cldr
+ガチョウ	🪿	name
+ガボン	🇬🇦	name
+ガラス	🫗	cldr
+ガリ勉	🤓	cldr
+ガンビア	🇬🇲	name
+ガーガー	🪿	cldr
+ガーデナー	🧑‍🌾	cldr
+ガーナ	🇬🇭	name
+ガーリック	🧄	cldr
+ガーン	🫨	cldr
+ガーンジー	🇬🇬	name
+キウイ	🥝	cldr
+キウイフルーツ	🥝	name
+キス	😗	💋	😙	😽	💏	name
+キスマーク	💋	name
+キック	🦵	🦶	cldr
+キックスクーター	🛴	cldr
+キックスケーター	🛴	cldr
+キックボード	🛴	name
+キッズ	🧒	cldr
+キッチンペーパー	🧻	cldr
+キツネ	🦊	🤘	cldr
+キツネの顔	🦊	name
+キドニービーンズ	🫘	cldr
+キノコ	🍄	🍄‍🟫	name
+キプロス	🇨🇾	name
+キャッシュ	💰	cldr
+キャッシュカード	💳	cldr
+キャッスル	🏰	cldr
+キャッチ	🤾	🤾‍♀️	cldr
+キャップ	🧢	name
+キャビネット	🗄️	cldr
+キャベツ	🥬	cldr
+キャリーケース	🧳	cldr
+キャンセル	✖️	❌	❎	cldr
+キャンディ	🍬	🍭	name
+キャンドル	🕯️	cldr
+キャンプ	🏕️	⛺	🥾	name
+キュウリ	🥒	name
+キュラソー	🇨🇼	name
+キューバ	🇨🇺	name
+キューピッド	💘	🪉	cldr
+キラキラ	✨	hand
+キリスト教	☦️	✝️	⛪	cldr
+キリバス	🇰🇮	name
+キリン	🦒	name
+キルギス	🇰🇬	name
+キンポウゲ	🌼	cldr
+キー	🔑	🗝️	🔐	cldr
+キーボード	⌨️	🎹	name
+ギア	⚙️	cldr
+ギター	🎸	name
+ギニア	🇬🇳	name
+ギニアビサウ	🇬🇼	name
+ギフト	🎁	cldr
+ギャンブル	🎰	cldr
+ギョーザ	🥟	cldr
+ギリシャ	🇬🇷	name
+クイーン	👸	cldr
+クウェート	🇰🇼	name
+クエスチョンマーク	❓	❔	cldr
+クジャク	🦚	name
+クジラ	🐋	🐳	🫍	name
+クスクス	🤭	cldr
+クッキー	🍪	name
+クック諸島	🇨🇰	name
+クマ	🫩	🐻	🐻‍❄️	cldr
+クマの顔	🐻	name
+クモ	🕷️	🕸️	name
+クモの巣	🕸️	name
+クラウン	👑	cldr
+クラゲ	🪼	name
+クラッカー	🎉	name
+クラッチバッグ	👝	cldr
+クラブ	♣️	🍸	name
+クランプ	🗜️	cldr
+クリア	🆑	cldr
+クリケット	🏏	name
+クリスタル	🔮	cldr
+クリスマス	🎄	🎅	🤶	🧑‍🎄	cldr
+クリスマスイブ	🎄	cldr
+クリスマスツリー	🎄	name
+クリスマス島	🇨🇽	name
+クリッパートン島	🇨🇵	name
+クリップ	📎	📋	🖇️	name
+クリップボード	📋	name
+クリームチーズ	🥯	cldr
+クレジットカード	💳	name
+クレヨン	🖍️	name
+クレーン	🏗️	cldr
+クロアチア	🇭🇷	name
+クロコダイル	🐊	cldr
+クロス	✝️	cldr
+クロスした剣	⚔️	name
+クロワッサン	🥐	name
+クローバー	☘️	🍀	♣️	name
+クロール	🏊	cldr
+クール	🆒	😎	cldr
+グアテマラ	🇬🇹	name
+グアドループ	🇬🇵	name
+グアナコ	🦙	cldr
+グアム	🇬🇺	name
+グッド	👍	cldr
+グラス	🍷	🥃	🍸	🥂	🥛	cldr
+グラスで乾杯	🥂	name
+グラフ	📊	📈	💹	cldr
+グラフ上向き	📈	name
+グラフ下向き	📉	name
+グリーン	🥗	cldr
+グリーンサラダ	🥗	name
+グリーンピース	🫛	cldr
+グリーンランド	🇬🇱	name
+グレナダ	🇬🇩	name
+グレー	🩶	cldr
+グレープ	🍇	cldr
+グローブ	🥊	cldr
+グー	👊	✊	name
+グーグー	💤	🛌	😴	name
+ケイマン諸島	🇰🇾	name
+ケガ	🤕	❤️‍🩹	cldr
+ケガしてる顔	🤕	cldr
+ケッテイ	🫏	cldr
+ケニア	🇰🇪	name
+ケバブ	🥙	cldr
+ケバブサンド	🥙	name
+ケンカ	🫯	cldr
+ケーキ	🍰	🎂	hand
+ケーブルカー	🚠	name
+ケール	🥬	cldr
+ゲイ	🌈	🏳️‍🌈	cldr
+ゲーム	🎮	🎲	🎴	🥌	🀄	cldr
+コアラ	🐨	name
+コイン	🪙	name
+コインロッカー	🛅	cldr
+コウモリ	🦇	name
+コオロギ	🦗	cldr
+コクチョウ	🐦‍⬛	cldr
+ココ	🈁	cldr
+ココのマーク	🈁	name
+ココス(キーリング)諸島	🇨🇨	name
+ココナッツ	🥥	cldr
+ココナツ	🥥	name
+コスタリカ	🇨🇷	name
+コスメ	💄	cldr
+コソボ	🇽🇰	name
+コック	🧑‍🍳	👨‍🍳	👩‍🍳	name
+コップ	🥛	🥤	cldr
+コップから注ぐ	🫗	name
+コピーライト	©️	cldr
+コピー機	🖨️	cldr
+コブ	🐫	🐪	cldr
+コモロ	🇰🇲	name
+コルク	🍾	cldr
+コロッケ	🧆	cldr
+コロンビア	🇨🇴	name
+コンガ	🪘	name
+コンゴ共和国(ブラザビル)	🇨🇬	name
+コンゴ民主共和国(キンシャサ)	🇨🇩	name
+コンセント	🔌	name
+コントローラ	🎮	🕹️	cldr
+コントロール	🎛️	cldr
+コントロールつまみ	🎛️	name
+コンパス	🧭	name
+コンビニ	🏪	name
+コンビニエンスストア	🏪	cldr
+コンピュータ	🧑‍💻	👨‍💻	👩‍💻	cldr
+コンピューター	⌨️	🖱️	🖲️	💽	💻	cldr
+コート	🧥	name
+コートジボワール	🇨🇮	name
+コーヒー	☕	hand
+コーム	🪮	cldr
+コーン	🌽	cldr
+ゴキブリ	🪳	name
+ゴシップ	💁	cldr
+ゴミ	🚯	cldr
+ゴミ捨て	🚮	cldr
+ゴミ捨て禁止	🚯	cldr
+ゴミ箱	🚮	🗑️	name
+ゴムぞうり	🩴	cldr
+ゴリラ	🦍	name
+ゴルフ	⛳	🏌️	🏌️‍♂️	🏌️‍♀️	🚩	name
+ゴルフをする人	🏌️	name
+ゴルフをする女	🏌️‍♀️	name
+ゴルフをする男	🏌️‍♂️	name
+ゴルファー	🏌️	🏌️‍♂️	🏌️‍♀️	cldr
+ゴンドラ	🚡	🚠	cldr
+ゴーグル	🥽	name
+ゴースト	👻	cldr
+ゴール	🥅	🥍	cldr
+ゴールド	🥇	cldr
+ゴールネット	🥅	name
+サのマーク	🈂️	name
+サイ	🦏	name
+サイエンス	🔬	🔭	cldr
+サイクリスト	🚵‍♀️	🚴	🚵	🚴‍♀️	cldr
+サイクリング	🚲	🚴‍♂️	🚵‍♂️	🚵‍♀️	🚴	cldr
+サイクロン	🌀	cldr
+サイコロ	🎲	name
+サイレン	🚨	🧜	cldr
+サイン	🚧	cldr
+サウジアラビア	🇸🇦	name
+サウスジョージア・サウスサンドウィッチ諸島	🇬🇸	name
+サウナ	🧖‍♂️	🧖‍♀️	🧖	cldr
+サウナに入る人	🧖	name
+サウナに入る女	🧖‍♀️	name
+サウナに入る男	🧖‍♂️	name
+サキソフォン	🎷	cldr
+サクソフォン	🎷	cldr
+サクラ	🌸	cldr
+サスカッチ	🫈	cldr
+サソリ	🦂	name
+サッカー	⚽	name
+サッカーボール	⚽	cldr
+サックス	🎷	name
+サツマイモ	🍠	cldr
+サボテン	🌵	🏜️	name
+サボテンのある砂漠	🏜️	cldr
+サムズアップ	👍	name
+サムズダウン	👎	name
+サメ	🦈	name
+サモア	🇼🇸	name
+サラダ	🥗	🥬	cldr
+サラリーマン	🧑‍💼	👨‍💼	👩‍💼	cldr
+サリー	🥻	name
+サル	🐒	🐵	🦧	name
+サルの顔	🐵	name
+サルサ	🕺	💃	cldr
+サロン	💆	cldr
+サングラス	🕶️	😎	name
+サングラスで笑顔	😎	name
+サンゴ	🪸	name
+サンタ	🎅	🧑‍🎄	name
+サンタさん	🧑‍🎄	name
+サンタクロース	🎅	🤶	🧑‍🎄	cldr
+サンダル	👡	🩴	name
+サントメ・プリンシペ	🇸🇹	name
+サンドイッチ	🥪	name
+サンピエール島・ミクロン島	🇵🇲	name
+サンマリノ	🇸🇲	name
+サン・バルテルミー	🇧🇱	name
+サン・マルタン	🇲🇫	name
+サーカス	🎪	name
+サーカス小屋	🎪	cldr
+サーク島	🇨🇶	name
+サービス	🐕‍🦺	cldr
+サービス料	🈂️	cldr
+サーファー	🏄‍♂️	🏄‍♀️	🏄	cldr
+サーフィン	🏄	cldr
+サーフィンする人	🏄	name
+サーフィンする女	🏄‍♀️	name
+サーフィンする男	🏄‍♂️	name
+ザリガニ	🦞	name
+ザンビア	🇿🇲	name
+シアン	🩵	cldr
+シェイカー	🪇	cldr
+シェイブアイス	🍧	cldr
+シェフ	🧑‍🍳	👨‍🍳	👩‍🍳	cldr
+シエラレオネ	🇸🇱	name
+シカ	🦌	name
+シク教	🪯	cldr
+シチュー	🍲	cldr
+シナゴーグ	🕍	name
+シネマ	🎞️	🎥	cldr
+シマウマ	🦓	name
+シマリス	🐿️	cldr
+シャチ	🫍	name
+シャッフル	🔀	cldr
+シャッフルボタン	🔀	name
+シャツ	👕	👚	👔	cldr
+シャトル	🏸	cldr
+シャベル	🪏	name
+シャボン玉	🫧	cldr
+シャワー	🚿	name
+シャンパン	🍾	🥂	name
+シャンプー	🧴	cldr
+シャンペン	🥂	🍾	cldr
+シュノーケリング	🤿	cldr
+シュリンプ	🦐	cldr
+シューズ	🩰	cldr
+ショウガ	🫚	name
+ショック	🤯	🫪	😱	🙀	🤦	cldr
+ショット	🥃	cldr
+ショッピング	🛒	👜	cldr
+ショッピングカート	🛒	name
+ショッピングバッグ	🛍️	cldr
+ショベル	🪏	cldr
+ショーツ	🩳	name
+ショートケーキ	🍰	name
+シリア	🇸🇾	name
+シリアル	🥣	cldr
+シルエット	🗣️	👤	👥	cldr
+シルクハット	🎩	name
+シルバー	🥈	cldr
+シロクマ	🐻‍❄️	name
+シンガポール	🇸🇬	name
+シンガー	🧑‍🎤	👨‍🎤	👩‍🎤	cldr
+シント・マールテン	🇸🇽	name
+シンボル	♀️	♂️	⚧️	cldr
+シンボルが口にある顔	🤬	cldr
+シーク教	🪯	cldr
+シーク教徒	🪯	cldr
+シーッ	🤫	cldr
+シート	💺	🪑	cldr
+シーフード	🥘	🦑	🦐	🦞	🦪	cldr
+シールド	🛡️	cldr
+ジェットコースター	🎢	name
+ジェット機	✈️	cldr
+ジグソーパズル	🧩	name
+ジジ	🃏	cldr
+ジト目	😒	cldr
+ジニー	🧞	cldr
+ジブチ	🇩🇯	name
+ジブラルタル	🇬🇮	name
+ジャガイモ	🥔	name
+ジャグラー	🤹‍♀️	🤹	🤹‍♂️	cldr
+ジャグリング	🤹‍♀️	🤹	🤹‍♂️	cldr
+ジャグリングする人	🤹	cldr
+ジャグリングをする人	🤹	name
+ジャグリングをする女	🤹‍♀️	name
+ジャグリングをする男	🤹‍♂️	name
+ジャケット	🧥	cldr
+ジャズ	🪊	cldr
+ジャマイカ	🇯🇲	name
+ジャンプ	🦘	cldr
+ジャー	🫙	cldr
+ジャージー	🇯🇪	name
+ジュエリー	💎	💍	🪎	cldr
+ジュース	🧃	🥤	cldr
+ジョイスティック	🕹️	name
+ジョギング	🏃‍♂️	🏃	🏃‍♀️	cldr
+ジョギングシューズ	👟	cldr
+ジョッキ	🍺	🍻	cldr
+ジョッキー	🏇	cldr
+ジョリー・ロジャー	🏴‍☠️	cldr
+ジョーイ	🦘	cldr
+ジョーカー	🃏	name
+ジョーク	🤪	😜	cldr
+ジョージア	🇬🇪	name
+ジンジャー	🫚	cldr
+ジンバブエ	🇿🇼	name
+ジーンズ	👖	name
+スイカ	🍉	name
+スイス	🇨🇭	🫕	name
+スイマー	🏊‍♂️	🏊‍♀️	🏊	cldr
+スイミング	🏊‍♂️	🏊‍♀️	🏊	cldr
+スイム	🏊‍♂️	🏊‍♀️	🏊	cldr
+スイムウェア	🩱	🩲	🩳	cldr
+スイーツ	🍨	🍩	🍦	🍪	🍰	cldr
+スウェーデン	🇸🇪	name
+スカイダイビング	🪂	cldr
+スカル	💀	☠️	cldr
+スカンク	🦨	name
+スカーフ	🧕	🧣	cldr
+スカーフの女性	🧕	name
+スキューバ	🤿	🥽	cldr
+スキー	🎿	⛷️	name
+スキーヤー	⛷️	name
+スクリュードライバー	🪛	cldr
+スクーター	🛵	name
+スクールバス	🚌	cldr
+スケジュール	📅	📆	🗓️	cldr
+スケボー	🛹	cldr
+スケルトン	🛷	cldr
+スケート	🛼	⛸️	cldr
+スケートボード	🛹	name
+スコア	🎼	cldr
+スコッチ	🥃	cldr
+スコットランド	🏴󠁧󠁢󠁳󠁣󠁴󠁿	name
+スコップ	🪏	cldr
+ススキ	🎑	🌾	cldr
+スタジアム	🏟️	cldr
+スタジオマイク	🎙️	name
+スター	⭐	🧑‍🎤	🌠	✨	🌟	name
+スティック	🕹️	🏑	🏒	🥍	cldr
+ステッキ	🩼	cldr
+ステッチ	🪡	cldr
+ステッパー	🪜	cldr
+ステーキ	🥩	cldr
+ステーキ肉	🥩	name
+ステーション	🚉	cldr
+ストック	⛷️	🎿	cldr
+ストップ	🖐️	✋	🛑	⏹️	🫷	cldr
+ストップウォッチ	⏱️	name
+ストライク	🎳	cldr
+ストラディバリウス	🎻	cldr
+ストロベリー	🍓	cldr
+ストロー	🧃	cldr
+ストローカップ	🥤	name
+ストーン	🥌	cldr
+スニーカー	👟	name
+スノボ	🏂	cldr
+スノーボーダー	🏂	name
+スノーボード	🏂	cldr
+スバールバル諸島・ヤンマイエン島	🇸🇯	name
+スパ	🧖	💆	cldr
+スパイ	🕵️	🥷	cldr
+スパイス	🫚	cldr
+スパイダー	🕷️	🕸️	cldr
+スパゲッティ	🍝	name
+スパゲッティー	🍝	cldr
+スパゲティ	🍝	cldr
+スパナ	🔧	🧑‍🔧	🛠️	👨‍🔧	👩‍🔧	cldr
+スパークリングワイン	🥂	🍾	cldr
+スパークル	❇️	name
+スピーカー	🔈	🔉	🔇	🔊	📢	name
+スピーカー消音	🔇	name
+スピーカー音量大	🔊	name
+スピーカー音量小	🔉	name
+スピードボート	🚤	name
+スプマンテ	🥂	🍾	cldr
+スプラッシュ	🫟	cldr
+スプーン	🥄	name
+スペイン	🇪🇸	name
+スペシャル	🩷	cldr
+スペースインベーダー	👾	cldr
+スペード	♠️	name
+スポンジ	🧽	name
+スポーク	🛞	cldr
+スマイリー	☺️	name
+スマホ	🤳	📱	📳	📶	📴	cldr
+スマホ禁止	📵	cldr
+スマートフォン	📱	📳	📶	📴	📲	cldr
+スマートフォン禁止	📵	cldr
+スミレ色	🪻	cldr
+スライダー	🎚️	cldr
+スライド	🪊	cldr
+スリッポン	🥿	cldr
+スリナム	🇸🇷	name
+スリランカ	🇱🇰	name
+スリーセブン	🎰	cldr
+スレートグレー	🩶	cldr
+スロット	🎰	cldr
+スロットマシン	🎰	name
+スロバキア	🇸🇰	name
+スロベニア	🇸🇮	name
+スローする	🤾	🤾‍♀️	cldr
+スーダン	🇸🇩	name
+スーツ	🕴️	cldr
+スーツケース	🧳	🛄	🛅	name
+スーパー	🛒	cldr
+スーパーヒーロー	🦸	name
+スーパーマン	🦸	cldr
+スープ	🍲	🍜	cldr
+ズボン	👖	cldr
+セウタ・メリリャ	🇪🇦	name
+セキュリティ	🫆	🪪	🔐	cldr
+セクシー	💋	🫦	cldr
+セネガル	🇸🇳	name
+セラピスト	🧑‍⚕️	👨‍⚕️	👩‍⚕️	cldr
+セラピー	💆	cldr
+セリフ	🗨️	💬	cldr
+セルビア	🇷🇸	name
+セルフィー	🤳	name
+セントクリストファー・ネーヴィス	🇰🇳	name
+セントビンセント及びグレナディーン諸島	🇻🇨	name
+セントヘレナ	🇸🇭	name
+セントルシア	🇱🇨	name
+セーシェル	🇸🇨	name
+セーリング	⛵	cldr
+ゼブラ	🦓	cldr
+ゼムクリップ	📎	cldr
+ソックス	🧦	name
+ソファ	🛋️	cldr
+ソファとランプ	🛋️	name
+ソフト	🍦	cldr
+ソフトクリーム	🍦	name
+ソフトタコス	🌯	cldr
+ソフトドリンク	🥤	cldr
+ソフトボール	🥎	name
+ソマリア	🇸🇴	name
+ソロモン諸島	🇸🇧	name
+ソーイング	🧵	cldr
+ソーセージ	🌭	cldr
+ソーダ	🥤	cldr
+ソープ	🧼	cldr
+ゾウ	🐘	name
+ゾンビ	🧟	🧟‍♂️	🧟‍♀️	name
+タイ	🇹🇭	name
+タイガー	🐅	cldr
+タイタニック号	🚢	cldr
+タイマー	⏲️	⌛	⏳	name
+タイム	⏱️	cldr
+タイヤ	🛞	cldr
+タキシード	🤵‍♂️	🤵‍♀️	🤵	cldr
+タキシードの人	🤵	name
+タキシードの女	🤵‍♀️	cldr
+タキシードの女性	🤵‍♀️	name
+タキシードの男	🤵‍♂️	cldr
+タキシードの男性	🤵‍♂️	name
+タクシー	🚕	🚖	🛺	name
+タクシー正面	🚖	name
+タグ	🏷️	🔖	cldr
+タコ	🐙	name
+タコス	🌮	name
+タジキスタン	🇹🇯	name
+タダ	🆓	🈚	cldr
+タバコ	🚬	🚭	cldr
+タピオカ	🧋	cldr
+タピオカドリンク	🧋	name
+タマネギ	🧅	name
+タマル	🫔	name
+タマレス	🫔	cldr
+タルト	🥧	cldr
+タワー	🗼	cldr
+タンゴ	🕺	💃	cldr
+タンザニア	🇹🇿	name
+タンブラー	🥃	cldr
+タンブラーグラス	🥃	name
+ターキー	🦃	cldr
+タークス・カイコス諸島	🇹🇨	name
+ターバン	👳	👳‍♂️	👳‍♀️	cldr
+ターバンの人	👳	name
+ターバンの女性	👳‍♀️	name
+ターバンの男性	👳‍♂️	name
+ダイア	♦️	💠	💎	🔶	🔷	cldr
+ダイス	🎲	cldr
+ダイナマイト	🧨	cldr
+ダイビング	🤿	🥽	🦪	cldr
+ダイヤ	♦️	💠	💎	🔶	🔷	name
+ダイヤモンド	💎	💍	cldr
+ダガー	🗡️	cldr
+ダッシュ	💨	name
+ダビデ	🔯	cldr
+ダビデの星	✡️	name
+ダブルループ	➿	name
+ダム作り	🦫	cldr
+ダメのポーズをする人	🙅	name
+ダメのポーズをする女	🙅‍♀️	name
+ダメのポーズをする男	🙅‍♂️	name
+ダンサー	🧑‍🩰	👯‍♀️	👯‍♂️	🕺	💃	cldr
+ダンス	🪩	🦶	🩰	🕺	💃	cldr
+ダーツ	🎯	cldr
+ダービー	🐎	cldr
+チェア	🪑	cldr
+チェコ	🇨🇿	name
+チェス	♟️	cldr
+チェスの駒	♟️	name
+チェッカーフラッグ	🏁	name
+チェック	✅	☑️	✔️	cldr
+チェックボックス	☑️	name
+チェックマーク	✅	☑️	✔️	cldr
+チェリー	🍒	cldr
+チェーン	⛓️	⛓️‍💥	cldr
+チキン	🍗	cldr
+チケット	🎫	🎟️	name
+チッ	🫦	cldr
+チャック	🤐	cldr
+チャド	🇹🇩	name
+チャペル	⛪	💒	cldr
+チャンピオン	🏆	cldr
+チャート	📊	📉	💹	📈	cldr
+チュニジア	🇹🇳	name
+チューリップ	🌷	name
+チョウ	🦋	name
+チョキ	✌️	cldr
+チョコ	🍫	🫕	cldr
+チョコレート	🍫	name
+チョコレートチップ	🍪	cldr
+チョッキ	🦺	cldr
+チリ	🇨🇱	name
+チンゲン菜	🥬	cldr
+チーズ	🧀	🍕	🪤	🫕	name
+チーズフォンデュ	🫕	cldr
+ツバル	🇹🇻	name
+ツリー	🎄	cldr
+ツールボックス	🧰	cldr
+ティラノサウルス	🦖	name
+ティーポット	🫖	name
+ティールブルー	🩵	cldr
+テイクアウト弁当	🥡	name
+テコンドー	🥋	cldr
+テディベア	🧸	name
+テニス	🎾	name
+テニスシューズ	👟	cldr
+テニスボール	🎾	cldr
+テレビ	📺	name
+テレビゲーム	🎮	🕹️	name
+テント	⛺	🏕️	🎪	name
+テントウムシ	🐞	name
+テープ	📼	cldr
+ディエゴガルシア島	🇩🇬	name
+ディスカウント	🈹	cldr
+ディスク	💾	📀	💿	cldr
+ディスコ	🪩	cldr
+ディナー	🍽️	🍴	cldr
+ディプロドクス	🦕	cldr
+ディヤランプ	🪔	name
+デザート	🍨	🍩	🍡	🍦	🍪	cldr
+デスクトップ	🖥️	cldr
+デスクトップパソコン	🖥️	name
+デッドリフト	🏋️	cldr
+デニム	👖	cldr
+デパート	🏬	name
+デビル	😈	👿	cldr
+デベロッパ	👨‍💻	👩‍💻	cldr
+デモ	🪧	cldr
+デュエル	🤼	🤼‍♂️	🤼‍♀️	cldr
+デリバリー	🥡	cldr
+デンマーク	🇩🇰	name
+データ	📊	📉	📈	cldr
+デート	😗	💕	😚	cldr
+トイレ	🚻	🚹	🚺	🚽	🚾	name
+トイレットペーパー	🧻	name
+トゥクトゥク	🛺	cldr
+トウシューズ	🩰	name
+トウモロコシ	🌽	cldr
+トカゲ	🦎	name
+トケラウ	🇹🇰	name
+トップ	🔝	cldr
+トド	🦭	cldr
+トボガン	🛷	cldr
+トマト	🍅	name
+トラ	🐅	🐯	name
+トラの顔	🐯	name
+トライアスロン	🏊	cldr
+トライデント	🔱	name
+トラクター	🚜	name
+トラック	🚚	🛻	🚛	name
+トラックボール	🖲️	name
+トランスジェンダー	🏳️‍⚧️	🌈	🏳️‍🌈	cldr
+トランスジェンダーのマーク	⚧️	name
+トランスジェンダーフラッグ	🏳️‍⚧️	name
+トランプ	♠️	♥️	♦️	♣️	🃏	cldr
+トランペット	🎺	name
+トリスタン・ダ・クーニャ	🇹🇦	name
+トリニダード・トバゴ	🇹🇹	name
+トリュフ	🍄‍🟫	cldr
+トルクメニスタン	🇹🇲	name
+トルコ	🇹🇷	name
+トルネード	🌪️	cldr
+トレイ	📤	📥	cldr
+トレードマーク	™️	cldr
+トレーラー	🚛	name
+トロピカル	🍹	🍍	🥭	🍋‍🟩	cldr
+トロピカルドリンク	🍹	name
+トロフィー	🏆	name
+トロリーバス	🚎	🚋	🚃	name
+トロンボーン	🪊	name
+トロール	🧌	name
+トンガ	🇹🇴	name
+トングサンダル	🩴	cldr
+トンボ返り	🤸	🤸‍♂️	🤸‍♀️	cldr
+トーク	💬	cldr
+トーゴ	🇹🇬	name
+ト音記号	🎼	cldr
+ドア	🚪	name
+ドイツ	🇩🇪	name
+ドキドキ	💓	💗	cldr
+ドキドキするハート	💓	name
+ドキュメント	📄	📃	cldr
+ドクター	👨‍⚕️	👩‍⚕️	😷	cldr
+ドクロ	💀	☠️	name
+ドクロと骨	☠️	name
+ドット付きひし形	💠	name
+ドミニカ共和国	🇩🇴	name
+ドミニカ国	🇩🇲	name
+ドライバー	🪛	cldr
+ドライブ	🚗	🚘	cldr
+ドラキュラ	🧛‍♂️	🧛‍♀️	🧛	cldr
+ドラゴン	🐉	🐲	name
+ドラゴンの顔	🐲	name
+ドラム	🥁	🪘	name
+ドラムスティック	🥁	cldr
+ドラム缶	🛢️	name
+ドリブル	⛹️	⛹️‍♀️	cldr
+ドリンク	🧋	🧉	🧃	cldr
+ドル	💲	💵	💰	💸	💱	cldr
+ドルフィン	🐬	cldr
+ドル円	💱	cldr
+ドル札	💵	name
+ドル袋	💰	name
+ドル記号	💲	name
+ドレス	👗	🥻	cldr
+ドードー	🦤	name
+ドーナツ	🍩	name
+ナイジェリア	🇳🇬	name
+ナイス	😁	😀	cldr
+ナイフ	🍽️	🍴	🔪	🗡️	cldr
+ナイフとフォーク	🍴	name
+ナイフとフォークと皿	🍽️	name
+ナウル	🇳🇷	name
+ナザール	🧿	cldr
+ナザール・ボンジュウ	🧿	name
+ナシ	🍐	cldr
+ナス	🍆	name
+ナッツ	🥜	cldr
+ナット	🔩	cldr
+ナマケモノ	🦥	name
+ナミビア	🇳🇦	name
+ナン	🫓	cldr
+ニウエ	🇳🇺	name
+ニカラグア	🇳🇮	name
+ニジェール	🇳🇪	name
+ニット	🧶	cldr
+ニューカレドニア	🇳🇨	name
+ニュージーランド	🇳🇿	name
+ニュース	📰	🗞️	cldr
+ニューヨーク	🗽	cldr
+ニワトリ	🐔	🐓	cldr
+ニンジン	🥕	cldr
+ニンニク	🧄	name
+ヌードル	🍜	cldr
+ネイル	💅	cldr
+ネクタイ	👔	name
+ネクタリン	🍊	cldr
+ネコ	🐈	🐱	🐈‍⬛	name
+ネコの顔	🐱	name
+ネズミ	🐀	🐭	🐁	🐹	name
+ネズミの顔	🐭	name
+ネックレス	📿	cldr
+ネット	🥅	cldr
+ネットワーク	🛜	cldr
+ネパール	🇳🇵	name
+ノコ	🪚	cldr
+ノット	🪢	cldr
+ノブ	🎛️	cldr
+ノルウェー	🇳🇴	name
+ノート	📓	📒	📔	🗒️	name
+ノートパソコン	💻	name
+ノーフォーク島	🇳🇫	name
+ハイウェイ	🛣️	cldr
+ハイキング	🥾	🚶‍♀️	🚶	cldr
+ハイキングシューズ	🥾	name
+ハイタッチ	🙏	🫷	🫸	cldr
+ハイチ	🇭🇹	name
+ハイヒール	👠	name
+ハイビスカス	🌺	name
+ハエ	🪰	name
+ハグ	🤗	🫂	name
+ハグする人	🫂	name
+ハサミ	✂️	cldr
+ハスの花	🪷	name
+ハチ	🐝	cldr
+ハチェット	🪓	cldr
+ハチミツ	🍯	cldr
+ハッピー	😄	😃	☺️	😁	🙂	cldr
+ハッピーバースデー	🎂	🥳	cldr
+ハツカネズミ	🐁	name
+ハト	🕊️	name
+ハニー	🍯	cldr
+ハヌカー	🕎	cldr
+ハムサ	🪬	name
+ハムスター	🐹	cldr
+ハムスターの顔	🐹	name
+ハリウッド	🎥	cldr
+ハリケーン	🌀	cldr
+ハリネズミ	🦔	name
+ハロウィン	🎃	cldr
+ハロウィンかぼちゃ	🎃	name
+ハロウィーン	🎃	👻	🧟	🧛	cldr
+ハロー	👋	cldr
+ハンガリー	🇭🇺	name
+ハンググライダー	🪂	cldr
+ハンドバッグ	👜	👝	name
+ハンドボール	🤾‍♂️	🤾	🤾‍♀️	cldr
+ハンドボールをする人	🤾	name
+ハンドボールをする女	🤾‍♀️	name
+ハンドボールをする男	🤾‍♂️	name
+ハンバーガー	🍔	name
+ハンマー	🔨	⚒️	👷	👷‍♂️	👷‍♀️	name
+ハンマーとつるはし	⚒️	name
+ハンマーとレンチ	🛠️	name
+ハート	❤️	💕	💖	💗	💓	hand
+ハートにリボン	💝	name
+ハートに矢	💘	name
+ハートのびっくり	❣️	name
+ハートの笑顔	🥰	name
+ハートデコ	💟	name
+ハートデコレーション	💟	cldr
+ハートブレイク	💔	cldr
+ハートポーズ	🫶	cldr
+ハート形の手	🫶	name
+ハード島・マクドナルド諸島	🇭🇲	name
+ハーブ	🌿	🫚	name
+ハープ	🪉	name
+バイオハザード	☣️	name
+バイオリン	🎻	name
+バイク	🛵	🏍️	cldr
+バイス	🗜️	cldr
+バイセクシュアル	🌈	🏳️‍🌈	cldr
+バイソン	🦬	name
+バイバイ	👋	cldr
+バクテリア	🦠	🧫	cldr
+バケツ	🪣	name
+バゲッジクレーム	🛄	cldr
+バゲット	🥖	name
+バス	🚌	🚍	🚎	🚐	name
+バスケ	🏀	⛹️‍♂️	⛹️	⛹️‍♀️	cldr
+バスケットボール	🏀	⛹️‍♂️	⛹️	⛹️‍♀️	name
+バスケットボールをする人	⛹️	name
+バスケットボールをする女	⛹️‍♀️	name
+バスケットボールをする男	⛹️‍♂️	name
+バスケットボール選手	⛹️	cldr
+バスタブ	🛁	🛀	name
+バス乗り場	🚏	cldr
+バス停	🚏	name
+バス正面	🚍	name
+バタフライ	🦋	cldr
+バター	🧈	name
+バチカン市国	🇻🇦	name
+バック	🔙	cldr
+バックパック	🎒	name
+バッグ	👜	👝	🛍️	cldr
+バッジ	📛	cldr
+バッタ	🦗	name
+バッテリー	🪫	🔋	cldr
+バッテリー残量低下	🪫	name
+バット	🏏	cldr
+バッファロー	🐃	🦬	cldr
+バツ	❌	❎	🙅‍♀️	✖️	🙅‍♂️	name
+バトル	🫯	cldr
+バドミントン	🏸	name
+バナナ	🍌	name
+バニー	👯	name
+バニーガール	👯‍♀️	name
+バニーボーイ	👯‍♂️	name
+バヌアツ	🇻🇺	name
+バハマ	🇧🇸	name
+ババ	🃏	cldr
+バブル	🫧	cldr
+バブルティー	🧋	cldr
+バミューダ	🇧🇲	name
+バラ	🌹	name
+バランス	⚖️	cldr
+バランス演技	🤹	🤹‍♂️	cldr
+バリアフリー	♿	🛗	cldr
+バリヤフリー	♿	cldr
+バルカンの挨拶	🖖	name
+バルカンサイン	🖖	cldr
+バルカン人	🖖	cldr
+バルバドス	🇧🇧	name
+バルーン	🎈	cldr
+バレエ	🧑‍🩰	🩰	cldr
+バレエシューズ	🥿	🩰	cldr
+バレエダンサー	🧑‍🩰	name
+バレンタインデー	💝	💌	cldr
+バレー	🏐	cldr
+バレーボール	🏐	name
+バンガロー	🛖	cldr
+バングラデシュ	🇧🇩	name
+バンザイ	🙌	name
+バンジョー	🪕	name
+バンド	🪈	cldr
+バンパイア	🦇	🧛‍♂️	🧛‍♀️	🧛	cldr
+バー	🍷	🍹	🍻	🍸	🍺	cldr
+バーガー	🍔	cldr
+バーゲン	🉐	cldr
+バーサス	🆚	cldr
+バースデー	🎂	cldr
+バースデーケーキ	🎂	name
+バーバー	💈	cldr
+バーベル	🏋️	cldr
+バーレーン	🇧🇭	name
+パイ	🥧	name
+パイナップル	🍍	name
+パイロット	🧑‍✈️	👨‍✈️	name
+パイン	🍍	cldr
+パエリア	🥘	name
+パエリア鍋	🥘	cldr
+パキスタン	🇵🇰	name
+パスタ	🍝	cldr
+パスポートコントロール	🛂	cldr
+パスワード	🔑	🗝️	cldr
+パズル	🧩	cldr
+パソコン	💻	🖥️	⌨️	🖱️	🖲️	cldr
+パタパタ	🪭	cldr
+パチパチ	👏	cldr
+パッキング	🧳	cldr
+パック	🏒	🧚	cldr
+パトカー	🚓	🚔	🚨	name
+パトカー正面	🚔	name
+パトランプ	🚨	name
+パトロール	🚓	cldr
+パドル	🚣	cldr
+パナマ	🇵🇦	name
+パニック	🫨	cldr
+パパ	👨‍🍼	cldr
+パプアニューギニア	🇵🇬	name
+パプリカ	🫑	cldr
+パモーニャ	🫔	cldr
+パラオ	🇵🇼	name
+パラグアイ	🇵🇾	name
+パラグライダー	🪂	cldr
+パラシュート	🪂	name
+パラセーリング	🪂	cldr
+パラソル	⛱️	🏖️	name
+パラボラ	📡	cldr
+パラボラアンテナ	📡	name
+パレスチナ自治区	🇵🇸	name
+パレット	🎨	👩‍🎨	cldr
+パワーリフティング	🏋️	cldr
+パン	🍞	🥪	🥨	🥐	🥖	cldr
+パンケーキ	🥞	name
+パンダ	🐼	cldr
+パンダの顔	🐼	name
+パンチ	👊	🤛	🤜	cldr
+パンツ	🩲	🩳	👖	cldr
+パンプキンパイ	🥧	cldr
+パン屋	🥯	cldr
+パー	🖐️	✋	cldr
+パーキング	🅿️	cldr
+パーティ	👯	cldr
+パーティー	🎉	🥳	hand
+パーティーの顔	🥳	name
+パーティークラッカー	🎉	cldr
+ヒジャブ	🧕	cldr
+ヒツジ	🐏	🐑	cldr
+ヒトコブラクダ	🐪	cldr
+ヒマワリ	🌻	name
+ヒヤシンス	🪻	name
+ヒョウ	🐆	name
+ヒヨコマメ	🧆	cldr
+ヒロイン	🦸‍♀️	🦸	cldr
+ヒンズー教	🕉️	🛕	cldr
+ヒンドゥー教	🕉️	🪷	cldr
+ヒンドゥー教の寺院	🛕	name
+ヒーロー	🦸‍♂️	🦸‍♀️	🦸	cldr
+ビキニ	👙	name
+ビクーナ	🦙	cldr
+ビジネスパーソン	🧑‍💼	👨‍💼	👩‍💼	cldr
+ビジネスマン	🕴️	👨‍💼	cldr
+ビスク	🦞	cldr
+ビタミン剤	💊	cldr
+ビタミンＣ	🍊	cldr
+ビックリ	🫨	cldr
+ビッグフット	🫈	cldr
+ビデオ	📹	📼	📺	📽️	cldr
+ビデオカセット	📼	cldr
+ビデオカメラ	📹	name
+ビデオゲーム	🎮	🕹️	cldr
+ビデオテープ	📼	name
+ビリヤード	🎱	name
+ビル	🏬	🌆	🌇	cldr
+ビルベリー	🫐	cldr
+ビル群	🏙️	cldr
+ビーサン	🩴	cldr
+ビーズ	🧿	cldr
+ビーチ	🏖️	👙	🌴	⛱️	cldr
+ビーチサンダル	🩴	name
+ビーチパラソル	🏖️	name
+ビーツ	🫜	cldr
+ビート	🪘	cldr
+ビーバー	🦫	name
+ビーフ	🥩	cldr
+ビール	🍺	🍻	hand
+ビールで乾杯	🍻	name
+ビールジョッキ	🍺	name
+ビーンズ	🫘	cldr
+ピアノ	🎹	cldr
+ピエロ	🤡	cldr
+ピエロの顔	🤡	name
+ピクニック	🧺	cldr
+ピクルス	🥒	cldr
+ピザ	🍕	name
+ピストル	🔫	cldr
+ピタパン	🥙	🫓	cldr
+ピックアップトラック	🛻	cldr
+ピッコロ	🪈	cldr
+ピッツァ	🍕	cldr
+ピトケアン諸島	🇵🇳	name
+ピニャータ	🪅	name
+ピノキオの顔	🤥	cldr
+ピン	📍	cldr
+ピンク	🩷	cldr
+ピンクのハート	🩷	name
+ピンク色	🦩	cldr
+ピンヒール	👠	cldr
+ピンポン	🏓	cldr
+ピーコック	🦚	cldr
+ピース	✌️	hand
+ピースマーク	☮️	name
+ピーチ	🍑	cldr
+ピーナッツ	🥜	name
+ピーマン	🫑	name
+ファイアー	🔥	cldr
+ファイト	💪	🔥	hand
+ファイヤー	🔥	cldr
+ファイル	🗄️	🗃️	📁	📂	cldr
+ファイルキャビネット	🗄️	name
+ファクトリー	🏭	cldr
+ファストフード	🍔	🍟	cldr
+ファックス	📠	name
+ファラフェル	🧆	name
+ファンタジー	🧌	🧞	🧙	🧝	🧚	cldr
+ファーティマ	🪬	cldr
+フィギュアスケート	⛸️	cldr
+フィジー	🇫🇯	name
+フィッシング	🎣	🐟	cldr
+フィリピン	🇵🇭	name
+フィルム	🎞️	📽️	🎥	cldr
+フィンランド	🇫🇮	name
+フィールドホッケー	🏑	cldr
+フェイスマッサージ	💆‍♀️	💆‍♂️	💆	cldr
+フェイスマッサージ中の人	💆	name
+フェイスマッサージ中の女	💆‍♀️	name
+フェイスマッサージ中の男	💆‍♂️	name
+フェニックス	🐦‍🔥	name
+フェリー	⛴️	name
+フェロー諸島	🇫🇴	name
+フェンシング	🤺	cldr
+フェンシングをする人	🤺	name
+フォルダー	📁	🗂️	📂	name
+フォンデュ	🫕	name
+フォーク	🍽️	🍴	cldr
+フォークランド諸島	🇫🇰	name
+フォーチュンクッキー	🥠	name
+フォーマル	🤵	cldr
+フクロウ	🦉	name
+フグ	🐡	name
+フタコブ	🐫	cldr
+フタコブラクダ	🐫	name
+フック	🪝	name
+フットボール	🏈	cldr
+フライ	🍤	cldr
+フライドポテト	🍟	name
+フライパン	🍳	cldr
+フライングディスク	🥏	cldr
+フラグ	🏴	🏳️	⛳	🚩	🏳️‍⚧️	cldr
+フラッグ	🏳️‍⚧️	🏁	🏴	🏳️	⛳	cldr
+フラッシュ	📸	cldr
+フラッシュを焚いているカメラ	📸	name
+フラットシューズ	🥿	name
+フラットブレッド	🫓	name
+フラミンゴ	🦩	name
+フラメンコ	🕺	💃	cldr
+フランクフルト	🌭	cldr
+フランス	🇫🇷	🥐	name
+フランスパン	🥖	cldr
+フランス王家	⚜️	cldr
+フリスビー	🥏	name
+フリー	🆓	cldr
+フリーダイヤル	➿	cldr
+フルーツ	🥭	🍋‍🟩	cldr
+フルート	🪈	cldr
+フルート奏者	🪈	cldr
+フルール・ド・リス	⚜️	name
+フレンチフライ	🍟	cldr
+フレーム	🎞️	🪟	cldr
+フロッピー	💾	name
+フロッピーディスク	💾	cldr
+ブイ	🛟	cldr
+ブイエス	🆚	cldr
+ブタ	🐖	🐷	🐽	name
+ブタの顔	🐷	name
+ブタ鼻	🐽	name
+ブックマーク	🔖	cldr
+ブドウ	🍇	cldr
+ブライトネス	🔅	🔆	cldr
+ブラウス	👚	cldr
+ブラウンマッシュルーム	🍄‍🟫	cldr
+ブラキオサウルス	🦕	cldr
+ブラシ	🪥	cldr
+ブラジル	🇧🇷	name
+ブリトー	🌯	name
+ブリーフ	🩲	name
+ブリーフケース	💼	name
+ブルガリア	🇧🇬	name
+ブルキナファソ	🇧🇫	name
+ブルズアイ	🎯	cldr
+ブルネイ	🇧🇳	name
+ブルンジ	🇧🇮	name
+ブルージーンズ	👖	cldr
+ブルーベリー	🫐	name
+ブルーボネット	🪻	cldr
+ブルーレイ	📀	💿	cldr
+ブロック	🧱	cldr
+ブロッコリー	🥦	name
+ブロンズ	🥉	cldr
+ブロントサウルス	🦕	cldr
+ブロンド	👱‍♀️	👱‍♂️	👱	cldr
+ブロードバンド	🛜	cldr
+ブーイング	👎	cldr
+ブーケ	💐	cldr
+ブータン	🇧🇹	name
+ブーツ	👢	🥾	name
+ブーベ島	🇧🇻	name
+ブーメラン	🪃	name
+プエルトリコ	🇵🇷	name
+プッシュピン	📍	cldr
+プライド	🏳️‍🌈	cldr
+プライバシー	🔏	cldr
+プラカード	🪧	name
+プラグ	🔌	cldr
+プラス	➕	name
+プランクトン	🪼	cldr
+プランジャー	🪠	cldr
+プリン	🍮	name
+プリンス	🤴	name
+プリンセス	👸	name
+プリンタ	🖨️	name
+プリンター	🖨️	cldr
+プレイ	▶️	cldr
+プレゼント	🎁	hand
+プレッツェル	🥨	name
+プログラマ	🧑‍💻	👨‍💻	👩‍💻	cldr
+プログラマー	👨‍💻	👩‍💻	cldr
+プロジェクター	📽️	cldr
+プーさん	🍯	cldr
+プードル	🐩	name
+プール	👙	cldr
+ヘアカット	💇‍♀️	💇	💇‍♂️	cldr
+ヘアサロン	💈	cldr
+ヘッドフォン	🎧	cldr
+ヘッドホン	🎧	name
+ヘビ	🐍	name
+ヘラジカ	🫎	name
+ヘリ	🚁	cldr
+ヘリコプター	🚁	name
+ヘルメット	🪖	⛑️	👷	👷‍♂️	👷‍♀️	cldr
+ベスト	🦺	cldr
+ベッド	🛏️	🛌	name
+ベッドに寝る人	🛌	name
+ベトナム	🇻🇳	name
+ベナン	🇧🇯	name
+ベネズエラ	🇻🇪	name
+ベビー	🚼	👶	cldr
+ベビーシート	🚼	cldr
+ベビーマーク	🚼	name
+ベラルーシ	🇧🇾	name
+ベランダ	🪴	cldr
+ベリー	🫐	cldr
+ベリーズ	🇧🇿	name
+ベル	🔔	🛎️	name
+ベルギー	🇧🇪	name
+ベルボーイベル	🛎️	name
+ベル消音	🔕	name
+ベーカリー	🍞	🥐	🥖	🥯	🧁	cldr
+ベーグル	🥯	name
+ベーコン	🥓	name
+ベール	👰‍♂️	👰‍♀️	👰	🧕	cldr
+ベールの人	👰	name
+ベールの女性	👰‍♀️	name
+ベールの男性	👰‍♂️	name
+ペア	👯	cldr
+ペケ	✖️	❌	❎	cldr
+ペット	🐕	🐩	🐈	🐇	🐹	cldr
+ペトリ皿	🧫	name
+ペパロニ	🍕	cldr
+ペルー	🇵🇪	name
+ペン	🖊️	🖋️	name
+ペンキ	🫟	cldr
+ペンギン	🐧	name
+ペン先	✒️	name
+ページ	📄	name
+ページに付箋	📑	name
+ページャー	📟	cldr
+ペーパークリップ	📎	🖇️	cldr
+ペーパータオル	🧻	cldr
+ホイール	🛞	name
+ホッキョクグマ	🐻‍❄️	cldr
+ホッケー	🏑	🏒	name
+ホットケーキ	🥞	cldr
+ホットスポット	🛜	cldr
+ホットドッグ	🌭	name
+ホットドリンク	☕	cldr
+ホテル	🏨	🏩	🛎️	🛏️	🛋️	name
+ホラー	🧟‍♂️	🧟‍♀️	🧟	cldr
+ホンジュラス	🇭🇳	name
+ホール	⛳	cldr
+ボウリング	🎳	name
+ボウルとスプーン	🥣	name
+ボカスカ	🫯	name
+ボクシング	🥊	name
+ボクシンググローブ	🥊	cldr
+ボスニア・ヘルツェゴビナ	🇧🇦	name
+ボタン式電話	☎️	cldr
+ボックス	🗃️	cldr
+ボツ	🆖	👎	cldr
+ボツワナ	🇧🇼	name
+ボディビル	💪	cldr
+ボディビルダー	🏋️	cldr
+ボトル	🍾	cldr
+ボブスレー	🛷	cldr
+ボリビア	🇧🇴	name
+ボリューム	🔈	🔉	🔊	cldr
+ボルト	🔩	cldr
+ボルトとナット	🔩	name
+ボート	🛥️	🚤	🚣‍♀️	🚣	🛶	cldr
+ボートをこぐ人	🚣	name
+ボートをこぐ女	🚣‍♀️	name
+ボートをこぐ男	🚣‍♂️	name
+ボード	🛹	cldr
+ボールペン	🖊️	cldr
+ポイ捨て禁止	🚯	name
+ポケットベル	📟	cldr
+ポケベル	📟	name
+ポスト	📮	📫	📪	📬	📭	cldr
+ポップコーン	🍿	name
+ポテト	🍟	🥔	cldr
+ポテトフライ	🍟	cldr
+ポリバケツ	🪣	cldr
+ポルトガル	🇵🇹	name
+ポンド	💷	cldr
+ポンド札	💷	name
+ポーカーフェイス	😐	name
+ポーク	🐖	🥩	cldr
+ポーズ	⏸️	cldr
+ポーチ	👝	name
+ポートベロー	🍄‍🟫	cldr
+ポーランド	🇵🇱	name
+マイク	🎤	🎙️	name
+マイクロバス	🚐	name
+マイタイ	🍹	cldr
+マイナス	➖	name
+マイナスドライバー	🪛	cldr
+マイホーム	🏠	🏡	cldr
+マウス	🖱️	🐁	name
+マウストラップ	🪤	cldr
+マウンテンバイク	🚵	cldr
+マウンテンバイクに乗る人	🚵	name
+マウンテンバイクに乗る女	🚵‍♀️	name
+マウンテンバイクに乗る男	🚵‍♂️	name
+マグネット	🧲	cldr
+マジック	🪄	cldr
+マスク	🤿	😷	cldr
+マスクメロン	🍈	cldr
+マスク顔	😷	name
+マダガスカル	🇲🇬	name
+マッサージ	💆‍♀️	💆‍♂️	💆	cldr
+マッシュルーム	🍄	🍄‍🟫	cldr
+マップ	🗺️	cldr
+マティーニ	🍸	cldr
+マテ茶	🧉	name
+マトリョーシカ	🪆	name
+マナーモード	📳	name
+マニア	🤓	cldr
+マニキュア	💅	cldr
+マニキュアを塗る手	💅	name
+マフラー	🧣	name
+ママ	👩‍🍼	cldr
+マヨット	🇾🇹	name
+マラウイ	🇲🇼	name
+マラカス	🪇	name
+マラソン	🏃‍♂️	🏃	🏃‍♀️	cldr
+マラリア	🦟	cldr
+マリ	🇲🇱	name
+マルガリータ	🍋‍🟩	cldr
+マルタ	🇲🇹	name
+マルチタスク	🤹	🤹‍♂️	cldr
+マルティニーク	🇲🇶	name
+マル得	🉐	name
+マル秘	㊙️	name
+マレーシア	🇲🇾	name
+マンガ	💡	💢	💥	💨	💬	cldr
+マンゴー	🥭	name
+マンテルクロック	🕰️	cldr
+マンモス	🦣	name
+マン島	🇮🇲	name
+マーシャル諸島	🇲🇭	name
+マーマン	🧜‍♂️	name
+マーメイド	🧜‍♀️	🧜	name
+ミクロネシア連邦	🇫🇲	name
+ミツアナグマ	🦡	cldr
+ミツバチ	🐝	name
+ミニディスク	💽	cldr
+ミニバス	🚐	cldr
+ミミズ	🪱	name
+ミミズク	🦉	cldr
+ミヤマガラス	🐦‍⬛	cldr
+ミュート	🔇	🔕	cldr
+ミラー	🪞	cldr
+ミラーボール	🪩	name
+ミリアム	🪬	cldr
+ミリタリー	🪖	cldr
+ミルキーウェイ	🌌	cldr
+ミルク	🤱	🍼	🥛	cldr
+ミルクティー	🧋	cldr
+ミートソース	🍝	cldr
+ミートパイ	🥧	cldr
+ムキムキ	💪	cldr
+ムスリム	☪️	cldr
+ムース	🫎	cldr
+ムービー	🎞️	📽️	📹	🎥	cldr
+メカニック	🧑‍🔧	🧰	👨‍🔧	👩‍🔧	cldr
+メガネ	👓	🕶️	🧐	🥸	🤓	name
+メガホン	📣	📢	name
+メキシカン	🌮	🌯	🫔	cldr
+メキシコ	🇲🇽	🪅	name
+メキシコ料理	🌮	🌯	cldr
+メダル	🏅	🥈	🥉	🥇	🎖️	name
+メッカ	🕋	cldr
+メッセージ	💬	cldr
+メトロ	🚇	cldr
+メノラー	🕎	cldr
+メノーラー	🕎	name
+メモ	📝	📋	cldr
+メモ帳	🗒️	name
+メリーゴーラウンド	🎠	cldr
+メリーゴーランド	🎠	name
+メロメロ	🥰	cldr
+メロン	🍈	name
+メーク	🪞	💄	cldr
+メール	📧	✉️	hand
+メール受信	📩	name
+メール受信中	📨	name
+メール送信	📩	cldr
+モアイ	🗿	name
+モザンビーク	🇲🇿	name
+モスク	🕌	name
+モナコ	🇲🇨	name
+モニター	🖥️	cldr
+モノづくり	🧑‍🏭	cldr
+モノクルを付けた顔	🧐	name
+モノレール	🚝	🚟	🚈	name
+モバイル	📱	📲	cldr
+モヒート	🍋‍🟩	cldr
+モヤイ	🗿	cldr
+モルタル	🧱	cldr
+モルディブ	🇲🇻	name
+モルドバ	🇲🇩	name
+モロッコ	🇲🇦	name
+モンゴル	🇲🇳	name
+モンスター	🧌	👾	cldr
+モンテネグロ	🇲🇪	name
+モントセラト	🇲🇸	name
+モータースポーツ	🏍️	🏎️	cldr
+モーターボート	🛥️	🚤	name
+モーリシャス	🇲🇺	name
+モーリシャス島	🦤	cldr
+モーリタニア	🇲🇷	name
+ヤギ	🐐	cldr
+ヤシ	🌴	🏝️	cldr
+ヤシの実	🥥	cldr
+ヤシの木	🌴	name
+ヤシの木のある島	🏝️	cldr
+ヤマアラシ	🦔	cldr
+ヤモリ	🦎	cldr
+ユダヤ教	🕍	✡️	🕎	🔯	cldr
+ユニコーン	🦄	cldr
+ユニコーンの顔	🦄	name
+ユリ	⚜️	cldr
+ユルト	🛖	cldr
+ユーフォー	👽	cldr
+ユーレイ	👻	cldr
+ユーロ	💶	cldr
+ユーロ札	💶	name
+ヨガ	🧘‍♂️	🧘‍♀️	🧘	cldr
+ヨガのポーズをする人	🧘	name
+ヨガのポーズをする女	🧘‍♀️	name
+ヨガのポーズをする男	🧘‍♂️	name
+ヨガ行者	🧘	cldr
+ヨット	⛵	name
+ヨルダン	🇯🇴	name
+ヨーヨー	🪀	name
+ヨーロッパ	🌍	cldr
+ライオン	🦁	cldr
+ライオンの顔	🦁	name
+ライス	🍛	🍚	cldr
+ライト	🔦	cldr
+ライトレール	🚈	name
+ライフセーバー	🛟	cldr
+ライム	🍋‍🟩	name
+ライラック	🪻	cldr
+ラオス	🇱🇦	name
+ラクダ	🐪	🐫	name
+ラクロス	🥍	name
+ラグビー	🏉	name
+ラグビーボール	🏉	cldr
+ラケット	🏸	🎾	🏓	cldr
+ラジオ	📻	name
+ラジオボタン	🔘	name
+ラッコ	🦦	cldr
+ラット	🐀	cldr
+ラッパ	📯	🎺	cldr
+ラップサンド	🥙	🌯	cldr
+ラップトップ	💻	cldr
+ラテン十字	✝️	cldr
+ラトビア	🇱🇻	name
+ラトル	🪇	cldr
+ラバ	🫏	cldr
+ラバシ	🫓	cldr
+ラバーカップ	🪠	name
+ラブ	💕	😍	🫶	🥰	🩶	cldr
+ラブホ	🏩	cldr
+ラブホテル	🏩	name
+ラブレター	💌	name
+ラベル	🏷️	cldr
+ラベンダー	🪻	cldr
+ラボ	🧪	cldr
+ラマ	🦙	name
+ラム	🥩	cldr
+ランドセル	🎒	cldr
+ランナー	🏃‍♂️	🏃	🏃‍♀️	cldr
+ランニング	🏃‍♂️	🎽	🏃	🏃‍♀️	cldr
+ランニングシャツ	🎽	cldr
+ランプ	🪔	🛋️	cldr
+ランプをこする	🧞	cldr
+ラーテル	🦡	cldr
+ラーメン	🍜	hand
+リクシャー	🛺	cldr
+リコーダー	🪈	cldr
+リサイクル	♻️	cldr
+リサイクルマーク	♻️	name
+リス	🐿️	name
+リズム	🪘	🪇	cldr
+リップ	💄	cldr
+リップスティック	💄	cldr
+リトアニア	🇱🇹	name
+リヒテンシュタイン	🇱🇮	name
+リビア	🇱🇾	name
+リピート	🔂	🔁	🔄	cldr
+リピートボタン	🔁	name
+リフト	🚠	🛗	cldr
+リベリア	🇱🇷	name
+リボルバー	🔫	cldr
+リボン	🎀	🎗️	💝	🎁	name
+リマインダー	🎗️	cldr
+リマインダーリボン	🎗️	name
+リュックサック	🎒	cldr
+リュージュ	🛷	cldr
+リラックス	🧖	💆‍♂️	💆	🧘	cldr
+リロード	🔃	cldr
+リンク	🔗	cldr
+リンクシンボル	🔗	name
+リング	🪐	💍	cldr
+リングノート	📒	name
+リングメモ	🗒️	cldr
+リング内	🤼	🤼‍♂️	🤼‍♀️	cldr
+ルクセンブルク	🇱🇺	name
+ルワンダ	🇷🇼	name
+ループ	➰	➿	name
+ルーペ	🔍	🔎	cldr
+ルーマニア	🇷🇴	name
+レインボー	🌈	cldr
+レインボーフラッグ	🏳️‍🌈	name
+レザー	🪒	cldr
+レシート	🧾	name
+レスキュー	🧑‍🚒	🛟	cldr
+レストラン	🍳	🍴	cldr
+レスラー	🤼	cldr
+レスリング	🤼	🤼‍♂️	🤼‍♀️	cldr
+レスリングする人	🤼	name
+レスリングする女	🤼‍♀️	name
+レスリングする男	🤼‍♂️	name
+レスリングをする	🤼‍♂️	🤼‍♀️	cldr
+レスリング大会	🤼	🤼‍♂️	🤼‍♀️	cldr
+レズビアン	🌈	🏳️‍🌈	cldr
+レソト	🇱🇸	name
+レタス	🥬	cldr
+レッドキドニー	🫘	cldr
+レッドロブスター	🦞	cldr
+レバノン	🇱🇧	name
+レベル	🎚️	cldr
+レベルスライダー	🎚️	name
+レモン	🍋	name
+レユニオン	🇷🇪	name
+レンチ	🔧	🛠️	name
+レントゲン	🩻	cldr
+レーザー	🪒	cldr
+レーシング	🏁	cldr
+レーシングカー	🏎️	name
+レース	🏎️	🏁	cldr
+ロウソク	🕯️	cldr
+ログ	🪵	cldr
+ロケット	🚀	🧑‍🚀	name
+ロザリオ	📿	cldr
+ロシア	🇷🇺	🪆	name
+ロッカー	🧑‍🎤	🛅	cldr
+ロック	🔏	🔒	🔓	🔐	cldr
+ロックオン	🤘	cldr
+ロッククライマー	🧗	cldr
+ロックスター	👨‍🎤	👩‍🎤	cldr
+ロバ	🫏	name
+ロブスター	🦞	cldr
+ロボット	🤖	name
+ロボットの顔	🤖	cldr
+ロマンス	💒	cldr
+ロングブーツ	👢	cldr
+ローション	🧴	name
+ローションボトル	🧴	cldr
+ローズ	🌹	cldr
+ロードバイク	🚴	cldr
+ロードレース	🚴‍♂️	🚴	🚴‍♀️	cldr
+ローファー	👞	cldr
+ロープ	🪢	cldr
+ロープウェイ	🚡	name
+ローマ字	🔤	🔠	🔡	cldr
+ローラースケート	🛼	name
+ロールプレイ	🧙	cldr
+ロールペーパー	🧻	cldr
+ワイシャツ	👔	cldr
+ワイン	🍷	cldr
+ワイングラス	🍷	name
+ワシ	🦅	name
+ワタリガラス	🐦‍⬛	cldr
+ワッフル	🧇	name
+ワニ	🐊	name
+ワンピース	👗	name
+ワンピースの水着	🩱	name
+ヴァーサス	🆚	cldr
+ヴィエス	🆚	cldr
+ヴィオラ	🎻	cldr
+ヴィラン	🦹‍♂️	🦹‍♀️	🦹	cldr
+一	1️⃣	cldr
+一つ目	👁️	cldr
+一戸建て	🏠	🏡	cldr
+一時停止	⏸️	⏯️	cldr
+一時停止ボタン	⏸️	name
+一角獣	🦄	cldr
+七	7️⃣	cldr
+七夕	🎋	name
+七面鳥	🦃	name
+万力	🗜️	name
+万年筆	🖋️	✒️	name
+万物	♾️	cldr
+三	3️⃣	cldr
+三つ又	🔱	cldr
+三日月	🌙	☪️	🌒	🌘	name
+三猿	🙉	🙈	🙊	cldr
+三角	🔺	🔻	cldr
+三角の旗	🚩	name
+三角定規	📐	name
+三輪タクシー	🛺	name
+上に向けた手	🫴	name
+上を見る顔	🙄	name
+上カーブ矢印	⤴️	name
+上ボタン	🔼	name
+上下	↕️	🪀	cldr
+上下矢印	↕️	name
+上半身	👤	👥	cldr
+上向き	📈	cldr
+上向きにすぼめた手	🤌	name
+上品	🧐	cldr
+上弦	🌓	cldr
+上弦の月	🌓	🌛	name
+上指差し	☝️	name
+上昇	📈	cldr
+上目	🙄	cldr
+上着	🥼	cldr
+上矢印	⬆️	name
+下に向けた手	🫳	name
+下カーブ矢印	⤵️	name
+下ボタン	🔽	name
+下向き	📉	cldr
+下弦	🌗	cldr
+下弦の月	🌗	🌜	name
+下手投げ	🥎	cldr
+下指差し	👇	name
+下着	🩲	🩳	cldr
+下矢印	⬇️	name
+下降	📉	cldr
+不信	🫤	cldr
+不可思議	🧞	cldr
+不吉	🐈‍⬛	cldr
+不安	😨	🫪	cldr
+不審	🤨	cldr
+不本意	😦	cldr
+不機嫌	🙎‍♀️	😾	🙎	🙎‍♂️	cldr
+不機嫌な人	🙎	name
+不機嫌な女	🙎‍♀️	name
+不機嫌な猫	😾	name
+不機嫌な男	🙎‍♂️	name
+不死身	🧛	cldr
+不死鳥	🐦‍🔥	cldr
+不毛	🪾	cldr
+不満	😠	🙍	🫤	😒	😦	cldr
+不潔	🪰	cldr
+不賛成	🙂‍↔️	cldr
+世界	🗺️	🌍	🌎	🌏	cldr
+世界地図	🗺️	name
+両手	🤲	🙌	cldr
+両手のひら	👐	name
+両手ハート	🫶	cldr
+両替	💱	cldr
+両目	👀	cldr
+中	🀄	cldr
+中国	🇨🇳	name
+中央アフリカ共和国	🇨🇫	name
+中性的	🧑	🧒	🧓	cldr
+中指	🖕	cldr
+中毒	🥴	cldr
+中秋節	🥮	cldr
+中華	🥡	cldr
+中華人民共和国マカオ特別行政区	🇲🇴	name
+中華人民共和国香港特別行政区	🇭🇰	name
+中華帽の男性	👲	name
+中華菓子	🥮	cldr
+串	🍢	🍡	cldr
+丸いMマーク	Ⓜ️	name
+丸いボタン	🔴	🟠	🟡	🟢	🔵	cldr
+丸い押しピン	📍	name
+丸い新幹線	🚅	cldr
+丸めた新聞	🗞️	name
+丸太	🪵	name
+主張	🪧	cldr
+乗用車	🚗	🚘	🚙	cldr
+乗算	✖️	❌	❎	cldr
+乗馬	🏇	🐎	cldr
+乙女座	♍	cldr
+九	9️⃣	cldr
+乳牛	🐄	cldr
+乳製品	🧈	cldr
+乾杯	🍻	🥂	cldr
+乾電池	🔋	cldr
+亀	🐢	cldr
+了解	👌	🫡	👍	hand
+予定	📅	📆	🗓️	cldr
+予防接種	💉	cldr
+争い	🫯	cldr
+二	2️⃣	cldr
+二重	⏫	⏬	cldr
+二重丸	🔘	cldr
+二重感嘆符	‼️	name
+五	5️⃣	cldr
+五線譜	🎼	cldr
+交差	🔀	cldr
+交差した旗	🎌	cldr
+交差点	🚥	🚦	cldr
+交通	🚥	🚦	cldr
+人のシルエット	👤	name
+人を指差している手	🫵	name
+人参	🥕	name
+人工衛星	🛰️	name
+人工装具	🦾	🦿	cldr
+人差し指と小指を立てた手	🤘	cldr
+人形	🪆	🪅	🎎	cldr
+人間	👱	cldr
+人魚	🧜	🧜‍♂️	🧜‍♀️	name
+介助犬	🐕‍🦺	name
+仏教	☸️	🪷	cldr
+仏領ギアナ	🇬🇫	name
+仏領ポリネシア	🇵🇫	name
+仏領極南諸島	🇹🇫	name
+仕事	💼	💻	hand
+仕掛け	🪤	cldr
+付箋	📑	🔖	cldr
+仮装	🥸	cldr
+仮面	🎭	cldr
+会社	🏢	cldr
+会社員	🧑‍💼	👨‍💼	👩‍💼	👔	name
+会計	🧾	cldr
+会話	💬	🗨️	cldr
+会話の吹き出し	💬	name
+伝説	🧜	🧝	🧚	cldr
+低輝度	🔅	name
+住宅街	🏘️	name
+体操	🤸	🤸‍♂️	🤸‍♀️	cldr
+体温計	🤒	cldr
+作業員	👷	👷‍♂️	👷‍♀️	🧑‍🔧	cldr
+便器	🚽	name
+便座	🚽	cldr
+保存	🫙	cldr
+保育園	📛	cldr
+保育所	📛	cldr
+保護メガネ	🥽	cldr
+信じられない	😮	🤦	🤦‍♂️	🤦‍♀️	cldr
+信仰	🪯	cldr
+信号	🚥	🚦	cldr
+信号横	🚥	name
+信号機	🚥	🚦	cldr
+信号縦	🚦	name
+俳優	🎭	👨‍🎤	👩‍🎤	cldr
+倍速	⏩	⏪	cldr
+停止	⏹️	cldr
+停止ボタン	⏹️	name
+停留所	🚏	cldr
+側転	🤸	🤸‍♂️	🤸‍♀️	cldr
+側転する人	🤸	name
+側転する女	🤸‍♀️	name
+側転する男	🤸‍♂️	name
+傘	☂️	🌂	☔	⛱️	name
+傘と雨	☔	name
+傷	🩹	cldr
+傷ついた	❤️‍🩹	cldr
+傷心	❤️‍🩹	cldr
+像	🗿	cldr
+優勝	🏆	🏅	🥇	cldr
+優勝カップ	🏆	cldr
+優等生	🤓	cldr
+元素	⚛️	cldr
+兄弟	👬	cldr
+充電不足	🪫	cldr
+先生	🧑‍🏫	👨‍🏫	👩‍🏫	cldr
+光ディスク	💿	cldr
+免許証	🪪	cldr
+児童横断	🚸	name
+入れ子	🪆	cldr
+入出国	🛂	cldr
+入力	🔢	🔣	🔤	🔠	🔡	cldr
+入場パス	🎟️	cldr
+入場券	🎟️	🎫	name
+全問正解	💯	cldr
+全曲	🔁	cldr
+八	8️⃣	cldr
+八端十字架	☦️	name
+八角アスタリスク	✳️	name
+八角形	🛑	cldr
+八角星	✴️	name
+公園	🏞️	🛝	cldr
+六	6️⃣	cldr
+六芒星	🔯	✡️	name
+六角星	🔯	cldr
+共感	😮	cldr
+兵士	🪖	cldr
+具合の悪い顔	🤢	cldr
+内向的	🫥	cldr
+内気	🫥	cldr
+内緒	🤐	🙊	🤭	cldr
+円	💴	⭕	💹	💱	cldr
+円ドル	💱	cldr
+円札	💴	name
+円盤	🥏	cldr
+円高	💹	cldr
+再利用	♻️	cldr
+再生	▶️	⏯️	♻️	🐦‍🔥	cldr
+再生ボタン	▶️	name
+再生／一時停止ボタン	⏯️	name
+再読み込み	🔃	cldr
+冗談	😜	cldr
+写真	📷	📸	cldr
+冠	👑	👸	cldr
+冠雪	🏔️	cldr
+冬	🪾	cldr
+冷たい	🧊	cldr
+冷や汗	😓	😅	😰	name
+冷や汗笑顔	😅	name
+冷や汗青ざめ	😰	name
+凍え	🥶	cldr
+凧揚げ	🪁	cldr
+凶器	🔪	cldr
+出入国	🛂	cldr
+出入国審査	🛂	name
+出血	🩸	cldr
+刀	⚔️	cldr
+刃	🪚	🪒	cldr
+刃物	🪒	cldr
+分かった	🙋	cldr
+分子	⚛️	cldr
+切り株	🪵	cldr
+切る	✂️	🪚	cldr
+切符	🎫	cldr
+列車	🚆	🚃	🚉	🚂	cldr
+初心者	🔰	cldr
+初心者マーク	🔰	name
+初月	🌒	name
+別れ	💔	cldr
+別れた	💔	cldr
+利口	🤓	cldr
+刺す	🦟	🪼	cldr
+刺繍	🪡	cldr
+剃刀	🪒	name
+前のシーン	⏮️	cldr
+前のトラック	⏮️	cldr
+前の曲ボタン	⏮️	name
+前を向いているひよこ	🐥	name
+剣	⚔️	🪯	cldr
+割	🈹	cldr
+割り算	➗	name
+割る	➗	cldr
+割れたハート	💔	name
+割マーク	🈹	name
+割引	🈹	cldr
+劇場	🎭	cldr
+力こぶ	💪	name
+加算	➕	cldr
+助けて	🆘	cldr
+勉強	📚	cldr
+動く目玉	👀	cldr
+動悸	💓	cldr
+動画	🎦	📹	📼	cldr
+勝ち誇った顔	😤	name
+勝利	🏁	cldr
+勲章	🎖️	name
+包む手	🤲	cldr
+包丁	🔪	name
+包帯	🤕	❤️‍🩹	cldr
+包帯を巻いたハート	❤️‍🩹	name
+包帯を巻いた顔	🤕	name
+化け物	👹	cldr
+化学	⚗️	🧪	⚖️	cldr
+化学者	🧑‍🔬	🧪	cldr
+化粧	💄	cldr
+化粧品	💄	cldr
+化粧室	🚻	🚾	🚹	🚺	cldr
+化粧水	🧴	cldr
+北	⬆️	cldr
+北マケドニア	🇲🇰	name
+北マリアナ諸島	🇲🇵	name
+北朝鮮	🇰🇵	name
+北東	↗️	cldr
+北極	🐻‍❄️	cldr
+北西	↖️	cldr
+医師	🧑‍⚕️	👨‍⚕️	👩‍⚕️	😷	cldr
+医療	⚕️	🩺	🩸	cldr
+医療のシンボル	⚕️	name
+医療器具	💉	cldr
+医者	🧑‍⚕️	👨‍⚕️	👩‍⚕️	🏥	💊	name
+十三夜月	🌔	name
+十五夜	🎑	cldr
+十字架	✝️	☦️	⛪	name
+十日夜の月	🌔	cldr
+半券	🎟️	🎫	cldr
+半月	🌓	🌗	🌛	🌜	cldr
+半魚人	🧜	cldr
+卒業	🧑‍🎓	🎓	👨‍🎓	👩‍🎓	cldr
+卓球	🏓	name
+南	⬇️	cldr
+南アフリカ	🇿🇦	name
+南スーダン	🇸🇸	name
+南京錠	🔏	🔒	🔓	🔐	cldr
+南東	↘️	cldr
+南極	🇦🇶	name
+南西	↙️	cldr
+占い	🔯	🔮	cldr
+印刷機	🖨️	cldr
+危険	💣	☣️	☢️	⚡	cldr
+卵	🥚	🪺	🐣	🍳	name
+卵からかえったひよこ	🐣	name
+厚着	🧣	🧥	cldr
+原付	🛵	cldr
+原子	⚛️	cldr
+原子のシンボル	⚛️	name
+厳禁	🈲	cldr
+友情	👭	🫂	cldr
+友達	👥	🧑‍🤝‍🧑	👭	👬	👫	cldr
+双子	👬	👯	cldr
+双子座	♊	cldr
+双葉	🌱	cldr
+反射	🪞	🦺	cldr
+反時計回り	🔄	cldr
+収穫	🧺	cldr
+取っ組み合い	🫯	🤼	🤼‍♂️	🤼‍♀️	cldr
+取り出し	⏏️	cldr
+取り出しボタン	⏏️	name
+受ける	🫴	cldr
+受付	💁	cldr
+受付嬢	💁	cldr
+受信	📩	📥	📲	cldr
+受信なし	📥	cldr
+受信トレイ	📥	name
+受信中	📨	cldr
+受信機	📻	cldr
+受信箱	📨	📥	cldr
+受話器	📞	name
+口	👄	🤐	🫦	name
+口が斜めの顔	🫤	name
+口が開いた顔	😮	name
+口なし	😶	cldr
+口に手を当てた顔	🤭	name
+口のない顔	😶	name
+口ひげ	🥸	cldr
+口を尖らせた人	🙎	cldr
+口を尖らせた男	🙎‍♂️	cldr
+口を開けた笑顔	😃	cldr
+口を開けた顔	😦	cldr
+口チャック	🤐	name
+口惜しさ	🫦	cldr
+口紅	💄	name
+古い鍵	🗝️	name
+古代	🏛️	cldr
+叫び	😱	cldr
+叫んでいる顔	😱	cldr
+召喚	🧙	cldr
+可	🉑	cldr
+可マーク	🉑	name
+可愛い	🥰	😍	💕	hand
+可能	🉑	cldr
+台帳	📒	cldr
+台湾	🇹🇼	name
+台風	🌀	cldr
+史跡	🏛️	cldr
+右に向けた手	🫱	name
+右カーブ矢印	↩️	name
+右上	↗️	cldr
+右上矢印	↗️	name
+右下	↘️	cldr
+右下矢印	↘️	name
+右側	🫱	cldr
+右向き	🫸	cldr
+右向きに押している手	🫸	name
+右向きのこぶし	🤜	name
+右回り	🔃	cldr
+右回り縦矢印	🔃	name
+右指差し	👉	name
+右矢印	➡️	name
+右肩上がり	📈	cldr
+右肩下がり	📉	cldr
+号泣	😭	cldr
+号泣する顔	😭	cldr
+合	🈴	cldr
+合マーク	🈴	name
+合意	🤝	cldr
+合掌	🙏	cldr
+合格	🈴	cldr
+合衆国領有小離島	🇺🇲	name
+同性	👭	👬	cldr
+名刺ホルダー	📇	cldr
+名札	📛	name
+吐きそう	🤢	cldr
+吐き気を催している顔	🤢	name
+吐く	🤮	cldr
+君主	🫅	cldr
+吸収	🧽	cldr
+吸引カップ	🪠	cldr
+吸血鬼	🧛	🧛‍♂️	🧛‍♀️	🦇	⚰️	name
+吹き出し	🗯️	👁️‍🗨️	🗨️	💬	💭	cldr
+吹き出しの目	👁️‍🗨️	name
+吹き出し左	🗨️	name
+吹奏楽	🪊	cldr
+呆然	😦	cldr
+呪文	🧙	cldr
+味見	😝	cldr
+呼吸	🫁	cldr
+和	🎋	🎍	🎎	cldr
+和服	👘	cldr
+和菓子	🍡	cldr
+和食	🍙	cldr
+咲いた花	🌼	cldr
+哺乳瓶	🍼	cldr
+哺乳類	🫏	🫎	cldr
+唇	🫦	👄	💋	cldr
+唇を咬んでいる口	🫦	name
+商標	™️	cldr
+商標マーク	™️	name
+善	🦸‍♂️	🦸‍♀️	🦸	cldr
+喧嘩	🫯	cldr
+喫煙	🚬	cldr
+営	🈺	cldr
+営マーク	🈺	name
+営巣	🪹	🪺	cldr
+営業中	🈺	cldr
+営業日	🈺	cldr
+嘔吐する顔	🤮	name
+嘘	🤥	cldr
+嘘つき	🤥	cldr
+噴水	⛲	name
+噴火	🌋	cldr
+四	4️⃣	cldr
+四つ葉のクローバー	🍀	name
+四角ボタン	🔳	🔲	cldr
+回転	🪀	cldr
+回転するハート	💞	name
+回転木馬	🎠	cldr
+団子	🎑	cldr
+団扇	🪭	cldr
+困った	🙁	☹️	😥	😟	😖	cldr
+困った顔	☹️	😧	name
+困惑	😖	😕	🫤	cldr
+困惑した顔	😖	name
+囲み数字	0️⃣	1️⃣	2️⃣	3️⃣	4️⃣	cldr
+図書館	📗	📙	📘	📖	cldr
+固定電話	☎️	name
+国王	🫅	cldr
+国立公園	🏞️	name
+国際連合	🇺🇳	name
+圏内	📶	cldr
+土下座	🙇‍♂️	🙇‍♀️	🙇	cldr
+土星	🪐	cldr
+土煙	🫯	cldr
+土砂災害	🛘	cldr
+地下鉄	🚇	name
+地図	🗾	🗺️	📍	cldr
+地滑り	🛘	name
+地球	🌐	🌍	🌎	🌏	cldr
+地球（アジアとオーストラリア）	🌏	name
+地球（アメリカ大陸）	🌎	name
+地球（ヨーロッパとアフリカ）	🌍	name
+地震	🫨	cldr
+埋葬	⚱️	⚰️	🪦	cldr
+城	🏯	🏰	name
+培養	🧫	cldr
+塔	🗼	cldr
+塩	🧂	name
+墓地	🪦	cldr
+墓場	🪦	cldr
+墓石	🪦	name
+壁	🧱	cldr
+壊れた	⛓️‍💥	cldr
+壊れたハート	💔	cldr
+壊れた鎖	⛓️‍💥	name
+壺	🏺	🍯	name
+変装	🥸	cldr
+変装した顔	🥸	name
+夏	🎐	🪭	cldr
+夕方	🌆	🌇	cldr
+夕日	🌇	🌆	name
+夕暮れ	🌆	🌇	cldr
+夕暮れの都会	🌆	name
+外貨両替	💱	name
+多分ね	🤷	🤷‍♂️	🤷‍♀️	cldr
+夜	🌉	🌃	🌠	cldr
+夜の橋	🌉	name
+夜の都会	🌃	name
+夜景	🌉	🌃	cldr
+夜空	🌌	cldr
+夢中	😶‍🌫️	🥰	cldr
+大きいオレンジのひし形	🔶	name
+大きい青のひし形	🔷	name
+大きくなるハート	💗	name
+大きな目	🥺	cldr
+大人	🧑	👨	👩	🧓	name
+大人一人	🧑‍🧒	🧑‍🧒‍🧒	cldr
+大人二人	🧑‍🧑‍🧒	🧑‍🧑‍🧒‍🧒	cldr
+大変よくできました	💮	name
+大好き	😍	❤️	🥰	💕	hand
+大工	🪚	cldr
+大文字	🔠	cldr
+大泣き	😭	name
+大災害	🧟	cldr
+大笑い	😂	cldr
+大股	🚶	cldr
+大豆	🫛	cldr
+大道芸	🤹‍♀️	🤹	🤹‍♂️	cldr
+大音量	🔊	cldr
+天の川	🌌	name
+天ぷら	🍤	cldr
+天体	🪐	cldr
+天体観測	🔭	cldr
+天使	👼	🪽	name
+天使の輪	😇	cldr
+天使の輪がついた笑顔	😇	name
+天国	🪽	cldr
+天文学	⭐	cldr
+天気雨	🌦️	cldr
+天狗	👺	name
+天秤	⚖️	name
+天秤座	♎	⚖️	cldr
+太い丸	⭕	name
+太字のチェック	✔️	name
+太字の等号	🟰	name
+太陽	☀️	🌞	🌅	⛅	🌤️	name
+太鼓	🥁	🪘	cldr
+失恋	💔	cldr
+失望	🙍	cldr
+失望した顔	😞	name
+契約成立	🤝	cldr
+女のエルフ	🧝‍♀️	name
+女のゾンビ	🧟‍♀️	name
+女の吸血鬼	🧛‍♀️	name
+女の妖精	🧚‍♀️	name
+女の子	👧	name
+女の精霊	🧞‍♀️	name
+女の魔法使い	🧙‍♀️	name
+女優	🎭	cldr
+女医	👩‍⚕️	cldr
+女子トイレ	🚺	name
+女子学生	👩‍🎓	name
+女性のコック	👩‍🍳	name
+女性のサンタ	🤶	name
+女性のスーパーヒーロー	🦸‍♀️	name
+女性のマーク	♀️	name
+女性の医者	👩‍⚕️	name
+女性の建設作業員	👷‍♀️	name
+女性の悪役	🦹‍♀️	name
+女性の探偵	🕵️‍♀️	name
+女性の教師	👩‍🏫	name
+女性の整備士	👩‍🔧	name
+女性の溶接工	👩‍🏭	name
+女性の芸術家	👩‍🎨	name
+女性の衛兵	💂‍♀️	name
+女性の裁判官	👩‍⚖️	name
+女性パイロット	👩‍✈️	name
+女性会社員	👩‍💼	name
+女性宇宙飛行士	👩‍🚀	name
+女性技術者	👩‍💻	name
+女性歌手	👩‍🎤	name
+女性消防士	👩‍🚒	name
+女性科学者	👩‍🔬	name
+女性警察官	👮‍♀️	name
+女王	🫅	👸	cldr
+好き	😍	❤️	🥰	hand
+好奇心	🦝	cldr
+妊夫	🫃	🫄	name
+妊娠	🫄	🤰	🫃	cldr
+妊娠した人	🫄	🫃	name
+妊婦	🤰	🫄	name
+妖精	🧚	🧚‍♂️	🧚‍♀️	🧝	name
+姉妹	👭	cldr
+姿見	🪞	cldr
+娘	👧	cldr
+婚約指輪	💍	cldr
+婦人帽子	👒	name
+婦人服	👚	name
+婦人靴	👡	👠	👢	cldr
+嬉しい	😊	😆	✨	hand
+嬉し泣き	😂	🥹	name
+嬉し泣きする猫	😹	name
+嬉し涙の顔	🥲	name
+子ども	🧒	cldr
+子供	🧒	👪	👦	🚸	👶	name
+子供の日	🎏	cldr
+子供一人	🧑‍🧑‍🧒	🧑‍🧒	cldr
+子供二人	🧑‍🧑‍🧒‍🧒	🧑‍🧒‍🧒	cldr
+子午線	🌐	cldr
+子午線のある地球	🌐	name
+子機	📞	cldr
+子犬	🐶	cldr
+子犬の目	🥺	cldr
+子猫	🐱	cldr
+孔雀	🦚	cldr
+学校	🏫	hand
+学校、幼稚園、保育所等あり	🚸	cldr
+学生	🧑‍🎓	👨‍🎓	👩‍🎓	name
+学者	🎓	cldr
+宅急便	📦	cldr
+宅配便	📦	cldr
+宇宙	🛰️	🌕	🌙	☄️	🌑	cldr
+宇宙人	👽	🛸	👾	cldr
+宇宙旅行	🚀	cldr
+宇宙飛行士	🧑‍🚀	👨‍🚀	👩‍🚀	name
+守衛	💂	💂‍♂️	💂‍♀️	cldr
+安全	🦺	🛟	🔐	cldr
+安全ピン	🧷	name
+安全ベスト	🦺	name
+安心	😌	😮‍💨	cldr
+定規	📏	📐	name
+宝物	🏴‍☠️	cldr
+宝石	💎	🪎	name
+宝箱	🪎	name
+実	🫒	cldr
+実験	⚗️	🔬	🥼	🧪	🧫	cldr
+客船	🛳️	⛴️	🚢	name
+害虫	🪳	🪰	cldr
+宴会	🍻	cldr
+家	🏠	hand
+家具	🪑	cldr
+家族	👪	🧑‍🧑‍🧒	🧑‍🧑‍🧒‍🧒	🧑‍🧒	🧑‍🧒‍🧒	name
+家畜	🐖	🐄	🐑	🐐	🐎	cldr
+容器	🪣	🫙	cldr
+寂しい	😢	cldr
+寄生虫	🪱	cldr
+富	🪎	cldr
+富士山	🗻	name
+寒い	🥶	❄️	hand
+寒い顔	🥶	name
+寒さ	🥶	cldr
+寒暖計	🌡️	cldr
+寝る	😴	🛌	🛏️	😪	💤	name
+寝待月	🌖	name
+寝顔	😴	cldr
+寺	🛕	cldr
+対	🆚	cldr
+寿司	🍣	hand
+封筒	✉️	💌	📧	📨	name
+封筒と矢印	📩	cldr
+射手	🏹	cldr
+射手座	♐	🏹	cldr
+小さいオレンジのひし形	🔸	name
+小さい青のひし形	🔹	name
+小エビ	🦐	cldr
+小包	📦	cldr
+小型バス	🚐	cldr
+小型機	🛩️	cldr
+小型飛行機	🛩️	name
+小学校	🎒	cldr
+小学生	🎒	cldr
+小屋	🛖	cldr
+小文字	🔡	cldr
+小説	📖	📚	cldr
+小豆	🫘	cldr
+小銭	🪙	cldr
+小銭入れ	👛	cldr
+小麦	🍞	cldr
+少しだけ	🤏	cldr
+少し困った	🙁	cldr
+少し困った顔	🙁	name
+少女	👧	cldr
+少年	👦	cldr
+就寝中	💤	🛌	cldr
+居待月	🌖	cldr
+居酒屋	🏮	🍺	cldr
+山	⛰️	🗻	🏔️	🌋	🧗	name
+山から日の出	🌄	name
+山を登る人	🧗	name
+山を登る女	🧗‍♀️	name
+山を登る男	🧗‍♂️	name
+山岳	⛰️	cldr
+山崩れ	🛘	cldr
+山登り	🧗‍♂️	🧗‍♀️	🧗	cldr
+山羊	🐐	name
+山羊座	♑	cldr
+山高帽	🎩	cldr
+岩	🪨	cldr
+岩石	🪨	🛘	name
+島	🏝️	cldr
+崩落	🛘	cldr
+巡礼	🕋	cldr
+巣	🪹	🪺	cldr
+巣作り	🪹	🪺	cldr
+工事	🏗️	👷	🦺	👷‍♂️	👷‍♀️	cldr
+工事中	🚧	name
+工作	🧑‍🔧	👨‍🔧	👩‍🔧	cldr
+工具	⛏️	🔧	⚙️	🔨	🔩	cldr
+工具箱	🧰	name
+工員	🧑‍🏭	👨‍🏭	👩‍🏭	cldr
+工場	🏭	🧑‍🏭	name
+左に向けた手	🫲	name
+左カーブ矢印	↪️	name
+左上	↖️	cldr
+左上矢印	↖️	name
+左下	↙️	cldr
+左下矢印	↙️	name
+左側	🫲	cldr
+左右	↔️	cldr
+左右矢印	↔️	name
+左向き	🫷	cldr
+左向きに押している手	🫷	name
+左向きのこぶし	🤛	name
+左回り矢印	🔄	name
+左指差し	👈	name
+左矢印	⬅️	name
+巨人	🫈	cldr
+巨大	🦣	cldr
+巨大勢力	🦸	cldr
+巨岩	🪨	cldr
+差し出す	🫴	cldr
+巻きページ	📃	name
+巻き戻し	◀️	⏪	cldr
+巻き物	📜	name
+巻き貝	🐚	name
+市場	💹	cldr
+帆船	⛵	cldr
+席	💺	cldr
+常緑樹	🌲	name
+帽子	👒	👳	🎩	🧢	🎓	cldr
+幕の内	🍱	cldr
+干ばつ	🪾	cldr
+平和	☮️	🕊️	😇	cldr
+平和のシンボル	☮️	cldr
+平安	🧘	cldr
+年齢制限	🔞	cldr
+幸せ	🤸	🤸‍♂️	🤸‍♀️	cldr
+幸運	🧧	cldr
+幸運を	🤞	cldr
+幼稚園	📛	cldr
+幽霊	👻	cldr
+床屋	💈	💇‍♀️	💇	💇‍♂️	name
+店	🏪	cldr
+店舗	🏬	cldr
+座る	🧎	🧎‍♂️	🧎‍♀️	cldr
+座席	💺	name
+庭	🏡	🫜	cldr
+庭付きの家	🏡	name
+庵点	〽️	cldr
+廃屋	🏚️	name
+建築	🏗️	🚩	cldr
+建設	🏗️	👷	👷‍♂️	👷‍♀️	cldr
+建設中	🏗️	name
+建設作業員	👷	name
+弁当	🍱	🥡	name
+弁当箱	🍱	cldr
+式場	💒	cldr
+弓	🏹	cldr
+弓矢	🏹	name
+引き付ける	🧲	cldr
+引き出し	🗄️	cldr
+引き算	➖	cldr
+引く	➖	cldr
+引っかけ	🪝	cldr
+引っ掛け	🪝	cldr
+弦楽器	🪕	🪉	cldr
+当たり	🎯	cldr
+彗星	☄️	name
+彫像	🗽	cldr
+役者	🎭	cldr
+待った	🫷	🫸	cldr
+待て	🫷	🫸	cldr
+得	🉐	cldr
+得意気	😤	cldr
+復活	🐦‍🔥	cldr
+微生物	🦠	name
+微笑み	🙂	😊	cldr
+微笑む	🙂	name
+徳利	🍶	name
+徹夜	🫩	cldr
+心拍	🫀	cldr
+心臓	🫀	🩺	name
+心配	😟	cldr
+忍び	🥷	cldr
+忍者	🥷	name
+忍術	🥷	cldr
+応援	📣	cldr
+快速艇	🚤	cldr
+念珠	📿	cldr
+怒った	😠	💢	cldr
+怒った悪魔	👿	name
+怒った顔	😠	cldr
+怒り	😡	💢	😠	hand
+怒りの吹き出し	🗯️	name
+怒りマーク	💢	cldr
+怒る	😡	💢	😠	hand
+怖い	😱	😨	hand
+急ぐ	💨	🏃	🏃‍♀️	cldr
+急げ	💨	cldr
+急須	🫖	cldr
+性別	⚧️	cldr
+怪我	🩼	cldr
+恋人	💑	🧑‍🤝‍🧑	👭	👬	👫	cldr
+恋文	💌	cldr
+恐怖	😱	🧟	🧛	name
+恐竜	🦕	🦖	cldr
+息を吐く顔	😮‍💨	name
+息切れ	😮‍💨	cldr
+悔しい	🫦	cldr
+悩む顔	😟	name
+悪	🦹‍♂️	🦹‍♀️	🦹	cldr
+悪い人	🦹	cldr
+悪人	🦹	cldr
+悪口	🤬	cldr
+悪役	🦹	name
+悪意	🖤	cldr
+悪玉	🦹	cldr
+悪臭	🦨	cldr
+悪魔	😈	👿	cldr
+悲しい	😢	😭	💧	hand
+悲しみ	🥺	cldr
+情け	🥺	cldr
+情報	ℹ️	cldr
+惑星	🪐	cldr
+愛	❤️	💕	😍	hand
+愛してる	🤟	🥰	🩷	cldr
+感動	🥲	cldr
+感嘆符	‼️	❗	cldr
+感嘆符疑問符	⁉️	name
+感激	🥲	cldr
+慰め	🫂	cldr
+憂鬱	🫥	cldr
+懇願	🥹	🥺	cldr
+懐中電灯	🔦	name
+懸垂式モノレール	🚟	name
+成人	🧑	cldr
+成長	📈	cldr
+我慢	😣	name
+我慢する顔	😣	cldr
+戦闘	🪖	cldr
+戸	🚪	cldr
+戻る	🔙	⏪	cldr
+扇	🪭	cldr
+扇子	🪭	name
+扉	🚪	cldr
+手がかり	🗝️	cldr
+手で書く	✍️	cldr
+手のひら	👐	cldr
+手のひらを揃えた両手	🤲	name
+手の甲	🤚	name
+手の甲上指差し	👆	name
+手をつなぐ	🧑‍🤝‍🧑	cldr
+手をつなぐ2人	🧑‍🤝‍🧑	name
+手をつなぐ女性	👭	name
+手をつなぐ男女	👫	name
+手をつなぐ男性	👬	name
+手を上げる	🙌	cldr
+手を叩く	👏	cldr
+手を挙げる	🙋‍♂️	🙋‍♀️	🙋	cldr
+手を挙げる人	🙋	name
+手を挙げる女	🙋‍♀️	name
+手を挙げる男	🙋‍♂️	name
+手を振る	👋	name
+手を返している人	💁	cldr
+手動式車椅子	🦽	name
+手動式車椅子の人	🧑‍🦽	name
+手動式車椅子の女性	👩‍🦽	name
+手動式車椅子の男性	👨‍🦽	name
+手品	🪄	cldr
+手帳	📓	cldr
+手当て	🩹	cldr
+手書き	✍️	cldr
+手漕ぎボート	🚣‍♀️	🚣	cldr
+手紙	📮	💌	✉️	📧	📨	cldr
+手紙あり	📫	📬	cldr
+手紙なし	📪	📭	cldr
+手荷物	🛄	🛅	cldr
+手荷物受取	🛄	name
+手荷物預かり	🛅	name
+手袋	🧤	name
+打ちっぱなし	🏌️	cldr
+打ち上げ花火	🎆	name
+打楽器	🪇	cldr
+技術者	🧑‍💻	name
+投げる	🤾	🤾‍♀️	cldr
+投げキッス	😘	name
+投票	🗳️	cldr
+投票箱	🗳️	name
+抗議	🪧	cldr
+折れ線グラフ	📉	📈	cldr
+抱擁	🫂	cldr
+押しピン	📌	📍	name
+押す	🫷	🫸	cldr
+担任	🧑‍🏫	cldr
+拍手	👏	name
+拡声器	📢	📣	name
+拡大鏡	🔍	🔎	cldr
+拳銃	🔫	cldr
+拾う	🫳	cldr
+持ち帰り	🥡	cldr
+持ち物	☂️	🌂	☔	cldr
+指	🈯	🤞	🤏	👈	👉	cldr
+指の間からのぞき見る顔	🫣	name
+指をクロス	🤞	🫰	name
+指ハート	🫰	cldr
+指マーク	🈯	name
+指定席	🈯	cldr
+指差し	☝️	👈	👉	👆	👇	cldr
+指摘	🫵	cldr
+指紋	🫆	name
+指輪	💍	name
+挙げたこぶし	✊	cldr
+挙手	✋	🖐️	🙋‍♂️	🙋‍♀️	🙋	name
+挨拶	🫂	cldr
+振りかけ容器	🧂	cldr
+振る	🪇	cldr
+振動	🫨	cldr
+捨て駒	♟️	cldr
+掃く	🧹	cldr
+掃除	🧹	🧽	cldr
+授乳	🤱	🧑‍🍼	👩‍🍼	👨‍🍼	name
+授乳する人	🧑‍🍼	name
+授乳する女性	👩‍🍼	name
+授乳する男性	👨‍🍼	name
+掘る	🪏	cldr
+掛け算	✖️	❌	❎	name
+掛け金	🪝	cldr
+採掘	⛏️	cldr
+探偵	🕵️	🕵️‍♂️	🕵️‍♀️	name
+接続	🛜	cldr
+換気	🪟	cldr
+握手	🤝	🫱	🫲	name
+携帯	📱	📳	cldr
+携帯受信	📲	cldr
+携帯禁止	📵	cldr
+携帯電話	📱	📴	📳	📶	📲	name
+携帯電話禁止	📵	name
+携帯電話電源オフ	📴	name
+撮影	🎥	cldr
+操る	🤹	🤹‍♂️	cldr
+操縦士	🧑‍✈️	👩‍✈️	👨‍✈️	cldr
+支払い	💳	💸	cldr
+放る	🤾	🤾‍♀️	cldr
+放射性	☢️	cldr
+放射線	☢️	cldr
+放射能	☢️	name
+放心状態	😶‍🌫️	cldr
+放送	📢	📻	cldr
+救助	🛟	cldr
+救助隊	🧑‍🚒	⛑️	cldr
+救命具	🛟	cldr
+救命浮環	🛟	name
+救急	⛑️	cldr
+救急車	🚑	name
+教会	⛪	🔔	💒	name
+教師	🧑‍🏫	👨‍🏫	👩‍🏫	name
+教授	🧑‍🏫	👨‍🏫	👩‍🏫	cldr
+散歩	🚶‍♀️	🚶	cldr
+散髪される人	💇	name
+散髪される女	💇‍♀️	name
+散髪される男	💇‍♂️	name
+敬礼	🫡	cldr
+敬礼する顔	🫡	name
+数字	🔢	cldr
+数字の入力	🔢	name
+数学	🟰	cldr
+数珠	📿	name
+整備士	🧑‍🔧	🧰	name
+文書	📜	📄	📃	cldr
+料理	🍳	🧑‍🍳	🔪	👨‍🍳	👩‍🍳	name
+料理人	👨‍🍳	👩‍🍳	cldr
+斧	🪓	name
+断る	🫷	🫸	cldr
+新	🆕	cldr
+新しい	🆕	cldr
+新幹線	🚄	🚅	name
+新月	🌑	🌚	name
+新生児	🍼	👶	🧑‍🍼	👩‍🍼	👨‍🍼	cldr
+新聞	📰	🗞️	name
+新聞紙	📰	🗞️	cldr
+新芽	🌱	name
+方位磁針	🧭	cldr
+方向	🫱	🫲	cldr
+方角	🧭	cldr
+施術	💆	cldr
+施錠	🔒	cldr
+旅客船	🛳️	cldr
+旅行	✈️	🧳	cldr
+旅行かばん	🧳	cldr
+旗	🏴	🏳️	🚩	🎌	⛳	cldr
+日の丸	🎌	cldr
+日の出	🌅	🌄	name
+日めくりカレンダー	📆	name
+日付	📅	📆	🗓️	cldr
+日傘	⛱️	cldr
+日光	☀️	🌅	cldr
+日暮れ	🌇	cldr
+日本	🇯🇵	🗾	🏯	🎋	🎍	name
+日本の城	🏯	cldr
+日本地図	🗾	name
+日本酒	🍶	cldr
+日没	🌇	cldr
+日焼け止め	🧴	cldr
+早戻し	⏪	cldr
+早戻しボタン	⏪	name
+早送り	⏩	cldr
+早送りボタン	⏩	name
+昆虫	🐜	🪲	🦋	🦗	cldr
+昇降機	🛗	cldr
+明かり	🔦	🕯️	🪔	💡	cldr
+明るい	🔆	cldr
+明るさ	🔅	🔆	cldr
+星	⭐	✨	🌟	hand
+星と三日月	☪️	name
+星空	🌃	🌌	cldr
+映写機	📽️	name
+映画	🎦	🎞️	🎥	🎬	📽️	name
+映画カメラ	🎥	name
+映画フィルム	🎞️	name
+映画館	🎦	cldr
+時計回り	🔃	🔂	🔁	cldr
+時間	⌚	⏰	🕰️	⏳	cldr
+晴れ	☀️	hand
+晴れ時々曇り	🌤️	name
+暑い	🥵	☀️	🔥	hand
+暑い顔	🥵	name
+暑さ	🥵	cldr
+暗い	🔅	cldr
+曇り	☁️	hand
+曇り一時晴れ	🌥️	name
+曇り時々晴れ	⛅	name
+曲げた脚	🦵	cldr
+曲線	↩️	↪️	⤴️	⤵️	cldr
+更新	🆙	🔄	cldr
+書いている手	✍️	name
+書籍	📕	📗	📙	📘	📖	cldr
+書類	📜	📄	📃	cldr
+月	🌙	🌕	hand
+月めくりカレンダー	🗓️	name
+月マーク	🈷️	name
+月極	🈷️	cldr
+月見	🎑	name
+月額	🈷️	cldr
+月餅	🥮	name
+有	🈶	cldr
+有マーク	🈶	name
+有害物質	☣️	cldr
+有料	🈶	cldr
+有明月	🌘	name
+有袋類	🦘	cldr
+有限	🈶	cldr
+服	👚	👕	👗	👘	🥻	cldr
+望遠鏡	🔭	name
+朝	🌅	🌄	cldr
+朝日	🌅	🌄	cldr
+朝食	🧇	🥯	🍳	🥣	🍴	cldr
+木	🌴	🌲	🌳	🪓	🪵	cldr
+木の葉	🍂	🍃	cldr
+木工	🪚	cldr
+木材	🪵	cldr
+未成年	🔞	cldr
+未確認動物	🫈	cldr
+未確認飛行物体	🛸	cldr
+本	📕	📗	📙	📘	📖	cldr
+本の山	📚	name
+札束	💴	💵	💶	💸	💷	cldr
+材木	🪵	cldr
+杖	🩼	🪄	cldr
+杖をついた人	🧑‍🦯	name
+杖をついた女性	👩‍🦯	name
+杖をついた男性	👨‍🦯	name
+東	➡️	cldr
+東ティモール	🇹🇱	name
+東京	🗼	cldr
+東京タワー	🗼	name
+松葉杖	🩼	name
+板	🎿	cldr
+板チョコ	🍫	cldr
+果実	🫒	cldr
+枝角	🫎	cldr
+枝豆	🫛	cldr
+枯れ木	🪾	name
+枯れ葉	🍂	cldr
+柑橘類	🍋	🍊	🍋‍🟩	cldr
+柔道	🥋	cldr
+栗	🌰	cldr
+校舎	🏫	cldr
+株	💹	cldr
+株価	💹	cldr
+根	🫜	cldr
+根菜	🫜	name
+格闘	🤼	🤼‍♂️	🤼‍♀️	cldr
+格闘技	🥋	cldr
+桃	🍑	name
+案内	💁‍♂️	💁‍♀️	💁	cldr
+案内する人	💁	name
+案内する女	💁‍♀️	💁	name
+案内する男	💁‍♂️	name
+案内所	ℹ️	cldr
+桜	🌸	hand
+梯子	🪜	cldr
+棒グラフ	📊	name
+棒付きキャンディ	🍭	cldr
+森	🌲	🌳	🫈	cldr
+森の人	🦧	cldr
+棺	⚰️	cldr
+棺桶	⚰️	name
+椅子	🪑	🦽	🦼	💺	name
+植木鉢	🪴	cldr
+植物	🏵️	🌺	🌵	💐	🌷	cldr
+椎茸	🍄‍🟫	cldr
+検索	🔍	🔎	cldr
+検閲	🤬	cldr
+極楽	🪷	cldr
+極秘	㊙️	cldr
+楽しい	😆	🎶	😊	hand
+楽器	🎺	🪗	🎸	🪕	🎷	cldr
+楽譜	🎼	name
+標識	🛑	⚠️	🚸	🚷	⛔	cldr
+横を向いているひよこ	🐤	cldr
+横笛	🪈	cldr
+樹木	🪵	cldr
+橋	🌉	cldr
+機械工	🧰	cldr
+機長	🧑‍✈️	cldr
+機関車	🚂	cldr
+次のシーン	⏭️	cldr
+次のトラック	⏭️	cldr
+次の曲ボタン	⏭️	name
+欧州連合	🇪🇺	name
+歌	🎤	cldr
+歌手	🧑‍🎤	👨‍🎤	👩‍🎤	name
+歌記号	〽️	cldr
+止まれ	🛑	🫷	🫸	cldr
+止まれの標識	🛑	name
+止めピン	🧷	cldr
+正午	🕛	cldr
+正座する人	🧎	name
+正座する女性	🧎‍♀️	name
+正座する男性	🧎‍♂️	name
+正月	🎍	cldr
+正装	🤵	cldr
+正負	🧲	cldr
+武器	🗡️	⚔️	🔫	🪃	🏹	cldr
+武道	🥋	name
+歩く	🚶‍♀️	🚶	cldr
+歩く人	🚶	name
+歩く女	🚶‍♀️	name
+歩く屍	🧟	cldr
+歩く男	🚶‍♂️	name
+歩行	🚶‍♂️	🚶‍♀️	🚶	cldr
+歩行者	🚶‍♂️	🚶‍♀️	🚶	cldr
+歩行者立入禁止	🚷	name
+歩行補助	🩼	cldr
+歯	🦷	🧛	name
+歯ブラシ	🪥	name
+歯医者	🦷	cldr
+歯磨き	🪥	cldr
+歯科医	😷	cldr
+歯車	⚙️	name
+歴史	🏛️	cldr
+歴史的な建物	🏛️	name
+歴史的建造物	🏛️	cldr
+死	⚱️	⚰️	💀	☠️	cldr
+死にそう	🥵	cldr
+死者	⚰️	💀	cldr
+残念	😞	cldr
+段ボール	📦	cldr
+母親	🧑‍🍼	👩‍🍼	cldr
+毒	🐍	🍄	🪼	cldr
+毛むくじゃら	🫈	cldr
+毛むくじゃらの生物	🫈	name
+毛糸	🧶	name
+毛糸玉	🧶	cldr
+毛虫	🐛	name
+民族衣装	🥻	cldr
+気候変動	🪸	cldr
+気持ち	🩷	cldr
+気持ち悪い	🤢	🤮	cldr
+気温	🌡️	cldr
+水	🚰	💧	🫗	🥤	cldr
+水やり	🪴	cldr
+水上競技	🤽	🤽‍♂️	🤽‍♀️	cldr
+水中	🫧	cldr
+水族館	🪼	cldr
+水晶	🔮	cldr
+水晶玉	🔮	name
+水晶球	🔮	cldr
+水泳	🤽	🥽	🏊‍♂️	🤽‍♂️	🤽‍♀️	cldr
+水滴	💧	💦	name
+水牛	🐃	name
+水球	🤽	🤽‍♂️	🤽‍♀️	cldr
+水球をする人	🤽	name
+水球をする女	🤽‍♀️	name
+水球をする男	🤽‍♂️	name
+水瓶	🏺	cldr
+水瓶座	♒	cldr
+水着	🩱	👙	🩲	🩳	cldr
+水色	🩵	cldr
+水道	🚰	cldr
+水鉄砲	🔫	name
+氷	🧊	🍧	cldr
+氷山	🧊	cldr
+氷点下	🥶	cldr
+永遠	♾️	cldr
+汗	💦	😅	(^_^;)	hand
+汽車	🚂	cldr
+沈黙	😶	cldr
+治療	⚕️	cldr
+法輪	☸️	name
+泡	🫧	🧼	🍾	name
+泡風呂	🛁	cldr
+波	🌊	〰️	🏄	name
+波乗り	🏄‍♂️	🏄‍♀️	🏄	cldr
+波浪	🌊	cldr
+波線	〰️	name
+泣いている猫	😿	name
+泣き笑い	🤣	😂	cldr
+泣き顔	😢	😩	🥹	name
+泣く	😭	😢	hand
+注射	💉	cldr
+注射器	💉	name
+注意	⚠️	cldr
+泳ぐ人	🏊	name
+泳ぐ女	🏊‍♀️	name
+泳ぐ男	🏊‍♂️	name
+洋ナシ	🍐	name
+洗濯	🧺	cldr
+洗面所	🪥	cldr
+活動的	🤸	cldr
+活発	🤸	🤸‍♂️	🤸‍♀️	cldr
+派手	🦚	🦩	cldr
+流れ星	🌠	💫	name
+浮いてるビジネスマン	🕴️	name
+浮き輪	🛟	cldr
+浴槽	🛀	🛁	cldr
+海	🫍	🪸	🔱	🌊	🏄	cldr
+海の生物	🧜	cldr
+海底	🧜	cldr
+海洋	🫍	cldr
+海洋生物	🪼	cldr
+海獣	🦭	cldr
+海綿	🧽	cldr
+海賊	🏴‍☠️	🦜	cldr
+海賊旗	🏴‍☠️	name
+消火	🧯	cldr
+消火器	🧯	name
+消火器具	🧯	cldr
+消防	🧯	cldr
+消防士	🧑‍🚒	👨‍🚒	👩‍🚒	name
+消防車	🚒	name
+消音	🔇	🔕	cldr
+涙	🥲	🥹	💧	😢	😭	cldr
+涙をこらえた顔	🥹	name
+液体	🫗	🫠	cldr
+涼む	🪭	cldr
+混乱	😕	😖	name
+清浄	🪷	cldr
+清潔	🧼	cldr
+済	✅	☑️	✔️	cldr
+減算	➖	cldr
+渦巻き	🌀	🍥	😵‍💫	name
+温かい飲み物	☕	name
+温度	🌡️	cldr
+温度計	🌡️	name
+温泉	♨️	cldr
+温泉マーク	♨️	name
+湯気	♨️	cldr
+湯飲み	🍵	name
+満マーク	🈵	name
+満員	🈵	cldr
+満室	🈵	cldr
+満席	🈵	cldr
+満月	🌕	🌝	name
+満点	💯	cldr
+満足	😊	😆	cldr
+満車	🈵	cldr
+溶かす	🫕	cldr
+溶けそう	🫠	cldr
+溶けている顔	🫠	name
+溶ける	🫠	cldr
+溶岩	🌋	cldr
+溶接	👨‍🏭	👩‍🏭	🥽	cldr
+溶接工	🧑‍🏭	name
+演劇	🎭	cldr
+演芸	🎭	cldr
+漕ぐ	🚣	cldr
+漬け物	🥒	cldr
+潮吹き	🐳	cldr
+潮吹きクジラ	🐳	name
+激怒	😡	👿	cldr
+火	🔥	name
+火の付いた	❤️‍🔥	cldr
+火の鳥	🐦‍🔥	cldr
+火事	🧯	cldr
+火山	🌋	name
+火花	🎇	🧨	cldr
+火薬	🧨	cldr
+灰色	🩶	cldr
+灰色のハート	🩶	name
+災害	🛘	cldr
+炎	❤️‍🔥	🔥	cldr
+点心	🥟	name
+点線の顔	🫥	name
+為替	💹	name
+烏	🐦‍⬛	cldr
+無	🈚	cldr
+無マーク	🈚	name
+無人島	🏝️	name
+無感情	😑	cldr
+無料	🆓	🈚	cldr
+無気力	🫤	cldr
+無神論	⚛️	cldr
+無線	🛜	cldr
+無線LAN	🛜	cldr
+無脊椎動物	🪼	cldr
+無表情	😑	😐	😶	name
+無言	😶	cldr
+無関心	🫤	cldr
+無限	♾️	cldr
+無限大	♾️	name
+無音	🔇	cldr
+焼き芋	🍠	name
+焼き菓子	🧇	cldr
+煉瓦	🧱	cldr
+煙突	🏭	cldr
+煙草	🚬	🚭	name
+煮物	🍲	cldr
+煮込み	🍲	cldr
+熊	🐻	cldr
+熱	🦟	cldr
+熱々	💑	🍜	cldr
+熱い	🔥	cldr
+熱がある顔	🤒	name
+熱を測る	🤒	cldr
+熱中症	🥵	cldr
+熱帯	🌴	🦩	cldr
+熱帯魚	🐠	name
+燃える	🔥	cldr
+燃えるハート	❤️‍🔥	name
+燭台	🕎	cldr
+爆弾	💣	name
+爆発	🤯	💣	💥	🧨	cldr
+爆発物	🧨	cldr
+爆竹	🧨	name
+爆笑	😹	🤣	😂	cldr
+爆薬	🧨	cldr
+爪	💅	cldr
+爬虫類	🐊	🐢	🦎	🐍	cldr
+父親	🧑‍🍼	👨‍🍼	cldr
+片目	👁️	name
+片眼鏡	🧐	cldr
+牌	🀄	cldr
+牙	🦣	🧛	cldr
+牛	🐃	🐮	🐂	🐄	🦬	cldr
+牛の顔	🐮	name
+牛乳	🥛	cldr
+牛乳入りのコップ	🥛	name
+牝牛	🐄	name
+牡牛	🐂	name
+牡牛座	♉	cldr
+牡羊	🐏	name
+牡羊座	♈	cldr
+牡蠣	🦪	name
+物理学者	🧑‍🔬	cldr
+犬	🐶	🐕	hand
+犯人	🦹‍♂️	🦹‍♀️	🦹	cldr
+犯罪者	🦹	cldr
+狐	🦊	cldr
+狼	🐺	cldr
+猪	🐗	cldr
+猪口	🍶	cldr
+猫	🐱	🐈	😺	hand
+猫のキス	😽	name
+献血	🩸	cldr
+猿	🐒	🙉	🐵	🦧	🙈	cldr
+獅子座	♌	cldr
+玄関	🚪	cldr
+玉	🔮	cldr
+玉ねぎ	🧅	cldr
+玉突き	🎱	cldr
+王	🫅	cldr
+王冠	👑	name
+王冠をかぶった人	🫅	name
+王女	👸	cldr
+王妃	👸	cldr
+王子	🤴	cldr
+王家	🫅	cldr
+王族	👑	🤴	🫅	cldr
+王様	🫅	cldr
+玩具	🪀	🪁	🧸	🪃	cldr
+珊瑚礁	🪸	cldr
+現金	💷	💰	cldr
+現金自動預け払い機	🏧	cldr
+球	🎳	cldr
+球技	🏌️	⛹️‍♂️	🤽	🤾‍♂️	🏌️‍♀️	cldr
+理容室	💈	💇	💇‍♂️	cldr
+理容院	💈	💇	💇‍♂️	cldr
+理髪店	💈	cldr
+環	🔗	cldr
+環のある惑星	🪐	name
+瓶	🫙	name
+甘い	😛	🍯	cldr
+生まれ変わり	🐦‍🔥	cldr
+生ガキ	🦪	cldr
+生体認証	🫆	cldr
+生命	🧬	cldr
+生姜	🫚	cldr
+生物学	🧫	🧬	cldr
+生物学者	🧑‍🔬	🧫	🧬	cldr
+生理	🩸	cldr
+申	🈸	cldr
+申し込み	🈸	cldr
+申マーク	🈸	name
+申請	🈸	cldr
+男のエルフ	🧝‍♂️	name
+男のゾンビ	🧟‍♂️	name
+男の吸血鬼	🧛‍♂️	name
+男の妖精	🧚‍♂️	name
+男の子	👦	name
+男の精霊	🧞‍♂️	name
+男の魔法使い	🧙‍♂️	name
+男女	👫	cldr
+男子トイレ	🚹	name
+男子学生	👨‍🎓	name
+男性のコック	👨‍🍳	name
+男性のスーパーヒーロー	🦸‍♂️	name
+男性のマーク	♂️	name
+男性の医者	👨‍⚕️	name
+男性の建設作業員	👷‍♂️	name
+男性の悪役	🦹‍♂️	name
+男性の探偵	🕵️‍♂️	name
+男性の教師	👨‍🏫	name
+男性の整備士	👨‍🔧	name
+男性の溶接工	👨‍🏭	name
+男性の芸術家	👨‍🎨	name
+男性の衛兵	💂‍♂️	name
+男性の裁判官	👨‍⚖️	name
+男性パイロット	👨‍✈️	name
+男性会社員	👨‍💼	name
+男性宇宙飛行士	👨‍🚀	name
+男性技術者	👨‍💻	name
+男性歌手	👨‍🎤	name
+男性消防士	👨‍🚒	name
+男性科学者	👨‍🔬	name
+男性警察官	👮‍♂️	name
+画びょう	📍	cldr
+画家	🧑‍🎨	👨‍🎨	👩‍🎨	🎨	cldr
+画鋲	📌	cldr
+留め金	🪝	cldr
+略奪	🏴‍☠️	cldr
+異性	👫	cldr
+異星人	👽	👾	cldr
+異議	🪧	cldr
+疑い	🤨	cldr
+疑問符	❓	❔	❕	cldr
+疲れ	😫	😩	🥱	cldr
+疲れた	😩	💦	😮‍💨	hand
+疲れた顔	😫	cldr
+病原菌	🪰	cldr
+病気	😵	💊	🩺	🤒	🤢	cldr
+病院	🏥	name
+痛い	🤕	cldr
+癒し	💆	cldr
+発射	🚀	cldr
+発熱	🥵	cldr
+登る	🧗	🪜	cldr
+登山	🧗‍♂️	🧗‍♀️	🧗	cldr
+登山鉄道	🚞	name
+登山電車	🚞	cldr
+登山靴	🥾	cldr
+登録商標	®️	cldr
+登録商標マーク	®️	name
+白いハート	🤍	💟	name
+白い丸	⚪	name
+白い感嘆符	❕	name
+白い歯	🦷	cldr
+白い疑問符	❔	name
+白十字	⛑️	cldr
+白十字ヘルメット	⛑️	name
+白四角中	◽	name
+白四角大	◻️	name
+白四角小	▫️	name
+白四角特大	⬜	name
+白抜きのチェック	✅	name
+白抜きのバツ	❎	name
+白旗	🏳️	name
+白杖	🦯	name
+白杖をついた女性	👩‍🦯	cldr
+白杖をついた男性	👨‍🦯	cldr
+白枠四角	🔳	name
+白衣	🥼	name
+白鳥	🦢	name
+百貨店	🏬	cldr
+的	🎯	name
+的中	🎯	cldr
+皿	🍽️	cldr
+盗み見	🫣	cldr
+目がぐるぐる	😵‍💫	cldr
+目がハートの猫	😻	name
+目がハートの笑顔	😍	name
+目が回る	💫	😵‍💫	cldr
+目が星の笑顔	🤩	name
+目にクマがある顔	🫩	name
+目をむく	🙄	cldr
+目を回した顔	😵‍💫	name
+目を細める	😊	cldr
+目を閉じてべー	😝	name
+目を閉じてキス	😚	cldr
+目を閉じる	😚	cldr
+目を開けて口に手を当てた顔	🫢	name
+目撃	👁️‍🗨️	cldr
+目玉焼き	🍳	cldr
+目覚まし	⏰	cldr
+目覚まし時計	⏰	name
+目隠し	🙈	cldr
+盲導犬	🦮	name
+直定規	📏	cldr
+直翅目	🦗	cldr
+相方	👯	cldr
+盾	🛡️	name
+眉を上げた顔	🤨	name
+看板	🪧	cldr
+真珠	🦪	cldr
+眠い	😪	😴	💤	hand
+眠そうな顔	😪	cldr
+眠っている顔	😪	cldr
+眠る	😪	😴	cldr
+眺め	🪟	cldr
+眼鏡	👓	🕶️	😎	cldr
+着信中	📲	name
+着物	👘	name
+着陸	🛬	cldr
+睡眠	🛏️	cldr
+瞑想	🧘‍♂️	🧘‍♀️	🧘	cldr
+矢	💘	🏹	cldr
+知らない	🤷	🤷‍♂️	🤷‍♀️	cldr
+知的	🤓	cldr
+知識	🧠	📖	cldr
+短冊	🎋	cldr
+短刀	🗡️	name
+短剣	🗡️	cldr
+石	🪨	cldr
+石けん	🧼	🫧	name
+石像	🗿	cldr
+石材	🪨	cldr
+石油	🛢️	cldr
+石碑	🪦	cldr
+砂	⌛	⏳	cldr
+砂が落ちている砂時計	⏳	name
+砂時計	⌛	⏳	name
+砂浜	🏖️	⛱️	cldr
+砂漠	🏜️	🌵	🐪	🐫	name
+砂糖	🧁	cldr
+研究	🔬	cldr
+硬い	🪨	cldr
+硬貨	🪙	cldr
+碇	⚓	cldr
+磁石	🧲	🧭	cldr
+礼拝	🛐	cldr
+礼拝堂	⛪	💒	cldr
+礼拝所	🛐	name
+社外秘	㊙️	cldr
+社屋	🏢	cldr
+祈り	🙏	🛐	🤲	name
+祈る	📿	cldr
+祝	㊗️	cldr
+祝マーク	㊗️	name
+祝日	🎌	cldr
+祝日の旗	🎌	name
+祝杯	🥂	cldr
+神社	⛩️	cldr
+神秘的	🧝	cldr
+神話	🧞	🧝	🧚	🪽	🐦‍🔥	cldr
+神道	⛩️	cldr
+禁	🈲	cldr
+禁マーク	🈲	name
+禁止	🚯	🚷	🔞	⛔	🚳	cldr
+禁止された	🙅	cldr
+禁煙	🚭	name
+禅	🧘	cldr
+秀才	🤓	cldr
+私立探偵	🕵️	🕵️‍♀️	cldr
+秋	🥮	cldr
+科学	🔬	🔭	🦠	🔍	🔎	cldr
+科学者	🧑‍🔬	👨‍🔬	👩‍🔬	🥼	name
+秘	㊙️	cldr
+秘密	🙉	㊙️	🤐	🙊	cldr
+税関	🛃	name
+稲	🌾	name
+稲妻	🌩️	⚡	⛈️	cldr
+稲穂	🌾	cldr
+穀物	🌾	cldr
+穴	🕳️	🪏	name
+空	🈳	🫙	🪽	cldr
+空き	🈳	cldr
+空き家	🏚️	cldr
+空き瓶	🫙	cldr
+空っぽの巣	🪹	name
+空マーク	🈳	name
+空中浮遊	🕴️	cldr
+空室	🈳	cldr
+空席	🈳	cldr
+空想	💭	cldr
+空手	🥋	cldr
+空色	🩵	cldr
+空飛ぶ円盤	🛸	name
+突風	🌪️	cldr
+窓	🪟	name
+立っている	🧍	cldr
+立つ人	🧍	name
+立つ女	🧍‍♀️	name
+立つ男	🧍‍♂️	name
+立てた中指	🖕	name
+竜	🐉	🐲	cldr
+竜巻	🌪️	name
+竜脚類	🦕	cldr
+童話	🧚	cldr
+競技	🚵	cldr
+競技場	🏟️	name
+競走馬	🏇	🐎	cldr
+競輪	🚴‍♂️	🚴	🚴‍♀️	cldr
+競馬	🏇	🐎	name
+竹	🎍	cldr
+笑	😂	🤣	😆	hand
+笑い	😂	🤣	😆	hand
+笑い転げる	🤣	name
+笑う	😁	😸	😀	🤣	😂	cldr
+笑えない	😐	cldr
+笑った悪魔	😈	name
+笛	🪈	🥳	name
+笹飾り	🎋	cldr
+等しい	🟰	cldr
+等号	🟰	cldr
+筋トレ	💪	🏋️	cldr
+筋肉	💪	cldr
+算盤	🧮	cldr
+管楽器	🪊	🪈	cldr
+箱	🧰	🎁	📤	🗃️	📥	cldr
+箸	🥢	🥡	🍜	cldr
+簿記	🧾	cldr
+米	🍚	🍙	🌾	cldr
+米領サモア	🇦🇸	name
+米領ヴァージン諸島	🇻🇮	name
+粘土	🧱	cldr
+粥	🥣	cldr
+精霊	🧞	🧞‍♂️	🧞‍♀️	name
+糸	🧵	🪡	name
+糸巻き	🧵	cldr
+約物	〰️	✳️	✴️	〽️	❇️	cldr
+紅包	🧧	cldr
+紅茶	☕	cldr
+紅葉	🍁	cldr
+紋章	⚜️	cldr
+紙	📜	cldr
+紙と鉛筆	📝	cldr
+紙クリップ	📎	🖇️	cldr
+紙パック飲料	🧃	name
+紙吹雪	🎊	cldr
+紙幣	💴	💵	💶	💸	💷	cldr
+紙手提げ	🛍️	cldr
+紙袋	🛍️	name
+紫	💜	🟣	🟪	cldr
+紫のハート	💜	💟	name
+紫の丸	🟣	name
+紫の四角	🟪	name
+紫色	🪻	cldr
+細菌	🦠	cldr
+紳士靴	👞	name
+終わり	🔚	cldr
+組み合わせ	🧩	cldr
+絆創膏	🩹	name
+結び目	🪢	name
+結婚	💒	🤵	👰	cldr
+結婚式	💒	name
+結晶	❄️	cldr
+給油	⛽	cldr
+絵	🖼️	🎨	cldr
+絵の具	🖌️	cldr
+絵の具パレット	🎨	name
+絵描き	🧑‍🎨	cldr
+絵画	🖼️	🎨	name
+絵筆	🖌️	name
+絶望する猫	🙀	name
+絶滅	🦣	🦤	cldr
+綱	🪢	cldr
+緊急	🚨	🦺	cldr
+緑	💚	🟢	🟩	🪴	🍋‍🟩	cldr
+緑のハート	💚	name
+緑の丸	🟢	name
+緑の四角	🟩	name
+緑の本	📗	name
+緑茶	🍵	cldr
+線路	🛤️	name
+線香花火	🎇	name
+編み物	🧶	cldr
+練り物	🍢	🍥	cldr
+縞	🦓	cldr
+縫い針	🪡	🧵	name
+縫う	🪡	cldr
+繰り返し	🔂	🔄	🔁	cldr
+缶	🥫	cldr
+缶詰	🥫	name
+置き時計	🕰️	cldr
+置時計	🕰️	name
+羊	🐑	🐏	name
+羊毛	🐑	🦙	cldr
+美味しい	😋	🤤	✨	hand
+美容室	💇‍♀️	💈	💇	💇‍♂️	cldr
+美容院	💇‍♀️	💈	💇	💇‍♂️	cldr
+美術館	🖼️	🎨	cldr
+群れ	🦬	cldr
+義手	🦾	name
+義足	🦿	name
+羽	🪶	🪽	name
+羽が生えたお金	💸	name
+羽根	🪶	cldr
+羽毛	🪶	cldr
+翼	🪽	name
+老人	🧓	👵	👴	cldr
+考える	🤔	🧐	cldr
+考える顔	🤔	name
+考え中	🤔	cldr
+考え事	💭	cldr
+考え込む顔	😔	cldr
+耳	👂	🦻	name
+耳の不自由な人	🧏	name
+耳の不自由な女性	🧏‍♀️	name
+耳の不自由な男性	🧏‍♂️	name
+聖なる心臓	❤️‍🔥	cldr
+聖地	🕋	cldr
+聞かざる	🙉	name
+聞き耳	👂	cldr
+聞く	👂	cldr
+聞こえない	🧏	cldr
+聴覚	🦻	🧏‍♂️	🧏‍♀️	🧏	cldr
+聴診器	🩺	name
+肉	🍖	🍗	🥩	🥓	cldr
+肉まん	🥟	cldr
+肉団子	🧆	cldr
+肉球	🐾	name
+肉食動物	🐆	🐅	cldr
+肝を冷やした	😓	cldr
+肩をすくめる	🤷	🤷‍♂️	🤷‍♀️	cldr
+肺	🫁	name
+胡坐	🧘	cldr
+脈	🫀	cldr
+脚	🦵	🦿	name
+脳	🧠	name
+脳みそ	🧠	cldr
+腕	🦾	💪	cldr
+腕時計	⌚	name
+腰掛け	🪑	cldr
+腹ぺこ	😩	😋	cldr
+膝	🦵	cldr
+膨れた	🫪	cldr
+臓器	🫁	🫀	cldr
+自分撮り	🤳	cldr
+自動車	🚗	🚘	🛞	🚙	🛻	name
+自動車正面	🚘	name
+自撮り	🤳	cldr
+自然	🏞️	🌊	cldr
+自由の女神	🗽	name
+自由形	🏊	cldr
+自転車	🚲	🚳	🚴	🚴‍♀️	🚵‍♂️	name
+自転車に乗る人	🚴	name
+自転車に乗る女	🚴‍♀️	name
+自転車に乗る男	🚴‍♂️	name
+自転車乗り	🚵‍♀️	🚴	🚵	🚴‍♀️	cldr
+自転車禁止	🚳	name
+臭い	💩	cldr
+興奮	🤸	🤸‍♂️	🤸‍♀️	cldr
+舌	👅	😛	🤑	😜	😝	name
+舌を出した顔	😛	🥵	name
+舞台芸術	🎭	name
+航海	🧭	cldr
+航空	🧭	cldr
+航空機	✈️	🛩️	🛫	🛬	cldr
+船	🚢	🛳️	⚓	⛴️	🛥️	name
+芋	🍠	cldr
+芋虫	🐛	cldr
+花	🌸	💐	🌷	hand
+花札	🎴	name
+花束	💐	name
+花火	🎇	🎆	🧨	cldr
+花火大会	🎆	cldr
+花粉症	🤧	😷	cldr
+花飾り	🏵️	name
+芸術	🎭	🖼️	🎨	cldr
+芸術家	🧑‍🎨	👨‍🎨	👩‍🎨	name
+芽	🌱	cldr
+苗	🪴	cldr
+若葉マーク	🔰	cldr
+苦悩	😧	name
+苦悶	😧	cldr
+英大文字の入力	🔠	name
+英字	🔤	🔠	🔡	cldr
+英字の入力	🔤	name
+英小文字の入力	🔡	name
+英領インド洋地域	🇮🇴	name
+英領ヴァージン諸島	🇻🇬	name
+苺	🍓	cldr
+茶器	🫖	cldr
+茶碗	🍵	cldr
+茶色	🤎	🟤	🟫	cldr
+茶色いハート	🤎	name
+茶色い四角	🟫	name
+茶色い靴	🥾	cldr
+茶色の丸	🟤	name
+茸	🍄‍🟫	cldr
+草	🤣	😂	🌱	hand
+草の者	🥷	cldr
+草食恐竜	🦕	name
+荷札	🏷️	name
+荷物	📦	name
+菌類	🍄	🍄‍🟫	cldr
+落ち葉	🍂	🍁	🍃	name
+落とす	🫳	cldr
+落石	🛘	cldr
+落胆	🫥	cldr
+落花生	🥜	cldr
+落葉樹	🌳	name
+葉	🍂	🍀	🍃	☘️	🌿	cldr
+葉っぱ	🍂	🍃	cldr
+葉のない木	🪾	cldr
+葉野菜	🥬	name
+著作権	©️	cldr
+著作権マーク	©️	name
+葬儀	⚱️	cldr
+蒸しぶろ	🧖	cldr
+蒸気	🧖	cldr
+蒸気機関車	🚂	name
+蒸留器	⚗️	name
+蓮華座のポーズ	🧘	cldr
+薄い青	🩵	cldr
+薄い青のハート	🩵	name
+薄毛	👴	cldr
+薄笑いをする顔	😏	name
+薔薇	🌹	cldr
+薪割り	🪓	cldr
+薬	💊	🏥	🩹	💉	name
+薬味	🧅	🧂	🧄	🫚	cldr
+薬草	🌿	🫚	cldr
+虎	🐯	🐅	cldr
+虫	🐛	🐜	🐞	🪳	🕷️	cldr
+虫めがね	🕵️	🕵️‍♂️	🕵️‍♀️	🔍	🔎	cldr
+虫歯	🍬	🪥	cldr
+虫眼鏡右	🔎	name
+虫眼鏡左	🔍	name
+虹	🌈	name
+虹色の旗	🏳️‍🌈	cldr
+蚊	🦟	name
+蛇遣座	⛎	cldr
+蜂	🐝	cldr
+蝶	🦋	cldr
+蟹座	♋	cldr
+蠍座	♏	cldr
+血	🧛	cldr
+血液	🩸	name
+血液型	🅰️	🆎	🅱️	🅾️	cldr
+血液型AB型	🆎	name
+血液型A型	🅰️	name
+血液型B型	🅱️	name
+血液型O型	🅾️	name
+街	🏘️	cldr
+衛兵	💂	💂‍♂️	💂‍♀️	name
+衛星アンテナ	📡	cldr
+衛生	🪥	cldr
+衝撃	💥	cldr
+衝突	💥	name
+表彰	🎖️	🏆	🏅	cldr
+表紙付きノート	📔	name
+裁判	🧑‍⚖️	👨‍⚖️	👩‍⚖️	cldr
+裁判官	🧑‍⚖️	👨‍⚖️	👩‍⚖️	name
+裁縫	🧵	🪡	cldr
+補助	🐕‍🦺	🦮	cldr
+補助犬	🦮	cldr
+補聴器を付けた耳	🦻	name
+裸足	👣	cldr
+複合機	📠	🖨️	cldr
+複数の家	🏘️	cldr
+複数の音符	🎶	name
+襟巻き	🧣	cldr
+西	⬅️	cldr
+西サハラ	🇪🇭	name
+西洋の城	🏰	name
+西洋の郵便局	🏤	name
+西洋ナシ	🍐	cldr
+見ざる	🙈	name
+規制	🚷	⛔	🚫	🚳	cldr
+視覚	🧑‍🦯	🦯	👨‍🦯	👩‍🦯	🦮	cldr
+親友	👯‍♂️	👯	cldr
+親子	👪	🧑‍🧑‍🧒	🧑‍🧑‍🧒‍🧒	🧑‍🧒	🧑‍🧒‍🧒	cldr
+親指	👍	cldr
+親指と人差し指をクロス	🫰	name
+親機	☎️	cldr
+観測	🔭	cldr
+観葉植物	🪴	cldr
+観覧車	🎡	name
+角	😈	👿	cldr
+角の指サイン	🤘	name
+角帽	🎓	🧑‍🎓	👨‍🎓	👩‍🎓	name
+角氷	🧊	name
+解錠	🔓	cldr
+触手	🪼	cldr
+言わざる	🙊	name
+計算	🧮	➖	cldr
+記号の入力	🔣	name
+記念日	💝	💕	💏	💑	cldr
+許して	🙇	cldr
+許可	🉑	cldr
+訴えるような顔	🥺	name
+試合	🥌	cldr
+試験管	🧪	name
+詮索好き	🦝	cldr
+話す	🗣️	cldr
+話す人のシルエット	🗣️	name
+誕生日	🎂	🎉	🎁	hand
+誘惑	🫦	cldr
+読書	📗	📙	📘	📖	📚	cldr
+調味料	🧂	🫙	cldr
+調整	🎛️	cldr
+調理器具	🔪	cldr
+請求書	🧾	cldr
+謎の人	👤	cldr
+講師	🧑‍🏫	👨‍🏫	👩‍🏫	cldr
+謝罪	🙇	cldr
+警備	💂	💂‍♂️	💂‍♀️	cldr
+警告	⚠️	name
+警官	👮	👮‍♂️	👮‍♀️	cldr
+警察	👮	👮‍♂️	👮‍♀️	🚓	🚔	cldr
+警察官	👮	👮‍♂️	👮‍♀️	name
+護符	🪬	cldr
+豆	🫘	🫛	name
+豚	🐷	🐖	🐽	cldr
+象	🐘	cldr
+貝	🐚	🦪	cldr
+貝殻	🐚	cldr
+財宝	🪎	cldr
+財布	👛	cldr
+貴金属	🪎	cldr
+買い物	🛒	cldr
+賞杯	🏆	cldr
+賞金	💰	cldr
+質問	🙋	cldr
+賭け金	💰	cldr
+赤いハート	❤️	name
+赤いバラ	🌹	cldr
+赤い上三角	🔺	name
+赤い下三角	🔻	name
+赤い丸	🔴	⭕	name
+赤い四角	🟥	name
+赤い封筒	🧧	name
+赤い感嘆符	❗	name
+赤い本	📕	cldr
+赤い疑問符	❓	name
+赤い箱	🧰	cldr
+赤い顔	😡	🥵	cldr
+赤くなる	😳	cldr
+赤ちゃん	🤱	🍼	🚼	👶	🧑‍🍼	cldr
+赤ちゃん天使	👼	cldr
+赤ちょうちん	🏮	name
+赤ん坊	👶	🚼	name
+赤インゲン豆	🫘	cldr
+赤リンゴ	🍎	name
+赤色灯	🚨	cldr
+赤身肉	🥩	cldr
+赤道ギニア	🇬🇶	name
+赤面	😳	name
+走る	🏃	🏃‍♀️	💨	cldr
+走る人	🏃	name
+走る女	🏃‍♀️	name
+走る男	🏃‍♂️	name
+起立	🧍‍♂️	🧍‍♀️	🧍	cldr
+超人	🦸‍♂️	🦸‍♀️	🦹‍♂️	🦹‍♀️	🦸	cldr
+超悪玉	🦹	cldr
+足	🦶	👣	🦿	🦵	name
+足あと	👣	name
+足し算	➕	cldr
+足す	➕	cldr
+足跡	🐾	cldr
+足首	🦶	cldr
+路面電車	🚋	🚊	🚎	name
+路面電車正面	🚊	name
+跳ね返り	🪃	cldr
+踊り子	💃	cldr
+踊る女	💃	name
+踊る男	🕺	name
+踏みつける	🦶	cldr
+蹄鉄	🧲	cldr
+身だしなみ	🪞	cldr
+身分証	🪪	name
+身分証明書	🪪	cldr
+車	🚗	hand
+車いす	🧑‍🦼	🧑‍🦽	👨‍🦼	👩‍🦼	👨‍🦽	cldr
+車両通行止め	🚫	name
+車両進入禁止	⛔	name
+車椅子	♿	🦽	🦼	name
+車輪	🛞	cldr
+軌道	🛤️	cldr
+軍用ヘルメット	🪖	name
+軍隊	🫡	🪖	cldr
+軟体動物	🐙	🦑	cldr
+転法輪	☸️	cldr
+転生	🐦‍🔥	cldr
+軽い	🪶	cldr
+軽トラック	🛻	name
+輝き	🌟	cldr
+輝度	🔅	🔆	cldr
+輪	⭕	cldr
+輪っか	➰	➿	cldr
+輪廻	🐦‍🔥	cldr
+辛い	🌶️	cldr
+農場主	🧑‍🌾	cldr
+農夫	👨‍🌾	cldr
+農家	🧑‍🌾	👩‍🌾	👨‍🌾	name
+農家の女性	👩‍🌾	name
+農家の男性	👨‍🌾	name
+農業	🧑‍🌾	cldr
+返って来る	🪃	cldr
+追悼	🪦	cldr
+退屈	🥱	cldr
+送信	📤	📩	cldr
+送信トレイ	📤	name
+送信箱	📤	cldr
+逃げる	💨	cldr
+逆再生	◀️	cldr
+逆再生ボタン	◀️	name
+逆回り	🔄	cldr
+通学路	🚸	cldr
+通水カップ	🪠	cldr
+通行止め	🚫	🚧	cldr
+通貨	💲	💴	💵	💶	💷	cldr
+通関	🛃	cldr
+連符	🎵	cldr
+逮捕する	👮	cldr
+進入禁止	⛔	cldr
+進化	🧬	cldr
+遊び好き	🦦	cldr
+遊具	🛝	cldr
+遊園地	🎡	🎢	🎠	cldr
+運動	🏋️	cldr
+運命	🔮	cldr
+運転免許証	🪪	cldr
+道化師	🤡	cldr
+道教	☯️	cldr
+道着	🥋	cldr
+道路	🛣️	🚷	⛔	🚫	🚳	cldr
+選挙	🗳️	cldr
+遺伝子	🧬	cldr
+遺灰	⚱️	cldr
+邪視	🧿	cldr
+郊外	🏠	🏡	cldr
+郵便	🏣	🏤	📯	📮	✉️	cldr
+郵便ポスト	📮	name
+郵便ラッパ	📯	name
+郵便受け	📫	📪	📬	📭	cldr
+郵便局	🏣	name
+郵便箱	📮	📫	📪	📬	📭	cldr
+都会	🌁	🌆	🏙️	🏢	cldr
+都市	🏙️	🌆	cldr
+配管工	👨‍🔧	👩‍🔧	cldr
+配送	🚚	📦	cldr
+配達	🚚	🛻	📦	cldr
+酒	🍶	cldr
+酸っぱい	🍋	🍋‍🟩	cldr
+重たい	🪨	cldr
+重量挙げ	🏋️	cldr
+重量挙げをする人	🏋️	name
+重量挙げをする女	🏋️‍♀️	name
+重量挙げをする男	🏋️‍♂️	name
+野牛	🦬	cldr
+野球	⚾	name
+野球場	🏟️	cldr
+野球帽	🧢	cldr
+金	🥇	🏅	cldr
+金メダル	🥇	🏅	name
+金持ち	💰	cldr
+金時豆	🫘	cldr
+金袋	💰	cldr
+金貨	🪙	🪎	cldr
+金髪	👱‍♀️	👱‍♂️	👱	cldr
+金髪の人	👱	name
+金髪の女性	👱‍♀️	name
+金髪の男性	👱‍♂️	name
+針	🪡	💉	🪼	cldr
+釣り	🎣	🐟	name
+釣り竿	🎣	cldr
+鈴	🎐	🔔	🔕	cldr
+鉄道	🛤️	🚃	🚄	🚈	🚂	cldr
+鉛筆	✏️	📝	name
+鉛筆とメモ	📝	name
+鉢植え	🪴	name
+鉤	🪝	cldr
+銀	🥈	cldr
+銀メダル	🥈	name
+銀河	🌌	cldr
+銀色	🩶	cldr
+銀行	🏦	🏧	💳	💰	name
+銀貨	🪙	cldr
+銃	🔫	cldr
+銅	🥉	cldr
+銅メダル	🥉	name
+鋤	🪏	cldr
+鋭い	🪒	cldr
+錠	🔒	🔓	🔐	cldr
+錨	⚓	name
+録画	⏺️	📹	cldr
+録音	⏺️	cldr
+録音録画ボタン	⏺️	name
+鍋	🫕	cldr
+鍵	🔑	🗝️	🔐	🧩	🔏	name
+鍵盤	🎹	name
+鎖	⛓️	name
+鏡	🪞	name
+鐘	🔔	🔕	cldr
+鑑識	🫆	cldr
+長椅子	🛋️	cldr
+長距離走	🎽	name
+長音	➰	cldr
+門松	🎍	name
+門番	💂	💂‍♂️	💂‍♀️	cldr
+閉じた	📫	📪	cldr
+閉じた傘	🌂	name
+閉じた本	📕	name
+閉じた郵便受け（手紙あり）	📫	name
+閉じた郵便受け（手紙なし）	📪	name
+閉じた錠	🔒	name
+閉じた錠とペン	🔏	name
+閉じた錠と鍵	🔐	name
+開いた	📬	📭	cldr
+開いたフォルダー	📂	name
+開いた両手	👐	cldr
+開いた手	🖐️	name
+開いた本	📖	name
+開いた郵便受け（手紙あり）	📬	name
+開いた郵便受け（手紙なし）	📭	name
+開いた錠	🔓	name
+開く	📂	cldr
+開ける	🪟	cldr
+開発者	🧑‍💻	👨‍💻	👩‍💻	cldr
+開花	🌼	🌷	🌸	name
+開錠	🔑	cldr
+闇	🌑	cldr
+防具	🛡️	cldr
+限界	😫	cldr
+除外	🙅	cldr
+除算	➗	cldr
+陰陽	☯️	name
+険しい表情	🙎	cldr
+障がい	🧑‍🦼	🧑‍🦽	🧏‍♂️	🧏‍♀️	🧑‍🦯	cldr
+隠す	🙈	cldr
+隠密	🥷	cldr
+離陸	🛫	cldr
+難聴	🦻	cldr
+雨	☔	🌧️	hand
+雨時々晴れ	🌦️	name
+雨粒	☔	cldr
+雨雲	🌧️	name
+雪	❄️	⛄	hand
+雪だるま	⛄	☃️	name
+雪だるまと雪	☃️	name
+雪の結晶	❄️	name
+雪山	🏔️	name
+雪雲	🌨️	name
+雲	☁️	🌧️	🌨️	🌩️	💭	name
+雲の中の顔	😶‍🌫️	name
+雲形の吹き出し	💭	name
+零時	🕛	cldr
+雷	⚡	hand
+雷雨	⛈️	name
+雷雲	🌩️	⛈️	name
+電動車椅子	🦼	name
+電動車椅子の人	🧑‍🦼	name
+電動車椅子の女性	👩‍🦼	name
+電動車椅子の男性	👨‍🦼	name
+電子メール	✉️	📧	📨	📩	📤	cldr
+電気	🔌	⚡	cldr
+電気工	👨‍🔧	👩‍🔧	cldr
+電池	🔋	name
+電池切れ寸前	🪫	cldr
+電池残量低下	🪫	cldr
+電波	📡	📶	🛜	cldr
+電源	🔌	cldr
+電源オフ	📴	cldr
+電球	💡	name
+電話	📞	📱	hand
+電話のジェスチャー	🤙	cldr
+電話の合図	🤙	name
+電車	🚃	🚆	hand
+電車正面	🚆	name
+震えている	🫨	cldr
+震えている顔	🫨	name
+霧	🌫️	🌁	name
+霧の都会	🌁	name
+青いハート	💙	name
+青い丸	🔵	name
+青い四角	🟦	name
+青い本	📘	cldr
+青い顔	😰	🥶	cldr
+青ざめ	😨	😰	name
+青ざめた顔	😨	cldr
+青の本	📘	name
+青ピーマン	🫑	cldr
+青リンゴ	🍏	name
+青紫	🪻	cldr
+静かに	🤫	🫢	cldr
+非常食	🥫	cldr
+革靴	👞	cldr
+靴	👞	👡	👟	👠	👢	cldr
+靴下	🧦	cldr
+鞄	💼	cldr
+韓国	🇰🇷	name
+音無し	🔇	🔕	cldr
+音符	🎵	🎶	name
+音量	🔉	🔊	🔈	cldr
+音量大	🔊	cldr
+音量小	🔉	cldr
+預け入れ荷物	🛄	cldr
+頑張って	💪	📣	🔥	hand
+頑張れ	💪	📣	🔥	hand
+領収書	🧾	cldr
+頬を赤らめる	😊	cldr
+頭	🧠	cldr
+頭爆発	🤯	name
+頭痛	😣	😓	cldr
+頭蓋骨	💀	cldr
+頷く	🙂‍↕️	cldr
+額	🖼️	cldr
+顎に手	🤔	cldr
+顔のある上弦の月	🌛	name
+顔のある下弦の月	🌜	name
+顔のある太陽	🌞	name
+顔のある新月	🌚	name
+顔のある満月	🌝	name
+顔のある風	🌬️	name
+顔文字	(^_^)	(´・ω・`)	(≧▽≦)	(^_^;)	(*´ω`*)	hand
+顕微鏡	🔬	name
+風	🌬️	🎐	🍃	🪭	cldr
+風に揺れる葉	🍃	name
+風呂	🛀	🚿	🛁	🧼	cldr
+風呂に入る人	🛀	name
+風船	🎈	name
+風邪	🤧	🤒	😷	cldr
+風鈴	🎐	name
+飛び散ったペンキ	🫟	name
+飛び散り	🫟	cldr
+飛び立つ	🪽	cldr
+飛ぶ	🪶	🪽	cldr
+飛べない鳥	🦤	cldr
+飛沫	🫟	cldr
+飛行	🪽	cldr
+飛行機	✈️	hand
+飛行機着陸	🛬	name
+飛行機離陸	🛫	name
+食べ物	🫒	🥭	🫐	🫔	🫓	cldr
+食べ過ぎ	🫃	🫄	cldr
+食パン	🍞	name
+食事	🍴	cldr
+食器	🥄	🍽️	🍴	cldr
+飲み屋	🏮	cldr
+飲み水	🚰	cldr
+飲み物	☕	🧉	🫖	🍵	🧃	cldr
+飲めない水	🚱	cldr
+飲料水	🚰	name
+飲用不可	🚱	name
+飲用禁止	🚱	cldr
+餃子	🥟	cldr
+首を振る	🙂‍↔️	🙂‍↕️	cldr
+首を横に振る	🙂‍↔️	name
+首を縦に振る	🙂‍↕️	name
+首巻き	🧣	cldr
+香り	🧄	cldr
+香草	🌿	cldr
+香辛料	🌶️	cldr
+馬	🐎	🐴	🏇	🎠	🫏	name
+馬の顔	🐴	name
+駅	🚉	name
+駅伝	🎽	cldr
+駅弁	🍱	cldr
+駆け足	🏃	🏃‍♀️	cldr
+駐車場	🅿️	cldr
+駒	♟️	cldr
+騎手	🏇	cldr
+驚いた	🫪	cldr
+驚き	🤨	😧	😮	😯	😳	cldr
+驚愕	😲	cldr
+骨	🦴	🍖	☠️	🩻	🍗	name
+骨付き肉	🍖	🍗	name
+骨壺	⚱️	name
+骨格	🦴	🩻	cldr
+骸骨	💀	☠️	cldr
+高層ビル	🏙️	name
+高所作業	🪜	cldr
+高輝度	🔆	name
+高速	🛣️	cldr
+高速上ボタン	⏫	name
+高速下ボタン	⏬	name
+高速列車	🚄	🚅	cldr
+高速道路	🛣️	name
+高電圧	⚡	name
+高齢者	🧓	👵	👴	cldr
+髪	💇	🪮	cldr
+髪をかき上げる	💁	cldr
+髪を振り払う	💁	cldr
+鬼	👹	name
+魔人	🧞	cldr
+魔力	🧝	cldr
+魔女	🧹	🧙‍♀️	🧙	cldr
+魔法	🧙	🪄	🧝	🔮	🧚	cldr
+魔法の杖	🪄	name
+魔法使い	🧙	🧙‍♂️	🧙‍♀️	name
+魔神	🧞‍♂️	🧞‍♀️	cldr
+魔術	🪄	cldr
+魔術師	🧙	🪄	cldr
+魔除け	🧿	cldr
+魚	🐟	🐠	🐡	🦈	🎣	name
+魚を食べる	🦦	cldr
+魚介	🦪	cldr
+魚座	♓	cldr
+鳥の卵と巣	🪺	name
+鳥の巣	🪺	cldr
+鳥居	⛩️	name
+鳥類	🪿	🐦‍⬛	cldr
+鳩	🕊️	cldr
+鶏もも肉	🍗	name
+鹿	🦌	🫎	cldr
+麦わら	👒	cldr
+麦わら帽子	👒	cldr
+麺	🍜	cldr
+麻雀	🀄	name
+麻雀牌	🀄	cldr
+黄色	🟡	🟨	💛	cldr
+黄色いハート	💛	cldr
+黄色い丸	🟡	name
+黄色い四角	🟨	name
+黄色のハート	💛	name
+黒いハート	🖤	name
+黒い丸	⚫	name
+黒い鳥	🐦‍⬛	name
+黒丸	⚫	cldr
+黒四角中	◾	name
+黒四角大	◼️	name
+黒四角小	▪️	name
+黒四角特大	⬛	name
+黒旗	🏴	name
+黒枠四角	🔲	name
+黒猫	🐈‍⬛	name
+黒電話	☎️	cldr
+黙る	🙊	cldr
+鼓動	💓	🫀	cldr
+鼻	👃	🐽	name
+鼻息	😤	cldr
+龍	🐉	🐲	cldr
+＃	💢	cldr

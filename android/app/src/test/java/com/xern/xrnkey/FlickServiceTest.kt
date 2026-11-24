@@ -287,4 +287,33 @@ class FlickServiceTest {
         assertEquals("", f.composing)
         f.service.onDestroy()
     }
+
+    /**
+     * The pad's ?123 opened the QWERTY symbols; it opens the 12-key number pad now. Its digits and
+     * symbols type as the QWERTY keys' do: straight in with nothing composing, into the reading
+     * while one is. あいう leads back, and a language chosen there switches the letters.
+     */
+    @Test
+    fun theNumberPadTypesDigitsAndSymbols() {
+        val f = field()
+        f.service.onLanguage(Options.FLICK)
+        f.tap("?123")
+        assertEquals(Page.KANA_NUMBERS, f.keys.page)
+        fun number(label: String) = f.act { f.keys.tap(Flick.numberKeys.single { it.label == label }) }
+        number("1")
+        number("2")
+        assertEquals("12", f.edit.text.toString())
+        assertEquals("", f.composing)
+        assertEquals(Strip.Tools, f.strip())
+        f.act { f.keys.tap(Flick.numberRows[2].keys.first()) }    // あいう
+        assertEquals(Page.KANA, f.keys.page)
+        f.tap("か")
+        f.tap("?123")
+        number("3")
+        assertEquals("12か3", f.edit.text.toString())
+        assertEquals("か3", f.composing)
+        f.service.onLanguage("ja")
+        assertEquals(Page.LETTERS, f.keys.page)
+        f.service.onDestroy()
+    }
 }

@@ -145,6 +145,43 @@ class ConverterTest {
     }
 
     /**
+     * After a particle no short word follows well, and before this the strip went back to the tool
+     * row: now the common content words that follow it come, by connection cost (読む and the
+     * nouns after を, in the made-up dictionary), with nothing of the particles.
+     */
+    @Test
+    fun contentWordsFollowAParticle() {
+        val wo = conv.best("を").single()
+        val next = conv.next(wo).map { it.text }
+        assertEquals(next.toString(), "読む", next.first())
+        assertTrue(next.toString(), next.containsAll(listOf("私", "今日", "学校")))
+        assertTrue(next.toString(), next.none { it in listOf("は", "が", "を", "の", "です", "ます") })
+        // The words the owner chose after it come first.
+        val h = UserHistory()
+        conv.history = h
+        h.learn("を", conv.best("がっこう"))
+        assertEquals("学校", conv.next(wo).first().text)
+    }
+
+    /** After 、 and 。 the next words are what a clause or a sentence starts with; after a digit, none. */
+    @Test
+    fun aSentenceStartsAfterPunctuation() {
+        for (p in listOf("。", "、", "？")) {
+            val stop = conv.punctuation(p)!!
+            assertFalse(stop.word)
+            val next = conv.next(stop).map { it.text }
+            assertEquals(next.toString(), "私", next.first())
+            assertTrue(next.toString(), next.containsAll(listOf("今日", "ありがとう")))
+            assertTrue(next.toString(), next.none { it in listOf("は", "が", "を", "です", "ます", "ございます") })
+        }
+        assertEquals(null, conv.punctuation("3"))
+        assertEquals(null, conv.punctuation("かみ"))
+        assertEquals("。", conv.asTyped("。")?.surface)
+        // A conversion ending in 、 is followed so too.
+        assertEquals("私", conv.next(conv.best("かみ、").last()).first().text)
+    }
+
+    /**
      * The rest of a reading after a piece of it was taken follows that piece: "はがくせいです"
      * after 私 starts with the particle は; alone, at a sentence's start, it would be 葉.
      */
@@ -199,6 +236,30 @@ class ConverterTest {
         assertTrue(c.next(iki).take(3).map { it.text }.containsAll(listOf("ます", "たい")))
         // Katakana keeps a slot for a reading that looks foreign.
         assertTrue(c.convert("ぴざとーすと").offered.take(3).any { it.text == "ピザトースト" })
+    }
+
+    /**
+     * With Mozc's dictionary: after a particle the content words that follow it ("を": する, 見る;
+     * "が": ある, できる; "の": こと), after 。 a sentence's start (この, その, そして), and a pronoun
+     * still has its particles first.
+     */
+    @Test
+    fun theRealDictionaryOffersWhatFollowsAParticle() {
+        val c = real()
+        // The particle as a sentence ends with it, after a noun.
+        fun after(reading: String) = c.next(c.best(reading).last()).map { it.text }
+        val wo = after("ほんを")
+        assertEquals(wo.toString(), "する", wo.first())
+        assertTrue(wo.toString(), "見る" in wo.take(5))
+        val ga = after("じかんが")
+        assertTrue(ga.toString(), ga.take(3).containsAll(listOf("ある", "できる")))
+        val ha = after("わたしは")
+        assertTrue(ha.toString(), ha.take(10).containsAll(listOf("ない", "いい")))
+        val no = after("わたしの")
+        assertTrue(no.toString(), "こと" in no.take(3))
+        val stop = c.next(c.punctuation("。")!!).map { it.text }
+        assertTrue(stop.toString(), stop.take(6).containsAll(listOf("この", "その", "そして")))
+        assertEquals("は", after("わたし").first())
     }
 
     /** かみ is 上 in Mozc's dictionary; once 紙 is picked, 紙 comes first, alone and in a sentence. */
