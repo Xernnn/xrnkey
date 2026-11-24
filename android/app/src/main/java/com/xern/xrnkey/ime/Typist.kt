@@ -4,6 +4,7 @@ import com.xern.xrnkey.engine.KeyResult
 import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
+import com.xern.xrnkey.engine.TypoFix
 import com.xern.xrnkey.engine.TypingState
 import java.text.BreakIterator
 
@@ -84,10 +85,16 @@ class Typist(
     var tonesOnSpace = TONES_OFF
 
     /**
-     * Auto-correct of words wrong in both languages ("teh" -> "the"): 0 off, 1 flexible
-     * (a confident fix only), 2 strong (a likelier fix will do).
+     * Auto-correct of words wrong in both languages ("teh" -> "the", "khpng" -> "không"): 0 off,
+     * 1 flexible (a confident fix only), 2 strong (a likelier fix will do).
      */
     var correctWrong = 1
+
+    /**
+     * Where the owner's taps land on each letter, learned from the words that end as typed
+     * (null: nothing learned here). Set only where the personal words are learned.
+     */
+    var touchSpots: TouchSpots? = null
 
     /**
      * A word that isn't Vietnamese, or is a common English word, ends as typed (the core's
@@ -138,8 +145,29 @@ class Typist(
                 held = false
                 applyKeepForeign()
             }
-            if (value.isEmpty()) inside = false
+            if (value.isEmpty()) {
+                inside = false
+                touches.clear()
+                touchKeys = ""
+            }
         }
+
+    /**
+     * Where each key of the word in progress was touched, one per key of [touchKeys] (null: not
+     * a tap on the touch keyboard). They follow [keys]: Backspace takes the touches of the keys
+     * it takes, a word opened again has none, and one Backspace opened after a fix has its own back.
+     */
+    private val touches = ArrayList<Touch?>()
+    private var touchKeys = ""
+
+    /** The key height and the spots the models were last given (for the typo fixes). */
+    private var keyHeight = 0f
+    private var spotsGiven: TouchSpots? = null
+    private var spotsVersion = -1
+
+    /** The last typo fix worked out, for the same keys, touches and words before. */
+    private var fixFor: String? = null
+    private var fixMade: TypoFix? = null
 
     /**
      * The word in progress is the part before the cursor of a word the cursor was put inside
@@ -168,7 +196,12 @@ class Typist(
      * comes back. After a Space, `reopen` holds the keys of the word Space changed: Backspace
      * takes the change and the space back and opens the word again, as typed.
      */
-    private data class Undo(val before: String, val after: String, val reopen: String? = null)
+    private data class Undo(
+        val before: String,
+        val after: String,
+        val reopen: String? = null,
+        val touches: List<Touch?>? = null,
+    )
     private var undo: Undo? = null
 
     /**
@@ -272,13 +305,17 @@ class Typist(
         expansion()?.let { return it }
         if (!restorable()) {
             if (raw || composing.isEmpty()) return null
+            typoFix()?.let { return it }
             return state?.previewFinal()?.takeIf { it.isNotEmpty() && it != composing }
         }
         val typed = keys()
         return when {
             tonesOnSpace == TONES_ALWAYS -> reading()
-            tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> reading(lookBack = false)
-            else -> wrongWordFix(typed)
+            else -> typoFix() ?: if (tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed)) {
+                reading(lookBack = false)
+            } else {
+                wrongWordFix(typed)
+            }
         }
     }
 
@@ -318,6 +355,88 @@ class Typist(
         state?.setContext(context())
     }
 
+    /**
+     * Space's fix of a word that is no word as it stands, Vietnamese or English, from where each
+     * of its keys was touched (core/typos.cpp): "khpng" -> "không", "chapf" -> "chào". Null when
+     * the word stays: a word, chat, a form picked from a held key, a word Backspace opened again.
+     */
+    fun typoFix(): String? = typoResult()?.fix
+
+    /**
+     * What the typo fix makes of the word in progress; with `search` false (or the fixes off),
+     * only whether it is a word, which costs next to nothing.
+     */
+    private fun typoResult(search: Boolean = true): TypoFix? {
+        val s = state ?: return null
+        if (models == null || raw || !autoCorrect || composing.isEmpty() || held || keptAsTyped()) return null
+        val level = if (search) maxOf(0, correctWrong) else 0
+        followTouches(null)
+        giveKeyboard()
+        val ctx = context()
+        val xs = FloatArray(touches.size) { touches[it]?.dx ?: Float.NaN }
+        val ys = FloatArray(touches.size) { touches[it]?.dy ?: Float.NaN }
+        val key = "$touchKeys|$level|$spotsVersion|${ctx.joinToString(" ")}|${xs.contentToString()}|${ys.contentToString()}"
+        if (key == fixFor) return fixMade
+        return s.fixTypo(ctx, xs, ys, level).also {
+            fixFor = key
+            fixMade = it
+        }
+    }
+
+    /** The key height of the latest taps, and the owner's spots, to the models when they change. */
+    private fun giveKeyboard() {
+        val m = models ?: return
+        val height = touches.lastOrNull { it != null }?.keyHeight ?: keyHeight
+        val spots = touchSpots
+        val version = spots?.version ?: -1
+        if (height <= 0f || (height == keyHeight && spots === spotsGiven && version == spotsVersion)) return
+        keyHeight = height
+        spotsGiven = spots
+        spotsVersion = version
+        m.setKeyboard(height, spots?.sweetX(), spots?.sweetY())
+    }
+
+    /**
+     * The touches follow the keys of the word in progress: a key typed adds `added` (and nothing
+     * for the other keys a form from a held key types); keys Backspace took leave with their
+     * touches, wherever in the word they were.
+     */
+    private fun followTouches(added: Touch?) {
+        val now = if (composing.isEmpty()) "" else keys()
+        if (now == touchKeys) return
+        if (now.startsWith(touchKeys)) {
+            repeat(now.length - touchKeys.length - 1) { touches += null }
+            touches += added
+        } else {
+            val kept = ArrayList<Touch?>(now.length)
+            var i = 0
+            for (c in now) {
+                while (i < touchKeys.length && touchKeys[i] != c) i++
+                kept += if (i < touchKeys.length) touches[i++] else null
+            }
+            touches.clear()
+            touches += kept
+        }
+        touchKeys = now
+    }
+
+    /**
+     * A word that ends as typed and is a word: its taps hit the keys meant, so they teach where
+     * the owner's taps land ([touchSpots]), where personal words are learned.
+     */
+    private fun learnTouches(fix: TypoFix?) {
+        val spots = touchSpots ?: return
+        if (fix == null || !fix.word || fix.fix != null || raw || !autoCorrect || !learnHere || personal == null) return
+        followTouches(null)
+        if (touches.any { it != null }) spots.learn(touchKeys, touches)
+    }
+
+    /** The touches of the word in progress, for the tests. */
+    internal fun touchesNow(): List<Touch?> {
+        followTouches(null)
+        return touches.toList()
+    }
+
     private fun wrongWordFix(typed: String): String? {
         if (correctWrong <= 0 || !autoCorrect) return null
         if (english) CONTRACTIONS[typed.lowercase()]?.let { fix ->
@@ -328,7 +447,13 @@ class Typist(
     }
 
     /** Typed text: each character is a key. */
-    override fun text(t: String) {
+    override fun text(t: String) = text(t, null)
+
+    /**
+     * A key tapped on the touch keyboard, and where on it ([touch]: null when not known), which
+     * Space's typo fixes weigh.
+     */
+    fun text(t: String, touch: Touch?) {
         val s = state
         // A letter's Vietnamese form (held on its key) goes in as the keys that make it, so the
         // word goes on taking marks: "vi" + "ê" + "tj" is "việt".
@@ -337,7 +462,10 @@ class Typist(
             held = true
             applyKeepForeign()
         }
-        for (c in keys) key(c)
+        for (c in keys) {
+            key(c)
+            followTouches(if (keys.length == 1) touch else null)
+        }
     }
 
     private fun key(c: Char) {
@@ -371,17 +499,37 @@ class Typist(
         }
         if (isSeparator(c) && restorable()) {
             val typed = keys()
+            val fixed = if (keptAsTyped()) null else typoResult(search = tonesOnSpace != TONES_ALWAYS)
             when {
                 keptAsTyped() -> {
                     if (!inside) kept = typed
                     endAsTyped(c, null)
                 }
-                tonesOnSpace == TONES_ALWAYS -> endRestored(c, lookBack = true)
+                tonesOnSpace == TONES_ALWAYS -> {
+                    learnTouches(fixed)
+                    endRestored(c, lookBack = true)
+                }
+                fixed?.fix != null -> endAsTyped(c, fixed.fix)
                 tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed) -> endRestored(c, lookBack = false)
-                else -> endAsTyped(c, wrongWordFix(typed))
+                else -> {
+                    val fix = wrongWordFix(typed)
+                    if (fix == null) learnTouches(fixed)
+                    endAsTyped(c, fix)
+                }
             }
             spaceAfterWord = c == ' '
             return
+        }
+        // A word typed with marks that is no word, fixed ("chapf" is "chào"); or one that is, whose
+        // taps teach where the owner's land.
+        if (isSeparator(c) && composing.isNotEmpty() && !raw) {
+            val fixed = typoResult()
+            if (fixed?.fix != null) {
+                endAsTyped(c, fixed.fix)
+                spaceAfterWord = c == ' '
+                return
+            }
+            learnTouches(fixed)
         }
         val hadWord = composing.isNotEmpty()
         // A number ends like a word: two spaces after "1" give "1. ", as Laban Key does.
@@ -411,12 +559,15 @@ class Typist(
      */
     private fun endAsTyped(c: Char, fix: String?) {
         val shown = composing
+        val typed = keys()
+        followTouches(null)
+        val tapped = touches.toList()
         commit((fix ?: shown) + c)
         composing = ""
         state?.reset()
         run.clear()
         if (fix != null) {
-            undo = if (c == ' ') Undo("", fix + c, reopen = shown) else Undo(shown + c, fix + c)
+            undo = if (c == ' ') Undo("", fix + c, reopen = typed, touches = tapped) else Undo(shown + c, fix + c)
             plain.clear()
         } else {
             plain += shown
@@ -483,6 +634,12 @@ class Typist(
             u.reopen?.let { keys ->
                 for (k in keys) apply(s.key(k.code))
                 refused = keys
+                // Its taps come back with it, so a change to the word is weighed as before.
+                followTouches(null)
+                u.touches?.takeIf { it.size == touches.size }?.let {
+                    touches.clear()
+                    touches += it
+                }
                 // Its marks came back with it: it ends as shown, never as its keys.
                 if (composing != keys) {
                     held = true
@@ -609,16 +766,22 @@ class Typist(
         undo = null
         val s = state
         if (!raw && s != null) {
+            val fix = if (tonesOnSpace == TONES_ALWAYS && restorable()) null else typoFix()
             if (restorable()) {
                 val typed = keys()
                 val restore = tonesOnSpace == TONES_ALWAYS ||
                     tonesOnSpace == TONES_WHEN_NEEDED && !models!!.plainWord(typed)
                 val r = when {
                     keptAsTyped() -> composing
+                    fix != null -> fix
                     restore -> models!!.restoreRun(context(), listOf(typed), "</s>")?.last() ?: composing
                     else -> wrongWordFix(typed) ?: composing
                 }
                 commit(r)
+                composing = ""
+                s.reset()
+            } else if (fix != null) {
+                commit(fix)
                 composing = ""
                 s.reset()
             } else {

@@ -231,6 +231,10 @@ bool bilingual_prefers_english(const XKStateImpl& s, const std::string& vi, cons
 /* `w` (lowercase ASCII) is chat meant as typed ("oke", "hehe", "hahaha"): never corrected. */
 bool keep_as_typed(const std::string& w);
 
+/* plain.cpp */
+/* The fix of an English typo common enough that models have it ("teh" -> "the"), or nullptr. */
+const char* known_english_typo(const std::string& w);
+
 /* Utility */
 bool is_vowel_char(char c);
 bool has_vietnamese_vowel_pattern(const std::string& s);

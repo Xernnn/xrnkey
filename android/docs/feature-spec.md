@@ -535,7 +535,11 @@ unless Settings says otherwise.
 1. **A shortcut matches** (the keys, ignoring case): commit its expansion, cased like the keys
    (`ko` → `không`, `Ko` → `Không`, `KO` → `KHÔNG`).
 2. **The keys used Telex marks or tones** (`dduowcj`, `khoong`): the owner is accenting by hand,
-   so the Telex result is committed. There are three exceptions:
+   so the Telex result is committed. There are these exceptions:
+   - The result is no word, and a slip or two away is one (`chapf`, `ddeeoj`, a slip in
+     `nguwowif`): Space's fix from where each tap landed (see "Typos") runs those keys through
+     Telex again (`chapf` → `chào`). A syllable chat may spell so on purpose (`dzậy`, `ừa`) is
+     fixed only by a neighbour's key the taps make likely.
    - The Telex result is not a valid syllable (`đươc`: a stop coda with no tone). Auto-correct
      takes the best valid syllable that keeps every mark that was typed (`được`).
    - The keys are also an English word, and the context says English (see "Mixed English and
@@ -562,9 +566,12 @@ unless Settings says otherwise.
      typed form itself.
    - A typo correction (a different ASCII shape) is committed only if it beats the keys as typed
      by the level's margin. Otherwise the keys stay.
+   - With tones on Space off or "when needed", a word that is no word (`khpng`, `cjao`) is first
+     given Space's fix from where each tap landed (see "Typos"), toward Vietnamese or English; the
+     English-only one-edit fix (`xk_fix_wrong_word`) comes after, when that finds nothing sure.
 4. **Neither a syllable nor a known word, and no close correction** (`dc`, `ns`, `vs`, a name):
    commit as typed. Short chat abbreviations are never "corrected" into words: letters with no
-   vowel (`thx`, `fff`, `strs`) never are, and a hand-written list in the core's lexicon holds
+   vowel (`thx`, `fff`, `strs`) never are unless a tap landed by a vowel's key, and a hand-written list in the core's lexicon holds
    the ones with a vowel (`idk`, `rofl`) and the contractions typed without the apostrophe
    (`youre`, `isnt`, `dont`), which stay as typed rather than gaining one.
 
@@ -573,8 +580,8 @@ Levels:
 | Level | Accent restoration on Space | Typo correction on Space |
 |---|---|---|
 | Off | no: the Telex result is committed | no |
-| Flexible (default) | yes | edit distance 1, words of 3 or more letters, wide margin |
-| Strong | yes | edit distance 2 for words of 7 or more letters, smaller margin |
+| Flexible (default) | yes | a word that is no word: one slip, or two from 4 keys; leads by 0.75 (log10) and holds 80 % |
+| Strong | yes | the same, leading by 0.5 and holding 60 % |
 
 - **Revert**: Backspace as the very next key after an auto-correct on Space takes it back with
   the space, and the word is in progress again as it was typed (`không␠` → `khong`, as Laban
@@ -683,17 +690,99 @@ the Telex result whatever the context, like `AutoRestore=False` on the laptop.
 
 ## Typos
 
-Built in the core (`core/keys.cpp`, `core/restore.cpp`) as a noisy channel over the QWERTY
-layout. Accent restoration offers, beside the readings of what was typed, the readings of the
-spellings a key away.
+Two typo channels live in the core: Space's fix of a word that is no word, which knows where each
+finger landed (`core/typos.cpp`, `core/keys.cpp`), and the layout's channel inside accent
+restoration (`core/restore.cpp`).
+
+### Space's fix, from where each tap landed
+
+This is the one the owner's settings use (tones on Space off, "Fix typos" Flexible), as Laban Key
+fixes slips there. It works the way AOSP LatinIME's typing scorer does.
+
+- **Where the tap landed.** A letter tap reports its offset from its key's centre, in key widths
+  across and key heights down, and the key's height (the phone's keys are about 1.4 key widths
+  tall). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
+  with their touches, wherever they were in the word; a word opened again has none; a word
+  Backspace opened right after a fix gets its own back. Text with no touches (the laptop, `adb
+  input text`, a form from a held key) counts as tapped at the key's centre, so the layout alone
+  decides.
+- **The spatial model.** The chance that a tap aimed at key i lands at point p is a Gaussian
+  around i's centre plus the outright slips onto i's neighbours:
+  L(p | i) = (1 − e) · g(p; c_i) + e · Σ_j w(i, j) · g(p; c_j), with
+  g = exp(−dx² / 2·0.36² − dy² / 2·0.42²) in key widths, e = 2 %, and the rows as far apart as a
+  key is tall. A tap on the edge between two keys counts for both; one in the middle of its key
+  makes a neighbour about 50 times less likely than the key itself (log10 −1.7).
+- **Only a word that is no word is fixed.** What Space would commit as things stand must be none
+  of these: a Vietnamese syllable (attested, or one the model knows), letters typed without marks
+  that stand for one (`khong`), English, a personal word, chat meant as typed (`oke`, `hihi`).
+  A real word is never changed, whatever slip made it. Also left alone: capitals throughout (a
+  code), letters with no vowel unless a tap landed by a vowel's key (`thx` stays, `pwn` is `ơn`
+  when the p was hit at its left edge), a form picked from a held key, a word Backspace refused
+  (`refused`, `kept`).
+- **The fixes tried** are the key sequences one or two slips away (two from 4 keys): a
+  neighbour's key, weighed by the spatial model; a key left out (log10 −2.6, −2.2 for a doubled
+  letter); a key too many (−2.6; −2.0 for the same key twice, −2.3 for a neighbour of the key
+  before or after); two keys swapped (−2.4). Each sequence goes through Telex again, so marks
+  typed keep their meaning (`chapf` → `chaof` → `chào`), and stands for what it spells: a
+  syllable with its marks, the accented readings of plain letters (`cjao` → `chao` → `chào`), an
+  English word.
+- **Ranking**, as LatinIME's noisy channel: each candidate scores the models' mixture in context
+  (the same as restoration and the English/Vietnamese choice, personal words included) plus its
+  slips' cost. Leaving the word scores the models' share for a word they don't know.
+- **When to replace.** The best fix must lead leaving the word by the level's margin and hold the
+  level's share of all the readings (leaving the word included): Flexible 0.75 (log10) and 80 %,
+  Strong 0.5 and 60 %. A syllable typed with its marks that chat may spell so (`dzậy`, `ừa`, `ùi`)
+  is tried only with neighbours' keys, and leaving it scores 2 higher: the deliberate spellings
+  were "fixed" by keys added or taken away, which no tap position speaks for.
+- **Shown and taken back.** The strip's middle shows the fix in bold before Space, as it shows
+  whatever Space commits. Backspace right after takes it back with the space, the word open as
+  typed with its taps; the next Space keeps it ("Auto-correct", Revert).
+- **The owner's own taps.** Words that end as typed and are words teach where the owner's taps
+  land on each letter: a running mean per letter, its count stopping at 200, drawn toward the
+  centre by 20 taps' worth (halfway at 20 taps; nothing before 10), at most 0.3 off. The models then
+  measure taps from those points (LatinIME's sweet spots). They are learned only where personal
+  words are ("Personal words").
+- **Speed.** About 1.5 ms per word that isn't one on the laptop's JVM (worst 3 ms, long Telex
+  words with two slips); a word that is one costs next to nothing. The result is kept per keys,
+  touches and context, so the strip and Space search once.
+
+### Measured (tools/xk-typos)
+
+Set C typed as the owner types (Vietnamese with full Telex, the tone key last; English as spelt),
+every key a tap aimed at its key's centre, landing with a spread of 0.33 key widths across and
+0.40 up and down, plus 1 % outright slips aimed at a neighbour; three seeds. "Before" is what
+Space committed until now with the owner's settings (the Telex result; plain letters as typed or
+fixed into English). The margins were picked on the dev text (the small models' made-up
+training text), and C measured only after.
+
+| Set C, Flexible | typo words | of them real words | fixed before | fixed after | no touch data | to a wrong word | clean words changed |
+|---|---|---|---|---|---|---|---|
+| Vietnamese | 3,891 | 806 | 0.1 % | **62.9 %** | 46.9 % | 1.6 % | 0.00 % of 2,829 |
+| English | 199 | 32 | 19.6 % | **52.3 %** | 30.2 % | 2.5 % | 0.00 % of 137 |
+
+- About a fifth of the typo words are another real word (`banj` slipped to `vanj`, `vạn`), which
+  the fix leaves by design; of the rest, four in five Vietnamese ones come out as meant.
+- Strong: 66.3 % and 55.3 %, with 3.0 % and 6.5 % to a wrong word.
+- The spread matters most: 0.25/0.30 key widths gives 68.8 % and 63.7 % (0.6 % wrong); 0.40/0.48,
+  48.4 % and 33.2 %.
+- Fingers with a habit (0.1 key widths toward the middle, 0.15 key heights low): 56.2 % and 47.3 %,
+  then 57.7 % and 51.8 % once the keyboard learned where they land from the dev text.
+- None of 117 made-up chat spellings (`dzậy`, `zậy`, `ừa`, `ùi`, `nàm`, `hok`, `khum`, `iu` …)
+  typed with taps on their keys' centres, in four contexts, is changed that wasn't before.
+- Real models, by hand: `tôi khpng` → không, `xin cjao` → chào, `em chapf` → chào, `cô ấy ddeeoj`
+  → đẹp, `mọi nhuowif` → người, `hôm nsy` → nay, `the meetimg` → meeting; `khong`, `banf`, `helo`,
+  `oke`, `dzậy` stay (`TouchTypoTest`).
+
+### The layout's channel in accent restoration
+
+Where Space restores every word (tones on Space "always"), restoration also offers the readings
+of the spellings a key away, each scored down by how unlikely the slip is on the layout.
 
 - **Key geometry.** The phone's rows are laid out in key widths: q..p from 0, a..l from 0.5,
   z..m from 1.5. Aiming at a key, the finger lands on a neighbour within 1.5 key widths with
   probability e · w / Σw, where w = exp(−d² / 2·0.6²), and e = 2 % is the typo rate.
 - **Cost.** Each slip costs log10 of that probability against typing the key right, about −2.2.
   A correction wins only when the words around it are worth more than that.
-- **Later.** A touch keyboard knows where each finger landed, and can send per-tap neighbour
-  weights instead of the layout's default. That comes with the Android keyboard.
 - **Levels:**
   - flexible allows one slip, or two from 5 letters;
   - strong allows two from 4 letters.
@@ -707,9 +796,8 @@ spellings a key away.
   0.49 %.
 - **Measured on T**, made-up chat with 3 % typos and only then: 86.4 % of the mistyped words are
   fixed (target ≥ 85 %), and 0.34 % of correct words change (target ≤ 1 %).
-- **Insertions, deletions and swaps** are not corrected yet. Set T has only substitutions. The
-  core's older `xk_autocorrect` (Damerau–Levenshtein) still serves the laptop's suggestion
-  window.
+- This channel doesn't use the touches yet. Set T has only substitutions. The core's older
+  `xk_autocorrect` (Damerau–Levenshtein) still serves the laptop's suggestion window.
 
 ## Personal words (learning, on the phone only)
 
@@ -727,6 +815,8 @@ spellings a key away.
   - With the real models, the five pairs they get wrong (`ngắn tủn`, `đôi bốt` …) all come out
     right once each has been typed twice, and every English context stays English (xk-eval).
 - **Counts of single words** are kept for listing and completing the owner's words.
+- **Where the taps land**: the taps of words that end as typed and are words teach where the
+  owner's taps on each letter land, one mean offset per letter, for Space's typo fixes ("Typos").
 - **Reverts**: a typed form reverted twice in a similar context is kept as typed from then on.
 - **Strip picks**: picking a side slot over the centre pick raises that candidate in that
   context.
@@ -743,6 +833,8 @@ spellings a key away.
     rarest go first.
 - It is read only after the phone is first unlocked. Before that, the keyboard types with the
   shipped model alone.
+- Where the taps land is `touch-spots.tsv` beside it, one `letter<TAB>dx<TAB>dy<TAB>count` line
+  per letter, cleared with the personal words.
 - `allowBackup="false"`. Nothing leaves the phone unless Settings → Personal words → **Sync
   through xrnhub** is on, which hands the words and pairs to the owner's hub app (see Sync).
   Export and import by hand are planned (see Settings).
@@ -1148,6 +1240,7 @@ Rules:
   which guards the personal words' provider for the hub app (see Sync).
 - **On the phone** (credential-encrypted private storage):
   - personal words and pairs;
+  - where the owner's taps land on each letter (26 mean offsets);
   - the words chosen on the Japanese keyboard, and pairs of them;
   - the revert memory;
   - the shortcut table;

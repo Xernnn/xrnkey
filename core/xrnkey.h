@@ -297,6 +297,34 @@ int xk_predict(const XKModels* models, const char* const* context, int n, char**
 int   xk_plain_word(const XKModels* models, const char* typed, float min_ratio);
 char* xk_fix_wrong_word(const XKModels* models, const char* typed, float min_margin);
 
+/* Typo fixes on Space that know where each finger landed (core/typos.cpp), as Laban Key and
+ * LatinIME make them. When the word in progress, as Space would commit it, is no word (not a
+ * Vietnamese syllable, with or without its marks; not English; not a personal word; not chat
+ * meant as typed, "oke"), the key sequences a slip or two away are tried: a tap meant for a
+ * neighbouring key, weighed by where it landed; a key left out, one too many, two swapped. Each
+ * goes through Telex again ("chapf" -> "chaof" -> "chào") and stands for the words it spells,
+ * which are ranked in `context` (as for xk_restore_word) by the models and what the slips cost.
+ * The best replaces the word when it leads leaving it by the level's margin (XK_CORRECT_*), and
+ * comes back newly allocated (the caller frees it), cased as the keys were ("Cjao" ->
+ * "Chào") and with the tone where the state's style puts it; else NULL. Two slips from 4 keys.
+ *
+ * touch_x and touch_y say where each key of the word (xk_state_get_keys; n_touches of them)
+ * was touched: the offset from that key's centre in key widths across and key heights down.
+ * NAN, or a count that doesn't match, means not known: the key's centre, so the layout alone
+ * decides (a physical keyboard, text typed by a script). `known`, when not NULL, is set to 1
+ * when the word as typed is a word (its taps can teach where the owner hits each key). */
+char* xk_state_fix_typo(XKState* state, const char* const* context, int ctx_len, const float* touch_x,
+                        const float* touch_y, int n_touches, int level, int* known);
+/* The best fix whatever the level's margins, for tuning them (tools/xk-typos): newly allocated,
+ * or NULL when there is nothing to try. `lead` gets how far it leads leaving the word as typed
+ * by the models alone (log10), `among` its share among the fixes. */
+char* xk_state_typo_best(XKState* state, const char* const* context, int ctx_len, const float* touch_x,
+                         const float* touch_y, int n_touches, int level, float* lead, float* among);
+/* The touch keyboard's letter keys, for those fixes: a key's height in key widths (the rows are
+ * that far apart; the phone's keys are taller than wide), and where the owner's taps on each
+ * letter a..z land on average, as offsets like the touches' (NULL: the centres). */
+void xk_models_set_keyboard(XKModels* models, float key_height, const float* sweet_x, const float* sweet_y);
+
 /* The same as xk_predict, with each word's log10 probability in `logprobs`. */
 int xk_predict_scored(const XKModels* models, const char* const* context, int n, char** out, float* logprobs,
                       int max);

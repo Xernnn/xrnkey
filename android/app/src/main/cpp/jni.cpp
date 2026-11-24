@@ -7,6 +7,7 @@
 
 #include <xrnkey.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -375,6 +376,44 @@ FN(jbyteArray, fixWrongWord)(JNIEnv* env, jobject, jlong models, jbyteArray type
     jbyteArray out = bytes(env, f);
     std::free(f);
     return out;
+}
+
+/* Space's typo fix for the word in progress (core/typos.cpp): the fix, or null; known[0] is 1
+ * when the word as typed is a word. */
+FN(jbyteArray, stateFixTypo)(JNIEnv* env, jobject, jlong state, jobjectArray context, jfloatArray touchX,
+                             jfloatArray touchY, jint level, jintArray known) {
+    const auto c = strings(env, context);
+    const auto p = pointers(c);
+    const jsize n = touchX && touchY ? std::min(env->GetArrayLength(touchX), env->GetArrayLength(touchY)) : 0;
+    std::vector<float> x(static_cast<size_t>(n)), y(static_cast<size_t>(n));
+    if (n > 0) {
+        env->GetFloatArrayRegion(touchX, 0, n, x.data());
+        env->GetFloatArrayRegion(touchY, 0, n, y.data());
+    }
+    int k = 0;
+    char* f = xk_state_fix_typo(as<XKState>(state), p.data(), static_cast<int>(p.size()), x.data(), y.data(), n,
+                                level, &k);
+    if (known && env->GetArrayLength(known) > 0) {
+        const jint v = k;
+        env->SetIntArrayRegion(known, 0, 1, &v);
+    }
+    if (!f) return nullptr;
+    jbyteArray out = bytes(env, f);
+    std::free(f);
+    return out;
+}
+
+/* The touch keyboard's key height (in key widths) and the owner's offsets per letter (26 each,
+ * or null) for the typo fixes. */
+FN(void, modelsSetKeyboard)(JNIEnv* env, jobject, jlong models, jfloat height, jfloatArray sweetX,
+                            jfloatArray sweetY) {
+    float x[26] = {}, y[26] = {};
+    const bool have = sweetX && sweetY && env->GetArrayLength(sweetX) >= 26 && env->GetArrayLength(sweetY) >= 26;
+    if (have) {
+        env->GetFloatArrayRegion(sweetX, 0, 26, x);
+        env->GetFloatArrayRegion(sweetY, 0, 26, y);
+    }
+    xk_models_set_keyboard(as<XKModels>(models), height, have ? x : nullptr, have ? y : nullptr);
 }
 
 /* The words, and their log10 probabilities in `scores`. */

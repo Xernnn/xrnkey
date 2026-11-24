@@ -25,12 +25,17 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     val shortcutsFile get() = File(dir, SHORTCUTS)
     val hiddenFile get() = File(dir, HIDDEN)
     val japaneseFile get() = File(dir, JAPANESE)
+    val spotsFile get() = File(dir, SPOTS)
 
     var words: PersonalWords? = null
         private set
     var shortcuts: Shortcuts? = null
         private set
     var hidden: HiddenWords? = null
+        private set
+
+    /** Where the owner's taps land on each letter: learned, kept and cleared with the personal words. */
+    var spots: TouchSpots? = null
         private set
 
     /** The words chosen on the Japanese keyboard, each for its reading and after the one before. */
@@ -58,6 +63,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
                     prefs.edit().putLong(KEY_DECAYED, now).apply()
                 }
             }
+            spots = TouchSpots().also { it.load(spotsFile) }
             wordsCleared = cleared
         }
         val stamp = if (shortcutsFile.exists()) shortcutsFile.lastModified() else 0L
@@ -87,6 +93,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         val w = words ?: return
         if (prefs.getLong(KEY_CLEARED, 0L) != wordsCleared) return
         if (w.unsaved > 0) w.save(wordsFile)
+        spots?.takeIf { it.unsaved > 0 }?.save(spotsFile)
     }
 
     /**
@@ -106,6 +113,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         words?.close()
         shortcuts?.close()
         words = null
+        spots = null
         shortcuts = null
         japanese = null
     }
@@ -121,16 +129,18 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         const val SHORTCUTS = "shortcuts.txt"
         const val HIDDEN = "hidden-suggestions.txt"
         const val JAPANESE = "japanese-history.tsv"
+        const val SPOTS = "touch-spots.tsv"
         private const val KEY_JA_CLEARED = "japanese-cleared"
         private const val KEY_CLEARED = "words-cleared"
         private const val KEY_DECAYED = "words-decayed"
         private const val MONTH = 30L * 24 * 3600 * 1000
         private const val DECAY = 0.9
 
-        /** Forgets every personal word, and shows every hidden suggestion again (from the settings screen). */
+        /** Forgets every personal word and where the taps land, and shows every hidden suggestion again (from the settings screen). */
         fun clearWords(dir: File, prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
             File(dir, WORDS).delete()
             File(dir, HIDDEN).delete()
+            File(dir, SPOTS).delete()
             wordsChanged(prefs, now)
         }
 

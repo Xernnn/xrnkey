@@ -1,0 +1,480 @@
+#!/usr/bin/env python3
+"""xk-typos: Space's typo fixes, measured with simulated fingers (android/docs/feature-spec.md,
+"Typos").
+
+usage: xk-typos --lib LIBXRNKEY --vi VI.xklm --en EN.xklm [--set C|dev] [--seeds 2026,2027]
+                [--sigma 0.33,0.40] [--slips 0.01] [--key-height 1.4] [--level 1] [--json OUT]
+                [--tune]
+
+Each message of the set is typed as the owner types with Laban Key's settings (tones on Space
+off, typo fixes Flexible, non-Vietnamese as typed): Vietnamese with its Telex marks ("không" is
+"khoong", the tone key last), English as it is spelt. Every key is a tap: aimed at the key's
+centre on the phone's QWERTY (rows q..p, a..l from half a key in, z..m from a key and a half
+in; a key 1.4 key widths tall), landing around it with a spread of `sigma` key widths across
+and up and down, and with `slips` an outright slip aimed at a neighbouring key. The tap types
+the letter key it lands on, and the keyboard passes on where it landed on that key.
+
+Space then commits what the keyboard commits: before, the Telex result, or a word typed
+without marks as typed or fixed into English (xk_fix_wrong_word); after, the touch-aware fix
+(xk_state_fix_typo) first. Reported, for Vietnamese and English apart:
+  - typo words: words with a tap on another key than meant; how many come out as meant;
+  - clean words: every tap on the key meant; how many the fix changes (should be ~0).
+The same is reported with the touches withheld ("no touch data": the key centres, as text
+typed by a script), which is the layout's prior alone.
+
+--bias DX,DY gives the fingers a habit: every tap lands DX key widths toward the middle of the
+keyboard (two thumbs reaching in) and DY key heights lower. The set is then typed again after
+the keyboard learned where the taps land, as the phone learns it (ime/TouchSpots.kt) from the
+words of the dev text typed with the same habit that ended as typed.
+
+Sets: C, the made-up chat of data/lm/eval/chat.txt (the test set); dev, the made-up sentences
+the small test models are trained on (data/lm/test/vi.txt and en.txt), which tuned the
+margins. --tune prints, for the dev set, the fixes and false changes each margin would give.
+"""
+
+import argparse
+import ctypes
+import importlib.machinery
+import importlib.util
+import json
+import math
+import os
+import random
+import sys
+import time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "data", "lm"))
+import xklm_text  # noqa: E402
+
+
+def load_xk_eval():
+    path = os.path.join(ROOT, "tools", "xk-eval")
+    loader = importlib.machinery.SourceFileLoader("xk_eval", path)
+    spec = importlib.util.spec_from_loader("xk_eval", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+# ---- the phone's keys ---------------------------------------------------------------------
+
+ROWS = (("qwertyuiop", 0.0), ("asdfghjkl", 0.5), ("zxcvbnm", 1.5))
+
+
+class Keys:
+    """The letter keys in key widths: x across, y down, rows `height` apart."""
+
+    def __init__(self, height):
+        self.h = height
+        self.pos = {}
+        for r, (row, x0) in enumerate(ROWS):
+            for i, c in enumerate(row):
+                self.pos[c] = (x0 + i + 0.5, (r + 0.5) * height)
+
+    def neighbours(self, c):
+        """The keys that touch `c`: beside it, and the two above and below it."""
+        x, y = self.pos[c]
+        out = []
+        for k, (kx, ky) in self.pos.items():
+            if k == c:
+                continue
+            if abs(ky - y) < 1e-9 and abs(kx - x) <= 1.01:
+                out.append(k)
+            elif abs(abs(ky - y) - self.h) < 1e-9 and abs(kx - x) <= 0.51:
+                out.append(k)
+        return out
+
+    def at(self, x, y):
+        """The letter key a point is on, or None off the letter keys (the number row, Shift,
+        Backspace, the bottom row, the ends of the middle row)."""
+        if y < 0 or y >= 3 * self.h:
+            return None
+        row, x0 = ROWS[int(y // self.h)]
+        i = int(math.floor(x - x0))
+        return row[i] if 0 <= i < len(row) else None
+
+
+class Finger:
+    """Taps aimed at keys: Gaussian around the aim, sometimes aimed at a neighbour."""
+
+    def __init__(self, keys, rng, sigma_x, sigma_y, slips, bias=None):
+        self.keys, self.rng = keys, rng
+        self.sx, self.sy, self.slips = sigma_x, sigma_y, slips
+        self.bias = bias or {}
+
+    def tap(self, c):
+        """The key a tap aimed at `c` types, and where on it (key widths across, heights
+        down from its centre). A tap off the letter keys is tapped again: Shift, a digit or
+        the space bar would have shown it at once."""
+        aim = c
+        if self.rng.random() < self.slips:
+            aim = self.rng.choice(self.keys.neighbours(c))
+        while True:
+            x, y = self.keys.pos[aim]
+            bx, by = self.bias.get(aim, (0.0, 0.0))
+            x += bx + self.rng.gauss(0.0, self.sx)
+            y += by * self.keys.h + self.rng.gauss(0.0, self.sy)
+            typed = self.keys.at(x, y)
+            if typed:
+                break
+        cx, cy = self.keys.pos[typed]
+        return typed, (x - cx), (y - cy) / self.keys.h
+
+
+# ---- the engine -----------------------------------------------------------------------------
+
+class Engine:
+    class Result(ctypes.Structure):
+        _fields_ = [("commit", ctypes.c_char * 64), ("preedit", ctypes.c_char * 64),
+                    ("consumed", ctypes.c_int), ("reset", ctypes.c_int), ("delete_before", ctypes.c_int)]
+
+    def __init__(self, lib, vi, en, key_height):
+        L = ctypes.CDLL(lib)
+        P, F, I = ctypes.c_void_p, ctypes.POINTER(ctypes.c_float), ctypes.c_int
+        S = ctypes.POINTER(ctypes.c_char_p)
+        L.xk_lm_open.restype = P
+        L.xk_lm_open.argtypes = [ctypes.c_char_p]
+        L.xk_models_new.restype = P
+        L.xk_models_new.argtypes = [P, P]
+        L.xk_models_set_keyboard.argtypes = [P, ctypes.c_float, P, P]
+        L.xk_state_new.restype = P
+        L.xk_state_new.argtypes = [I]
+        L.xk_state_set_models.argtypes = [P, P]
+        L.xk_state_set_context.argtypes = [P, S, I]
+        L.xk_state_reset.argtypes = [P]
+        L.xk_process_key.restype = Engine.Result
+        L.xk_process_key.argtypes = [P, ctypes.c_uint32, ctypes.c_uint32]
+        L.xk_state_get_preedit.restype = P
+        L.xk_state_get_preedit.argtypes = [P]
+        L.xk_state_preview_final.restype = P
+        L.xk_state_preview_final.argtypes = [P]
+        L.xk_fix_wrong_word.restype = P
+        L.xk_fix_wrong_word.argtypes = [P, ctypes.c_char_p, ctypes.c_float]
+        L.xk_state_fix_typo.restype = P
+        L.xk_state_fix_typo.argtypes = [P, S, I, F, F, I, I, ctypes.POINTER(I)]
+        L.xk_state_typo_best.restype = P
+        L.xk_state_typo_best.argtypes = [P, S, I, F, F, I, I, F, F]
+        self.L = L
+        self.libc = ctypes.CDLL(None)
+        self.libc.free.argtypes = [P]
+        self.vi = L.xk_lm_open(vi.encode())
+        self.en = L.xk_lm_open(en.encode())
+        if not self.vi or not self.en:
+            sys.exit("xk-typos: cannot open the models")
+        self.models = L.xk_models_new(self.vi, self.en)
+        self.set_keyboard(key_height)
+        self.state = L.xk_state_new(0)
+        L.xk_state_set_models(self.state, self.models)
+        # The phone's defaults: free marking on, w alone not ư.
+        L.xk_state_set_option.argtypes = [P, I, I]
+        L.xk_state_set_option(self.state, 4, 0)
+
+    def set_keyboard(self, key_height, sweet=None):
+        if sweet:
+            xs = (ctypes.c_float * 26)(*[sweet.get(chr(97 + i), (0, 0))[0] for i in range(26)])
+            ys = (ctypes.c_float * 26)(*[sweet.get(chr(97 + i), (0, 0))[1] for i in range(26)])
+            self.L.xk_models_set_keyboard(self.models, key_height, xs, ys)
+        else:
+            self.L.xk_models_set_keyboard(self.models, key_height, None, None)
+
+    def _text(self, p):
+        if not p:
+            return None
+        out = ctypes.string_at(p).decode("utf-8", "replace")
+        self.libc.free(p)
+        return out
+
+    @staticmethod
+    def _words(words):
+        return (ctypes.c_char_p * max(1, len(words)))(*[w.encode() for w in words]), len(words)
+
+    def type(self, ctx, keys):
+        L, s = self.L, self.state
+        L.xk_state_reset(s)
+        arr, n = self._words(ctx)
+        L.xk_state_set_context(s, arr, n)
+        for c in keys:
+            L.xk_process_key(s, ord(c), 0)
+        return self._text(L.xk_state_get_preedit(s))
+
+    def before(self, keys, shown):
+        """What Space commits today, with the owner's settings: a word typed without marks
+        as typed, or fixed into English; one typed with them as the core ends it."""
+        if shown == keys and keys.isascii() and keys.isalpha():
+            return self._text(self.L.xk_fix_wrong_word(self.models, keys.encode(), 1.0)) or keys
+        return self._text(self.L.xk_state_preview_final(self.state))
+
+    def touches(self, taps):
+        n = len(taps)
+        xs = (ctypes.c_float * max(1, n))(*[t[0] for t in taps])
+        ys = (ctypes.c_float * max(1, n))(*[t[1] for t in taps])
+        return xs, ys, n
+
+    def fix(self, ctx, taps, level):
+        arr, k = self._words(ctx)
+        xs, ys, n = self.touches(taps)
+        known = ctypes.c_int()
+        return self._text(self.L.xk_state_fix_typo(self.state, arr, k, xs, ys, n, level, ctypes.byref(known))), \
+            known.value
+
+    def best(self, ctx, taps, level):
+        arr, k = self._words(ctx)
+        xs, ys, n = self.touches(taps)
+        lead, among = ctypes.c_float(), ctypes.c_float()
+        text = self._text(self.L.xk_state_typo_best(self.state, arr, k, xs, ys, n, level,
+                                                    ctypes.byref(lead), ctypes.byref(among)))
+        return text, lead.value, among.value
+
+
+# ---- the sets -----------------------------------------------------------------------------
+
+def dev_items(engine_text):
+    """The made-up training text of the small test models: vi.txt Vietnamese where a token is
+    a syllable, en.txt all English."""
+    out = []
+    for name, english in (("vi.txt", False), ("en.txt", True)):
+        path = os.path.join(ROOT, "data", "lm", "test", name)
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if not line.strip() or line.startswith("#"):
+                    continue
+                for sent in xklm_text.sentences(engine_text, line):
+                    out.append([(t, None if t.startswith("<") else
+                                 (False if english else engine_text.syllable(t) is not None)) for t in sent])
+    return out
+
+
+def words_of(messages):
+    """Each message as (intended token, its keys, is Vietnamese) for the words typed, None
+    for a number or pause (it ends the run of words the context holds)."""
+    out = []
+    for items in messages:
+        row = []
+        for tok, vi in items:
+            if vi is None:
+                row.append(None)
+            elif vi:
+                row.append((tok, xklm_text.telex_keys(tok), True))
+            elif tok.isascii() and tok.isalpha():
+                row.append((tok, tok, False))
+            else:
+                row.append(None)
+        out.append(row)
+    return out
+
+
+def context(done):
+    """The words before, as the keyboard passes them: "<s>" while the sentence has at most
+    three, then the last three."""
+    return (["<s>"] + done) if len(done) <= 3 else done[-3:]
+
+
+# ---- the run ------------------------------------------------------------------------------
+
+def run(engine, messages, finger, level, record=None):
+    """Type every message; tally per language, with and without the touches."""
+    stats = {}
+
+    def bump(key, n=1):
+        stats[key] = stats.get(key, 0) + n
+
+    spent = []
+    for row in messages:
+        done = []
+        for item in row:
+            if item is None:
+                continue
+            tok, keys, vi = item
+            lang = "vi" if vi else "en"
+            taps = [finger.tap(c) for c in keys]
+            typed = "".join(t[0] for t in taps)
+            ctx = context(done)
+            shown = engine.type(ctx, typed)
+            before = engine.before(typed, shown)
+            t0 = time.perf_counter()
+            fixed, known = engine.fix(ctx, [(t[1], t[2]) for t in taps], level)
+            spent.append(time.perf_counter() - t0)
+            after = fixed or before
+            blind, _ = engine.fix(ctx, [(math.nan, math.nan)] * len(taps), level)
+            after_blind = blind or before
+            if record is not None:
+                best = engine.best(ctx, [(t[1], t[2]) for t in taps], level)
+                record.append((tok, typed, typed != keys, before, best, lang))
+            if typed == keys:
+                bump(f"{lang}.clean")
+                bump(f"{lang}.clean.changed", after != before)
+                bump(f"{lang}.clean.changed.blind", after_blind != before)
+            else:
+                bump(f"{lang}.typo")
+                bump(f"{lang}.typo.word", known)
+                bump(f"{lang}.typo.before", before == tok)
+                bump(f"{lang}.typo.after", after == tok)
+                bump(f"{lang}.typo.blind", after_blind == tok)
+                bump(f"{lang}.typo.wrong", after != before and after != tok)
+            done.append(after)
+    spent.sort()
+    stats["ms.p50"] = 1000 * spent[len(spent) // 2] if spent else 0
+    stats["ms.p99"] = 1000 * spent[int(len(spent) * 0.99)] if spent else 0
+    return stats
+
+
+def learn_spots(engine, messages, finger):
+    """Where the taps on each letter land, learned as the phone learns it: from the words typed
+    right, a running mean per letter (its count stopping at 200), drawn toward the centre while
+    there are few, none before 10 taps, at most 0.3 off."""
+    mean, count = {}, {}
+    for row in messages:
+        done = []
+        for item in row:
+            if item is None:
+                continue
+            tok, keys, vi = item
+            taps = [finger.tap(c) for c in keys]
+            typed = "".join(t[0] for t in taps)
+            done.append(tok)
+            if typed != keys:
+                continue
+            for c, dx, dy in taps:
+                n = min(count.get(c, 0) + 1, 200)
+                count[c] = n
+                mx, my = mean.get(c, (0.0, 0.0))
+                mean[c] = (mx + (dx - mx) / n, my + (dy - my) / n)
+
+    def spot(v, n):
+        return 0.0 if n < 10 else max(-0.3, min(0.3, v * n / (n + 20)))
+
+    return {c: (spot(mean[c][0], count[c]), spot(mean[c][1], count[c])) for c in mean}
+
+
+def habit(keys, dx, dy):
+    """Each key's offset for fingers that reach toward the keyboard's middle and land low."""
+    out = {}
+    for c, (x, _) in keys.pos.items():
+        out[c] = (dx if x < 5.0 else -dx, dy)
+    return out
+
+
+def pct(a, b):
+    return 100.0 * a / b if b else float("nan")
+
+
+def report(stats, title):
+    print(title)
+    print(f"  {'':10} {'typo words':>10} {'real words':>10} {'before':>8} {'after':>8} {'no touch':>9} "
+          f"{'wrong fix':>9}   {'clean':>6} {'changed':>8} {'no touch':>9}")
+    rows = []
+    for lang, name in (("vi", "Vietnamese"), ("en", "English"), ("all", "all")):
+        g = (lambda k: stats.get(f"vi.{k}", 0) + stats.get(f"en.{k}", 0)) if lang == "all" else \
+            (lambda k, lang=lang: stats.get(f"{lang}.{k}", 0))
+        typo, clean = g("typo"), g("clean")
+        r = {
+            "set": lang, "typo words": typo, "real-word typos": g("typo.word"),
+            "fixed before %": round(pct(g("typo.before"), typo), 1),
+            "fixed after %": round(pct(g("typo.after"), typo), 1),
+            "fixed without touch data %": round(pct(g("typo.blind"), typo), 1),
+            "fixed to a wrong word %": round(pct(g("typo.wrong"), typo), 1),
+            "clean words": clean,
+            "clean words changed %": round(pct(g("clean.changed"), clean), 2),
+            "clean words changed without touch data %": round(pct(g("clean.changed.blind"), clean), 2),
+        }
+        rows.append(r)
+        print(f"  {name:10} {typo:>10} {r['real-word typos']:>10} {r['fixed before %']:>7.1f}% "
+              f"{r['fixed after %']:>7.1f}% {r['fixed without touch data %']:>8.1f}% "
+              f"{r['fixed to a wrong word %']:>8.1f}%   {clean:>6} {r['clean words changed %']:>7.2f}% "
+              f"{r['clean words changed without touch data %']:>8.2f}%")
+    print(f"  the fix's time per Space: median {stats['ms.p50']:.2f} ms, p99 {stats['ms.p99']:.2f} ms")
+    return rows
+
+
+def tune(record):
+    """For each (margin, share) pair: typo words fixed right, and clean words changed."""
+    margins = [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+    shares = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    allowances = [0.0, 0.5, 1.0, 1.5, 2.0]
+    typos = sum(1 for r in record if r[2])
+    clean = sum(1 for r in record if not r[2])
+    print(f"tuning on {typos} typo words and {clean} clean ones (allowance, margin, share: fixed %, wrong %, "
+          f"clean changed %)")
+    for a in allowances:
+        for mg in margins:
+            line = []
+            for sh in shares:
+                fixed = wrong = changed = 0
+                for tok, typed, typo, before, (text, lead, among), lang in record:
+                    if not text:
+                        continue
+                    margin = lead - a
+                    share = 1.0 / (1.0 / among + 10 ** (-margin)) if among > 0 else 0
+                    if margin < mg or share < sh:
+                        continue
+                    if typo:
+                        fixed += text == tok
+                        wrong += text != tok
+                    else:
+                        changed += text != before
+                line.append(f"{pct(fixed, typos):5.1f}/{pct(wrong, typos):4.1f}/{pct(changed, clean):4.2f}")
+            print(f"  {a:3.1f} {mg:4.2f}  " + "  ".join(line))
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--lib", required=True)
+    ap.add_argument("--vi", required=True)
+    ap.add_argument("--en", required=True)
+    ap.add_argument("--set", default="C", choices=["C", "dev"])
+    ap.add_argument("--chat", default=os.path.join(ROOT, "data", "lm", "eval", "chat.txt"))
+    ap.add_argument("--seeds", default="2026,2027,2028")
+    ap.add_argument("--sigma", default="0.33,0.40", help="spread across, up and down (key widths)")
+    ap.add_argument("--slips", type=float, default=0.01, help="outright slips to a neighbour, per tap")
+    ap.add_argument("--key-height", type=float, default=1.4, help="a key's height in key widths")
+    ap.add_argument("--level", type=int, default=1, help="1 flexible, 2 strong")
+    ap.add_argument("--bias", help="DX,DY: the fingers' habit (key widths inward, key heights down)")
+    ap.add_argument("--json")
+    ap.add_argument("--tune", action="store_true")
+    args = ap.parse_args()
+
+    xk_eval = load_xk_eval()
+    text_engine = xklm_text.Engine(os.path.abspath(args.lib))
+    engine = Engine(os.path.abspath(args.lib), args.vi, args.en, args.key_height)
+    sets = {"C": lambda: xk_eval.chat_items(text_engine, args.chat), "dev": lambda: dev_items(text_engine)}
+    messages = words_of(sets[args.set]())
+    sx, sy = (float(v) for v in args.sigma.split(","))
+    keys = Keys(args.key_height)
+    bias = None
+    if args.bias:
+        bx, by = (float(v) for v in args.bias.split(","))
+        bias = habit(keys, bx, by)
+
+    def typed_all(record=None):
+        total = {}
+        for seed in (int(s) for s in args.seeds.split(",")):
+            finger = Finger(keys, random.Random(seed), sx, sy, args.slips, bias)
+            stats = run(engine, messages, finger, args.level, record)
+            for k, v in stats.items():
+                total[k] = total.get(k, 0) + v if not k.startswith("ms.") else max(total.get(k, 0), v)
+        return total
+
+    record = [] if args.tune else None
+    total = typed_all(record)
+    level = {1: "Flexible", 2: "Strong"}.get(args.level, str(args.level))
+    title = (f"xk-typos  set {args.set}  seeds {args.seeds}  spread {sx}/{sy} key widths  "
+             f"slips {args.slips}  keys {args.key_height} tall  level {level}")
+    if bias:
+        title += f"  habit {args.bias}"
+    rows = report(total, title)
+    if bias:
+        dev = words_of(dev_items(text_engine))
+        spots = learn_spots(engine, dev, Finger(keys, random.Random(7), sx, sy, args.slips, bias))
+        engine.set_keyboard(args.key_height, spots)
+        rows += report(typed_all(), "  ... after learning where the taps land, from the dev text typed so")
+        engine.set_keyboard(args.key_height)
+    if record is not None:
+        tune(record)
+    if args.json:
+        with open(args.json, "w", encoding="utf-8") as f:
+            json.dump(rows, f, indent=2, ensure_ascii=False)
+
+
+if __name__ == "__main__":
+    main()
