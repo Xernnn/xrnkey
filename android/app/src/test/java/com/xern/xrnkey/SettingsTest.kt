@@ -15,6 +15,7 @@ import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ime.XrnkeyService
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Palette
+import com.xern.xrnkey.keyboard.Shift
 import com.xern.xrnkey.keyboard.Tool
 import com.xern.xrnkey.keyboard.Strip
 import org.junit.Assert.assertEquals
@@ -109,7 +110,7 @@ class SettingsTest {
     fun theToolRowFoldsAwayAndComesBack() {
         val (s, keys) = keyboardOn()
         assertEquals(Strip.Tools, keys.strip)
-        assertEquals(listOf(Tool.HIDE, Tool.SETTINGS, Tool.CLIPBOARD, Tool.CURSOR, Tool.EMOJI), Tool.entries)
+        assertEquals(listOf(Tool.HIDE, Tool.SETTINGS, Tool.CLIPBOARD, Tool.CURSOR, Tool.ONE_HAND, Tool.EMOJI), Tool.entries)
         s.onTool(Tool.HIDE)
         assertEquals(XrnkeyService.BARE, keys.strip)
         assertTrue(Options.load(Options.prefs(app())).toolsHidden)
@@ -225,12 +226,34 @@ class SettingsTest {
         // A new setting: every install, new or updated from 0.3, starts with Laban's behaviour.
         val p = app().getSharedPreferences("tones", Context.MODE_PRIVATE)
         assertEquals(com.xern.xrnkey.ime.Typist.TONES_OFF, Options.load(p).tonesOnSpace)
-        assertFalse(Options.load(p).autoCap)
-        Options().copy(tonesOnSpace = 2, autoCap = true).save(p)
+        assertEquals("english", Options.load(p).autoCap)
+        Options().copy(tonesOnSpace = 2, autoCap = "always").save(p)
         assertEquals(2, Options.load(p).tonesOnSpace)
-        assertTrue(Options.load(p).autoCap)
+        assertEquals("always", Options.load(p).autoCap)
         p.edit().putInt("tones_on_space", 7).commit()
         assertEquals(2, Options.load(p).tonesOnSpace)
+    }
+
+    /**
+     * Auto-capitalise is English's by default: the English keyboard starts a sentence with Shift,
+     * the Vietnamese one doesn't (the owner has it off there, as on Laban Key). Before 0.11 it
+     * was on or off for every language: on stays on everywhere.
+     */
+    @Test
+    fun autoCapitaliseIsTheEnglishKeyboardsByDefault() {
+        val (s, keys) = keyboardOn()
+        assertEquals(Shift.OFF, keys.shift)
+        s.onLanguage("en")
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(Shift.ONCE, keys.shift)
+        s.onLanguage("vi")
+        keys.shift = Shift.OFF
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(Shift.OFF, keys.shift)
+        s.onDestroy()
+        val old = app().getSharedPreferences("cap", Context.MODE_PRIVATE)
+        old.edit().putBoolean("auto_cap", true).commit()
+        assertEquals("always", Options.load(old).autoCap)
     }
 
     @Test

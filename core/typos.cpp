@@ -13,8 +13,9 @@
  * scored in context by the models' mixture (score.cpp) plus what its slips cost, LatinIME's
  * noisy channel, and so is leaving the word as typed: the models' share for a word they don't
  * know. A syllable typed with its marks that no dictionary has may be chat spelt so on purpose
- * ("dzậy", "ừa"): it is fixed only by a neighbour's key, and by a wider margin. The best fix replaces the word only when it leads leaving it by the level's margin and
- * is the likely one among the rest. */
+ * ("dzậy", "ừa", "kái"): it is fixed only by a neighbour's key the tap landed toward, and by a
+ * wider margin. The best fix replaces the word only when it leads leaving it by the level's
+ * margin and is the likely one among the rest. A word of two keys stays. */
 #include "keys.h"
 #include "learn.h"
 #include "lm_internal.h"
@@ -48,6 +49,9 @@ constexpr double kExtraNear = -2.3;   /* the next or last key's neighbour brushe
 constexpr double kSwap = -2.4;        /* two keys swapped ("teh") */
 /* A neighbour worth trying for one tap, and the least a fix's slips may cost together. */
 constexpr double kSubFloor = -3.5;
+/* A neighbour worth trying in a syllable chat may spell so ("kái", "nhóe"): only a tap that
+ * landed toward it, never one in its own key's middle (about -1.7). */
+constexpr double kChatSubFloor = -1.2;
 constexpr double kChannelFloor = -6.0;
 /* A vowel's key this likely makes letters with no vowel a slip, not an abbreviation. */
 constexpr double kVowelEdge = -0.6;
@@ -203,7 +207,7 @@ struct Fix {
  * to it) and count. */
 std::unordered_map<std::string, std::pair<double, int>> sequences(const std::string& keys,
                                                                   const std::vector<std::array<double, 26>>& w,
-                                                                  int max_slips, bool other_slips) {
+                                                                  int max_slips, bool other_slips, double sub_floor) {
     std::unordered_map<std::string, std::pair<double, int>> out;
     auto add = [&](std::string k, double cost, int slips) {
         if (cost < kChannelFloor || k.empty()) return;
@@ -215,7 +219,7 @@ std::unordered_map<std::string, std::pair<double, int>> sequences(const std::str
     std::vector<std::vector<std::pair<char, double>>> subs(n);
     for (size_t i = 0; i < n; ++i) {
         for (int c = 0; c < 26; ++c)
-            if ('a' + c != keys[i] && w[i][static_cast<size_t>(c)] >= kSubFloor)
+            if ('a' + c != keys[i] && w[i][static_cast<size_t>(c)] >= sub_floor)
                 subs[i].emplace_back(static_cast<char>('a' + c), w[i][static_cast<size_t>(c)]);
         std::sort(subs[i].begin(), subs[i].end(), [](const auto& a, const auto& b) { return a.second > b.second; });
     }
@@ -272,7 +276,7 @@ bool find_fix(const XKStateImpl& s, const Models& m, const Context& ctx, const s
               const std::vector<std::array<double, 26>>& w, int level, const std::string& as_typed, bool chat,
               Fix* fix) {
     const int max_slips = keys.size() >= 4 ? 2 : 1;
-    const auto seqs = sequences(keys, w, max_slips, !chat);
+    const auto seqs = sequences(keys, w, max_slips, !chat, chat ? kChatSubFloor : kSubFloor);
     Resolver resolve(s, m);
     std::vector<Cand> cands;
     for (const auto& [k, cost] : seqs) resolve.words(k, cost.first, cost.second, cands);
@@ -362,11 +366,14 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
     if (is_word(m, as_typed)) return kWord;
     /* A syllable typed with its marks, though no dictionary's, may be chat spelt so on purpose
      * ("dzậy", "ừa", "ùi"), or a slip onto a key chat spells with ("fặng" for "gặng"): only a
-     * neighbour's key fixes it, never a key added or taken away, and only by a wider margin. */
+     * neighbour's key fixes it, where the tap landed toward that key, never a key added or taken
+     * away, and only by a wider margin. */
     std::u32string letters;
     int tone;
     const bool chat = !az(as_typed) && syllable_split(ends, &letters, &tone) && chat_syllable_valid(letters, tone);
-    if (level == XK_CORRECT_OFF || keys.size() < 2 || keys.size() > 24) return kNone;
+    /* Two keys are too few to tell a slip from what was meant ("aa" is â, not "as"): they stay,
+     * as in Laban Key, and as xk_fix_wrong_word leaves them. */
+    if (level == XK_CORRECT_OFF || keys.size() < 3 || keys.size() > 24) return kNone;
     /* Capitals throughout: an acronym or a code. Chat abbreviations stay, and letters with no
      * vowel are one unless there are four of them ("khpng" is a slip, "thx" is not). */
     if (upper == raw.size() && raw.size() > 1) return kNone;

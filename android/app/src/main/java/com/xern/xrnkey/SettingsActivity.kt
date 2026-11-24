@@ -85,6 +85,7 @@ import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ja.UserDictionary
 import com.xern.xrnkey.ja.UserHistory
+import com.xern.xrnkey.clip.ClipImages
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
 
@@ -579,6 +580,11 @@ class SettingsActivity : ComponentActivity() {
                 }
                 val rows = listOf("auto", "on", "off")
                 Choice("Number row", listOf("Auto", "On", "Off"), rows.indexOf(o.numberRow)) { set(o.copy(numberRow = rows[it])) }
+                // Portrait only; the side is kept while it is off.
+                val hand = if (!o.oneHanded) 0 else if (o.oneHandSide == "left") 1 else 2
+                Choice("One-handed", listOf("Off", "Left", "Right"), hand) {
+                    set(if (it == 0) o.copy(oneHanded = false) else o.copy(oneHanded = true, oneHandSide = if (it == 1) "left" else "right"))
+                }
             }
             Card {
                 Toggle("Hold for digits", o.holdDigits) { set(o.copy(holdDigits = it)) }
@@ -622,7 +628,9 @@ class SettingsActivity : ComponentActivity() {
             Card {
                 Toggle("Non-Vietnamese as typed", o.keepForeign) { set(o.copy(keepForeign = it)) }
                 Toggle("Double space full stop", o.doubleSpace) { set(o.copy(doubleSpace = it)) }
-                Toggle("Auto-capitalise", o.autoCap) { set(o.copy(autoCap = it)) }
+                Choice("Auto-capitalise", listOf("Off", "English", "All"), Options.AUTO_CAPS.indexOf(o.autoCap)) {
+                    set(o.copy(autoCap = Options.AUTO_CAPS[it]))
+                }
             }
         }
 
@@ -889,6 +897,7 @@ class SettingsActivity : ComponentActivity() {
             if (confirm) {
                 Confirm("Clear history", "Clear", {
                     File(filesDir, XrnkeyService.CLIPS).delete()
+                    File(filesDir, ClipImages.DIR).deleteRecursively()
                     OnDevice.clipsChanged(prefs)
                     confirm = false
                 }) { confirm = false }

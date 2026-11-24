@@ -292,6 +292,13 @@ class TouchTypoTest {
             assertEquals("dzậy", spaced("tôi", "dzaayj"))
             assertEquals("ừa", spaced("bạn", "uwaf"))
             assertEquals("ùi", spaced("xong", "uif"))
+            // Tapped in their keys' middles, chat spellings stay: "kái" was "lái", "nhóe" "nhớ".
+            assertEquals("kái", spaced("tôi", "kais"))
+            assertEquals("kái", spaced("bạn", "kais"))
+            assertEquals("nhóe", spaced("tôi", "nhoes"))
+            // Two keys stay as typed: "aa" is â.
+            assertEquals("â", spaced("tôi", "aa"))
+            assertEquals("â", spaced("tôi", "aa", mapOf(1 to (0.3f to 0f))))
         }
     }
 

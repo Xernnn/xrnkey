@@ -93,8 +93,8 @@ class SettingsPagesTest {
         assertEquals(2, Options.load(prefs()).correction)
         rule.onNodeWithText("When needed").performClick()
         assertEquals(1, Options.load(prefs()).tonesOnSpace)
-        rule.onNodeWithTag("Auto-capitalise").performScrollTo().assertIsOff().performClick()
-        assertTrue(Options.load(prefs()).autoCap)
+        rule.onNodeWithText("All").performScrollTo().performClick()
+        assertEquals("always", Options.load(prefs()).autoCap)
         back()
         rule.onNodeWithText("Theme").performClick()
         rule.onNodeWithText("Light").performClick()
@@ -294,6 +294,22 @@ class SettingsPagesTest {
     fun theKeyboardCanBeTriedOnTheMainPage() {
         rule.onNodeWithTag("Try it").performTextInput("xin chào")
         rule.onNodeWithTag("Try it").assert(hasText("xin chào"))
+    }
+
+    /** One-handed: off, or on against the left or the right edge; the side is kept while it is off. */
+    @Test
+    fun oneHandedIsChosenWithItsSide() {
+        rule.onNodeWithText("Keyboard").performClick()
+        rule.onNodeWithText("One-handed").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Left").performScrollTo().performClick()
+        assertTrue(Options.load(prefs()).oneHanded)
+        assertEquals("left", Options.load(prefs()).oneHandSide)
+        rule.onNodeWithText("Right").performClick()
+        assertEquals("right", Options.load(prefs()).oneHandSide)
+        // The second "Off": the number row's comes first.
+        rule.onAllNodesWithText("Off")[1].performClick()
+        assertFalse(Options.load(prefs()).oneHanded)
+        assertEquals("right", Options.load(prefs()).oneHandSide)
     }
 
     @Test

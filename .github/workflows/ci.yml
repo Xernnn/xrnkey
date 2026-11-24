@@ -69,6 +69,15 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
+
+      # Robolectric fetches Android's runtime jars from Maven Central as the tests run, into
+      # ~/.m2: kept between runs, so a busy Maven Central (HTTP 429) can't fail the tests.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('android/gradle/libs.versions.toml', 'android/app/build.gradle.kts') }}
+          restore-keys: robolectric-
 
       - name: Install build dependencies
         run: |

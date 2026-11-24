@@ -252,6 +252,29 @@ TEST_CASE("Space's fix leaves words, chat and codes alone", "[typos][touch]") {
     CHECK(t.fix({"<s>"}, "teh") == "the");
 }
 
+TEST_CASE("a syllable chat spells so is fixed only by a tap that landed toward the neighbour", "[typos][touch]") {
+    Typing t;
+    REQUIRE(t.t.vi != nullptr);
+    xk_state_set_option(t.s, XK_OPT_W_SHORTCUT, 0);
+    // "wúa" and "kà" typed on their keys' middles: the q and the l are not tried.
+    CHECK(t.best({"<s>", "em"}, "wuas").empty());
+    CHECK(t.best({"<s>", "em"}, "wuas", {{0, {0.0f, 0.0f}}}).empty());
+    CHECK(t.best({"<s>", "anh"}, "kaf").empty());
+    // The w tapped on its edge by q, the k on its edge by l: they are.
+    CHECK(t.best({"<s>", "em"}, "wuas", {{0, {-0.45f, 0.0f}}}) == "quá");
+    CHECK(t.best({"<s>", "anh"}, "kaf", {{0, {0.45f, 0.0f}}}) == "là");
+}
+
+TEST_CASE("Space's fix leaves a word of two keys alone", "[typos][touch]") {
+    Typing t;
+    REQUIRE(t.t.vi != nullptr);
+    // y tapped on its edge by t would make "it", but two keys may be meant so ("aa" is â).
+    CHECK(t.fix({"<s>"}, "iy", {{1, {-0.49f, 0.0f}}}, XK_CORRECT_STRONG).empty());
+    CHECK(t.fix({"<s>", "tôi"}, "aa", {{1, {0.49f, 0.0f}}}, XK_CORRECT_STRONG).empty());
+    // Three keys are enough.
+    CHECK(t.fix({"<s>", "hôm"}, "kay", {{0, {-0.45f, 0.45f}}}) == "nay");
+}
+
 TEST_CASE("Space's fix puts the tone where the owner's style does", "[typos][touch]") {
     Typing t;
     REQUIRE(t.t.vi != nullptr);

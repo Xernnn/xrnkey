@@ -139,6 +139,37 @@ class KeyboardShotsTest {
         both("strip-emoji") { strip = Strip.Candidates("sinh", "nhật", "🎂", more = true) }
     }
 
+    /** A text just copied, as the strip's chip: a long one cut short, a short one. */
+    @Test
+    fun theCopiedChip() {
+        both("strip-copied") { strip = Strip.Copied("Hẹn 7 giờ tối thứ Sáu ở quán cà phê cũ nhé, nhớ mang theo sách") }
+        both("strip-copied-short") { strip = Strip.Copied("0901 234 567") }
+    }
+
+    /**
+     * Images among the clips: their pictures fill their cards; the JPEG is dimmed (this field
+     * takes PNG only), and one whose thumbnail is missing shows a picture's outline.
+     */
+    @Test
+    fun clipboardPanelWithImages() {
+        for ((name, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+            val keys = view(palette)
+            val p = ClipboardPanelView(RuntimeEnvironment.getApplication())
+            p.palette = palette
+            p.clips = ClipShots.clips + Clip("", 1, image = "0dd.png", mime = "image/png")
+            p.thumbnail = ClipShots::thumbnail
+            p.canPaste = { it.image == null || it.mime == "image/png" }
+            p.measure(
+                MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(keys.height, MeasureSpec.EXACTLY),
+            )
+            p.layout(0, 0, p.measuredWidth, p.measuredHeight)
+            shotPanel("clipboard-images-$name", p)
+            p.hold(2)
+            shotPanel("clipboard-images-hold-$name", p)
+        }
+    }
+
     @Test
     fun clipboardPanel() {
         for ((name, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {

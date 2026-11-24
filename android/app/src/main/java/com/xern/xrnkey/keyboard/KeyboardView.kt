@@ -69,6 +69,8 @@ class KeyboardView(context: Context) : View(context) {
         fun onKanaMark() {}
         /** A Japanese conversion's ⇤ (-1) or ⇥ (1) on the strip: the focused phrase shrinks or stretches. */
         fun onResize(by: Int) {}
+        /** The strip's chip of a text just copied ([Strip.Copied]): paste it. */
+        fun onCopiedChip() {}
     }
 
     var listener: Listener? = null
@@ -97,6 +99,9 @@ class KeyboardView(context: Context) : View(context) {
         }
     var enterAction: EnterAction = EnterAction.NEWLINE
         set(value) { field = value; invalidate() }
+    /** The tool row's buttons, left to right (one-handed only where it can be: portrait). */
+    var tools: List<Tool> = Tool.entries
+        set(value) { if (field != value) { field = value; invalidate() } }
     var keyPreview = true
     var holdMillis = 400L
     /** The keys' height, in percent of the usual. */
@@ -181,7 +186,7 @@ class KeyboardView(context: Context) : View(context) {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
 
     private fun relayout() {
-        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow, kana = kana)
+        val rows = Layouts.rows(page, shift, numberRow, holdDigits, pad, home, emoticons = emoticonRow, kana = kana, english = language == "en")
         val w = width.toFloat()
         // A pad has no strip: its rows share the whole height.
         val first = if (page.isPad) 0f else stripHeight
@@ -222,6 +227,7 @@ class KeyboardView(context: Context) : View(context) {
                 Strip.Tools -> drawTools(canvas)
                 is Strip.Candidates -> drawCandidates(canvas, s)
                 is Strip.Search -> drawSearch(canvas, s)
+                is Strip.Copied -> drawCopied(canvas, s)
             }
         }
         // A kana key under its guide isn't lit itself: the guide's middle is.
@@ -679,11 +685,11 @@ class KeyboardView(context: Context) : View(context) {
 
     // The strip -------------------------------------------------------------------------------
 
-    private fun toolSlots(): Int = Tool.entries.size
+    private fun toolSlots(): Int = tools.size
 
     private fun drawTools(canvas: Canvas) {
         val w = width.toFloat() / toolSlots()
-        Tool.entries.forEachIndexed { i, t -> drawTool(canvas, t, w * i + w / 2, stripHeight / 2, 10 * dp) }
+        tools.forEachIndexed { i, t -> drawTool(canvas, t, w * i + w / 2, stripHeight / 2, 10 * dp) }
     }
 
     private fun drawTool(canvas: Canvas, t: Tool, cx: Float, cy: Float, s: Float) {
@@ -719,8 +725,55 @@ class KeyboardView(context: Context) : View(context) {
                 canvas.drawLine(cx + s * 0.65f, cy, cx + s * 1.0f, cy - s * 0.35f, line)
                 canvas.drawLine(cx + s * 0.65f, cy, cx + s * 1.0f, cy + s * 0.35f, line)
             }
+            Tool.ONE_HAND -> {
+                // A keyboard gone narrow: its keys on one side of a line, the other side free.
+                canvas.drawRoundRect(RectF(cx - s * 1.15f, cy - s * 0.8f, cx + s * 1.15f, cy + s * 0.8f), s * 0.25f, s * 0.25f, line)
+                canvas.drawLine(cx + s * 0.45f, cy - s * 0.8f, cx + s * 0.45f, cy + s * 0.8f, line)
+                fill.color = palette.dim
+                for (row in 0..1) for (k in 0..2) canvas.drawCircle(cx - s * 0.75f + k * s * 0.4f, cy - s * 0.35f + row * s * 0.38f, 1.2f * dp, fill)
+                canvas.drawLine(cx - s * 0.7f, cy + s * 0.42f, cx - s * 0.05f, cy + s * 0.42f, line)
+            }
             Tool.EMOJI -> drawSmile(canvas, cx, cy, s)
         }
+    }
+
+    /** The chip of a text just copied: a pill after ≡, the clipboard's icon and the text's start. */
+    private fun chipRect(s: Strip.Copied): Pair<RectF, String> {
+        val side = 48 * dp
+        glyph.typeface = font
+        glyph.textSize = 15 * sp
+        val pad = 12 * dp
+        val icon = 16 * dp
+        val room = width - 2 * side - 2 * dp - (pad + icon + 8 * dp + pad)
+        val shown = ellipsize(s.text.trim().take(200).replace(Regex("\\s+"), " "), maxOf(0f, room))
+        val w = pad + icon + 8 * dp + glyph.measureText(shown) + pad
+        return RectF(side, 8 * dp, side + w, stripHeight - 8 * dp) to shown
+    }
+
+    /** Where the chip of a text just copied is, while the strip shows one (for the tests). */
+    val copiedChip: RectF? get() = (strip as? Strip.Copied)?.let { chipRect(it).first }
+
+    private fun drawCopied(canvas: Canvas, s: Strip.Copied) {
+        val side = 48 * dp
+        val cy = stripHeight / 2
+        stroke(palette.dim, 1.8f * dp)
+        for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
+        drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        val (r, shown) = chipRect(s)
+        fill.color = palette.space
+        canvas.drawRoundRect(r, r.height() / 2, r.height() / 2, fill)
+        val ix = r.left + 12 * dp + 8 * dp
+        val k = 7 * dp
+        stroke(palette.dim, 1.6f * dp)
+        canvas.drawRoundRect(RectF(ix - k * 0.75f, cy - k * 0.85f, ix + k * 0.75f, cy + k), 2 * dp, 2 * dp, line)
+        canvas.drawRoundRect(RectF(ix - k * 0.35f, cy - k * 1.1f, ix + k * 0.35f, cy - k * 0.65f), 1.5f * dp, 1.5f * dp, line)
+        glyph.typeface = font
+        glyph.textSize = 15 * sp
+        glyph.color = palette.glyph
+        glyph.textAlign = Paint.Align.LEFT
+        val m = glyph.fontMetrics
+        canvas.drawText(shown, ix + 8 * dp + 8 * dp, cy - (m.ascent + m.descent) / 2, glyph)
+        glyph.textAlign = Paint.Align.CENTER
     }
 
     /** ⇤ ([dir] -1) or ⇥ (1): an arrow to a bar, in the strip's quiet colour. */
@@ -906,6 +959,12 @@ class KeyboardView(context: Context) : View(context) {
     private val lineStep get() = 28 * dp
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
 
+    /** How far a finger must slide before a key gives way to the one under it: 0.4 of a key. */
+    private val slideAway get() = 0.4f * width / 10f
+
+    /** How far a finger must slide along the space bar before it moves the cursor: half a key. */
+    private val spaceSlide get() = maxOf(slop.toFloat(), 0.5f * width / 10f)
+
     /** Where the pressed key's finger is now (where a popup opens around). */
     private var fingerX = 0f
     private var fingerY = 0f
@@ -1026,10 +1085,14 @@ class KeyboardView(context: Context) : View(context) {
     /** The finger moved while the space bar is held or swiped. */
     private fun moveCursor(x: Float, y: Float) {
         if (cursor == Cursor.OFF) {
-            if (!spaceSwipe || Math.abs(x - anchorX) < slop) return
+            // A slide, not a thumb's roll on a quick tap: half a key sideways, and more sideways
+            // than up or down. At the touch slop (8 dp) a fast Space often lost its space and
+            // moved the cursor a character, so the next letters went in the wrong place.
+            val dx = Math.abs(x - anchorX)
+            if (!spaceSwipe || dx < spaceSlide || dx < Math.abs(y - anchorY)) return
             removeCallbacks(hold)
             startCursor(Cursor.SWIPE)
-            anchorX += if (x > anchorX) slop.toFloat() else -slop.toFloat()
+            anchorX += if (x > anchorX) spaceSlide else -spaceSlide
         }
         val dx = ((x - anchorX) / cursorStep).toInt()
         val dy = if (cursor == Cursor.PAD) ((y - anchorY) / lineStep).toInt() else 0
@@ -1052,7 +1115,19 @@ class KeyboardView(context: Context) : View(context) {
         }
     }
 
+    /**
+     * The key a touch is on: the one whose cell holds it, else the nearest key of its row. The
+     * home row is inset half a key at each end, and a tap left of a or right of l typed nothing;
+     * on the reference (AOSP's keyboard) the end keys reach the screen's edges.
+     */
     private fun hitAt(x: Float, y: Float): Hit? = hits.firstOrNull { it.rect.contains(x, y) }
+        ?: hits.filter { y >= it.rect.top && y < it.rect.bottom }.minByOrNull { h ->
+            when {
+                x < h.rect.left -> h.rect.left - x
+                x >= h.rect.right -> x - h.rect.right
+                else -> 0f
+            }
+        }
 
     /** The cursor pad from the tool row: it stays until a tap that doesn't drag. */
     private var padOpen = false
@@ -1181,7 +1256,11 @@ class KeyboardView(context: Context) : View(context) {
             else -> {
                 val h = hitAt(x, y)
                 val kind = p?.key?.kind
-                if (h != null && h !== p && (kind == KeyKind.CHAR || kind == KeyKind.EMOTICON) && !holdFired) {
+                // Only a slide moves the key: a thumb rolls a little as it taps, and over a key's
+                // edge that used to type its neighbour ("e" became "r"). AOSP's keyboard has the
+                // same hysteresis.
+                val slid = Math.hypot((x - anchorX).toDouble(), (y - anchorY).toDouble()) > slideAway
+                if (h != null && h !== p && slid && (kind == KeyKind.CHAR || kind == KeyKind.EMOTICON) && !holdFired) {
                     removeCallbacks(hold)
                     pressed = h
                     if (h.key.hold != null) postDelayed(hold, holdMillis)
@@ -1327,7 +1406,16 @@ class KeyboardView(context: Context) : View(context) {
         when (strip) {
             Strip.Tools -> {
                 val i = (x / (width.toFloat() / toolSlots())).toInt().coerceIn(0, toolSlots() - 1)
-                listener?.onTool(Tool.entries[i])
+                listener?.onTool(tools[i])
+            }
+            is Strip.Copied -> {
+                val side = 48 * dp
+                val chip = chipRect(strip as Strip.Copied).first
+                when {
+                    x < side -> listener?.onStripMenu()
+                    x > width - side -> listener?.onTool(Tool.EMOJI)
+                    x >= chip.left && x <= chip.right -> listener?.onCopiedChip()
+                }
             }
             is Strip.Search -> {
                 val s = strip as Strip.Search
@@ -1531,6 +1619,12 @@ class KeyboardView(context: Context) : View(context) {
     override fun onDetachedFromWindow() {
         closeMore()
         super.onDetachedFromWindow()
+    }
+
+    /** Moved (the one-handed keyboard changed sides): the panel over the strip would stay behind. */
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        if (changed) closeMore()
     }
 
     private fun RectF.insetBy(dx: Float, dy: Float) = RectF(left + dx, top + dy, right - dx, bottom - dy)

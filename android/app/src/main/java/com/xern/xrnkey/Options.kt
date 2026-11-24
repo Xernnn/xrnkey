@@ -25,7 +25,11 @@ data class Options(
      */
     val tonesOnSpace: Int = 0,
     /** Shift for a sentence's first letter. */
-    val autoCap: Boolean = false,
+    /**
+     * Shift for a sentence's first letter: "off", "english" (on the English keyboard only, the
+     * default: the owner has it off for Vietnamese, as on Laban Key) or "always".
+     */
+    val autoCap: String = "english",
     /** The next word in the strip after a Space. */
     val nextWord: Boolean = true,
     val learn: Boolean = true,
@@ -49,6 +53,10 @@ data class Options(
     val commaHold: Boolean = true,
     /** Keyboard height, in percent. */
     val height: Int = 100,
+    /** One-handed (portrait only): the keys narrowed against [oneHandSide]'s edge. */
+    val oneHanded: Boolean = false,
+    /** "left" or "right": where the one-handed keyboard sits, kept while it is off. */
+    val oneHandSide: String = "right",
     val clipboard: Boolean = true,
     val shortcuts: Boolean = true,
     /** "dark", "light" or "system". */
@@ -75,7 +83,7 @@ data class Options(
             .putBoolean("suggestions", suggestions)
             .putBoolean("emoji_suggestions", emojiSuggestions)
             .putInt("tones_on_space", tonesOnSpace)
-            .putBoolean("auto_cap", autoCap)
+            .putString("auto_cap_mode", autoCap)
             .putBoolean("learn", learn)
             .putBoolean("sync_words", syncWords)
             .putInt("correction", correction)
@@ -88,6 +96,8 @@ data class Options(
             .putBoolean("space_swipe", spaceSwipe)
             .putBoolean("comma_hold", commaHold)
             .putInt("height", height)
+            .putBoolean("one_handed", oneHanded)
+            .putString("one_hand_side", oneHandSide)
             .putBoolean("clipboard", clipboard)
             .putBoolean("shortcuts", shortcuts)
             .putString("palette", theme)
@@ -99,6 +109,9 @@ data class Options(
 
     companion object {
         val HOLD_CHOICES = listOf(200, 300, 400, 500, 600)
+
+        /** Auto-capitalise's choices, in Settings' order. */
+        val AUTO_CAPS = listOf("off", "english", "always")
 
         /** Japanese on the 12-key kana pad: its own choice in the comma's menu, after QWERTY's "ja". */
         const val FLICK = "ja-flick"
@@ -125,7 +138,9 @@ data class Options(
                 suggestions = p.getBoolean("suggestions", d.suggestions),
                 emojiSuggestions = p.getBoolean("emoji_suggestions", d.emojiSuggestions),
                 tonesOnSpace = p.getInt("tones_on_space", d.tonesOnSpace).coerceIn(0, 2),
-                autoCap = p.getBoolean("auto_cap", d.autoCap),
+                // Before 0.11 it was on or off, for every language: on stays on everywhere.
+                autoCap = p.getString("auto_cap_mode", null)?.takeIf { it in AUTO_CAPS }
+                    ?: if (p.getBoolean("auto_cap", false)) "always" else d.autoCap,
                 learn = p.getBoolean("learn", d.learn),
                 syncWords = p.getBoolean("sync_words", d.syncWords),
                 correction = p.getInt("correction", d.correction).coerceIn(0, 2),
@@ -138,6 +153,8 @@ data class Options(
                 spaceSwipe = p.getBoolean("space_swipe", d.spaceSwipe),
                 commaHold = p.getBoolean("comma_hold", d.commaHold),
                 height = p.getInt("height", d.height).coerceIn(70, 130),
+                oneHanded = p.getBoolean("one_handed", d.oneHanded),
+                oneHandSide = p.getString("one_hand_side", d.oneHandSide)!!.takeIf { it in listOf("left", "right") } ?: d.oneHandSide,
                 clipboard = p.getBoolean("clipboard", d.clipboard),
                 shortcuts = p.getBoolean("shortcuts", d.shortcuts),
                 theme = p.getString("palette", d.theme)!!.takeIf { it in listOf("dark", "light", "system") } ?: d.theme,

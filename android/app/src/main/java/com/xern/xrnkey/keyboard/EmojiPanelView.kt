@@ -102,7 +102,8 @@ class EmojiPanelView(context: Context) : View(context) {
     private val sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
     private val headerHeight = 48 * dp
     private val barHeight = 48 * dp
-    private val tabWidth = 64 * dp
+    /** The tab row's five cells: 64 dp each, or a fifth of a narrower panel (one-handed). */
+    private val tabWidth get() = minOf(64 * dp, width / 5f)
     private val font: Typeface = try { resources.getFont(R.font.misans_vf) } catch (e: Exception) { Typeface.DEFAULT }
 
     private val glyph = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
@@ -262,7 +263,9 @@ class EmojiPanelView(context: Context) : View(context) {
      */
     private fun layoutBar() {
         val room = barRoom()
-        val least = 40 * dp
+        // Icons are narrower than samples: on a narrow panel (one-handed) they keep sharing the
+        // room down to 32 dp each, rather than scroll.
+        val least = if (pages.isNotEmpty() && pages.all { it.icon != null }) maxOf(32 * dp, minOf(40 * dp, room / pages.size)) else 40 * dp
         glyph.typeface = font
         glyph.textSize = barTextSize()
         val own = pages.map { if (it.icon != null) least else maxOf(least, glyph.measureText(it.sample) + 24 * dp) }

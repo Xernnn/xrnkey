@@ -86,13 +86,13 @@ class KeyTouchTest {
     @Test
     fun slidingAlongTheSpaceBarMovesTheCursorAndTypesNoSpace() {
         val v = keyboard()
-        val slop = android.view.ViewConfiguration.get(v.context).scaledTouchSlop
+        val dead = 54f  // half a key (keys are 108 px here)
         touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)
-        touch(v, MotionEvent.ACTION_MOVE, 545f, spaceY)        // within the slop: nothing yet
-        // Past the slop, every 10 dp (30 px) is a character.
-        touch(v, MotionEvent.ACTION_MOVE, 540f + slop + 150f, spaceY)
-        touch(v, MotionEvent.ACTION_MOVE, 540f + slop + 90f, spaceY)
-        touch(v, MotionEvent.ACTION_UP, 540f + slop + 90f, spaceY)
+        touch(v, MotionEvent.ACTION_MOVE, 545f, spaceY)        // within half a key: nothing yet
+        // Past half a key, every 10 dp (30 px) is a character.
+        touch(v, MotionEvent.ACTION_MOVE, 540f + dead + 150f, spaceY)
+        touch(v, MotionEvent.ACTION_MOVE, 540f + dead + 90f, spaceY)
+        touch(v, MotionEvent.ACTION_UP, 540f + dead + 90f, spaceY)
         assertEquals(listOf("cursor", "move 5 0", "move -2 0", "end"), events)
         events.clear()
         touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)
@@ -208,6 +208,35 @@ class KeyTouchTest {
         touch(v, MotionEvent.ACTION_DOWN, 54f, 234f)            // 1, on the number row
         touch(v, MotionEvent.ACTION_UP, 54f, 234f)
         assertEquals(listOf("e 0.37 0.25 1.67", "r -0.28 0.00 1.67", "1"), taps)
+    }
+
+    /**
+     * A quick tap's thumb rolls a little: it types what it landed on. A space whose finger slid
+     * up to 40 px (sideways, or up towards the letters) was a slide past the touch slop: the space
+     * was lost and the cursor moved. A letter that rolled 20 px over its edge typed the next key.
+     * A tap left of a or right of l, in the home row's half-key margins, typed nothing.
+     */
+    @Test
+    fun aTapTypesWhatItLandedOnThoughTheThumbRolls() {
+        val v = keyboard()
+        for (dx in listOf(20f, 40f, -40f)) {
+            touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)
+            touch(v, MotionEvent.ACTION_MOVE, 540f + dx, spaceY - 10f)
+            touch(v, MotionEvent.ACTION_UP, 540f + dx, spaceY - 10f)
+        }
+        touch(v, MotionEvent.ACTION_DOWN, 540f, spaceY)       // mostly up: still a space
+        touch(v, MotionEvent.ACTION_MOVE, 600f, spaceY - 80f)
+        touch(v, MotionEvent.ACTION_UP, 600f, spaceY - 80f)
+        assertEquals(listOf(" ", " ", " ", " "), events)
+        events.clear()
+        touch(v, MotionEvent.ACTION_DOWN, 315f, topRowY)      // e, near its right edge
+        touch(v, MotionEvent.ACTION_MOVE, 335f, topRowY)      // rolled 20 px onto r
+        touch(v, MotionEvent.ACTION_UP, 335f, topRowY)
+        touch(v, MotionEvent.ACTION_DOWN, 20f, homeRowY)      // left of a
+        touch(v, MotionEvent.ACTION_UP, 20f, homeRowY)
+        touch(v, MotionEvent.ACTION_DOWN, 1065f, homeRowY)    // right of l
+        touch(v, MotionEvent.ACTION_UP, 1065f, homeRowY)
+        assertEquals(listOf("e", "a", "l"), events)
     }
 
     /**
