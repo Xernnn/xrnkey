@@ -121,6 +121,12 @@ class XrnkeyService :
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
 
+    /** The text just copied, for the strip's chip. */
+    private val justCopied = JustCopied()
+
+    /** The field that has the keyboard is a password field (no chip there). */
+    private var passwordField = false
+
     /** The field that has the keyboard, as it started: what it takes besides text. */
     private var fieldInfo: EditorInfo? = null
 
@@ -251,6 +257,7 @@ class XrnkeyService :
 
     override fun onDestroy() {
         handler.removeCallbacks(stripTask)
+        handler.removeCallbacks(copiedEnd)
         worker?.shutdown()
         models?.user = null
         converter?.history = null
@@ -304,8 +311,9 @@ class XrnkeyService :
         inputFrame?.claimInsets()
         // Numbers, PINs, phone numbers and dates get a pad; what is typed there goes in as it is.
         val home = Layouts.pageFor(info.inputType)
+        passwordField = isPassword(info)
         fieldInfo = info
-        typist.raw = isPassword(info) || home.isPad
+        typist.raw = passwordField || home.isPad
         // No auto-correct where words are addresses, not language.
         typist.autoCorrect = !isAddress(info)
         loadOnDevice(info)
@@ -336,9 +344,15 @@ class XrnkeyService :
 
     /**
      * What the strip shows with nothing to suggest: the tool row, or, folded away by its ≡, the
-     * bare strip (≡ and emoji), as on Laban Key.
+     * bare strip (≡ and emoji), as on Laban Key. A text copied in the last minute, with nothing
+     * typed since, takes the place of either as a chip (never in a password field, nor with the
+     * clipboard history off, nor while a word is in progress).
      */
-    private fun idleStrip(): Strip = if (options.toolsHidden) BARE else Strip.Tools
+    private fun idleStrip(): Strip {
+        val copied = justCopied.current()?.takeIf { options.clipboard && !passwordField && input.shown.isEmpty() }
+        if (copied != null) return Strip.Copied(copied)
+        return if (options.toolsHidden) BARE else Strip.Tools
+    }
 
     /** The keyboard shows: the band is weighed again (the window's insets may have changed). */
     override fun onWindowShown() {
@@ -407,7 +421,7 @@ class XrnkeyService :
     private fun refresh(cursor: Int, reopen: Boolean) {
         expected.clear()
         input.reset(cursor)
-        if (reopen && !movingCursor) edit { input.reopenBefore(editor.textAfter(1)) }
+        if (reopen && !movingCursor) edit(typing = false) { input.reopenBefore(editor.textAfter(1)) }
         showStrip()
     }
 
@@ -419,9 +433,11 @@ class XrnkeyService :
 
     /**
      * One edit of the field by this keyboard: one selection update from the editor, at the
-     * position the typist expects.
+     * position the typist expects. Anything [typing] (every edit but a word opened again where
+     * the cursor stopped) ends the chip of a text just copied.
      */
-    private inline fun edit(block: () -> Unit) {
+    private inline fun edit(typing: Boolean = true, block: () -> Unit) {
+        if (typing) justCopied.clear()
         val ic = currentInputConnection
         ic?.beginBatchEdit()
         try {
@@ -812,6 +828,10 @@ class XrnkeyService :
     }
 
     private fun onCopied() {
+        // Whatever was copied before isn't on the clipboard any more: its chip goes, and this
+        // copy's comes only if it may.
+        justCopied.clear()
+        if (keyboard?.strip is Strip.Copied) keyboard?.strip = idleStrip()
         val clip = clipboard().primaryClip ?: return
         val description = clip.description
         val sensitive = description?.extras?.getBoolean(EXTRA_IS_SENSITIVE, false) == true
@@ -824,6 +844,7 @@ class XrnkeyService :
             val kept = text.toString().take(MAX_CLIP)
             history()?.add(kept, System.currentTimeMillis())
             showClips()
+            offerCopied(kept)
             return
         }
         // An image (a screenshot, a picture copied in a browser or gallery): from the system's
@@ -848,6 +869,28 @@ class XrnkeyService :
                 }
             }
         }
+    }
+
+    /** A text just copied: the strip offers it as a chip, if it has nothing better to show. */
+    private fun offerCopied(text: String) {
+        justCopied.copied(text)
+        handler.removeCallbacks(copiedEnd)
+        handler.postDelayed(copiedEnd, JustCopied.LIFE)
+        val k = keyboard ?: return
+        val chip = idleStrip()
+        if (chip is Strip.Copied && searchQuery == null && (k.strip == Strip.Tools || k.strip == BARE || k.strip is Strip.Copied)) k.strip = chip
+    }
+
+    /** The chip's minute is up: the strip without it. */
+    private val copiedEnd = Runnable {
+        if (keyboard?.strip is Strip.Copied) keyboard?.strip = idleStrip()
+    }
+
+    /** The strip's chip: the text just copied, pasted. */
+    override fun onCopiedChip() {
+        val text = justCopied.current() ?: return
+        edit { input.insert(text) }
+        showStrip()
     }
 
     /** The panel shows the history as it is now; thumbnails of images gone from it are let go. */

@@ -572,6 +572,12 @@ sealed interface Strip {
 
     /** Emoji search: the query typed so far and the emoji it finds. */
     data class Search(val query: String, val results: List<String>) : Strip
+
+    /**
+     * Nothing to suggest, and a text was just copied: ≡, a chip with the start of [text] that
+     * pastes it, and the emoji button.
+     */
+    data class Copied(val text: String) : Strip
 }
 
 /** What Enter does in this field, drawn as its icon. */

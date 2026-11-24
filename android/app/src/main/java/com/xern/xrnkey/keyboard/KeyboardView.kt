@@ -69,6 +69,8 @@ class KeyboardView(context: Context) : View(context) {
         fun onKanaMark() {}
         /** A Japanese conversion's ⇤ (-1) or ⇥ (1) on the strip: the focused phrase shrinks or stretches. */
         fun onResize(by: Int) {}
+        /** The strip's chip of a text just copied ([Strip.Copied]): paste it. */
+        fun onCopiedChip() {}
     }
 
     var listener: Listener? = null
@@ -222,6 +224,7 @@ class KeyboardView(context: Context) : View(context) {
                 Strip.Tools -> drawTools(canvas)
                 is Strip.Candidates -> drawCandidates(canvas, s)
                 is Strip.Search -> drawSearch(canvas, s)
+                is Strip.Copied -> drawCopied(canvas, s)
             }
         }
         // A kana key under its guide isn't lit itself: the guide's middle is.
@@ -721,6 +724,45 @@ class KeyboardView(context: Context) : View(context) {
             }
             Tool.EMOJI -> drawSmile(canvas, cx, cy, s)
         }
+    }
+
+    /** The chip of a text just copied: a pill after ≡, the clipboard's icon and the text's start. */
+    private fun chipRect(s: Strip.Copied): Pair<RectF, String> {
+        val side = 48 * dp
+        glyph.typeface = font
+        glyph.textSize = 15 * sp
+        val pad = 12 * dp
+        val icon = 16 * dp
+        val room = width - 2 * side - 2 * dp - (pad + icon + 8 * dp + pad)
+        val shown = ellipsize(s.text.trim().take(200).replace(Regex("\\s+"), " "), maxOf(0f, room))
+        val w = pad + icon + 8 * dp + glyph.measureText(shown) + pad
+        return RectF(side, 8 * dp, side + w, stripHeight - 8 * dp) to shown
+    }
+
+    /** Where the chip of a text just copied is, while the strip shows one (for the tests). */
+    val copiedChip: RectF? get() = (strip as? Strip.Copied)?.let { chipRect(it).first }
+
+    private fun drawCopied(canvas: Canvas, s: Strip.Copied) {
+        val side = 48 * dp
+        val cy = stripHeight / 2
+        stroke(palette.dim, 1.8f * dp)
+        for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(side / 2 - 8 * dp, cy + dy * dp, side / 2 + 8 * dp, cy + dy * dp, line)
+        drawSmile(canvas, width - side / 2, cy, 10 * dp)
+        val (r, shown) = chipRect(s)
+        fill.color = palette.space
+        canvas.drawRoundRect(r, r.height() / 2, r.height() / 2, fill)
+        val ix = r.left + 12 * dp + 8 * dp
+        val k = 7 * dp
+        stroke(palette.dim, 1.6f * dp)
+        canvas.drawRoundRect(RectF(ix - k * 0.75f, cy - k * 0.85f, ix + k * 0.75f, cy + k), 2 * dp, 2 * dp, line)
+        canvas.drawRoundRect(RectF(ix - k * 0.35f, cy - k * 1.1f, ix + k * 0.35f, cy - k * 0.65f), 1.5f * dp, 1.5f * dp, line)
+        glyph.typeface = font
+        glyph.textSize = 15 * sp
+        glyph.color = palette.glyph
+        glyph.textAlign = Paint.Align.LEFT
+        val m = glyph.fontMetrics
+        canvas.drawText(shown, ix + 8 * dp + 8 * dp, cy - (m.ascent + m.descent) / 2, glyph)
+        glyph.textAlign = Paint.Align.CENTER
     }
 
     /** ⇤ ([dir] -1) or ⇥ (1): an arrow to a bar, in the strip's quiet colour. */
@@ -1328,6 +1370,15 @@ class KeyboardView(context: Context) : View(context) {
             Strip.Tools -> {
                 val i = (x / (width.toFloat() / toolSlots())).toInt().coerceIn(0, toolSlots() - 1)
                 listener?.onTool(Tool.entries[i])
+            }
+            is Strip.Copied -> {
+                val side = 48 * dp
+                val chip = chipRect(strip as Strip.Copied).first
+                when {
+                    x < side -> listener?.onStripMenu()
+                    x > width - side -> listener?.onTool(Tool.EMOJI)
+                    x >= chip.left && x <= chip.right -> listener?.onCopiedChip()
+                }
             }
             is Strip.Search -> {
                 val s = strip as Strip.Search

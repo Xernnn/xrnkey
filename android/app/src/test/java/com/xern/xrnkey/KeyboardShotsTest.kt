@@ -139,6 +139,13 @@ class KeyboardShotsTest {
         both("strip-emoji") { strip = Strip.Candidates("sinh", "nhật", "🎂", more = true) }
     }
 
+    /** A text just copied, as the strip's chip: a long one cut short, a short one. */
+    @Test
+    fun theCopiedChip() {
+        both("strip-copied") { strip = Strip.Copied("Hẹn 7 giờ tối thứ Sáu ở quán cà phê cũ nhé, nhớ mang theo sách") }
+        both("strip-copied-short") { strip = Strip.Copied("0901 234 567") }
+    }
+
     /**
      * Images among the clips: their pictures fill their cards; the JPEG is dimmed (this field
      * takes PNG only), and one whose thumbnail is missing shows a picture's outline.

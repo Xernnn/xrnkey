@@ -49,6 +49,7 @@ Swipe typing is not used.
   as the word in progress).
 - **Tool row**: the strip's other face, a row of buttons: ≡ (folds the row away), settings,
   clipboard, cursor pad and emoji.
+- **Chip**: the strip's pill for a text just copied, which pastes it.
 - **Panel**: a full-keyboard-height view in place of the keys: emoji, clipboard, cursor pad or
   the expanded candidate list.
 - **Personal words**: words and word pairs learned from what the owner types. They are kept on
@@ -87,7 +88,6 @@ Swipe typing is not used.
 ## Later (agreed, not now)
 
 - Haptics and key sound. The owner has both off.
-- A chip in the strip for a just-copied item.
 - Typing whole words in a Unicode style as they are typed (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉). The `Aa` tab
   has the styled letters one at a time, as Laban Key's.
 - Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
@@ -287,6 +287,21 @@ Key for key as the reference has them.
   - The part of a candidate already in the field is drawn grey, the rest in the slot's colour
     (`bạn` of `bạn bè` while `bạn` is typed).
 - On the right, an **emoji button**.
+- **The chip of a text just copied**, as Gboard's: in the place of the tool row (or of the bare
+  strip, the tool row folded away), a pill after ≡ with the clipboard's icon and the start of the
+  text on one line, as much as fits between ≡ and the emoji button. Its rule:
+  - it is offered when a text is copied in any app (or with the cursor pad), and it shows while
+    the strip has nothing better: no word in progress and no next words, the strip that would
+    show the tool row. A copy while the strip has words leaves them, and the chip shows once it
+    is idle, in this field or the next, if nothing was typed meanwhile;
+  - it lasts a minute from the copy, until the text is pasted (the chip or the clipboard panel),
+    until anything is typed (any key, a candidate, an emoji), or until anything else is copied.
+    A word opened again where the cursor stopped is not typing;
+  - never for what the history doesn't keep (a sensitive clip, `ClipDescription.EXTRA_IS_SENSITIVE`,
+    which password managers set; a copy while a password field has the keyboard), never in a
+    password field, and never with the clipboard history off. A copy that may not be offered
+    still ends the chip before it: that text isn't on the clipboard any more;
+  - a copied image has no chip; it goes to the clipboard panel.
 
 What the slots hold, by situation (the centre in bold only where Space commits it):
 
@@ -307,6 +322,7 @@ What the slots hold, by situation (the centre in bold only where Space commits i
 | just after Space, following `cam on` | `các` | `bạn` | 🙏 |
 | just after Space, following `chuc mung sinh nhat` | a row of five: 🎈 🎁 🥳 🎉 🎂 |  |  |
 | field empty, nothing typed | the tool row instead |  |  |
+| field empty, a text copied in the last minute | the chip instead |  |  |
 
 ### What you can do
 
@@ -329,6 +345,8 @@ What the slots hold, by situation (the centre in bold only where Space commits i
   suggestions are kept with the personal words (Settings → Personal words lists them under
   "Hidden", each with Show; Clear all clears them too) and are never learned from.
 - **Tap ≡**: the tool row replaces the strip until the next key.
+- **Tap the chip**: pastes the text at the cursor (as the clipboard panel does), and the chip
+  goes. ≡ beside it shows the tool row, the emoji button the emoji panel.
 
 The strip never shows a sentence of explanation, only candidates.
 
