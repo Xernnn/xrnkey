@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The certificate the owner's hub app is signed with, as its SHA-256 digest: the one app that
+         may be granted SYNC_WORDS without sharing the keyboard's key. A certificate's digest is
+         public (every APK signed with it shows it); the key itself never leaves the owner's laptop. -->
+    <string-array name="hub_certs" translatable="false">
+        <item>952ddb480995b0cb812e0f46d8185b9ca3b28686987256c6ea2274d7567dce6f</item>
+    </string-array>
+</resources>

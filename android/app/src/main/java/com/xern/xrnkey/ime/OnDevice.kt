@@ -5,15 +5,22 @@ import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.ja.UserHistory
 import java.io.File
+import java.lang.ref.WeakReference
 
 /**
  * What the keyboard keeps about its owner, on the phone only: the personal words it learned, the
  * suggestions the owner hid, the shortcuts table, and what was chosen on the Japanese keyboard
  * ([japanese]). All are files in credential-encrypted storage ([dir]), so they exist only
  * after the first unlock and survive restarts and app updates. The settings screen changes them
- * through the same files; [refresh] picks the changes up when a field starts.
+ * through the same files; [refresh] picks the changes up when a field starts. The hub app's sync
+ * (sync/WordsProvider.kt) reads and changes the personal words' file too, through [live] on the main
+ * thread, where the keyboard uses them.
  */
 class OnDevice(private val dir: File, private val prefs: SharedPreferences) : AutoCloseable {
+    init {
+        current = WeakReference(this)
+    }
+
     val wordsFile get() = File(dir, WORDS)
     val shortcutsFile get() = File(dir, SHORTCUTS)
     val hiddenFile get() = File(dir, HIDDEN)
@@ -82,7 +89,19 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         if (w.unsaved > 0) w.save(wordsFile)
     }
 
+    /**
+     * The personal words' file was changed under the keyboard (the hub's sync, after [save]): read
+     * it again into the same table, which the typist and the models hold on to, and take the
+     * settings' stamp as read. Main thread only, as everything that touches [words].
+     */
+    fun reloadWords() {
+        val w = words ?: return
+        if (wordsFile.exists()) w.load(wordsFile)
+        wordsCleared = prefs.getLong(KEY_CLEARED, 0L)
+    }
+
     override fun close() {
+        if (current?.get() === this) current = null
         save()
         words?.close()
         shortcuts?.close()
@@ -92,6 +111,11 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     }
 
     companion object {
+        @Volatile private var current: WeakReference<OnDevice>? = null
+
+        /** The keyboard's own, while it is up: what it learned since its last save is in there. */
+        fun live(): OnDevice? = current?.get()
+
         const val WORDS = "personal-words.tsv"
         /** The laptop's macros.txt format, so one file can serve both (feature-spec, "Shortcuts"). */
         const val SHORTCUTS = "shortcuts.txt"

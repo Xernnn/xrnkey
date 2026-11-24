@@ -613,7 +613,10 @@ class SettingsActivity : ComponentActivity() {
             var confirmClear by remember { mutableStateOf(false) }
             val japanese = remember { readJapanese().size }
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-                Card { Toggle("Learn words", o.learn) { set(o.copy(learn = it)) } }
+                Card {
+                    Toggle("Learn words", o.learn) { set(o.copy(learn = it)) }
+                    Toggle("Sync through xrnhub", o.syncWords) { set(o.copy(syncWords = it)) }
+                }
                 Card { NavRow(Page.JAPANESE.title, "$japanese", onClick = openJapanese) }
                 Field(query, "Search", { query = it }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
                 val q = query.trim().lowercase()
