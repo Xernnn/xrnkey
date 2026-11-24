@@ -114,6 +114,21 @@ object Layouts {
         return if (upper) forms.map { it.uppercase() } + lower.toString() else forms + lower.uppercase()
     }
 
+    /** The vowels romaji writes long with a macron (Hepburn: Tōkyō). */
+    private val MACRON = mapOf('a' to "ā", 'i' to "ī", 'u' to "ū", 'e' to "ē", 'o' to "ō")
+
+    /**
+     * What holding a letter offers on the Japanese keyboard, the first under the finger: none of
+     * Vietnamese's marks, but what Japanese text uses of the Latin letters: a vowel with its
+     * macron (ā, as romaji writes a long vowel), the letter full-width (ａ), then the capital (a:
+     * ā ａ A; k: ｋ K). [upper]: as [forms], capitals, and the small letter last.
+     */
+    fun latinForms(c: Char, upper: Boolean = false): List<String> {
+        val lower = c.lowercaseChar()
+        val forms = listOfNotNull(MACRON[lower], (lower + 0xFEE0).toString())
+        return if (upper) forms.map { it.uppercase() } + lower.toString() else forms + lower.uppercase()
+    }
+
     /**
      * What holding the full stop offers: the common punctuation, the comma under the finger (as
      * on the keyboard the owner came from).
@@ -129,11 +144,12 @@ object Layouts {
      */
     val EMOTICON_ROW: List<String> = listOf("😂", "😊", "😍", "😫", "😢", "😞", "😨", "😁", "👌", "👍")
 
-    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false) =
+    /** Letter keys; on the Japanese keyboard ([kana]) a held letter gives [latinForms]. */
+    private fun chars(s: String, shift: Shift = Shift.OFF, digits: Boolean = false, kana: Boolean = false) =
         s.mapIndexed { i, c ->
             val up = shift != Shift.OFF
             val label = if (up) c.uppercase() else c.toString()
-            val forms = if (c.isLetter()) forms(c, up) else emptyList()
+            val forms = if (!c.isLetter()) emptyList() else if (kana) latinForms(c, up) else forms(c, up)
             Key(KeyKind.CHAR, label, variants = (if (digits) listOf(DIGITS[i].toString()) else emptyList()) + forms)
         }
 
@@ -222,7 +238,8 @@ object Layouts {
      * letter gives its digit first when [holdDigits] and there is no number row. A pad is a
      * dialer's grid of digits with a column beside it; [pad] says what a number pad adds. [home]
      * is the page the symbols' way back leads to (the letters, or the field's pad). On the
-     * Japanese keyboard ([kana]) the letters' comma and full stop are 、 and 。.
+     * Japanese keyboard ([kana]) the letters' comma and full stop are 、 and 。, and a held letter
+     * gives [latinForms], not Vietnamese's marks.
      */
     fun rows(
         page: Page,
@@ -260,11 +277,11 @@ object Layouts {
         Page.LETTERS -> buildList {
             if (numberRow && emoticons) add(Row(EMOTICON_ROW.map { Key(KeyKind.EMOTICON, it) }))
             else if (numberRow) add(Row(chars(DIGITS)))
-            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow)))
-            add(Row(chars("asdfghjkl", shift), inset = 0.5f))
+            add(Row(chars("qwertyuiop", shift, digits = holdDigits && !numberRow, kana = kana)))
+            add(Row(chars("asdfghjkl", shift, kana = kana), inset = 0.5f))
             add(
                 Row(
-                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift) +
+                    listOf(Key(KeyKind.SHIFT, width = 1.5f)) + chars("zxcvbnm", shift, kana = kana) +
                         Key(KeyKind.BACKSPACE, width = 1.5f),
                 ),
             )

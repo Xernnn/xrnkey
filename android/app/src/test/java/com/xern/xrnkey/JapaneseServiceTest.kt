@@ -258,4 +258,27 @@ class JapaneseServiceTest {
         assertEquals(",", Layouts.rows(Page.SYMBOLS, kana = true).last().keys.single { it.kind == KeyKind.COMMA }.text)
         assertNull(Layouts.rows(Page.SYMBOLS, kana = true).last().keys.firstOrNull { it.text == "、" })
     }
+
+    /**
+     * A held letter on the Japanese keyboard gave Vietnamese's toned vowels (ắ ằ ẳ): now a vowel
+     * with its macron, the letter full-width and its capital; with Shift, the same as capitals and
+     * the small letter last. The top row still gives its digit first without the number row; the
+     * Vietnamese keyboard keeps its marks.
+     */
+    @Test
+    fun aHeldLetterGivesLatinFormsNotVietnamese() {
+        fun variants(rows: List<com.xern.xrnkey.keyboard.Row>, label: String) =
+            rows.flatMap { it.keys }.single { it.kind == KeyKind.CHAR && it.label == label }.variants
+        val ja = Layouts.rows(Page.LETTERS, kana = true)
+        assertEquals(listOf("ā", "ａ", "A"), variants(ja, "a"))
+        assertEquals(listOf("ō", "ｏ", "O"), variants(ja, "o"))
+        assertEquals(listOf("ｋ", "K"), variants(ja, "k"))
+        assertEquals(listOf("ｄ", "D"), variants(ja, "d"))
+        val shifted = Layouts.rows(Page.LETTERS, com.xern.xrnkey.keyboard.Shift.ONCE, kana = true)
+        assertEquals(listOf("Ā", "Ａ", "a"), variants(shifted, "A"))
+        val noRow = Layouts.rows(Page.LETTERS, numberRow = false, kana = true)
+        assertEquals(listOf("3", "ē", "ｅ", "E"), variants(noRow, "e"))
+        assertTrue(ja.flatMap { it.keys }.flatMap { it.variants }.none { it in listOf("ắ", "à", "đ", "ư") })
+        assertTrue("ắ" in variants(Layouts.rows(Page.LETTERS), "a"))
+    }
 }

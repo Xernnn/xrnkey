@@ -384,6 +384,12 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   - letters that spell nothing yet wait at the end, as typed (`かk`).
 - **Shift**: a capital goes in as it is, and so do the letters after it until the reading ends
   (`Tokyo`), for names. Auto-capitalise never gives Shift here.
+- **Holding a letter** gives what Japanese text uses of it, not Vietnamese's marks: a vowel
+  with its macron, as romaji writes a long vowel (`ā ī ū ē ō`), the letter full-width (`ａ`),
+  then its capital (a: `ā ａ A`; k: `ｋ K`); with Shift, the same as capitals and the small
+  letter last. Without the number row the top row's digit comes first, as on the other
+  keyboards. Inside a reading they join it, as digits do; with nothing composing they go
+  straight in.
 - **Digits** stay ASCII. Inside a reading they join it (`3じ`), as other symbols do; with nothing
   composing they go straight in.
 - **The comma and full stop keys** are `、` and `。`. Holding `。` gives `、 ？ ！ ・ ー 「 」 … ～ ：
