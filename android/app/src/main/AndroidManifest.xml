@@ -50,6 +50,18 @@
             android:exported="true"
             android:permission="com.xern.xrnkey.permission.SYNC_WORDS" />
 
+        <!-- The clipboard history's images, for the field they are pasted into: not exported, each
+             URI readable only by the app it is given to (commitContent's grant). -->
+        <provider
+            android:name=".clip.ClipImageProvider"
+            android:authorities="${applicationId}.clips"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/clip_images" />
+        </provider>
+
         <activity
             android:name=".SettingsActivity"
             android:exported="true"

@@ -87,7 +87,7 @@ Swipe typing is not used.
 ## Later (agreed, not now)
 
 - Haptics and key sound. The owner has both off.
-- Clipboard images, and a chip in the strip for a just-copied item.
+- A chip in the strip for a just-copied item.
 - Typing whole words in a Unicode style as they are typed (𝐛𝐨𝐥𝐝, 𝘪𝘵𝘢𝘭𝘪𝘤, 𝓈𝒸𝓇𝒾𝓅𝓉). The `Aa` tab
   has the styled letters one at a time, as Laban Key's.
 - Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
@@ -1074,8 +1074,9 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
 
 ### What it shows
 
-- A list, newest first, of text the owner copied while this was the keyboard. Each item shows up
-  to two lines.
+- A list, newest first, of text and images the owner copied while this was the keyboard. A
+  text's card shows up to three lines; an image's card is its picture, cut to the card, the
+  middle kept, and dimmed where the field can't take it.
 - Pinned items sit above the rest, under a pin icon.
 - A trash button at the top clears every unpinned item.
 - When the history is empty, the panel shows only the clipboard icon, greyed out.
@@ -1083,14 +1084,30 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
 ### What you can do
 
 - **Tap an item**: pastes it at the cursor (`commitText`) and closes the panel.
+- **Tap an image**: where the field takes its type (`EditorInfo.contentMimeTypes`, `image/*`
+  and the like), it goes in through `InputConnectionCompat.commitContent`, as a content URI of
+  the keyboard's own FileProvider (`<package>.clips`, not exported) that the app is granted to
+  read, that URI alone. Where the field doesn't take it, the card is dimmed and a tap does
+  nothing.
 - **Long-press an item**: pin or unpin it, or delete it.
-- **What is kept**: plain text only, at most 50 unpinned items (the oldest goes first), with no
-  time limit. Pinned items are kept until they are unpinned. These rules are settings.
+- **What is kept**: text, at most 50 unpinned (the oldest goes first), and images, at most 10
+  unpinned, with no time limit. Pinned items are kept until they are unpinned. These rules are
+  settings.
+- **Images** come from the system clipboard only (the keyboard has no network): a screenshot
+  copied from the screenshot editor, an image copied in a browser or a gallery, read once
+  through the content URI the app put on the clipboard, off the main thread. One no bigger than
+  1600 pixels on its longest side and 3 MB is kept as it came (PNG, JPEG, GIF or WebP); a bigger
+  one is downscaled to 1600 pixels and written again, a JPEG as JPEG and anything else as PNG.
+  Each gets a 320-pixel thumbnail for its card. The file is named by a hash of what was copied,
+  so the same image copied twice is one entry. An image's files go with its entry (deleted, or
+  pushed out by newer ones), with Clear, and with the settings' "Clear history"; a file no entry
+  names is deleted when the history is read.
 - **What is never kept**:
   - a clip marked sensitive (`ClipDescription.EXTRA_IS_SENSITIVE`, which password managers set);
   - a clip copied from a password field;
   - anything copied while the clipboard setting is off.
-- Storage is a JSON file in credential-encrypted private storage. It is read only after unlock.
+- Storage is a list file and a folder of images (`clip-images/`) in credential-encrypted private
+  storage. They are read only after unlock.
 
 ## The cursor pad
 
@@ -1329,7 +1346,7 @@ Rules:
   - the owner's own Japanese words and their readings;
   - the revert memory;
   - the shortcut table;
-  - the clipboard history and pins;
+  - the clipboard history and pins, and its images (at most 10 unpinned, downscaled);
   - emoji recents and skin tones;
   - settings.
 
@@ -1340,7 +1357,8 @@ Rules:
   - sensitive clips;
   - whole messages. Only word counts and word-pair counts are learned, never sentences.
 - **Leaves the phone**: nothing, except files the owner exports by hand through the system
-  picker, and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
+  picker, an image the owner pastes from the clipboard panel (to the app it is pasted into, which
+  is granted that one URI), and, with **Sync through xrnhub** on, the personal words and pairs with their counts,
   which the owner's hub app reads to sync them through the owner's server. Never sentences,
   never the Japanese history, the shortcuts, the clipboard or anything typed in a password field.
 - **No microphone**: there is no voice input, and nothing is ever recorded.
@@ -1538,7 +1556,7 @@ Steps 1 to 10 are built, with these differences from the text above:
   keyboard's theme. Personal words: the list, search, delete one and clear all; adding a word,
   export and import are not built.
 - **Theme:** dark slate, light and system. True black is not built.
-- **Clipboard:** history size is fixed at 50; no time limit.
+- **Clipboard:** history size is fixed at 50 texts and 10 images; no time limit.
 - **Look-back** has no setting; it is always on.
 - **Next words** come from `xk_predict` (core/predict.cpp). The expanded list (≡ with more
   candidates) is not built; ≡ shows the tool row.

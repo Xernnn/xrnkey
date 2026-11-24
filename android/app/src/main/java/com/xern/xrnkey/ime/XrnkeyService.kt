@@ -1,10 +1,12 @@
 package com.xern.xrnkey.ime
 
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.AssetFileDescriptor
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.os.Handler
@@ -22,10 +24,16 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
+import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.xern.xrnkey.Options
 import com.xern.xrnkey.SettingsActivity
+import com.xern.xrnkey.clip.Clip
 import com.xern.xrnkey.clip.ClipHistory
+import com.xern.xrnkey.clip.ClipImages
 import com.xern.xrnkey.engine.EmojiIndex
 import com.xern.xrnkey.engine.Model
 import com.xern.xrnkey.engine.Models
@@ -48,6 +56,8 @@ import com.xern.xrnkey.keyboard.Strip
 import com.xern.xrnkey.keyboard.Tool
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
  * The keyboard. The models are memory-mapped straight from the APK (uncompressed assets), so
@@ -110,6 +120,9 @@ class XrnkeyService :
 
     /** The emoji search's query, while the keys type into it rather than the field. */
     private var searchQuery: String? = null
+
+    /** The field that has the keyboard, as it started: what it takes besides text. */
+    private var fieldInfo: EditorInfo? = null
 
     private val editor = object : Editor {
         override fun setComposing(text: String) {
@@ -238,6 +251,7 @@ class XrnkeyService :
 
     override fun onDestroy() {
         handler.removeCallbacks(stripTask)
+        worker?.shutdown()
         models?.user = null
         converter?.history = null
         converter?.userWords = null
@@ -290,6 +304,7 @@ class XrnkeyService :
         inputFrame?.claimInsets()
         // Numbers, PINs, phone numbers and dates get a pad; what is typed there goes in as it is.
         val home = Layouts.pageFor(info.inputType)
+        fieldInfo = info
         typist.raw = isPassword(info) || home.isPad
         // No auto-correct where words are addresses, not language.
         typist.autoCorrect = !isAddress(info)
@@ -778,46 +793,120 @@ class XrnkeyService :
         clips?.let { if (stamp == clipsStamp) return it }
         if (!getSystemService(UserManager::class.java).isUserUnlocked) return null
         clipsStamp = stamp
-        return ClipHistory(File(filesDir, CLIPS)).also { clips = it }
+        thumbs.clear()
+        return ClipHistory(File(filesDir, CLIPS), clipImages()).also { clips = it }
+    }
+
+    /** The history's images, in credential-encrypted storage beside it. */
+    private fun clipImages() = ClipImages(File(filesDir, ClipImages.DIR))
+
+    /** The panel's thumbnails, read once each. */
+    private val thumbs = HashMap<String, Bitmap?>()
+
+    /** Copied images are read and kept off the main thread, one at a time. */
+    private var worker: ExecutorService? = null
+
+    private fun background(task: Runnable) {
+        imageWork?.let { return it(task) }
+        (worker ?: Executors.newSingleThreadExecutor().also { worker = it }).execute(task)
     }
 
     private fun onCopied() {
         val clip = clipboard().primaryClip ?: return
-        val extras = clip.description?.extras
-        val sensitive = extras?.getBoolean(EXTRA_IS_SENSITIVE, false) == true
-        val text = clip.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text
+        val description = clip.description
+        val sensitive = description?.extras?.getBoolean(EXTRA_IS_SENSITIVE, false) == true
+        val item = clip.takeIf { it.itemCount > 0 }?.getItemAt(0)
+        val text = item?.text
         // typist.raw: the field that has the keyboard is a password field.
         val inPassword = typist.raw
-        if (!options.clipboard || !ClipHistory.keep(text, sensitive, inPassword)) return
-        history()?.add(text.toString().take(MAX_CLIP), System.currentTimeMillis())
-        clipPanel?.clips = history()?.clips.orEmpty()
+        if (!options.clipboard) return
+        if (ClipHistory.keep(text, sensitive, inPassword)) {
+            val kept = text.toString().take(MAX_CLIP)
+            history()?.add(kept, System.currentTimeMillis())
+            showClips()
+            return
+        }
+        // An image (a screenshot, a picture copied in a browser or gallery): from the system's
+        // clipboard only, read through the content URI the app put there.
+        val uri = item?.uri ?: return
+        val mime = description?.let(::imageType) ?: return
+        if (sensitive || inPassword || history() == null) return
+        val images = clipImages()
+        background {
+            val stored = try {
+                contentResolver.openInputStream(uri)?.let { images.store(it, mime) }
+            } catch (e: Exception) {
+                // Refused (no grant), gone, or not an image after all: not kept.
+                null
+            }
+            if (stored != null) {
+                handler.post {
+                    if (images.file(stored.name).isFile) {
+                        history()?.addImage(stored.name, stored.mime, System.currentTimeMillis())
+                        showClips()
+                    }
+                }
+            }
+        }
+    }
+
+    /** The panel shows the history as it is now; thumbnails of images gone from it are let go. */
+    private fun showClips() {
+        val now = history()?.clips.orEmpty()
+        thumbs.keys.retainAll(now.mapNotNull { it.image }.toSet())
+        clipPanel?.clips = now
     }
 
     private fun showClipboard() {
         val panel = clipPanel ?: return
-        panel.clips = history()?.clips.orEmpty()
+        showClips()
+        panel.thumbnail = ::thumbnail
+        panel.canPaste = { clip -> clip.image == null || canInsert(fieldInfo, clip.mime) }
         emojiPanel?.visibility = View.GONE
         keyboard?.visibility = View.INVISIBLE
         panel.visibility = View.VISIBLE
+    }
+
+    private fun thumbnail(clip: Clip): Bitmap? {
+        val name = clip.image ?: return null
+        return thumbs.getOrPut(name) { clipImages().thumbnail(name) }
     }
 
     override fun onPaste(text: String) {
         edit { input.insert(text) }
     }
 
-    override fun onPin(text: String, pinned: Boolean) {
-        history()?.pin(text, pinned)
-        clipPanel?.clips = history()?.clips.orEmpty()
+    /**
+     * An image from the history, into the field as content (a FileProvider URI the app is
+     * granted to read), where the field takes its type; elsewhere nothing.
+     */
+    override fun onPasteImage(clip: Clip) {
+        val info = fieldInfo ?: return
+        val mime = clip.mime ?: return
+        val name = clip.image ?: return
+        if (!canInsert(info, mime)) return
+        val ic = currentInputConnection ?: return
+        val file = clipImages().file(name).takeIf { it.isFile } ?: return
+        val uri = FileProvider.getUriForFile(this, "$packageName$IMAGES_AUTHORITY", file)
+        edit { input.finish() }
+        val content = InputContentInfoCompat(uri, ClipDescription("", arrayOf(mime)), null)
+        InputConnectionCompat.commitContent(ic, info, content, InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION, null)
+        showStrip()
     }
 
-    override fun onDelete(text: String) {
-        history()?.delete(text)
-        clipPanel?.clips = history()?.clips.orEmpty()
+    override fun onPin(key: String, pinned: Boolean) {
+        history()?.pin(key, pinned)
+        showClips()
+    }
+
+    override fun onDelete(key: String) {
+        history()?.delete(key)
+        showClips()
     }
 
     override fun onClearClips() {
         history()?.clear()
-        clipPanel?.clips = history()?.clips.orEmpty()
+        showClips()
     }
 
     // ---- settings -----------------------------------------------------------------------------
@@ -916,6 +1005,22 @@ class XrnkeyService :
          */
         internal var modelAssets: ((String) -> AssetFileDescriptor)? = null
         const val CLIPS = "clips.tsv"
+
+        /** For the tests: copied images kept right away, not on the worker thread. */
+        internal var imageWork: ((Runnable) -> Unit)? = null
+
+        /** The clipboard images' FileProvider, after the package name (the manifest's authority). */
+        const val IMAGES_AUTHORITY = ".clips"
+
+        /** The image type a clip names, if it is an image (the file's own bytes have the last word). */
+        fun imageType(d: ClipDescription): String? =
+            (0 until d.mimeTypeCount).map { d.getMimeType(it) }.firstOrNull { it.startsWith("image/") }
+
+        /** Whether the field takes content of [mime] (EditorInfo.contentMimeTypes, patterns allowed). */
+        fun canInsert(info: EditorInfo?, mime: String?): Boolean {
+            if (info == null || mime == null) return false
+            return EditorInfoCompat.getContentMimeTypes(info).any { ClipDescription.compareMimeTypes(mime, it) }
+        }
 
         /** The Japanese dictionary's asset (data/ja/README.md). */
         const val JAPANESE = "ja.xkdic"

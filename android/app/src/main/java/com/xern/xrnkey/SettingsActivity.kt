@@ -85,6 +85,7 @@ import com.xern.xrnkey.ime.HiddenWords
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.ja.UserDictionary
 import com.xern.xrnkey.ja.UserHistory
+import com.xern.xrnkey.clip.ClipImages
 import com.xern.xrnkey.ime.XrnkeyService
 import java.io.File
 
@@ -889,6 +890,7 @@ class SettingsActivity : ComponentActivity() {
             if (confirm) {
                 Confirm("Clear history", "Clear", {
                     File(filesDir, XrnkeyService.CLIPS).delete()
+                    File(filesDir, ClipImages.DIR).deleteRecursively()
                     OnDevice.clipsChanged(prefs)
                     confirm = false
                 }) { confirm = false }

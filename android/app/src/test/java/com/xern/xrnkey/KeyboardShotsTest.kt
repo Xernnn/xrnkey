@@ -139,6 +139,30 @@ class KeyboardShotsTest {
         both("strip-emoji") { strip = Strip.Candidates("sinh", "nhật", "🎂", more = true) }
     }
 
+    /**
+     * Images among the clips: their pictures fill their cards; the JPEG is dimmed (this field
+     * takes PNG only), and one whose thumbnail is missing shows a picture's outline.
+     */
+    @Test
+    fun clipboardPanelWithImages() {
+        for ((name, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
+            val keys = view(palette)
+            val p = ClipboardPanelView(RuntimeEnvironment.getApplication())
+            p.palette = palette
+            p.clips = ClipShots.clips + Clip("", 1, image = "0dd.png", mime = "image/png")
+            p.thumbnail = ClipShots::thumbnail
+            p.canPaste = { it.image == null || it.mime == "image/png" }
+            p.measure(
+                MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(keys.height, MeasureSpec.EXACTLY),
+            )
+            p.layout(0, 0, p.measuredWidth, p.measuredHeight)
+            shotPanel("clipboard-images-$name", p)
+            p.hold(2)
+            shotPanel("clipboard-images-hold-$name", p)
+        }
+    }
+
     @Test
     fun clipboardPanel() {
         for ((name, palette) in listOf("dark" to Palette.DARK, "light" to Palette.LIGHT)) {
