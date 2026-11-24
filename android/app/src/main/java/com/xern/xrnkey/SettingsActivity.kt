@@ -580,6 +580,11 @@ class SettingsActivity : ComponentActivity() {
                 }
                 val rows = listOf("auto", "on", "off")
                 Choice("Number row", listOf("Auto", "On", "Off"), rows.indexOf(o.numberRow)) { set(o.copy(numberRow = rows[it])) }
+                // Portrait only; the side is kept while it is off.
+                val hand = if (!o.oneHanded) 0 else if (o.oneHandSide == "left") 1 else 2
+                Choice("One-handed", listOf("Off", "Left", "Right"), hand) {
+                    set(if (it == 0) o.copy(oneHanded = false) else o.copy(oneHanded = true, oneHandSide = if (it == 1) "left" else "right"))
+                }
             }
             Card {
                 Toggle("Hold for digits", o.holdDigits) { set(o.copy(holdDigits = it)) }

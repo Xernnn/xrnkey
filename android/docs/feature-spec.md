@@ -48,8 +48,9 @@ Swipe typing is not used.
 - **Revert**: Backspace right after an auto-correct, which puts back what was typed (after Space,
   as the word in progress).
 - **Tool row**: the strip's other face, a row of buttons: ≡ (folds the row away), settings,
-  clipboard, cursor pad and emoji.
+  clipboard, cursor pad, one-handed and emoji.
 - **Chip**: the strip's pill for a text just copied, which pastes it.
+- **One-handed**: the keys, the strip and the panels narrowed against one edge of the screen.
 - **Panel**: a full-keyboard-height view in place of the keys: emoji, clipboard, cursor pad or
   the expanded candidate list.
 - **Personal words**: words and word pairs learned from what the owner types. They are kept on
@@ -93,7 +94,7 @@ Swipe typing is not used.
 - Auto-capitalise, smart space after punctuation, and moving the cursor to a word's end. The
   owner has these off in the reference.
 - "Improved Telex" (cc=ch …) and quick initial and final consonants. The owner has these off.
-- Split and one-handed layouts, and a tablet layout.
+- Split layouts, and a tablet layout.
 
 ## Out of scope
 
@@ -354,7 +355,8 @@ The strip never shows a sentence of explanation, only candidates.
 
 ### What it shows
 
-Five buttons, evenly spaced: ≡, settings, clipboard, cursor pad and emoji. There is no mic:
+Six buttons, evenly spaced: ≡, settings, clipboard, cursor pad, one-handed (a keyboard outline
+narrowed by a line) and emoji; in landscape five, without one-handed. There is no mic:
 the keyboard is fully offline and has no voice typing, and no theme button (the theme is in
 Settings). The tool row shows whenever there is no word in progress and no prediction to show,
 and whenever ≡ is tapped. Folded away by its ≡, it gives way to the bare strip, ≡ and emoji
@@ -366,7 +368,37 @@ with nothing between, as on Laban Key, in every field after, until ≡ brings it
 - **Settings**: opens Settings.
 - **Clipboard**: opens the clipboard panel.
 - **Cursor pad**: opens the cursor pad.
+- **One-handed**: turns the one-handed keyboard on, or off again (see "One-handed").
 - **Emoji**: opens the emoji panel.
+
+## One-handed
+
+As Gboard's one-handed mode, in portrait only.
+
+### What it shows
+
+- The keys, the strip and every panel (emoji, clipboard, the cursor pad, the more-suggestions
+  panel, the comma's menu and the held keys' popups) are 82 % of the width, against the left or
+  the right edge, as tall as at full width. The keys keep their proportions of the width: each
+  letter key is a tenth of the narrowed keyboard.
+- The free column on the other side, in the keyboard's background, holds two icons: full width
+  (|←→|) above, and an arrow pointing to the free side below.
+- In landscape the keyboard is always full width, and the tool row has no one-handed button.
+
+### What you can do
+
+- **The tool row's one-handed button** turns it on, on the side last used (the right at first),
+  and off again.
+- **The column's arrow** (its lower half) moves the keyboard to the other edge; **full width**
+  (its upper half) turns one-handed off.
+- **Settings → Keyboard → One-handed**: Off, Left or Right.
+- It is remembered for the next field and the next start, with its side kept while it is off.
+- Everything types as at full width: taps, holds and their popups, flicks, the space bar's slide,
+  the swipe from Backspace (a key and a half of the narrowed keys), the number row's swipe, the
+  pads and the 12-key pad. A tap reports where it landed in the narrowed key's own widths and
+  heights (see "Typos"), so the same place on a key is the same offset; the key's height in its
+  widths grows (about 1.7 instead of 1.4 on the owner's phone), and the spatial model sees the
+  rows as far apart as they are.
 
 ## The English keyboard
 
@@ -798,7 +830,7 @@ fixes slips there. It works the way AOSP LatinIME's typing scorer does.
 
 - **Where the tap landed.** A letter tap reports its offset from its key's centre, in key widths
   across and key heights down, and the key's height (the phone's keys are about 1.4 key widths
-  tall). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
+  tall; one-handed, about 1.7 of the narrowed keys' widths). The typist keeps one touch per key of the word in progress: keys Backspace takes leave
   with their touches, wherever they were in the word; a word opened again has none; a word
   Backspace opened right after a fix gets its own back. Text with no touches (the laptop, `adb
   input text`, a form from a held key) counts as tapped at the key's centre, so the layout alone
@@ -1181,6 +1213,7 @@ opens on the settings list.
 | | Hold comma to switch keyboard | on |
 | | Toggle input (the 12-key pad) | on |
 | | Keyboard height: 80–120 % | 100 % |
+| | One-handed: off / left / right (portrait) | off |
 | Clipboard | Keep history | on |
 | | History size | 50 |
 | Shortcuts | The table: add, edit, delete, import, export | — |

@@ -46,6 +46,7 @@ import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EmojiTab
 import com.xern.xrnkey.keyboard.EnterAction
 import com.xern.xrnkey.keyboard.Flick
+import com.xern.xrnkey.keyboard.Hand
 import com.xern.xrnkey.keyboard.KeyboardFrame
 import com.xern.xrnkey.keyboard.KeyboardView
 import com.xern.xrnkey.keyboard.Layouts
@@ -277,6 +278,8 @@ class XrnkeyService :
 
     override fun onCreateInputView(): View {
         val frame = KeyboardFrame(this).also { inputFrame = it }
+        frame.bar.onFullWidth = { saveOptions(options.copy(oneHanded = false)) }
+        frame.bar.onSwitchSide = { saveOptions(options.copy(oneHandSide = if (options.oneHandSide == "left") "right" else "left")) }
         val keys = KeyboardView(this).also {
             it.listener = this
             it.palette = savedPalette()
@@ -657,8 +660,18 @@ class XrnkeyService :
             Tool.EMOJI -> showEmoji()
             Tool.CLIPBOARD -> showClipboard()
             Tool.CURSOR -> keyboard?.openCursorPad()
+            Tool.ONE_HAND -> saveOptions(options.copy(oneHanded = !options.oneHanded))
         }
     }
+
+    /** One-handed, the side the keys sit against; null at full width (off, or not portrait). */
+    private fun handOf(o: Options): Hand? = when {
+        !o.oneHanded || !portrait() -> null
+        o.oneHandSide == "left" -> Hand.LEFT
+        else -> Hand.RIGHT
+    }
+
+    private fun portrait() = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
 
     private val handler = Handler(Looper.getMainLooper())
     private val stripTask = Runnable {
@@ -1027,7 +1040,9 @@ class XrnkeyService :
             languages = languages()
             toggleInput = o.kanaToggle
             heightPercent = o.height
+            tools = if (portrait()) Tool.entries else Tool.entries - Tool.ONE_HAND
         }
+        inputFrame?.hand = handOf(o)
         emojiPanel?.palette = palette
         clipPanel?.palette = palette
         inputFrame?.palette = palette

@@ -296,6 +296,22 @@ class SettingsPagesTest {
         rule.onNodeWithTag("Try it").assert(hasText("xin chào"))
     }
 
+    /** One-handed: off, or on against the left or the right edge; the side is kept while it is off. */
+    @Test
+    fun oneHandedIsChosenWithItsSide() {
+        rule.onNodeWithText("Keyboard").performClick()
+        rule.onNodeWithText("One-handed").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Left").performScrollTo().performClick()
+        assertTrue(Options.load(prefs()).oneHanded)
+        assertEquals("left", Options.load(prefs()).oneHandSide)
+        rule.onNodeWithText("Right").performClick()
+        assertEquals("right", Options.load(prefs()).oneHandSide)
+        // The second "Off": the number row's comes first.
+        rule.onAllNodesWithText("Off")[1].performClick()
+        assertFalse(Options.load(prefs()).oneHanded)
+        assertEquals("right", Options.load(prefs()).oneHandSide)
+    }
+
     @Test
     fun theKeyboardPreviewFollowsTheHeight() {
         rule.onNodeWithText("Keyboard").performClick()

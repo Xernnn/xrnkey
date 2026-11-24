@@ -109,7 +109,7 @@ class SettingsTest {
     fun theToolRowFoldsAwayAndComesBack() {
         val (s, keys) = keyboardOn()
         assertEquals(Strip.Tools, keys.strip)
-        assertEquals(listOf(Tool.HIDE, Tool.SETTINGS, Tool.CLIPBOARD, Tool.CURSOR, Tool.EMOJI), Tool.entries)
+        assertEquals(listOf(Tool.HIDE, Tool.SETTINGS, Tool.CLIPBOARD, Tool.CURSOR, Tool.ONE_HAND, Tool.EMOJI), Tool.entries)
         s.onTool(Tool.HIDE)
         assertEquals(XrnkeyService.BARE, keys.strip)
         assertTrue(Options.load(Options.prefs(app())).toolsHidden)

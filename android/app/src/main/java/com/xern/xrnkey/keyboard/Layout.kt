@@ -523,8 +523,11 @@ object Flick {
 }
 
 /** The strip's other face: the tool row (no mic: the keyboard is fully offline). */
-/** The tool row's buttons, left to right. HIDE (≡) folds the row away to the bare strip. */
-enum class Tool { HIDE, SETTINGS, CLIPBOARD, CURSOR, EMOJI }
+/**
+ * The tool row's buttons, left to right. HIDE (≡) folds the row away to the bare strip; ONE_HAND
+ * docks the keyboard to one side, and back (portrait only).
+ */
+enum class Tool { HIDE, SETTINGS, CLIPBOARD, CURSOR, ONE_HAND, EMOJI }
 
 /** What the strip above the keys shows. */
 sealed interface Strip {
