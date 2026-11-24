@@ -12,6 +12,9 @@ import android.os.Looper
 import android.os.UserManager
 import android.text.InputType
 import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.UnderlineSpan
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -29,6 +32,7 @@ import com.xern.xrnkey.engine.Models
 import com.xern.xrnkey.engine.TypingState
 import com.xern.xrnkey.ja.Converter
 import com.xern.xrnkey.ja.Dictionary
+import com.xern.xrnkey.ja.JapaneseEmoji
 import com.xern.xrnkey.keyboard.ClipboardPanelView
 import com.xern.xrnkey.keyboard.EmojiPanelView
 import com.xern.xrnkey.keyboard.EmojiTab
@@ -113,6 +117,12 @@ class XrnkeyService :
             currentInputConnection?.setComposingText(if (options.underline) text else SpannableString(text), 1)
         }
 
+        /** A Japanese conversion's phrases, the focused one marked ([phrasesText]). */
+        override fun setComposing(text: String, focus: IntRange) {
+            val accent = (keyboard?.palette ?: savedPalette()).accent
+            currentInputConnection?.setComposingText(phrasesText(text, focus, options.underline, accent), 1)
+        }
+
         override fun commit(text: String) {
             currentInputConnection?.commitText(text, 1)
         }
@@ -161,6 +171,12 @@ class XrnkeyService :
         // nothing said so: "teh" just stayed "teh").
         Log.i("xrnkey", "models: " + loaded.joinToString("; "))
         converter = openDictionary(JAPANESE)?.let(::Converter)
+        // The Japanese strip's emoji keywords; without them it offers no emoji.
+        kanaStrip.emoji = try {
+            assets.open("emoji-ja.tsv").use { JapaneseEmoji.load(it.readBytes()) }
+        } catch (e: IOException) {
+            null
+        }
         models = Models(vi, en)
         models?.correction = Models.CORRECT_FLEXIBLE
         english = en?.let { Models(null, it) }
@@ -224,6 +240,7 @@ class XrnkeyService :
         handler.removeCallbacks(stripTask)
         models?.user = null
         converter?.history = null
+        converter?.userWords = null
         typist.personal = null
         typist.shortcuts = null
         onDevice?.close()
@@ -444,6 +461,7 @@ class XrnkeyService :
     override fun onCandidate(slot: Int) {
         (input as? KanaTypist)?.let { k ->
             val c = kanaStrip.pick(slot) ?: return
+            japaneseEmojiPicked(c.text)
             edit { k.pick(c) }
             showStrip()
             return
@@ -460,6 +478,11 @@ class XrnkeyService :
             }
         }
         showStrip()
+    }
+
+    /** An emoji the Japanese strip offered was taken: a recent of the emoji panel (not a kaomoji). */
+    private fun japaneseEmojiPicked(text: String) {
+        if (kanaStrip.isEmoji(text) && emoji?.all?.any { it.text == text } == true) memory.addRecent(text)
     }
 
     /** A swipe left from Backspace: through the typist, so the words before the cursor stay right. */
@@ -489,6 +512,7 @@ class XrnkeyService :
         val k = input as? KanaTypist
         if (k != null) {
             val c = kanaStrip.pick(text) ?: return
+            japaneseEmojiPicked(c.text)
             edit { k.pick(c) }
         } else {
             edit { typist.pick(text) }
@@ -507,13 +531,24 @@ class XrnkeyService :
         showStrip()
     }
 
+    /** The space bar's slide, or ◀ ▶, moves the focus between a Japanese conversion's phrases. */
+    private var phraseSlide = false
+
     override fun onCursorStart() {
+        if ((input as? KanaTypist)?.converting == true) {
+            phraseSlide = true
+            return
+        }
         movingCursor = true
         input.finish()
         keyboard?.strip = idleStrip()
     }
 
     override fun onCursor(dx: Int, dy: Int) {
+        if (phraseSlide) {
+            kanaEdit { it.moveFocus(dx) }
+            return
+        }
         val ic = currentInputConnection ?: return
         fun press(code: Int, times: Int) = repeat(times) {
             ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
@@ -528,9 +563,16 @@ class XrnkeyService :
      * stopped at opens, as after a tap.
      */
     override fun onCursorEnd() {
+        if (phraseSlide) {
+            phraseSlide = false
+            return
+        }
         movingCursor = false
         refresh(-1, reopen = true)
     }
+
+    /** The strip's ⇤ or ⇥ after Space: the focused phrase shrinks or stretches by a kana. */
+    override fun onResize(by: Int) = kanaEdit { it.resize(by) }
 
     /** The strip's ≡: the tool row. Where it was folded away, it stays out again. */
     override fun onStripMenu() {
@@ -558,7 +600,7 @@ class XrnkeyService :
             kana = input is KanaTypist
             // Between QWERTY and the 12-key pad: the letters' page changes (a field's pad stays).
             if (!home.isPad) {
-                val onLetters = page == Page.LETTERS || page == Page.KANA
+                val onLetters = page == Page.LETTERS || page.isFlick
                 home = lettersPage()
                 if (onLetters) page = home
             }
@@ -607,6 +649,7 @@ class XrnkeyService :
      */
     private fun showStrip() {
         keyboard?.composing = input.shown.isNotEmpty()
+        keyboard?.converting = (input as? KanaTypist)?.converting == true
         handler.removeCallbacks(stripTask)
         handler.post(stripTask)
     }
@@ -717,6 +760,8 @@ class XrnkeyService :
             info.packageName != packageName
         // The Japanese keyboard's choices: used and learned as the personal words are.
         converter?.history = if (learning) od.japanese else null
+        // The owner's own Japanese words: theirs to use whatever is learned.
+        converter?.userWords = od.japaneseWords
         kana?.learnHere = typist.learnHere
     }
 
@@ -801,6 +846,7 @@ class XrnkeyService :
         kana = if (o.language in Options.JAPANESE) kana ?: converter?.let { KanaTypist(editor, it) } else null
         kana?.learnHere = typist.learnHere
         kanaStrip.nextWords = o.nextWord
+        kanaStrip.emojiSuggestions = o.emojiSuggestions
         val inEnglish = o.language == "en" || o.language in Options.JAPANESE
         // The English keyboard: no marks, and the English model alone.
         val mode = if (inEnglish) TypingState.PLAIN else if (o.vni) TypingState.VNI else TypingState.TELEX
@@ -873,6 +919,21 @@ class XrnkeyService :
 
         /** The Japanese dictionary's asset (data/ja/README.md). */
         const val JAPANESE = "ja.xkdic"
+
+        /**
+         * A Japanese conversion's composing text: the focused phrase on a tint of [accent], as
+         * Gboard marks it, the whole underlined if [underline]. Framework spans only (they cross
+         * to the app), flagged as composing, so the editor drops them with the composing text.
+         */
+        fun phrasesText(text: String, focus: IntRange, underline: Boolean, accent: Int): SpannableString {
+            val s = SpannableString(text)
+            val flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE or Spanned.SPAN_COMPOSING
+            if (underline) s.setSpan(UnderlineSpan(), 0, text.length, flags)
+            if (!focus.isEmpty() && focus.last < text.length) {
+                s.setSpan(BackgroundColorSpan((accent and 0x00FFFFFF) or 0x55000000), focus.first, focus.last + 1, flags)
+            }
+            return s
+        }
 
         /** Edits whose selection updates may still be on their way. */
         private const val EXPECTED = 32

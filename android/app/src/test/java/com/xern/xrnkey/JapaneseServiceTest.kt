@@ -143,6 +143,50 @@ class JapaneseServiceTest {
         f.service.onDestroy()
     }
 
+    /** The field's span on the focused phrase: where it is, as the field shows it. */
+    private fun Field.focused(): String {
+        val e = edit.text
+        val span = e.getSpans(0, e.length, android.text.style.BackgroundColorSpan::class.java).singleOrNull() ?: return ""
+        return e.substring(e.getSpanStart(span), e.getSpanEnd(span))
+    }
+
+    /**
+     * Space splits the reading into phrases in the field, the focused one on a tint: the space
+     * bar's slide (or ◀ ▶) moves the focus without ending the conversion, the strip's ⇤ shrinks
+     * the focused phrase, a tap on the last phrase's candidate commits it all and the tint goes.
+     */
+    @Test
+    fun spaceConvertsInPhrasesAndTheFieldMarksTheFocusedOne() {
+        val f = field()
+        f.service.onLanguage("ja")
+        f.type("watashihagakuseidesu ")
+        assertEquals("私は学生です", f.composing)
+        assertEquals("私は", f.focused())
+        val s = f.strip() as Strip.Candidates
+        assertTrue(s.resize && s.highlight)
+        assertTrue(f.keys.converting)
+        val old = f.edit.selectionStart
+        f.service.onCursorStart()
+        f.service.onCursor(1, 0)
+        f.service.onCursorEnd()
+        f.report(old)
+        assertEquals("私は学生です", f.composing)
+        assertEquals("学生です", f.focused())
+        assertEquals("学生です", (f.strip() as Strip.Candidates).centre)
+        f.service.onResize(-1)
+        f.report(old)
+        assertEquals("学生で", f.focused())
+        f.strip()
+        f.service.onCandidate(1)
+        f.strip()
+        f.service.onCandidate(1)
+        assertEquals("私は学生です", f.edit.text.toString())
+        assertEquals("", f.composing)
+        assertEquals("", f.focused())
+        assertFalse(f.keys.converting)
+        f.service.onDestroy()
+    }
+
     /**
      * A candidate from the strip, or from the panel, commits it in place of the part of the reading
      * it stands for: a piece leaves the rest composing.
@@ -195,6 +239,56 @@ class JapaneseServiceTest {
         val kept = File(f.service.filesDir, OnDevice.JAPANESE).readText()
         assertTrue(kept, kept.contains("w\tかみ\t髪\t"))
         assertTrue(kept, kept.contains("p\t私\tは\tは\t"))
+        f.service.onDestroy()
+    }
+
+    /**
+     * The owner's own words, from the settings' file: the keyboard converts them for their reading
+     * (with learning off too, and in an incognito field: they are the owner's, not learned), and
+     * reads the file again at the next field once the settings changed it.
+     */
+    @Test
+    fun theOwnersWordsConvert() {
+        val file = File(RuntimeEnvironment.getApplication().filesDir, OnDevice.JAPANESE_WORDS)
+        com.xern.xrnkey.ja.UserDictionary().apply { add("tanaka", "田仲"); save(file) }
+        Options(learn = false).save(Options.prefs(RuntimeEnvironment.getApplication()))
+        val f = field(imeOptions = EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+        f.service.onLanguage("ja")
+        f.type("tanaka")
+        assertEquals("田仲", (f.strip() as Strip.Candidates).centre)
+        f.type(" ")
+        assertEquals("田仲", f.edit.text.toString())
+        f.service.onFinishInputView(true)
+        com.xern.xrnkey.ja.UserDictionary().apply { load(file); add("tanaka", "多奈加"); save(file) }
+        OnDevice.japaneseWordsChanged(Options.prefs(RuntimeEnvironment.getApplication()))
+        f.service.onStartInputView(EditorInfo().also { it.inputType = InputType.TYPE_CLASS_TEXT }, false)
+        f.type("tanaka")
+        assertEquals("多奈加", (f.strip() as Strip.Candidates).centre)
+        f.service.onDestroy()
+    }
+
+    /**
+     * The strip offers a reading's emoji from the APK's Japanese table: あめ (雨) ☔ on the right; a
+     * tap puts it in place of the reading and keeps it among the emoji panel's recents. A
+     * kaomoji goes in as well, but is no recent.
+     */
+    @Test
+    fun aReadingsEmojiIsOfferedAndGoesIn() {
+        val f = field()
+        f.service.onLanguage("ja")
+        f.type("ame")
+        assertEquals("☔", (f.strip() as Strip.Candidates).right)
+        f.service.onCandidate(2)
+        assertEquals("☔", f.edit.text.toString())
+        assertEquals("", f.composing)
+        val memory = com.xern.xrnkey.ime.EmojiMemory(Options.prefs(RuntimeEnvironment.getApplication()))
+        assertEquals("☔", memory.recents().first())
+        f.type("kao")
+        val s = f.strip() as Strip.Candidates
+        assertTrue(s.toString(), "(^_^)" in listOfNotNull(s.right) + s.extra)
+        f.service.onMorePick("(´・ω・`)")
+        assertEquals("☔(´・ω・`)", f.edit.text.toString())
+        assertFalse("(´・ω・`)" in memory.recents())
         f.service.onDestroy()
     }
 
@@ -257,5 +351,28 @@ class JapaneseServiceTest {
         // The symbols keep theirs.
         assertEquals(",", Layouts.rows(Page.SYMBOLS, kana = true).last().keys.single { it.kind == KeyKind.COMMA }.text)
         assertNull(Layouts.rows(Page.SYMBOLS, kana = true).last().keys.firstOrNull { it.text == "、" })
+    }
+
+    /**
+     * A held letter on the Japanese keyboard gave Vietnamese's toned vowels (ắ ằ ẳ): now a vowel
+     * with its macron, the letter full-width and its capital; with Shift, the same as capitals and
+     * the small letter last. The top row still gives its digit first without the number row; the
+     * Vietnamese keyboard keeps its marks.
+     */
+    @Test
+    fun aHeldLetterGivesLatinFormsNotVietnamese() {
+        fun variants(rows: List<com.xern.xrnkey.keyboard.Row>, label: String) =
+            rows.flatMap { it.keys }.single { it.kind == KeyKind.CHAR && it.label == label }.variants
+        val ja = Layouts.rows(Page.LETTERS, kana = true)
+        assertEquals(listOf("ā", "ａ", "A"), variants(ja, "a"))
+        assertEquals(listOf("ō", "ｏ", "O"), variants(ja, "o"))
+        assertEquals(listOf("ｋ", "K"), variants(ja, "k"))
+        assertEquals(listOf("ｄ", "D"), variants(ja, "d"))
+        val shifted = Layouts.rows(Page.LETTERS, com.xern.xrnkey.keyboard.Shift.ONCE, kana = true)
+        assertEquals(listOf("Ā", "Ａ", "a"), variants(shifted, "A"))
+        val noRow = Layouts.rows(Page.LETTERS, numberRow = false, kana = true)
+        assertEquals(listOf("3", "ē", "ｅ", "E"), variants(noRow, "e"))
+        assertTrue(ja.flatMap { it.keys }.flatMap { it.variants }.none { it in listOf("ắ", "à", "đ", "ư") })
+        assertTrue("ắ" in variants(Layouts.rows(Page.LETTERS), "a"))
     }
 }

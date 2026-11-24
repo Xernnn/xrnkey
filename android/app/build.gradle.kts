@@ -56,6 +56,8 @@ abstract class BundleModels : DefaultTask() {
     @get:Internal abstract val testDir: DirectoryProperty
     @get:InputFile abstract val emojiIndex: RegularFileProperty
     @get:InputFile abstract val emojiKeywords: RegularFileProperty
+    /** The Japanese keyboard's emoji keywords (data/emoji/keywords-ja.tsv). */
+    @get:InputFile abstract val japaneseEmoji: RegularFileProperty
     /** The Japanese dictionary's licence notices (data/ja/NOTICE), which the settings show. */
     @get:InputFile abstract val japaneseNotice: RegularFileProperty
     @get:Input abstract val release: Property<Boolean>
@@ -68,6 +70,7 @@ abstract class BundleModels : DefaultTask() {
         out.mkdirs()
         emojiIndex.get().asFile.copyTo(out.resolve("emoji-index.tsv"))
         emojiKeywords.get().asFile.copyTo(out.resolve("emoji-keywords.tsv"))
+        japaneseEmoji.get().asFile.copyTo(out.resolve("emoji-ja.tsv"))
         japaneseNotice.get().asFile.copyTo(out.resolve("ja-notice.txt"))
         val real = realDir.get().asFile
         val test = testDir.get().asFile
@@ -198,13 +201,17 @@ android {
                 // The engine, the test models and the emoji data are inputs: the tests run again
                 // when the core or its data change, not only when the Kotlin does.
                 test.inputs.files(buildHost).withPropertyName("hostEngine")
-                test.inputs.files(repoDir.resolve("data/emoji/emoji-index.tsv"), repoDir.resolve("data/emoji/keywords.tsv"))
+                test.inputs.files(
+                    repoDir.resolve("data/emoji/emoji-index.tsv"), repoDir.resolve("data/emoji/keywords.tsv"),
+                    repoDir.resolve("data/emoji/keywords-ja.tsv"),
+                )
                     .withPropertyName("emojiData")
                 test.systemProperty("java.library.path", hostDir.resolve("jni").path)
                 test.systemProperty("xrnkey.testModels", hostDir.resolve("lm").path)
                 test.systemProperty("xrnkey.realModels", modelDir.path)
                 test.systemProperty("xrnkey.emojiIndex", repoDir.resolve("data/emoji/emoji-index.tsv").path)
                 test.systemProperty("xrnkey.emojiKeywords", repoDir.resolve("data/emoji/keywords.tsv").path)
+                test.systemProperty("xrnkey.emojiJapanese", repoDir.resolve("data/emoji/keywords-ja.tsv").path)
                 (findProperty("xrnkey.shots") as String?)?.let { test.systemProperty("xrnkey.shots", it) }
                 // Mozc's evaluation set (data/ja/README.md), for the Japanese converter's numbers.
                 (findProperty("xrnkey.jaEval") as String?)?.let { test.systemProperty("xrnkey.jaEval", it) }
@@ -226,6 +233,7 @@ androidComponents {
             realDir.set(modelDir)
             emojiIndex.set(repoDir.resolve("data/emoji/emoji-index.tsv"))
             emojiKeywords.set(repoDir.resolve("data/emoji/keywords.tsv"))
+            japaneseEmoji.set(repoDir.resolve("data/emoji/keywords-ja.tsv"))
             japaneseNotice.set(repoDir.resolve("data/ja/NOTICE"))
             testDir.set(hostDir.resolve("lm"))
             this.release.set(release)

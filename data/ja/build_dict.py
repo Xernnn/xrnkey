@@ -44,7 +44,10 @@ another (Mozc's connection matrix). The keyboard finds the cheapest way through 
               longer words (u32 reading index, u8 word index); sorted by prefix, after a u32
               offset to each. A prefix that starts fewer readings is looked through instead.
   literals    u16 ids for text that has no reading: a kana no word has, a number, Latin
-              letters, a comma, a full stop, another symbol
+              letters, a comma, a full stop, another symbol; then a byte per part of speech
+              (K of them), how a word of it joins a phrase (a bunsetsu, as a conversion is
+              split for changing it piece by piece): KINDS below. A reader that knows only
+              the six ids reads on as before: the size in the header covers them.
 
 Kana codes: ぁ (U+3041) ... ゖ (U+3096) are 1 ... 86, ー is 87, so their order is the
 characters'. A reading with anything else is left out: the keyboard only types those.
@@ -72,6 +75,31 @@ PREDICT_SCAN = 1500
 PREDICTIONS = 16
 UNKNOWN_KANA = 12000
 LITERALS = ("noun", "number", "alphabet", "comma", "period", "symbol")
+
+# How a word of each part of speech joins a phrase (bunsetsu): a word starts one; a particle,
+# an auxiliary, a suffix, a dependent word or punctuation goes with the word before it; a
+# prefix takes the word after it; a form of する goes with a noun that takes する before it.
+KINDS = ("word", "attach", "prefix", "suru", "sahen")
+
+
+def kind_of(name):
+    """How a word of Mozc's part of speech `name` (id.def) joins a phrase: an index of KINDS."""
+    f = name.split(",")
+    if f[0] in ("助詞", "助動詞"):
+        return KINDS.index("attach")
+    if f[0] in ("動詞", "形容詞") and f[1] in ("非自立", "接尾"):
+        return KINDS.index("attach")
+    if f[0] == "名詞" and f[1] in ("非自立", "接尾", "特殊", "動詞非自立的"):
+        return KINDS.index("attach")
+    if f[0] == "記号" and f[1] in ("句点", "読点", "括弧閉"):
+        return KINDS.index("attach")
+    if f[0] == "接頭詞" or (f[0] == "記号" and f[1] == "括弧開"):
+        return KINDS.index("prefix")
+    if f[0] == "動詞" and len(f) > 4 and f[4] == "サ変・スル":
+        return KINDS.index("suru")
+    if f[0] == "名詞" and f[1] == "サ変接続":
+        return KINDS.index("sahen")
+    return KINDS.index("word")
 HEADER = struct.Struct("<4sIIIIIIIIIIIIIII")  # 64 bytes
 
 
@@ -158,12 +186,13 @@ def cmd_fetch(args):
 class Source:
     """What a dictionary is built from: words, the ids' names, the connection matrix."""
 
-    def __init__(self, ids, conn, words, literals, scan=PREDICT_SCAN):
+    def __init__(self, ids, conn, words, literals, scan=PREDICT_SCAN, kinds=None):
         self.ids = ids          # name of each id; 0 is the sentence's start and end
         self.conn = conn        # array: conn[right_id_of_left_word * n + left_id_of_right_word]
         self.words = words      # {(reading, surface, lid, rid): cost}
         self.literals = literals  # id for each of LITERALS
         self.scan = scan        # prefixes with more readings than this get stored predictions
+        self.kinds = kinds or [0] * len(ids)  # each id's index of KINDS
 
 
 def read_mozc(downloads, max_cost, max_proper):
@@ -200,19 +229,22 @@ def read_mozc(downloads, max_cost, max_proper):
     literals = [by_name[x] for x in (
         "名詞,一般,*,*,*,*,*", "名詞,数,アラビア数字,*,*,*,*", "記号,アルファベット,*,*,*,*,*",
         "記号,読点,*,*,*,*,、", "記号,句点,*,*,*,*,。", "記号,一般,*,*,*,*,*")]
-    return Source([ids[i] for i in range(n)], conn, words, literals)
+    names = [ids[i] for i in range(n)]
+    return Source(names, conn, words, literals, kinds=[kind_of(x) for x in names])
 
 
 def read_text(path):
     """The made-up test dictionary: see test/dict.txt for its format."""
-    ids, rules, words, literals, scan = ["BOS/EOS"], [], {}, {}, PREDICT_SCAN
+    ids, rules, words, literals, scan, kinds = ["BOS/EOS"], [], {}, {}, PREDICT_SCAN, [0]
     with open(path, encoding="utf-8") as f:
         for no, line in enumerate(f, 1):
             line = line.rstrip("\n")
             if not line.strip() or line.startswith("#"):
                 continue
             if line.startswith("@id "):
-                ids.append(line[4:].strip())
+                name, *kind = line[4:].split()
+                ids.append(name)
+                kinds.append(KINDS.index(kind[0]) if kind else 0)
             elif line.startswith("@conn "):
                 left, right, cost = line[6:].split()
                 rules.append((left, right, int(cost)))
@@ -237,7 +269,7 @@ def read_text(path):
             for c in range(n):
                 if right in ("*", ids[c]) or (right == "EOS" and c == 0):
                     conn[r * n + c] = cost
-    return Source(ids, conn, words, [ids.index(literals[k]) for k in LITERALS], scan)
+    return Source(ids, conn, words, [ids.index(literals[k]) for k in LITERALS], scan, kinds)
 
 
 # ---- writing ---------------------------------------------------------------------------------
@@ -389,7 +421,8 @@ def build(source, out):
     put("masks", masks.tobytes(), align=8)
     put("values", bytes(values))
     put("pred", struct.pack(f"<{len(pred_offsets)}I", *pred_offsets) + bytes(pred))
-    put("literals", struct.pack(f"<{len(LITERALS)}H", *(dense[x] for x in source.literals)))
+    put("literals", struct.pack(f"<{len(LITERALS)}H", *(dense[x] for x in source.literals))
+        + bytes(source.kinds[olds[i]] for i in range(k)))
     HEADER.pack_into(
         out_bytes, 0, MAGIC, VERSION, len(out_bytes), len(readings), len(offsets) - 1,
         sections["blocks"], sections["index"], len(chars), sections["chars"], len(pos_list),
@@ -456,6 +489,9 @@ class Dictionary:
         self.pred_offsets = struct.unpack_from(f"<{npred}I", self.b, pred)
         self.pred = pred + 4 * npred
         self.literals = dict(zip(LITERALS, struct.unpack_from(f"<{len(LITERALS)}H", self.b, literals)))
+        at = literals + 2 * len(LITERALS)
+        # Each part of speech's kind (KINDS), where the build wrote them; else none.
+        self.kinds = self.b[at:at + self.k] if at + self.k <= len(self.b) else None
 
     def conn(self, r, c):
         i = r * self.w + (c >> 6)

@@ -386,6 +386,12 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   - letters that spell nothing yet wait at the end, as typed (`かk`).
 - **Shift**: a capital goes in as it is, and so do the letters after it until the reading ends
   (`Tokyo`), for names. Auto-capitalise never gives Shift here.
+- **Holding a letter** gives what Japanese text uses of it, not Vietnamese's marks: a vowel
+  with its macron, as romaji writes a long vowel (`ā ī ū ē ō`), the letter full-width (`ａ`),
+  then its capital (a: `ā ａ A`; k: `ｋ K`); with Shift, the same as capitals and the small
+  letter last. Without the number row the top row's digit comes first, as on the other
+  keyboards. Inside a reading they join it, as digits do; with nothing composing they go
+  straight in.
 - **Digits** stay ASCII. Inside a reading they join it (`3じ`), as other symbols do; with nothing
   composing they go straight in.
 - **The comma and full stop keys** are `、` and `。`. Holding `。` gives `、 ？ ！ ・ ー 「 」 … ～ ：
@@ -411,37 +417,76 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     that are words, longest first), then the rest;
   - a reading that looks foreign keeps its katakana right after the best conversion: one with
     ー, a small vowel (`ふぁ`, `てぃ`) or ゔ, or with a kana no word reads;
+  - **emoji**: a reading whose best conversion is an emoji keyword, or that is one itself
+    (`data/emoji/keywords-ja.tsv`: CLDR's Japanese names and keywords, and a hand list), has
+    its emoji: `わらい` (`笑い`) 😂, `ねこ` (`猫`) 🐱, `ありがとう` 🙏, `すし` 🍣, `にほん` 🇯🇵,
+    and kaomoji for `かお` (`(^_^)`, `(´・ω・`)`) and `しょぼん`. The conversion's keyword
+    comes first (`あめ`: `雨` ☔ before the candy). The first takes the right slot, the
+    likeliest third going to the panel's start, and the others follow the panel's first row; a
+    keyword that is only an association (`本` 📕, `時間` ⌚) has them all in the panel. A tap
+    puts the emoji in place of the reading, learned as nothing, and an emoji (not a kaomoji)
+    joins the emoji panel's recents. The settings' "Emoji" turns them off, as on the other
+    keyboards;
   - no remove marks: the dictionary's words are not the owner's to forget.
 - **Space**:
-  - while composing, it converts: the field shows the best conversion, and the strip shows it
-    in the middle on the accent, with the candidate before it on the left and the next on the
-    right. Each further Space shows the next one, after the last the first again. The order is
-    the strip's, without the predictions: the best conversion, the owner's choices, the next
-    likeliest conversions, and after the first eight of those the hiragana, the katakana (and
-    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters), then the rest, then
-    the words for the reading's start. A start converted another way shows with the rest of the
-    reading converted after it (`渡し` + `は学生です`). Predictions are not in the round; they
-    stay in the panel;
+  - while composing, it converts, as Mozc and Gboard do, in **phrases** (bunsetsu: a word and
+    what goes with it): the field shows the best conversion split into phrases, the first in
+    focus, on a tint of the accent (the whole underlined, as composing text is):
+    `わたしはがくせいです` is `私は` / `学生です`, `きょうはいいてんきですね` `今日は` / `いい天気ですね`,
+    `しごとがおわったらでんわします` `仕事が` / `終わったら` / `電話します`. A particle, an
+    auxiliary, a suffix, a dependent word (`いる` of `ている`) or punctuation goes with the word
+    before it, a prefix (`お`) with the word after it, a form of `する` with a noun that takes it
+    (`勉強します`), by each part of speech Mozc's dictionary has (`data/ja/build_dict.py`,
+    `KINDS`);
+  - the strip shows the focused phrase's candidates: the one the field shows in the middle on
+    the accent, the one before it on the left and the next on the right, the others in the
+    panel. Each further Space shows the focused phrase's next, after the last the first again;
+    the other phrases stay. The order: the phrase as the whole conversion has it, then the
+    phrase's reading converted alone after the phrase before (its owner's choices, the next
+    likeliest conversions, and after the first eight of those the hiragana, the katakana, and
+    the letters full-width, `Ｔｏｋｙｏ`, for a reading of Latin letters, then the rest, then the
+    words for the phrase's start). A start converted another way shows with the rest of its
+    phrase converted after it (`渡し葉`). The whole reading's predictions are in the panel while
+    it is one phrase;
+  - the focus moves a phrase with ◀ and ▶ on the 12-key pad, and on QWERTY by sliding along
+    the space bar, a phrase per 30 dp, no further than the ends; the conversion stays;
+  - the strip's sides are ⇤ and ⇥ while converting, in place of ≡ and the emoji button: ⇤
+    shrinks the focused phrase by a kana, which starts the next phrase (or a new one at the
+    end), ⇥ stretches it by one taken from the next (as Mozc's Shift+arrows). Both are converted
+    again, the focused one after the phrase before and the next after it; the phrases further
+    on stay. A phrase of one kana doesn't shrink, the last doesn't stretch;
   - with nothing composing, it types a full-width space `　`, Gboard's default.
-- **Tap a candidate** (a slot or the panel): it goes in, in place of the part of the reading it
-  stands for, with no space after it. A word for the reading's start leaves the rest composing,
-  as typed, and its candidates follow that word (`私`, then `はがくせいです` converts to
-  `は学生です`, the particle).
+- **Tap a candidate** (a slot or the panel): after Space, the focused phrase's: the field shows
+  it, and the focus moves to the next phrase; on the last phrase everything goes in, as shown.
+  While composing: it goes in, in place of the part of the reading it stands for, with no space
+  after it. A word for the reading's start leaves the rest composing, as typed, and its
+  candidates follow that word (`私`, then `はがくせいです` converts to `は学生です`, the
+  particle).
 - **The word before**: a reading converts after the last word put in by Space, Enter or a tap,
-  while nothing else went in after it: `は` after `私` is the particle, not `葉`. A space,
-  punctuation, Backspace into the text, an emoji or a moved cursor ends it.
+  or the `、`, `。`, `？` or `！` typed after it, while nothing else went in after it: `は` after
+  `私` is the particle, not `葉`. A space, Backspace into the text, an emoji or a moved cursor
+  ends it.
 - **Next words**: with nothing composing, right after a word goes in, the strip offers what may
   follow it, the likeliest in the middle, not bold (Space doesn't take it):
   - the words the owner put in after it before, the latest first;
-  - then the short words its part of speech goes on with best, by the connection cost plus the
-    word's own: particles, the copula and auxiliaries, and the commonest verbs and nouns that
-    follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`, `ます`).
-    Only those under a limit, so after a particle there may be none, and the tool row shows;
+  - then the words its part of speech goes on with best, by the connection cost plus the word's
+    own, each kind under a limit:
+    - the short words: particles, the copula and auxiliaries, and the commonest verbs and nouns
+      that follow others (`私`: `は`, `の`, `が`; `ありがとう`: `ございます`; `行き`: `たい`,
+      `ます`);
+    - about 100 common content words: nouns, adjectives, verbs and adverbs (`何`, `私`, `今日`,
+      `いい`, `ない`, `する`, `見る` …), which a particle is followed by (`を`: `する`, `思う`,
+      `見る`; `が`: `ある`, `できる`, `ない`; `の`: `よう`, `こと`, `人`), and a noun far less;
+  - after `、`, `。`, `？` or `！` (typed, or the end of a conversion): what a clause or a
+    sentence starts with, by the same costs after that punctuation (`。`: `この`, `その`,
+    `また`, `これ`, `そして`, `それ`, `私`);
+  - worked out once for each part of speech, the first time it comes, so no key costs more;
   - a tap puts it in with no space, and the strip goes on from it;
   - the settings' "Next word" turns it off, as on the other keyboards.
 - **Learning** (the owner's choices, on the phone only):
-  - what Space or a tap puts in is learned: each word with its reading, and each pair of a word
-    and the one before it, with how often and when. Not what Enter commits as typed, nor Latin
+  - what Space or a tap puts in is learned: each word with its reading (after Space, each
+    phrase's choice, as its words), and each pair of a word and the one before it, with how
+    often and when. Not what Enter commits as typed, nor Latin
     letters, digits, punctuation or a kana no word has;
   - a word chosen for a reading is offered right after what Space gives, and it costs less than
     every other word read so (more, the more often it was chosen; of two chosen, the later), so
@@ -456,8 +501,23 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     of speech are the dictionary's, looked up again when another build of it comes;
   - Settings → Personal words → Japanese lists them with their count; each can be deleted, or
     all cleared.
+- **The owner's own words** (a user dictionary, for what Mozc's lacks: a name, a place):
+  - Settings → Personal words → Japanese dictionary, under Japanese, with their count: Add takes
+    a reading and a word (the reading in hiragana, katakana or romaji: `tanaka`, `タナカ` and
+    `たなか` are all `たなか`; one that isn't kana is refused, the form stays); each is listed
+    with its reading, to delete. Import takes a file of a reading, a tab and a word per line
+    (more columns, as Mozc's and Gboard's exports have, are ignored; `#` lines are comments),
+    Export gives one;
+  - each is a word of the dictionary for its reading, a noun, costing 3,000 less than the
+    cheapest word the dictionary reads so (nothing, where it has none): it wins its reading,
+    alone and inside a sentence (`たなか` is `田中` in Mozc's dictionary; with `田仲` added,
+    `たなかさんはがくせいです` is `田仲さんは学生です`), is in the words read so, first, and is
+    predicted from the reading's start (`ぜる`: `ゼルダ`). Chosen, it is learned as any word;
+  - used whether learning is on or off, in every field but passwords (they are the owner's, not
+    learned); at most 5,000, kept in `japanese-words.tsv` next to the personal words, and read
+    again at the next field once the settings change them.
 - **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
-  after Space the conversion shown), with no new line; otherwise the field's action or a new
+  after Space every phrase as shown), with no new line; otherwise the field's action or a new
   line.
 - **Backspace**: takes the last letter waiting or the last kana; after Space, it goes back to the
   reading, unconverted; with nothing composing, the character before the cursor. A swipe from it
@@ -467,9 +527,10 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   committed as it is (a last n as ん).
 - **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
   types them; nothing converts.
-- **Not on this keyboard**: no learning of new words the dictionary lacks (only of choices
-  among its words and the kana), no next words beyond the owner's and the short words that
-  follow, no Telex, and no emoji in the strip (the emoji panel is there).
+- **Not on this keyboard**: no learning of new words the dictionary lacks by typing them (the
+  owner adds them, above), no parts of speech for the owner's words (all are nouns), no next
+  words beyond the owner's and the lists above, no Telex, and no emoji after Space or among the
+  next words (the emoji panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first
@@ -521,11 +582,29 @@ is JA). Password, email and URL fields get plain QWERTY letters, and number fiel
   kana after a reading of punctuation alone commits it first.
 - **◀ and ▶** move the cursor a character, and repeat while held. ◀ with a reading commits it as
   shown, as the space bar's slide does; ▶ at the end of a reading stays put (it ends a toggle).
-- **?123** opens the symbols, whose way back says あいう. **🌐** opens the comma's menu at once:
-  slide to a choice and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap
-  elsewhere closes it.
-- **Not yet**: a 12-key number pad (the symbols serve), godan and other kana layouts, flick for
-  Latin letters, ↺ undoing a commit, and moving the cursor inside a reading.
+  After Space (変換) they move the focus between the phrases instead, both ways.
+- **?123** opens the number pad below. **🌐** opens the comma's menu at once: slide to a choice
+  and lift, or tap 🌐 and the menu stays open for a tap to choose; a tap elsewhere closes it.
+- **The number pad**, as Gboard's (Google Japanese Input's 12-key numbers): the same grid and
+  side keys, with the digits where the kana are:
+
+  | | | | | |
+  |---|---|---|---|---|
+  | 記号 | 1 | 2 | 3 | ⌫ |
+  | ◀ | 4 | 5 | 6 | ▶ |
+  | あいう | 7 | 8 | 9 | 空白 |
+  | 🌐 | ()[] | 0 | .,-/ | Enter |
+
+  - a tap types the digit, a flick left, up or right a symbol, each shown small under its
+    digit: 1 `☆ ♪ →`, 2 `¥ $ €`, 3 `% ° #`, 4 `○ * ・`, 5 `+ × ÷`, 6 `< = >`, 7 `「 」 :`,
+    8 `〒 々 〆`, 9 `^ | \`, 0 `~ …`; `()[]` taps `(` and flicks `) [ ]`, `.,-/` taps `.` and
+    flicks `, - /`. The guide shows them as the kana's does;
+  - they type as the QWERTY keys' digits and symbols do: straight in with nothing composing,
+    into the reading while one is (`か3`). No toggle: 1 tapped twice is `11`;
+  - あいう goes back to the kana, 記号 opens the symbols (their way back says あいう too); a
+    language chosen from 🌐 switches the letters, as from the kana.
+- **Not yet**: godan and other kana layouts, flick for Latin letters, ↺ undoing a commit, and
+  moving the cursor inside a reading.
 
 ## Auto-correct (Space and punctuation)
 
@@ -987,6 +1066,9 @@ owner's phone, 1080 × 2400): its layout and behaviour, none of its artwork or d
   list of chat words, abbreviations, emoticons, feelings and wishes (`data/emoji/README.md`). Of
   1,445 Vietnamese syllables typed bare, 15 are keywords (Laban Key, measured: 34; the CLDR
   index used before: 164).
+- **The Japanese strip's emoji keywords**: `data/emoji/keywords-ja.tsv` (about 6,100), read by
+  the Japanese keyboard itself (see "The Japanese keyboard"): CLDR 48's Japanese names and
+  keywords, and a hand list with a few kaomoji (`data/emoji/README.md`).
 
 ## The clipboard panel
 
@@ -1050,6 +1132,7 @@ opens on the settings list.
 | | Emoji suggestions | on |
 | | Personal words: the list, search, add, delete one, clear all (with confirm), export, import | — |
 | | Japanese (under Personal words): the words chosen, delete one, clear all (with confirm) | — |
+| | Japanese dictionary (under Personal words): the owner's words with their readings, add, delete one, export, import | — |
 | Auto-correct | Level: off / flexible / strong | flexible |
 | | Keep non-Vietnamese words as typed | on |
 | | Double space for full stop | on |
@@ -1182,6 +1265,7 @@ All of it ships in the APK and is never downloaded.
 | Unihan readings (already a source) | the syllable inventory | Unicode License v3 |
 | SCOWL (already the source of `english.txt`) | the English vocabulary | SCOWL's permissive notice |
 | Unicode CLDR annotations, `vi` and `en`, and `emoji-test.txt` | emoji names, keywords, order and groups | Unicode License v3 |
+| Unicode CLDR annotations, `ja` | the Japanese strip's emoji keywords (`data/emoji/keywords-ja.tsv`) | Unicode License v3 |
 | Mozc's open-source dictionary (`src/data/dictionary_oss`: the words and the connection costs), itself from IPAdic and the Okinawa dictionary | the Japanese keyboard's conversions (`data/ja`) | BSD 3-Clause, with the IPAdic and ICOT notices (`data/ja/NOTICE`, shown in Settings → About → Licences) |
 | A hand list of Vietnamese and English chat words, abbreviations and emoticons, written for this project (`data/emoji/keywords-hand.tsv`) | the strip's emoji keywords | MIT, with the code |
 | A made-up chat and test set, written for this project | tuning the switch cost and abbreviations; the eval set C | MIT, with the code |
@@ -1242,6 +1326,7 @@ Rules:
   - personal words and pairs;
   - where the owner's taps land on each letter (26 mean offsets);
   - the words chosen on the Japanese keyboard, and pairs of them;
+  - the owner's own Japanese words and their readings;
   - the revert memory;
   - the shortcut table;
   - the clipboard history and pins;

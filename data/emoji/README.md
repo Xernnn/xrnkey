@@ -40,7 +40,36 @@ it), and where the line comes from (`cldr` or `hand`).
   ("tất" of "tất cả", "kiến" of "ý kiến", the hours: "ba giờ"). It is part of this project,
   under its MIT licence.
 
-`generate.py` builds it from the files pinned in `sources.json`:
+## The Japanese keyboard's keywords
+
+`keywords-ja.tsv` is what the Japanese keyboard's strip offers emoji for: a keyword, its emoji
+(or kaomoji, at most five, best first), and where the line comes from (`hand`, `name` or
+`cldr`). While a reading composes, the strip looks up its best conversion, then the reading
+itself (`ねこ`: `猫` 🐱; `かお`: the kaomoji), and offers the emoji in place of the reading.
+
+- `japanese.py` builds it from CLDR's Japanese annotations (pinned in `sources.json`) and
+  `keywords-ja-hand.tsv`:
+
+  ```bash
+  python3 -I data/emoji/generate.py fetch ~/.cache/xrnkey-lm/downloads
+  python3 -I data/emoji/japanese.py ~/.cache/xrnkey-lm/downloads
+  ```
+
+- From CLDR: each emoji's Japanese name and keywords, and the flags' countries from the derived
+  annotations (`旗: 日本` gives `日本`). A keyword in katakana or hiragana is also keyed in
+  hiragana, as it is read (`ネコ`: `ねこ`). A keyword more than 15 emoji share is a category
+  (`顔`, `動物`, `記号`) and one kana long says too little: both are left out. A keyword's emoji
+  come in order: the one it names, then those whose name has it, then the more particular,
+  then Unicode's. A line is `name` when its first emoji is named so (`すし` 🍣, `日本` 🇯🇵): it
+  may take the strip's slot; `cldr` when it is only an association (`本` 📕): its emoji wait in
+  the panel.
+- `keywords-ja-hand.tsv` is written for this project: chat words, greetings, feelings, food and
+  weather as typed and converted (`わら`, `笑い`, `ありがとう`, `おめでとう`, `おやすみ`, `猫`),
+  a few kaomoji (`かお`, `しょぼん`), and the CLDR keywords left out (`skip`) because they are
+  everyday words (`上`, `人`, `手`). A hand line takes the place of CLDR's for its keyword. It
+  is part of this project, under its MIT licence.
+
+`generate.py` builds the index from the files pinned in `sources.json`:
 
 ```bash
 python3 -I data/emoji/generate.py fetch ~/.cache/xrnkey/downloads
@@ -53,7 +82,9 @@ python3 -I data/emoji/generate.py ~/.cache/xrnkey/downloads
 - Unicode CLDR 48, `annotations` and `annotationsDerived` for `en` and `vi`, from the
   `unicode-org/cldr-json` repository: names (`tts`) and keywords. `keywords.tsv` takes some of
   these names, through `emoji-index.tsv`.
-- `keywords-hand.tsv`: this project's own, MIT.
+- Unicode CLDR 48, `annotations` and `annotationsDerived` for `ja`, from the same repository:
+  `keywords-ja.tsv` takes their names and keywords.
+- `keywords-hand.tsv` and `keywords-ja-hand.tsv`: this project's own, MIT.
 
 The first two are Unicode data, under the Unicode License v3:
 
