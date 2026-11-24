@@ -97,6 +97,20 @@ const ShapeIndex& shapes(const Lm& m) {
 
 }  // namespace
 
+void shape_readings(const Lm& m, const std::string& shape, std::vector<std::pair<std::string_view, uint32_t>>& out) {
+    const char* words[64];
+    uint32_t ids[64];
+    const int n = lm_shape_candidates(m, shape, words, ids, 64);
+    if (n >= 0) {
+        for (int i = 0; i < n; ++i) out.emplace_back(words[i], ids[i]);
+        return;
+    }
+    const ShapeIndex& idx = shapes(m);
+    auto it = idx.by_shape.find(shape);
+    if (it != idx.by_shape.end())
+        for (const auto& e : it->second) out.emplace_back(e.text, e.id);
+}
+
 bool typed_word(const char* typed, std::string* lower, Case* cs) {
     if (!typed || !*typed) return false;
     size_t n = 0, upper = 0;

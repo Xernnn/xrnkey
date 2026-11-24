@@ -9,7 +9,9 @@
 
 #include <cstdint>
 #include <mutex>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace xrnkey {
@@ -85,6 +87,11 @@ int lm_shape_candidates(const Lm& m, std::string_view shape, const char** words,
 bool lm_shape_prefix_range(const Lm& m, std::string_view prefix, uint64_t* lo, uint64_t* hi);
 const char* lm_shape_at(const Lm& m, uint64_t pos);
 int lm_shape_candidates_at(const Lm& m, uint64_t pos, const char** words, uint32_t* ids, int max_out);
+
+/* The syllables an ASCII shape (a-z) stands for, from the file's index or the one built on
+ * first use (restore.cpp): each one's text and vocabulary id (lmfmt::kUnk for an attested
+ * syllable the model lacks), appended to `out`. The texts live as long as the model. */
+void shape_readings(const Lm& m, const std::string& shape, std::vector<std::pair<std::string_view, uint32_t>>& out);
 
 inline const Lm& lm_of(const XKLm* lm) { return *reinterpret_cast<const Lm*>(lm); }
 

@@ -21,6 +21,7 @@ add_library(xrnkey SHARED
     plain.cpp
     learn.cpp
     keys.cpp
+    typos.cpp
     shortcuts.cpp
     autocorrect.cpp
     bilingual_switch.cpp

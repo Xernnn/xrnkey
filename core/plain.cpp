@@ -53,9 +53,11 @@ bool readings(const Lm& m, const std::string& shape, float* plain, float* best) 
     return true;
 }
 
+}  // namespace
+
 /* English typos common enough that web text (and so a model) has them: their fix is known,
  * whatever the model makes of them. */
-const char* known_typo(const std::string& w) {
+const char* xrnkey::known_english_typo(const std::string& w) {
     static const std::pair<const char*, const char*> table[] = {
         {"teh", "the"},     {"hte", "the"},       {"adn", "and"},       {"nad", "and"},
         {"taht", "that"},   {"thta", "that"},     {"thier", "their"},   {"wiht", "with"},
@@ -70,6 +72,8 @@ const char* known_typo(const std::string& w) {
         if (w == typo) return fix;
     return nullptr;
 }
+
+namespace {
 
 bool english(const Models& m, const std::string& w) {
     if (xrnkey::lexicon_is_english(w)) return true;
@@ -111,7 +115,7 @@ extern "C" char* xk_fix_wrong_word(const XKModels* models, const char* typed, fl
     /* A shape with Vietnamese readings is Vietnamese typed without marks, not a typo. */
     float plain, best;
     if (m.vi && readings(*m.vi, w, &plain, &best)) return nullptr;
-    if (const char* fix = known_typo(w)) return strdup(fix);
+    if (const char* fix = xrnkey::known_english_typo(w)) return strdup(fix);
     /* Right in English: nothing to fix. */
     if (english(m, w)) return nullptr;
     std::vector<std::string> edits;

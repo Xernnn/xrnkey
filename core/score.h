@@ -5,6 +5,7 @@
 #ifndef XRNKEY_SCORE_H
 #define XRNKEY_SCORE_H
 
+#include "keys.h"
 #include "lm_internal.h"
 #include "xrnkey_internal.h"
 
@@ -21,6 +22,7 @@ struct Models {
     const Lm* en = nullptr;
     User* user = nullptr;  /* personal words (learn.cpp); learning writes to it */
     int correction = 0;    /* XK_CORRECT_*: typo correction in restoration */
+    Keyboard keyboard;     /* the touch keyboard's keys, for typo fixes (typos.cpp) */
 };
 
 /* P(next frame | language of the word before); LANG_NONE is the start of
