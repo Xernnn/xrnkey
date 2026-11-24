@@ -3,13 +3,14 @@ package com.xern.xrnkey.ime
 import android.content.SharedPreferences
 import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
+import com.xern.xrnkey.ja.UserDictionary
 import com.xern.xrnkey.ja.UserHistory
 import java.io.File
 
 /**
  * What the keyboard keeps about its owner, on the phone only: the personal words it learned, the
- * suggestions the owner hid, the shortcuts table, and what was chosen on the Japanese keyboard
- * ([japanese]). All are files in credential-encrypted storage ([dir]), so they exist only
+ * suggestions the owner hid, the shortcuts table, what was chosen on the Japanese keyboard
+ * ([japanese]) and the owner's own Japanese words ([japaneseWords]). All are files in credential-encrypted storage ([dir]), so they exist only
  * after the first unlock and survive restarts and app updates. The settings screen changes them
  * through the same files; [refresh] picks the changes up when a field starts.
  */
@@ -18,6 +19,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     val shortcutsFile get() = File(dir, SHORTCUTS)
     val hiddenFile get() = File(dir, HIDDEN)
     val japaneseFile get() = File(dir, JAPANESE)
+    val japaneseWordsFile get() = File(dir, JAPANESE_WORDS)
 
     var words: PersonalWords? = null
         private set
@@ -30,10 +32,15 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
     var japanese: UserHistory? = null
         private set
 
+    /** The owner's own Japanese words, each with its reading (the settings add and remove them). */
+    var japaneseWords: UserDictionary? = null
+        private set
+
     private var wordsCleared = -1L
     private var shortcutsStamp = -1L
     private var hiddenStamp = -1L
     private var japaneseCleared = -1L
+    private var japaneseWordsStamp = -1L
 
     /** Loads what isn't loaded yet, or changed since. Old habits fade once a month. */
     fun refresh(now: Long = System.currentTimeMillis()) {
@@ -70,6 +77,11 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             japanese = UserHistory().also { it.load(japaneseFile) }
             japaneseCleared = jaCleared
         }
+        val wordsStamp = japaneseWordsStamp(prefs)
+        if (japaneseWords == null || wordsStamp != japaneseWordsStamp) {
+            japaneseWords = UserDictionary().also { it.load(japaneseWordsFile) }
+            japaneseWordsStamp = wordsStamp
+        }
     }
 
     /** Writes the personal words and the Japanese choices, if any were learned since the last save. */
@@ -89,6 +101,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         words = null
         shortcuts = null
         japanese = null
+        japaneseWords = null
     }
 
     companion object {
@@ -97,6 +110,8 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         const val SHORTCUTS = "shortcuts.txt"
         const val HIDDEN = "hidden-suggestions.txt"
         const val JAPANESE = "japanese-history.tsv"
+        const val JAPANESE_WORDS = "japanese-words.tsv"
+        private const val KEY_JA_WORDS = "japanese-words-changed"
         private const val KEY_JA_CLEARED = "japanese-cleared"
         private const val KEY_CLEARED = "words-cleared"
         private const val KEY_DECAYED = "words-decayed"
@@ -132,6 +147,13 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         }
 
         private fun japaneseStamp(prefs: SharedPreferences) = prefs.getLong(KEY_JA_CLEARED, 0L)
+
+        /** The settings changed the owner's Japanese words: the keyboard reads them again at its next field. */
+        fun japaneseWordsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
+            prefs.edit().putLong(KEY_JA_WORDS, maxOf(now, japaneseWordsStamp(prefs) + 1)).commit()
+        }
+
+        private fun japaneseWordsStamp(prefs: SharedPreferences) = prefs.getLong(KEY_JA_WORDS, 0L)
 
         /** The clipboard history was cleared in the settings: the keyboard reads it again. */
         fun clipsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {

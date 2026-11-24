@@ -198,6 +198,31 @@ class JapaneseServiceTest {
         f.service.onDestroy()
     }
 
+    /**
+     * The owner's own words, from the settings' file: the keyboard converts them for their reading
+     * (with learning off too, and in an incognito field: they are the owner's, not learned), and
+     * reads the file again at the next field once the settings changed it.
+     */
+    @Test
+    fun theOwnersWordsConvert() {
+        val file = File(RuntimeEnvironment.getApplication().filesDir, OnDevice.JAPANESE_WORDS)
+        com.xern.xrnkey.ja.UserDictionary().apply { add("tanaka", "田仲"); save(file) }
+        Options(learn = false).save(Options.prefs(RuntimeEnvironment.getApplication()))
+        val f = field(imeOptions = EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+        f.service.onLanguage("ja")
+        f.type("tanaka")
+        assertEquals("田仲", (f.strip() as Strip.Candidates).centre)
+        f.type(" ")
+        assertEquals("田仲", f.edit.text.toString())
+        f.service.onFinishInputView(true)
+        com.xern.xrnkey.ja.UserDictionary().apply { load(file); add("tanaka", "多奈加"); save(file) }
+        OnDevice.japaneseWordsChanged(Options.prefs(RuntimeEnvironment.getApplication()))
+        f.service.onStartInputView(EditorInfo().also { it.inputType = InputType.TYPE_CLASS_TEXT }, false)
+        f.type("tanaka")
+        assertEquals("多奈加", (f.strip() as Strip.Candidates).centre)
+        f.service.onDestroy()
+    }
+
     /** In an incognito field nothing chosen is learned, and nothing is written. */
     @Test
     fun anIncognitoFieldLearnsNothing() {

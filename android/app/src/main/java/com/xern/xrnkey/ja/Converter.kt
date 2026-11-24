@@ -84,12 +84,46 @@ class Converter(private val dict: Dictionary) {
             value?.let(::matchDictionary)
         }
 
+    /**
+     * The owner's own words (null: none), the dictionary's words for their readings: each costs
+     * [USER_MARGIN] less than the cheapest word the dictionary has read so (nothing, where it has
+     * none), so it wins its reading, alone and inside longer ones.
+     */
+    var userWords: UserDictionary? = null
+
     /** Which build of the dictionary this is, as [UserHistory.stamp] keeps it. */
     private val stamp = dict.stamp
 
     private var cached: Conversion? = null
     private var cachedPrev: String? = null
     private var cachedVersion = -1
+    private var cachedWords = -1
+
+    /** The words read `reading`: the dictionary's, and the owner's own as words of it. */
+    private fun lookup(reading: String): List<Word> {
+        val found = dict.lookup(reading)
+        val own = userWords?.of(reading).orEmpty()
+        return if (own.isEmpty()) found else withOwn(found, own)
+    }
+
+    /** The dictionary's words for one reading, with the owner's for it as words of a noun's part of speech. */
+    private fun withOwn(found: List<Word>, own: List<UserDictionary.Entry>): List<Word> {
+        val noun = dict.literal(Literal.NOUN)
+        val cost = maxOf(0, (found.minOfOrNull { it.cost } ?: 0) - USER_MARGIN)
+        val mine = own.map { Word(it.reading, it.surface, noun, noun, cost) }
+        val written = mine.mapTo(HashSet()) { it.surface }
+        return mine + found.filter { it.surface !in written }
+    }
+
+    /** The words that may start at `i` of `text`: the dictionary's and the owner's, shortest reading first. */
+    private fun prefixes(text: String, i: Int): List<Pair<Int, List<Word>>> {
+        val found = dict.prefixes(text, i)
+        val own = userWords?.at(text, i).orEmpty()
+        if (own.isEmpty()) return found
+        val byLength = found.toMap(java.util.TreeMap())
+        for ((length, entries) in own) byLength[length] = withOwn(byLength[length].orEmpty(), entries)
+        return byLength.toList()
+    }
 
     /**
      * The cheapest conversion of `reading`, segment by segment, after a word that ends with the
@@ -104,7 +138,7 @@ class Converter(private val dict: Dictionary) {
     private inner class Lattice(val reading: String) {
         private val at = arrayOfNulls<List<Pair<Int, List<Word>>>>(reading.length)
 
-        fun prefixes(i: Int): List<Pair<Int, List<Word>>> = at[i] ?: dict.prefixes(reading, i).also { at[i] = it }
+        fun prefixes(i: Int): List<Pair<Int, List<Word>>> = at[i] ?: prefixes(reading, i).also { at[i] = it }
     }
 
     /** The cheapest way through the lattice's reading from `from` to its end, after `left`. */
@@ -199,8 +233,9 @@ class Converter(private val dict: Dictionary) {
     /** Every candidate for `reading` after `left`, and after the word `prev` (the last one asked for is kept). */
     fun convert(reading: String, left: Int = 0, prev: String? = null): Conversion {
         val version = history?.version ?: -1
+        val ownVersion = userWords?.version ?: -1
         cached?.let {
-            if (it.reading == reading && it.left == left && cachedPrev == prev && cachedVersion == version) return it
+            if (it.reading == reading && it.left == left && cachedPrev == prev && cachedVersion == version && cachedWords == ownVersion) return it
         }
         val n = reading.length
         val kana = reading.all { Dictionary.kanaCode(it) != 0 }
@@ -225,7 +260,7 @@ class Converter(private val dict: Dictionary) {
         val chosenOn = h?.startingWith(reading, LEARNED)?.map(::whole).orEmpty()
 
         // A reading no word has keeps the word chosen for it first: the lattice can't hold it.
-        val dictWords = if (kana) costed(dict.lookup(reading)) else emptyList()
+        val dictWords = if (kana) costed(lookup(reading)) else emptyList()
         val fromPath = Candidate(path.text, n, path.rid, path.segments)
         val best = chosen.firstOrNull()?.takeIf { dictWords.isEmpty() } ?: fromPath
 
@@ -259,6 +294,13 @@ class Converter(private val dict: Dictionary) {
         val fromDict = if (kana) dict.predict(reading, PREDICTIONS) else emptyList()
         for (w in fromDict) {
             scored += Scored(whole(w.surface, w), alone(w, w.cost) + PREDICTION + PER_KANA * (w.reading.length - n), prediction = true)
+        }
+        // The owner's own words too, each as cheap as it is for its whole reading.
+        if (kana) {
+            for (e in userWords?.startingWith(reading, PREDICTIONS).orEmpty()) {
+                val w = lookup(e.reading).first { it.surface == e.surface }
+                scored += Scored(whole(w.surface, w), alone(w, w.cost) + PREDICTION + PER_KANA * (w.reading.length - n), prediction = true)
+            }
         }
         // A reading that looks foreign (ー, small vowels, a kana no word has) keeps its katakana
         // right after the best conversion.
@@ -304,6 +346,7 @@ class Converter(private val dict: Dictionary) {
             cached = it
             cachedPrev = prev
             cachedVersion = version
+            cachedWords = ownVersion
         }
     }
 
@@ -424,6 +467,9 @@ class Converter(private val dict: Dictionary) {
         private const val MARGIN = 1500
         private const val MARGIN_STEP = 250
         private fun margin(count: Int) = MARGIN + MARGIN_STEP * (minOf(count, 4) - 1)
+
+        /** How much cheaper than the cheapest word the dictionary reads so an owner's own word is. */
+        private const val USER_MARGIN = 3000
 
         /** Of two words chosen for one reading, the later is this much cheaper again. */
         private const val RECENT = 300

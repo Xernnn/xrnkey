@@ -224,6 +224,7 @@ class XrnkeyService :
         handler.removeCallbacks(stripTask)
         models?.user = null
         converter?.history = null
+        converter?.userWords = null
         typist.personal = null
         typist.shortcuts = null
         onDevice?.close()
@@ -709,6 +710,8 @@ class XrnkeyService :
             info.packageName != packageName
         // The Japanese keyboard's choices: used and learned as the personal words are.
         converter?.history = if (learning) od.japanese else null
+        // The owner's own Japanese words: theirs to use whatever is learned.
+        converter?.userWords = od.japaneseWords
         kana?.learnHere = typist.learnHere
     }
 

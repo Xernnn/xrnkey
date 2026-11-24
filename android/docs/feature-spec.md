@@ -469,6 +469,21 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
     of speech are the dictionary's, looked up again when another build of it comes;
   - Settings → Personal words → Japanese lists them with their count; each can be deleted, or
     all cleared.
+- **The owner's own words** (a user dictionary, for what Mozc's lacks: a name, a place):
+  - Settings → Personal words → Japanese dictionary, under Japanese, with their count: Add takes
+    a reading and a word (the reading in hiragana, katakana or romaji: `tanaka`, `タナカ` and
+    `たなか` are all `たなか`; one that isn't kana is refused, the form stays); each is listed
+    with its reading, to delete. Import takes a file of a reading, a tab and a word per line
+    (more columns, as Mozc's and Gboard's exports have, are ignored; `#` lines are comments),
+    Export gives one;
+  - each is a word of the dictionary for its reading, a noun, costing 3,000 less than the
+    cheapest word the dictionary reads so (nothing, where it has none): it wins its reading,
+    alone and inside a sentence (`たなか` is `田中` in Mozc's dictionary; with `田仲` added,
+    `たなかさんはがくせいです` is `田仲さんは学生です`), is in the words read so, first, and is
+    predicted from the reading's start (`ぜる`: `ゼルダ`). Chosen, it is learned as any word;
+  - used whether learning is on or off, in every field but passwords (they are the owner's, not
+    learned); at most 5,000, kept in `japanese-words.tsv` next to the personal words, and read
+    again at the next field once the settings change them.
 - **Enter**: while composing, commits what the field shows (the reading, a last n as ん, or
   after Space the conversion shown), with no new line; otherwise the field's action or a new
   line.
@@ -480,9 +495,10 @@ be typed on the 12-key kana pad instead (あ in the menu, "The 12-key pad" below
   committed as it is (a last n as ん).
 - **Password, email and URL fields**: plain letters, with `,` and `.`, as the English keyboard
   types them; nothing converts.
-- **Not on this keyboard**: no learning of new words the dictionary lacks (only of choices
-  among its words and the kana), no next words beyond the owner's and the lists above, no
-  Telex, and no emoji in the strip (the emoji panel is there).
+- **Not on this keyboard**: no learning of new words the dictionary lacks by typing them (the
+  owner adds them, above), no parts of speech for the owner's words (all are nouns), no next
+  words beyond the owner's and the lists above, no Telex, and no emoji in the strip (the emoji
+  panel is there).
 - The conversion is Mozc's way: the cheapest path through a lattice of the dictionary's words,
   each word's cost plus the cost of its part of speech after the one before (Mozc's
   connection costs), and a kana no word reads stands for itself; of two as cheap, the first
@@ -986,6 +1002,7 @@ opens on the settings list.
 | | Emoji suggestions | on |
 | | Personal words: the list, search, add, delete one, clear all (with confirm), export, import | — |
 | | Japanese (under Personal words): the words chosen, delete one, clear all (with confirm) | — |
+| | Japanese dictionary (under Personal words): the owner's words with their readings, add, delete one, export, import | — |
 | Auto-correct | Level: off / flexible / strong | flexible |
 | | Keep non-Vietnamese words as typed | on |
 | | Double space for full stop | on |
@@ -1175,6 +1192,7 @@ Rules:
 - **On the phone** (credential-encrypted private storage):
   - personal words and pairs;
   - the words chosen on the Japanese keyboard, and pairs of them;
+  - the owner's own Japanese words and their readings;
   - the revert memory;
   - the shortcut table;
   - the clipboard history and pins;
