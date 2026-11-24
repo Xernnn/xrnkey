@@ -167,8 +167,25 @@ class LayoutTest {
         assertTrue("₫" in reachable)
     }
 
-    private fun held(c: Char, shift: Shift = Shift.OFF): List<String> =
-        Layouts.rows(Page.LETTERS, shift).flatMap { it.keys }.single { it.label.equals(c.toString(), ignoreCase = true) && it.kind == KeyKind.CHAR }.variants
+    private fun held(c: Char, shift: Shift = Shift.OFF, english: Boolean = false): List<String> =
+        Layouts.rows(Page.LETTERS, shift, english = english).flatMap { it.keys }
+            .single { it.label.equals(c.toString(), ignoreCase = true) && it.kind == KeyKind.CHAR }.variants
+
+    /**
+     * On the English keyboard a held letter gives the accents English borrows, not Vietnamese's
+     * marks (a gave ă and ằ there), then the capital: a, e, n, c, s; a letter without accents
+     * just its capital. With Shift, capitals first and the small letter last (ß stays ß).
+     */
+    @Test
+    fun englishHeldLettersGiveLatinAccents() {
+        assertEquals("à á â ä æ ã å ā A".split(' '), held('a', english = true))
+        assertEquals("è é ê ë ē ę E".split(' '), held('e', english = true))
+        assertEquals(listOf("ñ", "ń", "N"), held('n', english = true))
+        assertEquals(listOf("ç", "ć", "č", "C"), held('c', english = true))
+        assertEquals(listOf("T"), held('t', english = true))
+        assertEquals(listOf("ß", "Ś", "Š", "s"), held('s', Shift.ONCE, english = true))
+        assertTrue(held('a', english = true).none { it in listOf("ă", "ằ", "ạ", "ả") })
+    }
 
     private fun base(s: String): Char = Normalizer.normalize(s, Normalizer.Form.NFD)[0]
 
