@@ -873,9 +873,12 @@ fixes slips there. It works the way AOSP LatinIME's typing scorer does.
   slips' cost. Leaving the word scores the models' share for a word they don't know.
 - **When to replace.** The best fix must lead leaving the word by the level's margin and hold the
   level's share of all the readings (leaving the word included): Flexible 0.75 (log10) and 80 %,
-  Strong 0.5 and 60 %. A syllable typed with its marks that chat may spell so (`dzậy`, `ừa`, `ùi`)
-  is tried only with neighbours' keys, and leaving it scores 2 higher: the deliberate spellings
-  were "fixed" by keys added or taken away, which no tap position speaks for.
+  Strong 0.5 and 60 %. A syllable typed with its marks that chat may spell so (`dzậy`, `ừa`, `ùi`,
+  `kái`, `nhóe`) is tried only with neighbours' keys, only those the tap landed toward (log10
+  −1.2 or better, never a tap in its own key's middle), and leaving it scores 2 higher: the
+  deliberate spellings were "fixed" by keys added or taken away, which no tap position speaks
+  for, and with the real models `tôi kái` became `lái` and `nhóe` `nhớ` from taps in the keys'
+  middles.
 - **Shown and taken back.** The strip's middle shows the fix in bold before Space, as it shows
   whatever Space commits. Backspace right after takes it back with the space, the word open as
   typed with its taps; the next Space keeps it ("Auto-correct", Revert).
@@ -899,16 +902,16 @@ training text), and C measured only after.
 
 | Set C, Flexible | typo words | of them real words | fixed before | fixed after | no touch data | to a wrong word | clean words changed |
 |---|---|---|---|---|---|---|---|
-| Vietnamese | 3,891 | 806 | 0.1 % | **62.9 %** | 46.9 % | 1.6 % | 0.00 % of 2,829 |
-| English | 199 | 32 | 19.6 % | **52.3 %** | 30.2 % | 2.5 % | 0.00 % of 137 |
+| Vietnamese | 3,891 | 806 | 0.1 % | **62.5 %** | 44.1 % | 1.6 % | 0.00 % of 2,829 |
+| English | 199 | 32 | 19.6 % | **52.3 %** | 29.6 % | 2.5 % | 0.00 % of 137 |
 
 - About a fifth of the typo words are another real word (`banj` slipped to `vanj`, `vạn`), which
   the fix leaves by design; of the rest, four in five Vietnamese ones come out as meant.
-- Strong: 66.3 % and 55.3 %, with 3.0 % and 6.5 % to a wrong word.
-- The spread matters most: 0.25/0.30 key widths gives 68.8 % and 63.7 % (0.6 % wrong); 0.40/0.48,
-  48.4 % and 33.2 %.
-- Fingers with a habit (0.1 key widths toward the middle, 0.15 key heights low): 56.2 % and 47.3 %,
-  then 57.7 % and 51.8 % once the keyboard learned where they land from the dev text.
+- Strong: 65.8 % and 55.3 %, with 3.1 % and 6.5 % to a wrong word.
+- The spread matters most: 0.25/0.30 key widths gives 68.7 % and 63.7 % (0.5 % wrong); 0.40/0.48,
+  48.0 % and 33.2 %.
+- Fingers with a habit (0.1 key widths toward the middle, 0.15 key heights low): 55.9 % and 47.7 %,
+  then 57.5 % and 51.8 % once the keyboard learned where they land from the dev text.
 - None of 117 made-up chat spellings (`dzậy`, `zậy`, `ừa`, `ùi`, `nàm`, `hok`, `khum`, `iu` …)
   typed with taps on their keys' centres, in four contexts, is changed that wasn't before.
 - Real models, by hand: `tôi khpng` → không, `xin cjao` → chào, `em chapf` → chào, `cô ấy ddeeoj`
