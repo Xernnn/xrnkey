@@ -858,8 +858,9 @@ fixes slips there. It works the way AOSP LatinIME's typing scorer does.
   that stand for one (`khong`), English, a personal word, chat meant as typed (`oke`, `hihi`).
   A real word is never changed, whatever slip made it. Also left alone: capitals throughout (a
   code), letters with no vowel unless a tap landed by a vowel's key (`thx` stays, `pwn` is `ơn`
-  when the p was hit at its left edge), a form picked from a held key, a word Backspace refused
-  (`refused`, `kept`).
+  when the p was hit at its left edge), a word of two keys (`aa` is â, never `as`; Laban Key and
+  the English one-edit fix leave them too), a form picked from a held key, a word Backspace
+  refused (`refused`, `kept`).
 - **The fixes tried** are the key sequences one or two slips away (two from 4 keys): a
   neighbour's key, weighed by the spatial model; a key left out (log10 −2.6, −2.2 for a doubled
   letter); a key too many (−2.6; −2.0 for the same key twice, −2.3 for a neighbour of the key

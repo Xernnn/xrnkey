@@ -292,6 +292,9 @@ class TouchTypoTest {
             assertEquals("dzậy", spaced("tôi", "dzaayj"))
             assertEquals("ừa", spaced("bạn", "uwaf"))
             assertEquals("ùi", spaced("xong", "uif"))
+            // Two keys stay as typed: "aa" is â.
+            assertEquals("â", spaced("tôi", "aa"))
+            assertEquals("â", spaced("tôi", "aa", mapOf(1 to (0.3f to 0f))))
         }
     }
 

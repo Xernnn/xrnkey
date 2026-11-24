@@ -252,6 +252,16 @@ TEST_CASE("Space's fix leaves words, chat and codes alone", "[typos][touch]") {
     CHECK(t.fix({"<s>"}, "teh") == "the");
 }
 
+TEST_CASE("Space's fix leaves a word of two keys alone", "[typos][touch]") {
+    Typing t;
+    REQUIRE(t.t.vi != nullptr);
+    // y tapped on its edge by t would make "it", but two keys may be meant so ("aa" is â).
+    CHECK(t.fix({"<s>"}, "iy", {{1, {-0.49f, 0.0f}}}, XK_CORRECT_STRONG).empty());
+    CHECK(t.fix({"<s>", "tôi"}, "aa", {{1, {0.49f, 0.0f}}}, XK_CORRECT_STRONG).empty());
+    // Three keys are enough.
+    CHECK(t.fix({"<s>", "hôm"}, "kay", {{0, {-0.45f, 0.45f}}}) == "nay");
+}
+
 TEST_CASE("Space's fix puts the tone where the owner's style does", "[typos][touch]") {
     Typing t;
     REQUIRE(t.t.vi != nullptr);

@@ -13,8 +13,9 @@
  * scored in context by the models' mixture (score.cpp) plus what its slips cost, LatinIME's
  * noisy channel, and so is leaving the word as typed: the models' share for a word they don't
  * know. A syllable typed with its marks that no dictionary has may be chat spelt so on purpose
- * ("dzậy", "ừa"): it is fixed only by a neighbour's key, and by a wider margin. The best fix replaces the word only when it leads leaving it by the level's margin and
- * is the likely one among the rest. */
+ * ("dzậy", "ừa"): it is fixed only by a neighbour's key, and by a wider margin. The best fix
+ * replaces the word only when it leads leaving it by the level's margin and is the likely one
+ * among the rest. A word of two keys stays. */
 #include "keys.h"
 #include "learn.h"
 #include "lm_internal.h"
@@ -366,7 +367,9 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
     std::u32string letters;
     int tone;
     const bool chat = !az(as_typed) && syllable_split(ends, &letters, &tone) && chat_syllable_valid(letters, tone);
-    if (level == XK_CORRECT_OFF || keys.size() < 2 || keys.size() > 24) return kNone;
+    /* Two keys are too few to tell a slip from what was meant ("aa" is â, not "as"): they stay,
+     * as in Laban Key, and as xk_fix_wrong_word leaves them. */
+    if (level == XK_CORRECT_OFF || keys.size() < 3 || keys.size() > 24) return kNone;
     /* Capitals throughout: an acronym or a code. Chat abbreviations stay, and letters with no
      * vowel are one unless there are four of them ("khpng" is a slip, "thx" is not). */
     if (upper == raw.size() && raw.size() > 1) return kNone;
