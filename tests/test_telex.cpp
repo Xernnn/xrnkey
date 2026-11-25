@@ -296,6 +296,49 @@ TEST_CASE("Telex keeps the spellings chat uses", "[telex]") {
     xk_state_free(s);
 }
 
+/* Typed for feeling, a word goes on in its last letter: Laban Key keeps the syllable, its tone
+ * where it was, and the letters after it as typed, Space too. These are what it showed on the
+ * owner's phone. This showed the keys once the word was no syllable ("naofoooooo"); after
+ * BackSpace reopened "nào", the tone key among them ("nafoooo"). */
+TEST_CASE("A word stretched for feeling stays its syllable, as in Laban Key", "[telex]") {
+    struct Case { const char* keys; const char* want; };
+    const Case cases[] = {
+        {"naofoooooo", "nàooooooo"}, {"vaixiiiiii", "vãiiiiiii"}, {"trowfiiiii", "trờiiiii"},
+        {"ddaayyyyyy", "đâyyyyyy"},  {"owiiiiii", "ơiiiiii"},     {"khoongggg", "khôngggg"},
+        {"uwfuuuu", "ừuuuu"},        {"naofo", "nàoo"},           {"Naofooo", "Nàoooo"},
+        // An a after "quá" is "quấ" while that can still be a syllable; the next takes it back.
+        {"quasaaaaa", "quáaaaa"},    {"dajaaaaa", "dạaaaa"},
+        // As before, and as in Laban Key: no syllable before the run, or its mark taken back.
+        {"naoooooof", "naoooooof"},  {"vaiiiiiix", "vaiiiiiix"},  {"hahaaaaaa", "hahaaaaaa"},
+        {"tooooo", "toooo"},         {"ddeeeeee", "đeeeee"},      {"hixxxxx", "hixxxx"},
+        // An English word with a key too many is a slip in it, not a syllable stretched.
+        {"costt", "costt"},          {"lastt", "lastt"},          {"thesee", "these"},
+    };
+    for (const auto& c : cases) {
+        XKState* s = make_telex();
+        xk_state_set_option(s, XK_OPT_W_SHORTCUT, 0);
+        INFO("typing " << c.keys);
+        std::string shown;
+        for (const char* p = c.keys; *p; ++p) shown = xk_process_key(s, static_cast<uint32_t>(*p), 0).preedit;
+        if (std::string(c.keys) != "thesee") CHECK(shown == c.want);
+        CHECK(std::string(xk_process_key(s, 0x20, 0).commit) == std::string(c.want) + " ");
+        xk_state_free(s);
+    }
+    // "nào", BackSpace, then o's: the o that went comes back, and the rest are stretched.
+    XKState* s = make_telex();
+    std::string shown;
+    for (const char* p = "naof"; *p; ++p) xk_process_key(s, static_cast<uint32_t>(*p), 0);
+    xk_process_key(s, 0xFF08, 0);
+    for (const char* p = "oooo"; *p; ++p) shown = xk_process_key(s, static_cast<uint32_t>(*p), 0).preedit;
+    CHECK(shown == "nàoooo");
+    xk_state_free(s);
+    // Without auto-restore the tone stays on its syllable, not over the o's.
+    s = make_telex();
+    xk_state_set_option(s, XK_OPT_AUTO_RESTORE, 0);
+    REQUIRE(process_string(s, "naofooo") == "nàoooo ");
+    xk_state_free(s);
+}
+
 /* The phone's English keyboard: no marks at all, so Telex's keys are letters
  * ("vieetj", "off", "text"); a digit or an apostrophe stays inside the word;
  * punctuation and Space end it as typed. */

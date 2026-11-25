@@ -292,6 +292,12 @@ class TouchTypoTest {
             assertEquals("dzậy", spaced("tôi", "dzaayj"))
             assertEquals("ừa", spaced("bạn", "uwaf"))
             assertEquals("ùi", spaced("xong", "uif"))
+            // Stretched for feeling, as Laban Key keeps them: "trờii" was fixed to "trời", and
+            // "nàoooo" ended as its keys ("naofooo").
+            assertEquals("trờii", spaced("ông", "trowfii"))
+            assertEquals("nàoooo", spaced("trời", "naofooo"))
+            assertEquals("vãiiii", spaced("ôi", "vaixiii"))
+            assertEquals("khôngggg", spaced("tôi", "khoongggg"))
             // Tapped in their keys' middles, chat spellings stay: "kái" was "lái", "nhóe" "nhớ".
             assertEquals("kái", spaced("tôi", "kais"))
             assertEquals("kái", spaced("bạn", "kais"))

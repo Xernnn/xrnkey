@@ -69,6 +69,8 @@ struct Word {
     /* Set by BackSpace in a word shown as typed: from then on every key is
      * just its letter, so editing "text" gives "tex", not "tẽ". */
     bool literal = false;
+    /* The mode the keys were last replayed in (XK_MODE_*). */
+    int mode = XK_MODE_TELEX;
 
     bool empty() const { return keys.empty(); }
     void clear() {
@@ -160,6 +162,10 @@ void word_backspace(Word& w, int mode, const Options& o);
 /* The composition can still become a Vietnamese syllable. Key handlers make
  * a change, ask this, and put the word back if not. */
 bool word_prefix_ok(const Word& w);
+/* A word stretched for feeling ("nàoooo", "vãiiii", "khôngggg"): keys that make a syllable with
+ * its marks, then that syllable's last letter typed again and again. Sets *out (when given) to
+ * the syllable as Telex makes it with the letters after it as typed; false when it isn't one. */
+bool word_stretched(const Word& w, const Options& o, std::string* out);
 void word_add_letter(Word& w, int key_index);
 
 /* telex.cpp / vni.cpp: apply key `i` of w.keys to the composition so far. */
