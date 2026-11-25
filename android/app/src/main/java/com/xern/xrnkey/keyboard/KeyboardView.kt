@@ -179,8 +179,8 @@ class KeyboardView(context: Context) : View(context) {
         strokeJoin = Paint.Join.ROUND
     }
 
-    /** A key, where it takes touches, and the tile drawn for it (the box on the pads). */
-    private class Hit(val key: Key, val rect: RectF, val tile: RectF = rect)
+    /** A key, where it takes touches, and where it is drawn: its row, without the gap under the last. */
+    private class Hit(val key: Key, val rect: RectF, val face: RectF = rect)
     private var hits: List<Hit> = emptyList()
 
     /** The letter page's row count sets the height; the other pages share it out. */
@@ -193,16 +193,6 @@ class KeyboardView(context: Context) : View(context) {
         val w = MeasureSpec.getSize(widthMeasureSpec)
         val h = (stripHeight + gridRows(keyRows()).sum() + bottomGap).toInt()
         setMeasuredDimension(w, h)
-    }
-
-    /**
-     * Laban Key's tile in a key's box: 10 px in from each side of a 108 px key; 10 px down a
-     * 153 px row and 130 tall; on the number row (131 px), 20 px down and 100 tall.
-     */
-    private fun tileOf(r: RectF, rowH: Float, short: Boolean, unit: Float): RectF {
-        val side = 0.09f * unit
-        val top = r.top + rowH * if (short) 0.153f else 0.065f
-        return RectF(r.left + side, top, r.right - side, top + rowH * if (short) 0.763f else 0.85f)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = relayout()
@@ -226,9 +216,7 @@ class KeyboardView(context: Context) : View(context) {
             // The gap under the last row is still its key's.
             val bottom = if (r == rows.size - 1) first + room else top + rowH
             for (k in row.keys) {
-                val box = RectF(x, top, x + k.width * unit, bottom)
-                val tiled = !page.isPad && !page.isFlick
-                out += Hit(k, box, if (tiled) tileOf(box, rowH, short = grid && r == 0 && numberRow, unit = unit) else box)
+                out += Hit(k, RectF(x, top, x + k.width * unit, bottom), RectF(x, top, x + k.width * unit, top + rowH))
                 x += k.width * unit
             }
             top += rowH
@@ -243,7 +231,7 @@ class KeyboardView(context: Context) : View(context) {
                 Rect().also { h.rect.roundOut(it) }
             }
         }
-        out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { languageLabel = spaceLabelFor(it.tile.width()) }
+        out.firstOrNull { it.key.kind == KeyKind.SPACE }?.let { languageLabel = spaceLabelFor(spaceBar(it.face).width()) }
         if (menuOpen) closeMenu()
         invalidate()
     }
@@ -281,8 +269,8 @@ class KeyboardView(context: Context) : View(context) {
         canvas.drawRect(0f, stripHeight, width.toFloat(), height.toFloat(), fill)
         fill.alpha = 255
         val space = hits.firstOrNull { it.key.kind == KeyKind.SPACE } ?: return
-        val cx = space.rect.centerX()
-        val cy = space.rect.centerY()
+        val cx = space.face.centerX()
+        val cy = space.face.centerY()
         val s = 7 * dp
         stroke(palette.glyph, 2.2f * dp)
         for (dir in listOf(-1f, 1f)) {
@@ -425,6 +413,11 @@ class KeyboardView(context: Context) : View(context) {
         return if (glyph.measureText(full) <= barWidth - 24 * dp) full else LANGUAGE_LABELS[language] ?: language.uppercase()
     }
 
+    private fun spaceBar(r: RectF): RectF {
+        val half = minOf(17 * dp, r.height() * 0.3f)
+        return RectF(r.left + 4 * dp, r.centerY() - half, r.right - 4 * dp, r.centerY() + half)
+    }
+
     /**
      * A label of Japanese marks (゛゜小, 、。?!), each drawn in a full-width cell with its ink in a
      * corner: set closer, so they read as one label.
@@ -453,20 +446,15 @@ class KeyboardView(context: Context) : View(context) {
     }
 
     private fun drawKey(canvas: Canvas, h: Hit, down: Boolean) {
-        val r = h.rect
+        val r = h.face
+        val cx = r.centerX()
+        val cy = r.centerY()
         val k = h.key
-        // The glyph sits in the middle of its tile, as Laban Key's.
-        val cx = h.tile.centerX()
-        val cy = h.tile.centerY()
-        if (page.isPad && k.kind != KeyKind.BLANK) {
+        if (page.isPad && k.kind != KeyKind.ENTER && k.kind != KeyKind.BLANK) {
             // A pad's keys are tiles, as a dialer's are: big targets for a thumb.
-            fill.color = when {
-                down -> palette.preview
-                k.kind == KeyKind.ENTER -> palette.function
-                else -> palette.space
-            }
+            fill.color = if (down) palette.preview else palette.space
             canvas.drawRoundRect(r.insetBy(4 * dp, 4 * dp), 12 * dp, 12 * dp, fill)
-        } else if (page.isFlick) {
+        } else if (page.isFlick && k.kind != KeyKind.ENTER) {
             // The 12-key pad's keys are tiles, as Gboard's: the kana a shade lighter than the rest.
             fill.color = when {
                 down -> palette.preview
@@ -474,15 +462,9 @@ class KeyboardView(context: Context) : View(context) {
                 else -> mix(palette.background, palette.space, 0.45f)
             }
             canvas.drawRoundRect(r.insetBy(3 * dp, 3 * dp), 10 * dp, 10 * dp, fill)
-        } else if (k.kind != KeyKind.BLANK) {
-            // Laban Key's tiles: letters, digits, symbols and the space bar in one grey, the keys
-            // around them darker.
-            fill.color = when {
-                down -> palette.pressed
-                k.kind in AROUND -> palette.function
-                else -> palette.key
-            }
-            canvas.drawRoundRect(h.tile, 3.2f * dp, 3.2f * dp, fill)
+        } else if (down && k.kind != KeyKind.ENTER && k.kind != KeyKind.SPACE && k.kind != KeyKind.BLANK) {
+            fill.color = palette.pressed
+            canvas.drawRoundRect(r.insetBy(3 * dp, 4 * dp), 8 * dp, 8 * dp, fill)
         }
         when (k.kind) {
             KeyKind.BLANK -> Unit
@@ -491,7 +473,7 @@ class KeyboardView(context: Context) : View(context) {
                 drawLabel(canvas, k.label, cx, cy, textSize(k), palette.glyph)
             KeyKind.COMMA -> {
                 drawMark(canvas, k.label, cx, cy + 2 * dp, textSize(k))
-                drawGlobe(canvas, cx, h.tile.top + 9 * dp, 6.5f * dp, palette.dim)
+                drawGlobe(canvas, cx, r.top + 13 * dp, 6.5f * dp, palette.dim)
             }
             KeyKind.PERIOD -> drawMark(canvas, k.label, cx, cy, textSize(k))
             KeyKind.EMOTICON -> drawLabel(canvas, k.label, cx, cy, 17 * sp, palette.glyph)
@@ -524,16 +506,21 @@ class KeyboardView(context: Context) : View(context) {
                 canvas.drawLine(cx - s, cy + s * 0.3f, cx + s, cy + s * 0.3f, line)
                 canvas.drawLine(cx + s, cy + s * 0.3f, cx + s, cy - s * 0.2f, line)
             } else {
-                // On its tile, the language in a quiet colour.
+                // A pill that reads as the space bar, with the language in a quiet colour.
+                fill.color = if (down) palette.preview else palette.space
+                val bar = spaceBar(r)
+                canvas.drawRoundRect(bar, bar.height() / 2, bar.height() / 2, fill)
                 drawLabel(canvas, spaceLabel, cx, cy, 14 * sp, palette.spaceLabel)
             }
             KeyKind.SHIFT -> drawShift(canvas, cx, cy, 11 * dp)
             KeyKind.BACKSPACE -> drawBackspace(canvas, cx, cy, 12 * dp)
             KeyKind.ENTER -> {
-                // On a dark tile, as Laban Key's: the field's action as its icon.
+                // A bright disc in the tile's plum, with the field's action as its icon.
+                fill.color = if (down) palette.accentPressed else palette.accent
+                canvas.drawCircle(cx, cy, minOf(r.height(), r.width()) * 0.36f, fill)
                 val label = enterLabel
-                if (label != null) drawLabel(canvas, label, cx, cy, 15 * sp, palette.glyph, fontStrong)
-                else drawEnter(canvas, cx, cy, 10 * dp, palette.glyph)
+                if (label != null) drawLabel(canvas, label, cx, cy, 15 * sp, palette.onAccent, fontStrong)
+                else drawEnter(canvas, cx, cy, 10 * dp, palette.onAccent)
             }
         }
     }
@@ -725,9 +712,8 @@ class KeyboardView(context: Context) : View(context) {
         tools.forEachIndexed { i, t -> drawTool(canvas, t, w * i + w / 2, stripHeight / 2, 10 * dp) }
     }
 
-    /** A tool's icon, white as Laban Key's toolbar. */
     private fun drawTool(canvas: Canvas, t: Tool, cx: Float, cy: Float, s: Float) {
-        stroke(palette.glyph, 1.8f * dp)
+        stroke(palette.dim, 1.8f * dp)
         when (t) {
             // The strip's own ≡, where it sits on the strip: the tools give way to it.
             Tool.HIDE -> for (dy in listOf(-5f, 0f, 5f)) canvas.drawLine(cx - 8 * dp, cy + dy * dp, cx + 8 * dp, cy + dy * dp, line)
@@ -763,7 +749,7 @@ class KeyboardView(context: Context) : View(context) {
                 // A keyboard gone narrow: its keys on one side of a line, the other side free.
                 canvas.drawRoundRect(RectF(cx - s * 1.15f, cy - s * 0.8f, cx + s * 1.15f, cy + s * 0.8f), s * 0.25f, s * 0.25f, line)
                 canvas.drawLine(cx + s * 0.45f, cy - s * 0.8f, cx + s * 0.45f, cy + s * 0.8f, line)
-                fill.color = palette.glyph
+                fill.color = palette.dim
                 for (row in 0..1) for (k in 0..2) canvas.drawCircle(cx - s * 0.75f + k * s * 0.4f, cy - s * 0.35f + row * s * 0.38f, 1.2f * dp, fill)
                 canvas.drawLine(cx - s * 0.7f, cy + s * 0.42f, cx - s * 0.05f, cy + s * 0.42f, line)
             }
@@ -1669,29 +1655,19 @@ class KeyboardView(context: Context) : View(context) {
 
         /** The comma menu's label of each language. */
         val LANGUAGE_LABELS = mapOf("vi" to "VI", "en" to "EN", "ja" to "JA", Options.FLICK to "あ")
-
-        /** The keys around the letters, on Laban Key's darker tiles. */
-        private val AROUND = setOf(
-            KeyKind.SHIFT, KeyKind.BACKSPACE, KeyKind.SYMBOLS, KeyKind.MORE_SYMBOLS, KeyKind.LETTERS, KeyKind.COMMA,
-            KeyKind.PERIOD, KeyKind.ENTER, KeyKind.NUMPAD, KeyKind.GLOBE, KeyKind.LEFT, KeyKind.RIGHT, KeyKind.UNDO,
-        )
     }
 }
 
 /**
- * The keyboard's colours. Dark is Laban Key's on the owner's phone: grey key tiles (#444444)
- * on black, the keys around the letters on darker ones (#222222), white letters. The accent is
- * the xrnkey tile's plum (#983A78), lightened on the dark keyboard (Caps Lock, a chosen form).
+ * The keyboard's colours. Dark slate is the default. The accent is the xrnkey tile's plum
+ * (#983A78), lightened on the dark keyboard so Enter stands out from it (3.3:1, and 4:1 for
+ * its icon).
  */
 data class Palette(
     val background: Int,
     val strip: Int,
     val glyph: Int,
     val dim: Int,
-    /** A letter's, digit's or symbol's tile, and the space bar's. */
-    val key: Int,
-    /** The tile of a key around the letters: Shift, Backspace, ?123, comma, full stop, Enter. */
-    val function: Int,
     val space: Int,
     val spaceLabel: Int,
     val pressed: Int,
@@ -1702,31 +1678,27 @@ data class Palette(
 ) {
     companion object {
         val DARK = Palette(
-            background = 0xFF000000.toInt(),
-            strip = 0xFF000000.toInt(),
-            glyph = 0xFFFFFFFF.toInt(),
-            dim = 0xFFADADAD.toInt(),
-            key = 0xFF444444.toInt(),
-            function = 0xFF222222.toInt(),
-            space = 0xFF444444.toInt(),
-            spaceLabel = 0xFFADADAD.toInt(),
-            pressed = 0xFF666666.toInt(),
-            preview = 0xFF5A5A5A.toInt(),
+            background = 0xFF263238.toInt(),
+            strip = 0xFF1E272C.toInt(),
+            glyph = 0xFFECEFF1.toInt(),
+            dim = 0xFFB0BEC5.toInt(),
+            space = 0xFF3E4C53.toInt(),
+            spaceLabel = 0xFF95A5A6.toInt(),
+            pressed = 0xFF37474F.toInt(),
+            preview = 0xFF4F626B.toInt(),
             accent = 0xFFC4579D.toInt(),
             accentPressed = 0xFFA9468A.toInt(),
             onAccent = 0xFFFFFFFF.toInt(),
         )
         val LIGHT = Palette(
-            background = 0xFFE3E6EA.toInt(),
-            strip = 0xFFE3E6EA.toInt(),
+            background = 0xFFECEFF1.toInt(),
+            strip = 0xFFE3E7EA.toInt(),
             glyph = 0xFF1F2428.toInt(),
             dim = 0xFF5F6B73.toInt(),
-            key = 0xFFFFFFFF.toInt(),
-            function = 0xFFC2C8CF.toInt(),
-            space = 0xFFFFFFFF.toInt(),
+            space = 0xFFCFD8DC.toInt(),
             spaceLabel = 0xFF607078.toInt(),
-            pressed = 0xFFAEB6BE.toInt(),
-            preview = 0xFFD9DEE3.toInt(),
+            pressed = 0xFFC5CED3.toInt(),
+            preview = 0xFFFFFFFF.toInt(),
             accent = 0xFF983A78.toInt(),
             accentPressed = 0xFF7E2F63.toInt(),
             onAccent = 0xFFFFFFFF.toInt(),

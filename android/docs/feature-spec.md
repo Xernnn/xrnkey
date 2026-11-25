@@ -116,17 +116,16 @@ Swipe typing is not used.
 
 ### What it shows
 
-Top to bottom, on Laban Key's grid and in its dark theme by default: each key a grey tile
-(#444444) on black, the keys around the letters (Shift, Backspace, `?123`, comma, full stop,
-Enter) on darker ones (#222222), glyphs white, large, in MiSans Latin and in the middle of their
-tile.
+Top to bottom, on Laban Key's grid, in the dark slate theme by default. Keys have no borders,
+and their glyphs are large, in MiSans Latin. (0.11.1 drew Laban Key's grey tiles on black,
+measured from a screenshot taken in its incognito mode; the owner's own Laban Key doesn't look
+like that, and 0.11.2 went back to this.)
 
 The grid is Laban Key's on the owner's phone (1080 px at 2.5 px a dp): the strip 110 px (44 dp),
 the number row 131 px (52.4 dp), the other rows 153 px (61.2 dp), and 7 px under the last, 860 px
 in all at 100 % height. The symbol pages share it (their first row is the digits); the number
-pads and the 12-key pad share the height equally. A tile is 10 px in from each side of its key
-and 10 px down a full row, 130 px tall (on the number row 20 px down, 100 tall), with corners of
-8 px. A key takes touches in its whole box, gaps included; `a` and `l` out to the screen's edges.
+pads and the 12-key pad share the height equally. The bottom row also takes the 7 px under it;
+`a` and `l` take touches out to the screen's edges.
 With a number row as tall as the others, each letter row sat 9 to 19 px lower than Laban Key's,
 and taps on the top of a key typed the row above it.
 
@@ -142,10 +141,11 @@ and taps on the top of a key typed the row above it.
 4. **Bottom row**:
    - `?123`.
    - Comma, with a small globe above it, because holding it opens the keyboard and language menu.
-   - The space bar, 5 keys wide, a tile like the letters' with the language in grey.
+   - The space bar, 5 keys wide: a pill a shade lighter than the keyboard, with the language in a
+     quiet colour.
    - Full stop.
-   - Enter, a darker tile with a white icon, as Laban Key's. Its icon follows the field's
-     action: newline, send, search, go, next or done.
+   - Enter, as a round key in the accent colour. Its icon follows the field's action: newline,
+     send, search, go, next or done.
 
 There is no navigation row, language key or hide key. Android's own navigation bar shows the
 keyboard's hide button.
@@ -1243,7 +1243,7 @@ opens on the settings list.
 | Clipboard | Keep history | on |
 | | History size | 50 |
 | Shortcuts | The table: add, edit, delete, import, export | — |
-| Theme | Dark (Laban Key's: grey tiles on black) / light / system | dark |
+| Theme | Dark slate / light / true black / system | dark slate |
 | About | Version, model version, licences of the code and the model data | — |
 
 - **Export** of personal words or shortcuts writes a `.txt` file through the system picker.
@@ -1632,8 +1632,7 @@ Steps 1 to 10 are built, with these differences from the text above:
   auto-correct, Personal words, Shortcuts, Clipboard, Theme, About and its Licences), in the
   keyboard's theme. Personal words: the list, search, delete one and clear all; adding a word,
   export and import are not built.
-- **Theme:** dark (Laban Key's black, with its tiles), light and system. Laban Key's other
-  themes and pictures are not built.
+- **Theme:** dark slate, light and system. True black is not built.
 - **Clipboard:** history size is fixed at 50 texts and 10 images; no time limit.
 - **Look-back** has no setting; it is always on.
 - **Next words** come from `xk_predict` (core/predict.cpp). The expanded list (≡ with more
