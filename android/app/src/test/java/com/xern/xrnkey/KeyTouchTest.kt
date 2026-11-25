@@ -25,8 +25,9 @@ import java.time.Duration
 
 /**
  * Holding and sliding on the keys, through real touch events on a keyboard in a window.
- * At xxhdpi (dp = 3) and 1080 px wide: the strip is 144 px, then five rows of 180 px (the
- * number row, qwerty, asdf, zxcv, the bottom row); a letter key is 108 px wide.
+ * At xxhdpi (dp = 3) and 1080 px wide: the strip is 132 px, then Laban Key's grid: the number
+ * row 157.2 px, then qwerty, asdf, zxcv and the bottom row 183.6 px each, centred at 381, 565,
+ * 748 and 932, and 8.4 px under them; a letter key is 108 px wide.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w360dp-h914dp-xxhdpi")
@@ -80,8 +81,8 @@ class KeyTouchTest {
         File(dir, "$name.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
-    private val spaceY = 954f
-    private val topRowY = 414f
+    private val spaceY = 932f
+    private val topRowY = 381f
 
     @Test
     fun slidingAlongTheSpaceBarMovesTheCursorAndTypesNoSpace() {
@@ -159,7 +160,7 @@ class KeyTouchTest {
         touch(v, MotionEvent.ACTION_UP, x + dx, y + dy)
     }
 
-    private val homeRowY = 594f
+    private val homeRowY = 565f
 
     /**
      * A held vowel offers all its toned forms, the grave one under the finger: let go there for
@@ -205,9 +206,9 @@ class KeyTouchTest {
         touch(v, MotionEvent.ACTION_DOWN, 270f, topRowY)        // e, slid onto r's left side
         touch(v, MotionEvent.ACTION_MOVE, 348f, topRowY)
         touch(v, MotionEvent.ACTION_UP, 348f, topRowY)
-        touch(v, MotionEvent.ACTION_DOWN, 54f, 234f)            // 1, on the number row
-        touch(v, MotionEvent.ACTION_UP, 54f, 234f)
-        assertEquals(listOf("e 0.37 0.25 1.67", "r -0.28 0.00 1.67", "1"), taps)
+        touch(v, MotionEvent.ACTION_DOWN, 54f, numberY)         // 1, on the number row
+        touch(v, MotionEvent.ACTION_UP, 54f, numberY)
+        assertEquals(listOf("e 0.37 0.25 1.70", "r -0.28 0.00 1.70", "1"), taps)
     }
 
     /**
@@ -308,7 +309,7 @@ class KeyTouchTest {
     }
 
     private val deleteX = 999f
-    private val zRowY = 774f
+    private val zRowY = 748f
 
     /** Slid left from Backspace past a key and a half: a word goes, once however far. */
     @Test
@@ -342,7 +343,7 @@ class KeyTouchTest {
         assertTrue(!rects[0].contains(1075, (zRowY - 180f).toInt()))  // not the l row above
     }
 
-    private val numberY = 234f
+    private val numberY = 211f
 
     /** Swiping the number row left shows ten emoji, each typed whole; right brings the digits back. */
     @Test

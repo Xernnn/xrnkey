@@ -60,8 +60,8 @@ class PanelHeightTest {
     fun everyPanelIsAsTallAsTheLetters() {
         val (s, frame) = start()
         val letters = height(frame)
-        // The strip, five rows of 60 dp and the navigation band, at 2.5 px a dp.
-        assertEquals(((48 + 5 * 60) * 2.5).toInt() + nav, letters)
+        // The strip (44 dp), Laban Key's grid (300 dp) and the navigation band, at 2.5 px a dp.
+        assertEquals(((44 + 300) * 2.5).toInt() + nav, letters)
 
         s.onTool(Tool.EMOJI)
         assertEquals("emoji", letters, height(frame))

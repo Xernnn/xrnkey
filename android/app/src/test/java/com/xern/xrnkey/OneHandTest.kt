@@ -163,22 +163,23 @@ class OneHandTest {
     /**
      * A tap on a narrowed key types that key, and says where on it the finger landed in that
      * key's widths and heights, as at full width: the typo fixes see the same offsets for the
-     * same place on a key. The key is taller in its own widths (180 / 88.6 = 2.03).
+     * same place on a key. The key is taller in its own widths (183.6 / 88.6 = 2.07).
      */
     @Test
     fun aTapOnANarrowedKeyTypesItWithItsOwnOffsets() {
         val unit = 886 / 10f
-        val qwerty = 144f + 180f + 90f
+        // The strip (132 px), the number row (157.2), then rows of 183.6.
+        val qwerty = 132f + 157.2f + 91.8f
         for ((hand, left) in listOf(Hand.LEFT to 0f, Hand.RIGHT to 194f)) {
             val events = mutableListOf<String>()
             val frame = keysIn(hand, events)
             tap(frame, left + 2.5f * unit, qwerty)                       // e, at its centre
             tap(frame, left + 0.5f * unit + 0.3f * unit, qwerty + 45f)   // q, right of and below its centre
             tap(frame, left + 9.5f * unit - 0.45f * unit, qwerty)        // p, near its left edge
-            tap(frame, left + 1.5f * unit, 144f + 90f)                   // 2, on the number row
+            tap(frame, left + 1.5f * unit, 132f + 78.6f)                 // 2, on the number row
             assertEquals(
                 "$hand",
-                listOf("e 0.00 0.00 2.03", "q 0.30 0.25 2.03", "p -0.45 0.00 2.03", "2"),
+                listOf("e 0.00 0.00 2.07", "q 0.30 0.25 2.07", "p -0.45 0.00 2.07", "2"),
                 events,
             )
             // The free column types nothing.
@@ -188,7 +189,7 @@ class OneHandTest {
         // At full width, the same place on e is the same offset, in its own (wider) key.
         val events = mutableListOf<String>()
         tap(keysIn(null, events), 2.5f * 108f + 0.3f * 108f, qwerty)
-        assertEquals(listOf("e 0.30 0.00 1.67"), events)
+        assertEquals(listOf("e 0.30 0.00 1.70"), events)
     }
 
     /**
@@ -224,21 +225,21 @@ class OneHandTest {
             e.recycle()
         }
         // The comma (after ?123's key and a half), held: ⌨ VI EN from over it; slid two cells.
-        val bottom = 144f + 4 * 180f + 90f
+        val bottom = 132f + 157.2f + 3 * 183.6f + 91.8f
         touch(MotionEvent.ACTION_DOWN, 2f * unit, bottom)
         t += 450
         looper.idleFor(Duration.ofMillis(450))
         touch(MotionEvent.ACTION_MOVE, 4f * unit, bottom)
         touch(MotionEvent.ACTION_UP, 4f * unit, bottom)
         // Backspace, swiped left a key and a half and a little.
-        val zxcv = 144f + 3 * 180f + 90f
+        val zxcv = 132f + 157.2f + 2 * 183.6f + 91.8f
         touch(MotionEvent.ACTION_DOWN, 9.25f * unit, zxcv)
         touch(MotionEvent.ACTION_MOVE, 7.6f * unit, zxcv)
         touch(MotionEvent.ACTION_UP, 7.6f * unit, zxcv)
         // The 12-key pad: か flicked left is き.
         keys.kana = true
         keys.page = Page.KANA
-        val top = 144f + 225f / 2
+        val top = 132f + 225f / 2
         touch(MotionEvent.ACTION_DOWN, 5f * unit, top)
         touch(MotionEvent.ACTION_MOVE, 5f * unit - 120f, top)
         touch(MotionEvent.ACTION_UP, 5f * unit - 120f, top)
