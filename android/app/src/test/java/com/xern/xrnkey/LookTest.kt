@@ -21,8 +21,8 @@ import kotlin.math.pow
 
 /**
  * The keys as the owner's phone shows them (1080 px at 2.5 px a dp), measured against Laban
- * Key on the same phone: its grid, its grey tiles on black with darker ones around the letters,
- * and letters about 30 sp.
+ * Key on the same phone: its grid (LabanGridTest), letters about 30 sp, a space bar that reads
+ * as one, and a bright Enter in the plum of the tile.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w432dp-h960dp-400dpi")
@@ -69,56 +69,20 @@ class LookTest {
 
     @Test
     fun theKeyboardIsAsTallAsLabans() {
-        // Laban Key's strip (44 dp), number row (52.4), four rows (61.2 each) and the gap under them.
+        // The strip (44 dp), a number row of 52.4 dp, four rows of 61.2 and 2.8 under them.
         assertEquals(860, view().measuredHeight)
     }
 
-    /**
-     * Laban Key's tiles on the owner's phone, from a screenshot (screen pixels, the keyboard
-     * starting at y 1420): each tile's colour reaches 3 px inside its edges, and the gaps
-     * between them are the keyboard's black.
-     */
     @Test
-    fun theTilesAreWhereLabansAre() {
-        val p = Palette.DARK
-        val bmp = draw(view { enterAction = EnterAction.DONE })
-        fun at(x: Int, screenY: Int) = bmp.getPixel(x, screenY - 1420)
-        // left, top, right, bottom on the screen, and the tile's colour.
-        val tiles = listOf(
-            "1" to intArrayOf(10, 1550, 97, 1649, p.key),
-            "q" to intArrayOf(10, 1672, 98, 1801, p.key),
-            "a" to intArrayOf(63, 1825, 151, 1954, p.key),
-            "Shift" to intArrayOf(10, 1978, 141, 2107, p.function),
-            "z" to intArrayOf(172, 1978, 259, 2107, p.key),
-            "?123" to intArrayOf(10, 2131, 152, 2260, p.function),
-            "space" to intArrayOf(279, 2131, 800, 2260, p.key),
-            "Enter" to intArrayOf(928, 2131, 1070, 2260, p.function),
-        )
-        for ((name, t) in tiles) {
-            val (l, top, r, bottom, colour) = t
-            val cx = (l + r) / 2
-            val cy = (top + bottom) / 2
-            for ((x, y) in listOf(l + 3 to cy, r - 3 to cy, cx to top + 3, cx to bottom - 3)) {
-                assertEquals("$name at $x, $y", colour, at(x, y))
-            }
+    fun theKeysAreFlatOnSlate() {
+        // No tiles (Laban Key's grey ones on black were its incognito theme, not the owner's):
+        // beside the glyphs of q and l, between q and w, and over the space bar's pill, where
+        // a tile would be, is the keyboard's own colour.
+        val bmp = draw(view())
+        for ((x, y) in listOf(20 to 316, 950 to 470, 108 to 316, 300 to 712)) {
+            assertEquals("at $x, $y", Palette.DARK.background, bmp.getPixel(x, y))
         }
-        // Between q and w, between the number row and q, between q and a, left of a.
-        for ((x, y) in listOf(108 to 1736, 54 to 1660, 54 to 1813, 30 to 1890)) {
-            assertEquals("gap at $x, $y", p.background, at(x, y))
-        }
-    }
-
-    @Test
-    fun theLettersReadOnTheirTiles() {
-        assertEquals(0xFF000000.toInt(), Palette.DARK.background)
-        assertEquals(0xFF444444.toInt(), Palette.DARK.key)
-        assertEquals(0xFF222222.toInt(), Palette.DARK.function)
-        for (p in listOf(Palette.DARK, Palette.LIGHT)) {
-            assertTrue("letters on their tiles", contrast(p.glyph, p.key) >= 4.5)
-            assertTrue("icons on the darker tiles", contrast(p.glyph, p.function) >= 4.5)
-            assertTrue("the language on the space bar", contrast(p.spaceLabel, p.space) >= 3.0)
-            assertTrue("a pressed tile shows", contrast(p.pressed, p.key) >= 1.2)
-        }
+        assertEquals(0xFF263238.toInt(), Palette.DARK.background)
     }
 
     @Test
@@ -131,26 +95,24 @@ class LookTest {
     }
 
     @Test
-    fun enterIsADarkTileAsLabans() {
+    fun enterIsARoundAccentKey() {
         val v = view()
         val bmp = draw(v)
-        // The Enter key: the last key of the bottom row, 1.5 keys wide; its tile around the icon.
+        // The Enter key: the last key of the bottom row, 1.5 keys wide, its row 700 to 853 px.
         val cx = (1080 - 1.5f * 108 / 2).toInt()
-        val cy = 2195 - 1420
-        assertEquals(Palette.DARK.function, bmp.getPixel(cx - (16 * dp).toInt(), cy - (12 * dp).toInt()))
-        // Its icon in the letters' white.
-        val r = (10 * dp).toInt()
-        assertTrue((cx - r..cx + r).any { x -> (cy - r..cy + r).any { y -> bmp.getPixel(x, y) == Palette.DARK.glyph } })
+        val cy = 777
+        // Its disc around the icon, a little off the centre.
+        assertEquals(Palette.DARK.accent, bmp.getPixel(cx - (12 * dp).toInt(), cy - (12 * dp).toInt()))
     }
 
     @Test
     fun shiftFillsWhenOnAndCapsLockIsItsOwn() {
         fun centre(shift: Shift): Int {
             val v = view { this.shift = shift }
-            // The middle of Shift's tile: x 10 to 141, y 1978 to 2107 on the screen.
-            return draw(v).getPixel((0.75f * 108).toInt(), 2042 - 1420)
+            val y = 624  // the middle of the row above the bottom one (547 to 700 px)
+            return draw(v).getPixel((0.75f * 108).toInt(), y)
         }
-        assertEquals(Palette.DARK.function, centre(Shift.OFF))
+        assertEquals(Palette.DARK.background, centre(Shift.OFF))
         assertEquals(Palette.DARK.glyph, centre(Shift.ONCE))
         assertEquals(Palette.DARK.accent, centre(Shift.LOCKED))
     }
