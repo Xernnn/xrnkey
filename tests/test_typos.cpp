@@ -275,6 +275,17 @@ TEST_CASE("Space's fix leaves a word of two keys alone", "[typos][touch]") {
     CHECK(t.fix({"<s>", "hôm"}, "kay", {{0, {-0.45f, 0.45f}}}) == "nay");
 }
 
+TEST_CASE("Space's fix leaves a word stretched for feeling", "[typos]") {
+    Typing t;
+    REQUIRE(t.t.vi != nullptr);
+    // With the real models "trờii" became "trời" (TouchTypoTest); Laban Key leaves them.
+    CHECK(t.fix({"<s>", "ông"}, "trowfii").empty());
+    CHECK(t.fix({"<s>", "trời"}, "naofo").empty());
+    CHECK(t.fix({"<s>"}, "vaixiii").empty());
+    // A word typed with a slip is still fixed.
+    CHECK(t.fix({"<s>", "hôm"}, "kay", {{0, {-0.45f, 0.45f}}}) == "nay");
+}
+
 TEST_CASE("Space's fix puts the tone where the owner's style does", "[typos][touch]") {
     Typing t;
     REQUIRE(t.t.vi != nullptr);

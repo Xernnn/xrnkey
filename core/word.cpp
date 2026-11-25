@@ -1,4 +1,5 @@
 #include "xrnkey_internal.h"
+#include <algorithm>
 #include <cctype>
 
 namespace xrnkey {
@@ -33,6 +34,7 @@ static char32_t glyph(char base, uint8_t mark) {
 }
 
 void word_replay(Word& w, int mode, const Options& o) {
+    w.mode = mode;
     w.letters.clear();
     w.tone = XK_TONE_NONE;
     w.tone_key = -1;
@@ -156,10 +158,60 @@ static bool has_vn_marks(const Word& w) {
     return false;
 }
 
+/* Laban Key keeps a word stretched for feeling as the syllable it was, with its tone, and the
+ * letters after it as they were typed, Space too: "nào" and six more o's is "nàooooooo", "vãi"
+ * and i's "vãiiiiii", "không" and g's "khôngggg". These showed their keys instead
+ * ("naofoooooo"); with the word reopened by BackSpace, the tone key in the middle of them
+ * ("nafoooo"); and without auto-restore, the tone over the o's. The syllable is the keys up to
+ * the run of the same letter at the end, or into it ("khoong" of "khoongggg", "owi" of
+ * "owiiii"), when they spell a syllable with marks that ends in that letter. The run's keys
+ * still went through Telex: "quá" and an "a" is "quấ" while that can still be a syllable, and a
+ * second "a" takes the mark back, so "quá" and five a's is "quáaaaa", as in Laban Key. */
+bool word_stretched(const Word& w, const Options& o, std::string* out) {
+    if (w.literal || w.mode == XK_MODE_PLAIN || !has_vn_marks(w)) return false;
+    /* Keys that spell an English word are that word ("thesee" is "these", a key taken back). */
+    if (lexicon_is_english(word_raw(w)) || lexicon_is_english(word_raw_effective(w))) return false;
+    const std::string& k = w.keys;
+    const size_t n = k.size();
+    auto lower = [](char ch) { return static_cast<char>(std::tolower(static_cast<unsigned char>(ch))); };
+    if (n < 2) return false;
+    const char c = lower(k[n - 1]);
+    if (c < 'a' || c > 'z') return false;
+    size_t run = n;
+    while (run > 0 && lower(k[run - 1]) == c) --run;
+    for (size_t end = std::max<size_t>(run, 1); end < n; ++end) {
+        /* The syllable's marks must survive the run: "too" is "tô", but more o's take its hat
+         * back ("tooooo" is "toooo"), as "ddeee" takes the ê of "đê". */
+        bool taken_back = false;
+        for (size_t i = 0; i < end; ++i) taken_back = taken_back || w.recs[i].undone;
+        if (taken_back) continue;
+        Word p;
+        p.keys = k.substr(0, end);
+        word_replay(p, w.mode, o);
+        if (p.letters.empty() || p.letters.back().base != c || !has_vn_marks(p)) continue;
+        const std::u32string letters = word_letters(p);
+        if (!syllable_valid(letters, p.tone) && !chat_syllable_valid(letters, p.tone)) continue;
+        /* Keys that are an English word are a slip in it: "costt" is "cost", not "cót" stretched. */
+        if (lexicon_is_english(word_raw(p)) || lexicon_is_english(word_raw_effective(p))) continue;
+        const std::string syllable = word_render(p, o);
+        if (out) {
+            /* A key of the run that a later one took back is gone, as in Telex. */
+            *out = syllable;
+            for (size_t i = end; i < n; ++i)
+                if (!w.recs[i].undone) *out += k[i];
+        }
+        return true;
+    }
+    return false;
+}
+
 std::string word_display(const Word& w, const Options& o) {
     if (w.literal) return word_raw(w);
     std::string v = word_render(w, o);
-    if (!o.auto_restore || !has_vn_marks(w) || word_prefix_ok(w)) return v;
+    if (!has_vn_marks(w) || word_prefix_ok(w)) return v;
+    std::string stretched;
+    if (word_stretched(w, o, &stretched)) return stretched;
+    if (!o.auto_restore) return v;
     /* No more keys can make this Vietnamese ("tẽt"): show what was typed. */
     return word_raw_effective(w);
 }
@@ -167,7 +219,10 @@ std::string word_display(const Word& w, const Options& o) {
 std::string word_final(const Word& w, const Options& o, const XKStateImpl* s) {
     if (w.literal) return word_raw(w);
     std::string v = word_render(w, o);
-    if (!o.auto_restore) return v;
+    if (!o.auto_restore) {
+        std::string stretched;
+        return word_stretched(w, o, &stretched) ? stretched : v;
+    }
     /* Two readings of the keys as plain text: with keys a repeat undid left
      * out ("ass" -> "as", "pass" -> "pas"), and exactly as typed ("pass").
      * When both are English, the keys as typed win -- a repeated key in
@@ -207,6 +262,9 @@ std::string word_final(const Word& w, const Options& o, const XKStateImpl* s) {
     if (const std::string* en = english()) return *en;
     /* A spelling chat uses, its marks typed on purpose ("đơu", "zậy"). */
     if (chat_syllable_valid(letters, w.tone)) return v;
+    /* Stretched for feeling, it stays so (word_stretched). */
+    std::string stretched;
+    if (word_stretched(w, o, &stretched)) return stretched;
     if (has_vn_marks(w)) return eff;
     return v;
 }

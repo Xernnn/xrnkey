@@ -337,6 +337,9 @@ int typo_fix(XKState* state, const char* const* context, int ctx_len, const floa
              int n_touches, int level, Fix* fix) {
     auto* s = reinterpret_cast<XKStateImpl*>(state);
     if (!s || !s->models || s->word.empty() || s->word.literal) return kNone;
+    /* A word stretched for feeling ("nàoooo", "trờiii") is meant so: Laban Key leaves it, and
+     * this made "naoof" "nào" and "trowfiif" "trời". */
+    if (word_stretched(s->word, s->opt, nullptr)) return kNone;
     const Models& m = *s->models;
     if (!m.vi && !m.en) return kNone;
     const std::string& raw = s->word.keys;

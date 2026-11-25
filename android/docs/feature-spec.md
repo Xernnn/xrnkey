@@ -155,6 +155,13 @@ keyboard's hide button.
 - **Tap a letter**: the key goes to the engine, and the word in progress is shown as composing
   text, without an underline where the app allows it. With "Key-press popup" on, a magnified
   copy of the key shows above the finger for as long as it is down.
+- **Stretch a word for feeling**: a syllable's last letter typed on and on keeps the syllable,
+  its tone where it was, with the letters after it as typed, as on Laban Key: `naof` + `oooo` is
+  `nàooooo`, `vaix` + `iii` `vãiiii`, `khoong` + `ggg` `khôngggg`, and `nào` ⌫ + `oooo` `nàoooo`.
+  A key Telex took back is gone (`quas` + `aaaaa` is `quáaaaa`: the first `a` made `quấ`, the
+  next took it back). Space keeps it, and its typo fix leaves it. Not when the syllable's mark
+  was taken back (`tooooo` stays `toooo`), nor in an English word (`costt`, `thesee`). Before,
+  such a word showed its keys (`naofoooo`; after ⌫, `nafoooo`) and Space fixed `trờii` to `trời`.
 - **Long-press a letter** (400 ms): a popup over the key. A vowel's holds every toned form of
   it and of its marked letters, then the capital: `a` à á ả ã ạ, ă ằ ắ ẳ ẵ ặ, â ầ ấ ẩ ẫ ậ, A (18),
   `o` 18, `e` and `u` 12, `i` and `y` 6. `d` gives đ and D, any other letter its capital (with
