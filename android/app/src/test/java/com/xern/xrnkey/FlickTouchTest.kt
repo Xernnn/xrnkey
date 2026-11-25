@@ -24,9 +24,9 @@ import java.time.Duration
 
 /**
  * The Japanese 12-key pad under real touch events, in a window as on the phone. At xxhdpi
- * (dp = 3) and 1080 px wide: the strip is 144 px, then four rows of 225 px (the height of the
+ * (dp = 3) and 1080 px wide: the strip is 132 px, then four rows of 225 px (the height of the
  * letters' five); the side columns are 183.6 px wide, the kana keys 237.6 px, so the columns'
- * centres are at 92, 302, 540, 778 and 988 px, and the rows' at 257, 482, 707 and 932 px.
+ * centres are at 92, 302, 540, 778 and 988 px, and the rows' at 245, 470, 695 and 920 px.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w360dp-h914dp-xxhdpi")
@@ -36,7 +36,7 @@ class FlickTouchTest {
     private var t = 0L
 
     private val cols = listOf(92f, 302f, 540f, 778f, 988f)
-    private val rows = listOf(257f, 482f, 707f, 932f)
+    private val rows = listOf(245f, 470f, 695f, 920f)
 
     /** The pad, with the number row on (the letters' five rows' height) unless [setup] says. */
     private fun pad(palette: Palette = Palette.DARK, setup: KeyboardView.() -> Unit = {}): KeyboardView {
@@ -119,7 +119,8 @@ class FlickTouchTest {
     @Test
     fun eachKeyTapsAndFlicksToItsKana() {
         val v = pad()
-        assertEquals(1044, v.height)
+        // As tall as the letters: the strip (44 dp) and Laban Key's grid (300 dp), at 3 px a dp.
+        assertEquals(1032, v.height)
         val keys = listOf(
             Triple(1, 0, "あいうえお"), Triple(2, 0, "かきくけこ"), Triple(3, 0, "さしすせそ"),
             Triple(1, 1, "たちつてと"), Triple(2, 1, "なにぬねの"), Triple(3, 1, "はひふへほ"),
@@ -403,7 +404,8 @@ class FlickTouchTest {
             touch(v, MotionEvent.ACTION_UP, cols[2] + 90f, rows[2])
         }
         val noRow = pad { numberRow = false }
-        assertEquals(864, noRow.height)
+        // The strip (132 px) and four of the letters' rows (183.6 px) with the gap under them.
+        assertEquals(874, noRow.height)
         shot("flick-pad-no-number-row-dark", noRow)
     }
 }

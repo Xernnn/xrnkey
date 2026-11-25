@@ -66,7 +66,8 @@ class ImeBandTest {
 
     private fun check(w: Window, what: String) {
         w.layout(insets())
-        val keysHeight = ((48 + 5 * 60) * dp).toInt()
+        // The strip (44 dp) and Laban Key's grid (a 52.4 dp number row, four of 61.2, 2.8 under them).
+        val keysHeight = ((44 + 300) * dp).toInt()
         // The keyboard is its keys and the band, and nothing outside it pads the window.
         assertEquals("$what: the keyboard", keysHeight + band, w.frame.measuredHeight)
         assertEquals("$what: the window", w.frame.measuredHeight, w.decor.measuredHeight)
@@ -122,10 +123,11 @@ class ImeBandTest {
 
     @Test
     fun theBandFollowsInsetsThatComeLateOrChange() {
-        // On the phone the first show could come before the window's insets: 870 px, no band.
+        // On the phone the first show could come before the window's insets: 860 px, no band.
         val w = window()
         w.layout(WindowInsetsCompat.Builder().build())
-        val keysHeight = ((48 + 5 * 60) * dp).toInt()
+        // The strip (44 dp) and Laban Key's grid (a 52.4 dp number row, four of 61.2, 2.8 under them).
+        val keysHeight = ((44 + 300) * dp).toInt()
         assertEquals(keysHeight, w.frame.measuredHeight)
         w.layout(insets())
         assertEquals(keysHeight + band, w.frame.measuredHeight)
@@ -145,7 +147,7 @@ class ImeBandTest {
         (w.frame as com.xern.xrnkey.keyboard.KeyboardFrame).metricsInsets = { androidx.core.graphics.Insets.of(0, 0, 0, band) }
         w.service.onWindowShown()
         w.layout(WindowInsetsCompat.Builder().build())
-        assertEquals(((48 + 5 * 60) * dp).toInt() + band, w.frame.measuredHeight)
+        assertEquals(((44 + 300) * dp).toInt() + band, w.frame.measuredHeight)
         val keys = w.keys
         assertTrue(keys.bottom <= w.frame.measuredHeight - band)
         w.service.onDestroy()
