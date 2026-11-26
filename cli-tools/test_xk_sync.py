@@ -31,9 +31,11 @@ class FakeHub:
         self.rows = {}  # key -> [count, at, seq]
         self.seq = 0
         self.pushes = []
+        self.allowed = []  # each push's allowDeletions
 
-    def push(self, base, changes):
+    def push(self, base, changes, allow_deletions=False):
         self.pushes.append(changes)
+        self.allowed.append(allow_deletions)
         before = self.seq
         for key, count, at in changes:
             old = self.rows.get(key)
@@ -85,6 +87,11 @@ class Sync(unittest.TestCase):
 
     def read(self):
         with open(self.dict, encoding="utf-8") as f:
+            return f.read()
+
+    @staticmethod
+    def raw(path):
+        with open(path, "rb") as f:
             return f.read()
 
     def sync(self, now=NOW, **kw):
@@ -148,9 +155,93 @@ class Sync(unittest.TestCase):
         self.sync(NOW + 10)
         self.assertEqual(self.hub.live(), {"bún": 2.0})
         self.assertEqual(self.read(), "bún\t2000\n")
-        self.write("")  # emptied by hand: that is a deletion
-        self.sync(NOW + 20)
-        self.assertEqual(self.hub.live(), {})
+
+    def test_an_empty_file_is_lost_too_and_deletes_nothing(self):
+        # A power cut while the file was being rewritten leaves it empty, or with its first lines
+        # only. That used to send every word as deleted, on every device.
+        self.write("".join(f"từ{i}\t2000\n" for i in range(30)))
+        self.sync()
+        for left in ("", "\n", "# my words\ntừ mới\t9000\n"):
+            self.write(left)
+            self.hub.pushes.clear()
+            self.sync(NOW + 10)
+            self.assertEqual(self.hub.pushes, [])
+            self.assertEqual(len(self.hub.live()), 30)
+            self.assertIn("từ7\t2000\n", self.read())  # the words come back
+            self.assertTrue(self.read().startswith(left))
+        self.assertIn("--clear-all", self.said[-2])
+
+    def test_a_file_that_doesnt_read_changes_nothing(self):
+        self.write("bún\t2000\nphở\t3000\n")
+        self.sync()
+        with open(self.dict, "wb") as f:
+            f.write("bún\t2000\n".encode("latin-1") + b"ph\xe1\t3000\n")  # Latin-1, edited by hand
+        before = self.raw(self.dict)
+        self.hub.phone(("chè", 4, NOW + 5))
+        self.hub.pushes.clear()
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 10)
+        self.assertEqual((self.hub.pushes, self.raw(self.dict)), ([], before))
+        self.assertEqual(self.hub.live(), {"bún": 2.0, "phở": 3.0, "chè": 4})
+
+    def test_a_round_deleting_too_many_is_refused_unless_allowed(self):
+        self.write("".join(f"từ{i}\t2000\n" for i in range(100)))
+        self.sync()
+        state = self.raw(self.state)
+        self.write("".join(f"từ{i}\t2000\n" for i in range(74)))  # 26 gone: more than 20, more than a quarter
+        self.hub.pushes.clear()
+        self.hub.allowed.clear()
+        with self.assertRaises(xk_sync.Problem) as said:
+            self.sync(NOW + 10)
+        self.assertIn("26", str(said.exception))
+        self.assertIn("--allow-deletions", str(said.exception))
+        self.assertEqual((self.hub.pushes, self.raw(self.state), len(self.hub.live())), ([], state, 100))
+        self.assertEqual(self.read().count("\n"), 74)  # nothing written either
+        self.sync(NOW + 20, allow_deletions=True)
+        self.assertEqual((len(self.hub.live()), self.hub.allowed), (74, [True]))
+        self.write("".join(f"từ{i}\t2000\n" for i in range(54)))  # 20 of 74: a quarter is 18.5, but 20 may go
+        self.sync(NOW + 30)
+        self.assertEqual((len(self.hub.live()), self.hub.allowed[-1]), (54, False))
+        self.write("".join(f"từ{i}\t2000\n" for i in range(33)))  # 21 of 54
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 40)
+
+    def test_a_small_table_can_lose_a_few_words_by_hand(self):
+        self.write("bún\t2000\nphở\t3000\nchè\t1000\n")
+        self.sync()
+        self.write("chè\t1000\n")  # two of three
+        self.sync(NOW + 10)
+        self.assertEqual(self.hub.live(), {"chè": 1.0})
+        self.assertEqual(self.hub.allowed[-1], False)
+
+    def test_clear_all_deletes_every_synced_word_here_and_everywhere(self):
+        self.write("# my words\ntừ mới\t9000\n" + "".join(f"từ{i}\t2000\n" for i in range(40)))
+        self.sync()
+        self.hub.phone(("ăn phở", 2, 0))
+        self.write("# my words\ntừ mới\t9000\n")  # emptying the words alone doesn't clear them: the flag does
+        self.sync(NOW + 10)
+        self.assertEqual(len(self.hub.live()), 41)
+        self.sync(NOW + 20, clear_all=True)
+        self.assertEqual(self.hub.live(), {"ăn phở": 2})  # the phone's pairs aren't the laptop's
+        self.assertEqual(self.read(), "# my words\ntừ mới\t9000\n")
+        self.assertEqual(self.hub.allowed[-1], True)
+        self.hub.pushes.clear()
+        self.assertFalse(self.sync(NOW + 30))  # and after it, nothing more to say
+        self.assertEqual(self.hub.pushes, [])
+
+    def test_the_files_reach_the_disk_before_they_replace_the_old_ones(self):
+        synced, real = [], os.fsync
+        def fsync(fd):
+            synced.append(os.readlink(f"/proc/self/fd/{fd}"))
+            real(fd)
+        xk_sync.os.fsync = fsync
+        self.addCleanup(setattr, xk_sync.os, "fsync", real)
+        self.hub.phone(("phở", 3, 0))
+        self.write("bún\t2000\n")
+        self.sync()
+        folder, state = os.path.dirname(self.dict), os.path.dirname(self.state)
+        self.assertEqual([os.path.dirname(p) if p.startswith(folder + "/.") or p.startswith(state + "/.") else p
+                          for p in synced], [folder, folder, state, state])
 
     def test_phrases_capitals_and_other_lines_stay_as_they_are(self):
         self.write("# my words\ntừ mới\t9000\nHà\t5000\n\nbún\t2000\nnot a line\n")
@@ -213,6 +304,33 @@ class Config(unittest.TestCase):
 
 class OverHttp(unittest.TestCase):
     """The command itself, against a stand-in hub on this machine that wants the login."""
+
+    def test_only_an_allowed_sync_asks_the_hub_past_its_guard_and_a_refusal_says_so(self):
+        bodies = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_POST(self):
+                bodies.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+                self.send_response(409 if not bodies[-1].get("allowDeletions") else 200)
+                body = b'{"from": 0, "seq": 1}'
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        hub = xk_sync.Hub(f"http://127.0.0.1:{srv.server_address[1]}", "alex", "made up")
+        with self.assertRaises(xk_sync.Problem) as said:
+            hub.push(3, [["bún", None, NOW]])
+        self.assertIn("--allow-deletions", str(said.exception))
+        self.assertEqual(hub.push(3, [["bún", None, NOW]], True), {"from": 0, "seq": 1})
+        self.assertEqual(bodies, [{"base": 3, "changes": [["bún", None, NOW]]},
+                                  {"base": 3, "changes": [["bún", None, NOW]], "allowDeletions": True}])
 
     def test_it_signs_in_syncs_and_keeps_its_state(self):
         hub = FakeHub()

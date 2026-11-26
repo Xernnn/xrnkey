@@ -220,8 +220,11 @@ systemctl --user enable --now xk-sync.timer
 ```
 
 It keeps what it last synced in `~/.local/state/xrnkey/words-sync.json`. A `user-dict.txt` that is
-missing altogether is taken as lost, and its words come back; an emptied one deletes them
-everywhere. Suggestions must be on (`PredictionEnabled`) for the words to show while typing.
+missing, or holds none of the words that sync, is taken as lost, and its words come back; one that
+doesn't read stops the sync. A sync that would delete more than 20 words and more than a quarter of
+them stops before sending anything: `xk-sync --allow-deletions` lets it through, and
+`xk-sync --clear-all` deletes every word that syncs, here and on every device. Suggestions must be
+on (`PredictionEnabled`) for the words to show while typing.
 
 ## Project Structure
 

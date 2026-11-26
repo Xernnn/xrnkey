@@ -6,8 +6,10 @@ keyboard itself has no network), and this brings them into the laptop's user dic
 user-dict.txt, which the Fcitx5 addon reads. Words added or removed here (xk-dict add, xk-dict remove,
 or by hand) go back the same way, so a word removed on one device goes from every device.
 
-    xk-sync              sync once (a systemd user timer runs it every hour: xk-sync.timer)
-    xk-sync --dry-run    say what would change, and change nothing
+    xk-sync                    sync once (a systemd user timer runs it every hour: xk-sync.timer)
+    xk-sync --dry-run          say what would change, and change nothing
+    xk-sync --allow-deletions  let this sync delete more words than the guard below lets through
+    xk-sync --clear-all        delete every word that syncs, here and on every device
 
 Only single words in lower case sync, the shape the phone keeps them in. A phrase ("từ mới") or a
 capitalised entry stays on the laptop and is left alone, and the phone's word pairs (which the laptop
@@ -17,8 +19,14 @@ the phone as typed 9 times.
 
 What it remembers between runs is in $XDG_STATE_HOME/xrnkey/words-sync.json: the last number it read
 from the server and the words as they were after the last sync, which is how it tells a word removed
-here from one never seen. A user-dict.txt that is missing altogether is taken as lost, not emptied:
-its words come back rather than being deleted everywhere. The first sync only adds, both ways.
+here from one never seen. The first sync only adds, both ways.
+
+A word removed here is removed everywhere, so a file that lost its words must not look like one whose
+words were all removed. A user-dict.txt that is missing, or holds none of the words that sync (what a
+power cut during a rewrite leaves), is taken as lost: its words come back, and nothing is deleted. One
+that doesn't read (not UTF-8) stops the sync, and nothing changes. And a sync that would delete more
+than MAX_DELETIONS words and more than a quarter of them stops before sending anything, unless it is
+run with --allow-deletions; --clear-all is the way to delete every word everywhere.
 
 Reads ~/.config/xrnkey/sync.json, which never enters the repo:
 
@@ -47,6 +55,7 @@ MAX_PUSH_BYTES = 200 * 1024  # and well inside its body limit
 WORDS_PATH = "/api/keyboard/words"
 TIMEOUT_S = 30
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
+MAX_DELETIONS = 20  # a sync may always delete this many; more only while within a quarter of the words
 
 
 class Problem(Exception):
@@ -84,12 +93,15 @@ def syncs(word):
 
 def read_dict(path):
     """(lines, {word: freq}) of user-dict.txt; the lines as they are, for writing back around the
-    words that sync. A word on two lines counts at its higher frequency, as the addon reads it."""
+    words that sync. A word on two lines counts at its higher frequency, as the addon reads it.
+    (None, {}) when there is no file. Raises Problem when it doesn't read."""
     try:
         with open(path, encoding="utf-8") as f:
             lines = f.read().splitlines()
     except FileNotFoundError:
         return None, {}
+    except (OSError, UnicodeDecodeError) as e:
+        raise Problem(f"{path} doesn't read ({e.__class__.__name__}): nothing was synced or changed") from None
     words = {}
     for line in lines:
         word, freq = entry(line)
@@ -122,11 +134,33 @@ def write_dict(path, lines, words):
             out.append(f"{word}\t{words[word]}")
             seen.add(word)
     out += [f"{w}\t{words[w]}" for w in sorted(words) if w not in seen]
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".user-dict.", dir=os.path.dirname(path))
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        f.write("".join(line + "\n" for line in out))
-    os.replace(tmp, path)
+    write_whole(path, "".join(line + "\n" for line in out), ".user-dict.")
+
+
+def write_whole(path, text, prefix):
+    """`text` as the file at `path`, whole or not at all: written beside it, flushed to the disk,
+    moved into place, and the folder flushed, so a power cut leaves the old file or the new one,
+    never an empty one (which would read as every word deleted)."""
+    folder = os.path.dirname(path)
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=prefix, dir=folder)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+    dfd = os.open(folder, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(dfd)
+    finally:
+        os.close(dfd)
 
 
 def count_of(freq):
@@ -137,14 +171,20 @@ def freq_of(count):
     return min(MAX_FREQ, max(1, round(count * FREQ_PER_COUNT)))
 
 
-def local_changes(base, words, first, missing, now_ms):
+def local_changes(base, words, first, lost, now_ms):
     """[[word, count or None, at]]: what changed here since the last sync. A first sync sends at 0,
-    which only adds; a missing file deletes nothing."""
+    which only adds; a lost file deletes nothing."""
     at = 0 if first else now_ms
     out = [[w, count_of(f), at] for w, f in sorted(words.items()) if w not in base or base[w][1] != f]
-    if not first and not missing:
+    if not first and not lost:
         out += [[w, None, now_ms] for w in sorted(base) if w not in words]
     return out
+
+
+def too_many(deletions, base):
+    """Whether a sync deleting `deletions` of the `base` words it last synced is more than a slip of
+    the hand: more than MAX_DELETIONS, and more than a quarter of them."""
+    return deletions > max(MAX_DELETIONS, base / 4)
 
 
 def chunks(changes):
@@ -161,23 +201,40 @@ def chunks(changes):
         yield part
 
 
-def sync(server, dict_path, state_path, now_ms=None, dry_run=False, say=print):
-    """One sync. `server` has push(base, changes) and pull(since). Returns whether user-dict.txt changed."""
+def sync(server, dict_path, state_path, now_ms=None, dry_run=False, allow_deletions=False, clear_all=False,
+         say=print):
+    """One sync. `server` has push(base, changes, allow_deletions) and pull(since). Returns whether
+    user-dict.txt changed. Raises Problem, having sent and written nothing, when it would delete too
+    many words (`allow_deletions` lets it)."""
     now_ms = int(time.time() * 1000) if now_ms is None else now_ms
     state = load_state(state_path)
     first = state is None
     cursor = 0 if first else state["cursor"]
     base = {} if first else state["words"]
     lines, words = read_dict(dict_path)
-    if lines is None:
-        # Lost, not emptied: what it held at the last sync comes back, and nothing is deleted.
-        words = {w: known[1] for w, known in base.items()}
-    changes = local_changes(base, words, first, lines is None, now_ms)
+    held = words  # what the file has, to tell what changed in it
+    if clear_all:
+        changes = [[w, None, now_ms] for w in sorted(set(base) | set(words))]
+    else:
+        lost = lines is None or (not words and bool(base))
+        if lost:
+            # Lost, not emptied: what it held at the last sync comes back, and nothing is deleted.
+            words = {w: known[1] for w, known in base.items()}
+            if base:
+                say(f"{dict_path} has none of the {len(base)} words synced: taken as lost, they come back "
+                    "(xk-sync --clear-all deletes them everywhere)")
+        changes = local_changes(base, words, first, lost, now_ms)
+        deletions = sum(1 for _, count, _ in changes if count is None)
+        if too_many(deletions, len(base)) and not allow_deletions:
+            raise Problem(f"this sync would delete {deletions} of the {len(base)} words synced, everywhere, "
+                          "so it stopped and changed nothing. If they were removed on purpose: "
+                          "xk-sync --allow-deletions")
+    allow = clear_all or allow_deletions
 
     clean, reached = True, cursor
     if not dry_run:
         for part in chunks(changes):
-            answer = server.push(cursor, part)
+            answer = server.push(cursor, part, allow)
             clean = clean and answer["from"] == reached  # nobody else wrote in between
             reached = answer["seq"]
     # Pushed with nobody writing in between: what the server has since is only this.
@@ -192,7 +249,7 @@ def sync(server, dict_path, state_path, now_ms=None, dry_run=False, say=print):
         if not page["more"]:
             break
 
-    after = dict(words)
+    after = {} if clear_all else dict(words)
     for word, count in remote.items():
         if not syncs(word):
             continue
@@ -211,14 +268,14 @@ def sync(server, dict_path, state_path, now_ms=None, dry_run=False, say=print):
             count = base.get(word, [count_of(freq)])[0]
         known[word] = [count, freq]
 
-    added = sorted(set(after) - set(words))
-    gone = sorted(set(words) - set(after))
-    moved = sorted(w for w in after if w in words and after[w] != words[w])
+    added = sorted(set(after) - set(held))
+    gone = sorted(set(held) - set(after))
+    moved = sorted(w for w in after if w in held and after[w] != held[w])
     say(f"sent {len(changes)}, got {len(remote)}: {len(added)} new here, {len(gone)} gone, {len(moved)} changed"
         + (" (dry run: nothing sent or written)" if dry_run else ""))
     if dry_run:
         return False
-    changed = bool(added or gone or moved or (lines is None and after))
+    changed = bool(added or gone or moved)
     if changed:
         write_dict(dict_path, lines, after)
     save_state(state_path, {"cursor": since, "words": known})
@@ -239,11 +296,7 @@ def load_state(path):
 
 
 def save_state(path, doc):
-    os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".words-sync.", dir=os.path.dirname(path))
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, separators=(",", ":"))
-    os.replace(tmp, path)
+    write_whole(path, json.dumps(doc, ensure_ascii=False, separators=(",", ":")), ".words-sync.")
 
 
 # ---- the server ----------------------------------------------------------------------------------
@@ -266,13 +319,18 @@ class Hub:
                 return json.loads(res.read())
         except urllib.error.HTTPError as e:
             said = {401: "it refused the login", 429: "too many wrong passwords; try again later",
-                    404: "it has no keyboard words: is the hub server with them deployed?"}
+                    404: "it has no keyboard words: is the hub server with them deployed?",
+                    409: "it refused to delete that many words. If they were removed on purpose: "
+                         "xk-sync --allow-deletions"}
             raise Problem(f"{self.server} answered {e.code}: {said.get(e.code, e.read()[:200].decode(errors='replace'))}") from None
         except (urllib.error.URLError, OSError) as e:
             raise Problem(f"couldn't reach {self.server}: {getattr(e, 'reason', e)}") from None
 
-    def push(self, base, changes):
-        return self.ask("POST", WORDS_PATH, {"base": base, "changes": changes})
+    def push(self, base, changes, allow_deletions=False):
+        body = {"base": base, "changes": changes}
+        if allow_deletions:
+            body["allowDeletions"] = True  # past the hub's own guard against mass deletions
+        return self.ask("POST", WORDS_PATH, body)
 
     def pull(self, since):
         return self.ask("GET", f"{WORDS_PATH}?since={since}")
@@ -318,6 +376,10 @@ def reload_fcitx():
 def main(argv=None):
     p = argparse.ArgumentParser(description="Sync the laptop's personal words with the phone keyboard's, through the hub.")
     p.add_argument("--dry-run", action="store_true", help="say what would change, and change nothing")
+    p.add_argument("--allow-deletions", action="store_true",
+                   help=f"let this sync delete more than {MAX_DELETIONS} words and more than a quarter of them")
+    p.add_argument("--clear-all", action="store_true",
+                   help="delete every word that syncs, from user-dict.txt and from every device")
     args = p.parse_args(argv)
     server, user, password = read_config(config_file())
     state = state_file()
@@ -328,7 +390,7 @@ def main(argv=None):
         except BlockingIOError:
             raise Problem("another xk-sync is running") from None
         changed = sync(Hub(server, user, password), os.path.join(data_dir(), "user-dict.txt"), state,
-                       dry_run=args.dry_run)
+                       dry_run=args.dry_run, allow_deletions=args.allow_deletions, clear_all=args.clear_all)
     if changed:
         reload_fcitx()
 
