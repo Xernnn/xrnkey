@@ -17,6 +17,10 @@ import com.xern.xrnkey.Options
 import com.xern.xrnkey.ime.OnDevice
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
 import java.util.UUID
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
@@ -170,6 +174,30 @@ class WordsProvider : ContentProvider() {
         private const val ID_FILE = "words-sync-id"
         private val TOKEN = Regex("[A-Za-z0-9-]{8,64}")
 
+        /**
+         * [text] as [file], whole or not at all: written beside it, flushed to the disk ([flush])
+         * before it is renamed over the old one, and the folder flushed after, so a power cut leaves
+         * the old words or the new ones, never an empty file that a sync would read as deletions.
+         */
+        fun writeWhole(file: File, text: String, flush: (FileOutputStream) -> Unit = { it.fd.sync() }) {
+            val part = File(file.parentFile, file.name + ".part")
+            try {
+                FileOutputStream(part).use { out ->
+                    out.write(text.toByteArray(Charsets.UTF_8))
+                    flush(out)
+                }
+                if (!part.renameTo(file)) throw IOException("rename")
+            } catch (_: IOException) {
+                part.delete()
+                throw IllegalStateException("couldn't write the personal words")
+            }
+            try {
+                // The rename itself, best effort: not every platform opens a folder to flush it.
+                FileChannel.open(file.parentFile!!.toPath(), StandardOpenOption.READ).use { it.force(true) }
+            } catch (_: Exception) {
+            }
+        }
+
         /** The table's id, made once and kept with the words. */
         fun tableId(dir: File): String {
             val file = File(dir, ID_FILE)
@@ -192,12 +220,7 @@ class WordsProvider : ContentProvider() {
             val file = File(dir, OnDevice.WORDS)
             val (text, applied) = WordsTable.patch(if (file.isFile) file.readText() else "", patch)
             if (applied.set + applied.deleted > 0) {
-                val part = File(dir, OnDevice.WORDS + ".part")
-                part.writeText(text)
-                if (!part.renameTo(file)) {
-                    part.delete()
-                    throw IllegalStateException("couldn't write the personal words")
-                }
+                writeWhole(file, text)
                 OnDevice.wordsChanged(prefs)
                 live?.reloadWords()
             }

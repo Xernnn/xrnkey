@@ -226,6 +226,21 @@ class WordsSyncTest {
     }
 
     @Test
+    fun theWordsFileReachesTheDiskBeforeItReplacesTheOldOne() {
+        // A power cut right after a patch must leave the old words or the new ones, never an empty
+        // file, which the next sync would send as every word deleted.
+        val file = File(app.filesDir, "durable.tsv").apply { writeText("old\t1\n") }
+        val seen = mutableListOf<String>()
+        WordsProvider.writeWhole(file, "new\t2\n") { out ->
+            out.flush()
+            seen += file.readText() // flushed while the old file still stands
+        }
+        assertEquals(listOf("old\t1\n"), seen)
+        assertEquals("new\t2\n", file.readText())
+        assertFalse(File(app.filesDir, "durable.tsv.part").exists())
+    }
+
+    @Test
     fun onlyTheWordsFileIsReadAndNothingIsWrittenThroughAFile() {
         val p = provider()
         assertThrows(FileNotFoundException::class.java) { p.openFile(Uri.parse("content://${WordsProvider.AUTHORITY}/../shortcuts"), "r") }
