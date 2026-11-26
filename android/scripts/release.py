@@ -43,6 +43,9 @@ REPO = os.path.dirname(ANDROID)
 GRADLE = os.path.join(ANDROID, "app", "build.gradle.kts")
 APK_DIR = os.path.join(ANDROID, "app", "build", "outputs", "apk", "release")
 SIGNING = os.path.join(os.path.dirname(REPO), "xrn-signing.properties")
+# The lock every Gradle build on this laptop takes (the worktrees' folder beside the checkouts), so a
+# release never runs a second build beside another session's: two at once overran its memory.
+GRADLE_LOCK = os.path.join(os.path.dirname(REPO), ".wt", ".gradle.lock")
 CONFIG = os.path.join(os.path.expanduser("~"), ".config", "xrnkey", "release.json")
 RELEASE_BRANCH = "main"
 PACKAGE = "com.xern.xrnkey"
@@ -162,6 +165,12 @@ def build_tools():
     return os.path.join(sdk, "build-tools", versions[-1])
 
 
+def gradle_command(*tasks):
+    """./gradlew for `tasks` under the shared Gradle lock (flock waits for a build that holds it),
+    leaving no daemon behind: Gradle's and Kotlin's once held 8 GB of a laptop's memory."""
+    return ["flock", GRADLE_LOCK, "./gradlew", "--no-daemon", "-Pkotlin.compiler.execution.strategy=in-process", *tasks]
+
+
 def run(args, **kw):
     return subprocess.run(args, check=True, capture_output=True, text=True, **kw).stdout
 
@@ -205,10 +214,9 @@ signing certificate (apksigner verify --print-certs on the APK it was installed 
     live_text = ssh(f"cat {remote}/app.json 2>/dev/null || true").decode().strip()
     check_newer(code, json.loads(live_text) if live_text else None)
 
-    # No daemon left behind: Gradle's and Kotlin's once held 8 GB of a laptop's memory.
     env = dict(os.environ, ANDROID_USER_HOME=os.environ.get("ANDROID_USER_HOME", os.path.expanduser("~/.android")))
-    subprocess.run(["./gradlew", "--no-daemon", "-Pkotlin.compiler.execution.strategy=in-process",
-                    ":app:assembleRelease"], cwd=ANDROID, env=env, check=True)
+    os.makedirs(os.path.dirname(GRADLE_LOCK), exist_ok=True)
+    subprocess.run(gradle_command(":app:assembleRelease"), cwd=ANDROID, env=env, check=True)
     with open(os.path.join(APK_DIR, "output-metadata.json"), encoding="utf-8") as f:
         built = json.load(f)["elements"][0]
     if built["versionCode"] != code:
