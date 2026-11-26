@@ -55,6 +55,8 @@ class WordsSyncTest {
         return call(WordsProvider.COMMIT, token, null)
     }
 
+    private fun lines(n: Int) = Bundle().apply { putInt(WordsProvider.KEY_LINES, n) }
+
     private fun saved(vararg learned: Pair<String?, String>) = PersonalWords().use { w ->
         learned.forEach { (prev, word) -> w.learn(prev, word) }
         w.save(wordsFile)
@@ -215,14 +217,39 @@ class WordsSyncTest {
         val p = provider()
         p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, "phở\t2") })
         p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, "bún\t3\n") })
-        assertEquals(0, p.call(WordsProvider.COMMIT, "token-b2", null).getInt("set"))
-        assertEquals(2, p.call(WordsProvider.COMMIT, "token-a1", null).getInt("set"))
-        assertEquals(0, p.call(WordsProvider.COMMIT, "token-a1", null).getInt("set")) // once only
+        assertThrows(IllegalStateException::class.java) { p.call(WordsProvider.COMMIT, "token-b2", null) }
+        val done = p.call(WordsProvider.COMMIT, "token-a1", null)
+        assertEquals(listOf(2, 2), listOf(done.getInt("set"), done.getInt(WordsProvider.KEY_LINES)))
+        assertThrows(IllegalStateException::class.java) { p.call(WordsProvider.COMMIT, "token-a1", null) } // once only
         assertThrows(IllegalArgumentException::class.java) { p.call(WordsProvider.COMMIT, "../x", null) }
         val tooLong = "x".repeat(WordsProvider.MAX_PART + 1)
         assertThrows(IllegalArgumentException::class.java) {
             p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, tooLong) })
         }
+    }
+
+    @Test
+    fun aPatchLostWithTheKeyboardsProcessFailsRatherThanLookingApplied() {
+        // The hub put its patch, then the keyboard's process died (an update, a low-memory kill):
+        // Android starts a new provider, which holds no parts. Its commit used to apply nothing and
+        // answer 0 set, 0 deleted, and the hub saved its base as if the phone had the hub's words,
+        // so the next round took them as deleted on the phone and deleted them everywhere.
+        saved("<s>" to "phở")
+        provider().call(WordsProvider.PUT, "token-lost", Bundle().apply { putString(WordsProvider.KEY_TEXT, "bún\t3\nphở\t-\n") })
+        val restarted = provider()
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-lost", lines(2)) }
+        // Restarted between two parts: only the second arrived, and the count of lines tells.
+        restarted.call(WordsProvider.PUT, "token-half", Bundle().apply { putString(WordsProvider.KEY_TEXT, "chè\t2\n") })
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-half", lines(3)) }
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-half", lines(1)) } // dropped
+        PersonalWords().use {
+            it.load(wordsFile)
+            assertEquals(listOf(1.0, 0.0, 0.0), listOf(it.count(null, "phở"), it.count(null, "bún"), it.count(null, "chè")))
+        }
+        // The whole patch, with its count of lines, goes in.
+        restarted.call(WordsProvider.PUT, "token-whole", Bundle().apply { putString(WordsProvider.KEY_TEXT, "chè\t2\nphở\t-\n") })
+        val done = restarted.call(WordsProvider.COMMIT, "token-whole", lines(2))
+        assertEquals(listOf(1, 1, 0, 2), listOf("set", "deleted", "skipped", WordsProvider.KEY_LINES).map(done::getInt))
     }
 
     @Test

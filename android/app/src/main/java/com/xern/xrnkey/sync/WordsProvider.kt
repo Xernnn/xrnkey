@@ -39,7 +39,10 @@ import java.util.concurrent.TimeUnit
  *     call("state")                 learn, sync, and the table's id
  *     openFile(.../words, "r")      personal-words.tsv, after the keyboard in use saved what it learned
  *     call("put", token, {text})    part of a patch: "key<TAB>count" sets, "key<TAB>-" deletes
- *     call("commit", token)         applies the parts put under that token, at once: set, deleted, skipped
+ *     call("commit", token, {lines}) applies the parts put under that token, at once: set, deleted,
+ *                                   skipped, lines. Throws, applying nothing, when the token holds
+ *                                   no parts (lost with a process that died) or fewer lines than
+ *                                   the hub put.
  *
  * The table's id is made the first time it's asked for and kept with the words, so it changes only
  * when the keyboard's files go (its data cleared, or the app installed afresh). The hub app then
@@ -103,12 +106,21 @@ class WordsProvider : ContentProvider() {
             COMMIT -> {
                 requireOn()
                 val token = token(arg)
-                val patch = synchronized(pending) { pending.remove(token)?.first?.toString() }.orEmpty()
+                // No parts under the token (never put, expired, or lost with a process that died):
+                // a failure, never "nothing to do", or the hub would save its round as applied.
+                val patch = synchronized(pending) {
+                    pending.remove(token)?.takeIf { SystemClock.elapsedRealtime() - it.second <= PENDING_MS }?.first?.toString()
+                } ?: throw IllegalStateException("no patch under that token")
+                val lines = patch.lineSequence().count { it.isNotEmpty() }
+                if (extras != null && extras.containsKey(KEY_LINES) && extras.getInt(KEY_LINES) != lines) {
+                    throw IllegalStateException("part of the patch is missing")
+                }
                 val applied = onMain { apply(ctx(), patch) }
                 Bundle().apply {
                     putInt(KEY_SET, applied.set)
                     putInt(KEY_DELETED, applied.deleted)
                     putInt(KEY_SKIPPED, applied.skipped)
+                    putInt(KEY_LINES, lines)
                 }
             }
             else -> throw IllegalArgumentException("unknown call $method")
@@ -166,6 +178,8 @@ class WordsProvider : ContentProvider() {
         const val KEY_SET = "set"
         const val KEY_DELETED = "deleted"
         const val KEY_SKIPPED = "skipped"
+        /** In a commit's extras, the lines the hub put; in its answer, the lines applied. */
+        const val KEY_LINES = "lines"
         /** Characters in one part: well inside a binder transaction's room. */
         const val MAX_PART = 100_000
         private const val MAX_PATCH = 32 * 1024 * 1024
