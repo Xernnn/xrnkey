@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit
  *
  *     call("state")                 learn, sync, the table's id, and when Clear all was last used
  *     openFile(.../words, "r")      personal-words.tsv, after the keyboard in use saved what it learned
+ *     openFile(.../faded, "r")      the keys the monthly fade dropped (one a line), less any in the
+ *                                   table again: the hub sends no deletion for them
  *     call("put", token, {text})    part of a patch: "key<TAB>count" sets, "key<TAB>-" deletes
  *     call("commit", token, {lines}) applies the parts put under that token, at once: set, deleted,
  *                                   skipped, lines. Throws, applying nothing, when the token holds
@@ -130,14 +132,30 @@ class WordsProvider : ContentProvider() {
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
         enforce()
-        if (uri.pathSegments != listOf(WORDS_PATH) || mode != "r") throw FileNotFoundException("only $WORDS_PATH, to read")
+        val path = uri.pathSegments.singleOrNull()
+        if (path !in listOf(WORDS_PATH, FADED_PATH) || mode != "r") throw FileNotFoundException("only $WORDS_PATH or $FADED_PATH, to read")
         if (!on()) throw FileNotFoundException("Sync is off")
         // What the keyboard learned since it last saved goes in first.
         onMain { OnDevice.live()?.save() }
+        if (path == FADED_PATH) return faded()
         val file = File(dir(), OnDevice.WORDS)
         val read = if (file.isFile) file else File(ctx().cacheDir, "no-words.tsv").apply { writeText("") }
         // The engine replaces the file by rename, so what is opened stays one whole version.
         return ParcelFileDescriptor.open(read, ParcelFileDescriptor.MODE_READ_ONLY)
+    }
+
+    /** The keys the fade dropped that aren't in the table again, in a file of their own for this read. */
+    private fun faded(): ParcelFileDescriptor {
+        val words = File(dir(), OnDevice.WORDS)
+        val table = if (words.isFile) WordsTable.parse(words.readText()).keys else emptySet()
+        val text = OnDevice.faded(dir()).filter { it !in table }.joinToString("") { "$it\n" }
+        val out = File.createTempFile("faded-", ".txt", ctx().cacheDir)
+        try {
+            out.writeText(text)
+            return ParcelFileDescriptor.open(out, ParcelFileDescriptor.MODE_READ_ONLY)
+        } finally {
+            out.delete() // read through the descriptor only
+        }
     }
 
     private fun token(arg: String?): String =
@@ -169,6 +187,8 @@ class WordsProvider : ContentProvider() {
         const val AUTHORITY = "com.xern.xrnkey.words"
         const val PERMISSION = "com.xern.xrnkey.permission.SYNC_WORDS"
         const val WORDS_PATH = "words"
+        /** The keys the monthly fade dropped: not deletions, so the hub app sends no tombstone for them. */
+        const val FADED_PATH = "faded"
         const val STATE = "state"
         const val PUT = "put"
         const val COMMIT = "commit"

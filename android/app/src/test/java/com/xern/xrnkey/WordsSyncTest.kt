@@ -9,6 +9,7 @@ import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.sync.Gate
 import com.xern.xrnkey.sync.WordsProvider
+import com.xern.xrnkey.sync.WordsTable
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,6 +55,10 @@ class WordsSyncTest {
         call(WordsProvider.PUT, token, Bundle().apply { putString(WordsProvider.KEY_TEXT, patch) })
         return call(WordsProvider.COMMIT, token, null)
     }
+
+    private fun WordsProvider.faded(): List<String> =
+        ParcelFileDescriptor.AutoCloseInputStream(openFile(Uri.parse("content://${WordsProvider.AUTHORITY}/faded"), "r"))
+            .use { it.readBytes().toString(Charsets.UTF_8) }.lines().filter { it.isNotEmpty() }.sorted()
 
     private fun lines(n: Int) = Bundle().apply { putInt(WordsProvider.KEY_LINES, n) }
 
@@ -281,6 +286,32 @@ class WordsSyncTest {
         assertEquals(7_000L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
         OnDevice.clearWords(app.filesDir, prefs, now = 6_000L) // a clock set back still moves it on
         assertEquals(7_001L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
+    }
+
+    @Test
+    fun wordsTheMonthlyFadeDroppedAreListedSoTheyDontSyncAsDeletions() {
+        // A word added on the laptop reaches the phone with a small count, and if it isn't typed on
+        // the phone the fade drops it there after some months. Synced as a deletion, it went from
+        // the laptop too, where it was typed every day.
+        wordsFile.writeText("${'$'}{WordsTable.HEADER}\nbún\t3\nphở\t0.5\ntừ\t0.52\n<s> phở\t0.5\n<s> bún\t3\n")
+        prefs.edit().putLong("words-decayed", 1L).commit() // the last fade, long ago
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh(now = 100L * 24 * 3600 * 1000)
+        assertEquals(0.0, od.words!!.count(null, "phở"), 0.0)
+        assertEquals(2.7, od.words!!.count(null, "bún"), 1e-9)
+        val p = provider()
+        assertEquals(listOf("<s> phở", "phở", "từ"), p.faded())
+        // Typed again, it is a word again, not a faded one.
+        od.words!!.learn("<s>", "phở")
+        od.words!!.learn("<s>", "phở")
+        assertEquals(listOf("từ"), p.faded())
+        // Deleted by hand it is a deletion, though it once faded: the keyboard's strip, the settings.
+        OnDevice.forgotByHand(app.filesDir, "phở")
+        od.words!!.forget("phở")
+        od.save()
+        assertEquals(listOf("từ"), p.faded())
+        OnDevice.clearWords(app.filesDir, prefs)
+        assertEquals(emptyList<String>(), p.faded())
     }
 
     @Test

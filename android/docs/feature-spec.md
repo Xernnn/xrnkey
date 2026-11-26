@@ -1473,6 +1473,16 @@ is off until the owner turns it on.
   keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
   deletion to sync. A new id tells the hub app that the table lost its words rather than had them
   all deleted, so its first sync only adds.
+- **Deletions are guarded.** `call("state")` also gives `clearAll`, when Clear all was last used:
+  without a newer one, an empty table deletes nothing, and no round deletes more than 20 keys and
+  a quarter of them ("Sync paused"). `call("commit")` throws, applying nothing, when the parts put
+  under its token are gone (the keyboard's process died in between) or fewer than the hub put, so
+  a lost patch is never saved as applied.
+- **The fade stays on the phone.** The keys the monthly fade drops are listed in
+  `faded-words.txt`, served as `openFile(.../faded, "r")`, and the hub app sends no deletion for
+  them: a word typed on the laptop, or kept there, doesn't go from every device because the phone
+  stopped using it. A key deleted by hand (the settings' list, the strip's remove mark) leaves the
+  list, and Clear all empties it.
 - **The merge**, on the hub's server: a word or pair is a row with a count, or a tombstone once
   deleted, so a word removed on any device goes from all of them. A device sends what changed since
   its last sync; a row nobody else wrote meanwhile takes its value (so the monthly fade goes

@@ -238,6 +238,7 @@ class SettingsActivity : ComponentActivity() {
             w.forget(word)
             w.save(wordsFile)
         }
+        OnDevice.forgotByHand(filesDir, word)
         OnDevice.wordsChanged(prefs)
     }
 
