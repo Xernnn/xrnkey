@@ -31,9 +31,21 @@ class FakeHub:
         self.rows = {}  # key -> [count, at, seq]
         self.seq = 0
         self.pushes = []
-        self.allowed = []  # each push's allowDeletions
+        self.allowed = []  # each push's clearAll, the owner's say-so past the hub's guard
+        self.purged = 0  # the newest seq a purge of old tombstones dropped
+        self.pulls = 0
+
+    def check(self, cursor):
+        if 0 < cursor < self.purged:
+            raise xk_sync.Purged()
+
+    def purge(self):
+        """Old tombstones go, and a cursor from before them is answered 410."""
+        self.purged = self.seq
+        self.rows = {k: r for k, r in self.rows.items() if r[0] is not None}
 
     def push(self, base, changes, allow_deletions=False):
+        self.check(base)
         self.pushes.append(changes)
         self.allowed.append(allow_deletions)
         before = self.seq
@@ -56,6 +68,8 @@ class FakeHub:
         return {"from": before, "seq": self.seq}
 
     def pull(self, since, limit=2):
+        self.pulls += 1
+        self.check(since)
         rows = sorted((r[2], k, r[0], r[1]) for k, r in self.rows.items() if r[2] > since)
         page = rows[:limit]
         return {"seq": self.seq, "next": page[-1][0] if page else since, "more": len(rows) > limit,
@@ -229,6 +243,36 @@ class Sync(unittest.TestCase):
         self.assertFalse(self.sync(NOW + 30))  # and after it, nothing more to say
         self.assertEqual(self.hub.pushes, [])
 
+    def test_a_cursor_from_before_a_purge_syncs_once_as_if_for_the_first_time(self):
+        self.write("bún\t2000\nphở\t3000\n")
+        self.sync()
+        self.hub.phone(("phở", None, NOW + 5), ("chè", 4, NOW + 5))
+        self.hub.purge()  # 90 days on: the deletion of phở is gone from the hub
+        self.hub.phone(("cơm", 2, NOW + 6))
+        self.write("bún\t2000\nphở\t3000\nxôi\t1000\n")
+        self.assertTrue(self.sync(NOW + 10))
+        # Only adds, at 0: phở, deleted that long ago, comes back, as on a phone that lost its words.
+        self.assertEqual(self.hub.pushes[-1], [["bún", 2.0, 0], ["phở", 3.0, 0], ["xôi", 1.0, 0]])
+        self.assertEqual(self.read(), "bún\t2000\nphở\t3000\nxôi\t1000\nchè\t4000\ncơm\t2000\n")
+        self.assertTrue(any("first time" in line for line in self.said), self.said)
+        self.hub.pushes.clear()
+        self.assertFalse(self.sync(NOW + 20))  # and from there on, as before
+        self.assertEqual(self.hub.pushes, [])
+
+    def test_a_purge_answered_again_on_the_retry_stops_the_sync(self):
+        self.write("bún\t2000\n")
+        self.sync()
+        hub = self.hub
+        hub.check = lambda cursor: (_ for _ in ()).throw(xk_sync.Purged()) if cursor > 0 else None
+        hub.phone = None
+        for i in range(5):
+            hub.rows[f"từ{i}"] = [1.0, NOW, 10 + i]  # pages of 2: the second page asks from a seq
+        hub.seq = 20
+        pulls = hub.pulls
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 10)
+        self.assertEqual(hub.pulls - pulls, 3)  # the 410, then one first sync: its first page, and the 410
+
     def test_the_files_reach_the_disk_before_they_replace_the_old_ones(self):
         synced, real = [], os.fsync
         def fsync(fd):
@@ -305,16 +349,21 @@ class Config(unittest.TestCase):
 class OverHttp(unittest.TestCase):
     """The command itself, against a stand-in hub on this machine that wants the login."""
 
-    def test_only_an_allowed_sync_asks_the_hub_past_its_guard_and_a_refusal_says_so(self):
+    def test_only_an_allowed_sync_asks_the_hub_past_its_guard_and_its_answers_are_told_apart(self):
         bodies = []
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *a):
                 pass
 
+            def do_GET(self):
+                self.send_response(410)  # a cursor from before the hub purged old deletions
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
             def do_POST(self):
                 bodies.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
-                self.send_response(409 if not bodies[-1].get("allowDeletions") else 200)
+                self.send_response(409 if not bodies[-1].get("clearAll") else 200)
                 body = b'{"from": 0, "seq": 1}'
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
@@ -329,8 +378,10 @@ class OverHttp(unittest.TestCase):
             hub.push(3, [["bún", None, NOW]])
         self.assertIn("--allow-deletions", str(said.exception))
         self.assertEqual(hub.push(3, [["bún", None, NOW]], True), {"from": 0, "seq": 1})
+        with self.assertRaises(xk_sync.Purged):
+            hub.pull(3)
         self.assertEqual(bodies, [{"base": 3, "changes": [["bún", None, NOW]]},
-                                  {"base": 3, "changes": [["bún", None, NOW]], "allowDeletions": True}])
+                                  {"base": 3, "changes": [["bún", None, NOW]], "clearAll": True}])
 
     def test_it_signs_in_syncs_and_keeps_its_state(self):
         hub = FakeHub()

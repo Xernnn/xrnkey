@@ -62,6 +62,13 @@ class Problem(Exception):
     """Why this sync stopped."""
 
 
+class Purged(Problem):
+    """The hub dropped deletions older than the last sync (410): sync as if for the first time."""
+
+    def __init__(self):
+        super().__init__("the hub purged old deletions since the last sync, and syncing afresh didn't help")
+
+
 def xdg(name, fallback):
     base = os.environ.get(name, "")
     return base if base.startswith("/") else os.path.expanduser(fallback)
@@ -203,11 +210,22 @@ def chunks(changes):
 
 def sync(server, dict_path, state_path, now_ms=None, dry_run=False, allow_deletions=False, clear_all=False,
          say=print):
-    """One sync. `server` has push(base, changes, allow_deletions) and pull(since). Returns whether
-    user-dict.txt changed. Raises Problem, having sent and written nothing, when it would delete too
-    many words (`allow_deletions` lets it)."""
+    """One sync. `server` has push(base, changes, allow_deletions) and pull(since), which raise
+    Purged when the hub answers 410. Returns whether user-dict.txt changed. Raises Problem, having
+    sent and written nothing, when it would delete too many words (`allow_deletions` lets it).
+
+    A cursor from before the hub purged its old deletions may have missed one, so the sync runs
+    again once as a first sync, which only adds; a second 410 stops it."""
     now_ms = int(time.time() * 1000) if now_ms is None else now_ms
-    state = load_state(state_path)
+    try:
+        return sync_once(server, dict_path, state_path, now_ms, dry_run, allow_deletions, clear_all, say, False)
+    except Purged:
+        say("the hub purged old deletions since the last sync: syncing as if for the first time")
+        return sync_once(server, dict_path, state_path, now_ms, dry_run, allow_deletions, clear_all, say, True)
+
+
+def sync_once(server, dict_path, state_path, now_ms, dry_run, allow_deletions, clear_all, say, afresh):
+    state = None if afresh else load_state(state_path)
     first = state is None
     cursor = 0 if first else state["cursor"]
     base = {} if first else state["words"]
@@ -318,6 +336,8 @@ class Hub:
             with urllib.request.urlopen(req, timeout=TIMEOUT_S) as res:
                 return json.loads(res.read())
         except urllib.error.HTTPError as e:
+            if e.code == 410:
+                raise Purged() from None
             said = {401: "it refused the login", 429: "too many wrong passwords; try again later",
                     404: "it has no keyboard words: is the hub server with them deployed?",
                     409: "it refused to delete that many words. If they were removed on purpose: "
@@ -329,7 +349,7 @@ class Hub:
     def push(self, base, changes, allow_deletions=False):
         body = {"base": base, "changes": changes}
         if allow_deletions:
-            body["allowDeletions"] = True  # past the hub's own guard against mass deletions
+            body["clearAll"] = True  # the owner's say-so, past the hub's own guard against mass deletions
         return self.ask("POST", WORDS_PATH, body)
 
     def pull(self, since):
