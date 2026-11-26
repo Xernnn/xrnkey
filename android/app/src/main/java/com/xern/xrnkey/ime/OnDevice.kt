@@ -5,6 +5,8 @@ import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.engine.Shortcuts
 import com.xern.xrnkey.ja.UserDictionary
 import com.xern.xrnkey.ja.UserHistory
+import com.xern.xrnkey.sync.WordsProvider
+import com.xern.xrnkey.sync.WordsTable
 import java.io.File
 import java.lang.ref.WeakReference
 
@@ -65,8 +67,10 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
                 if (last == 0L) {
                     prefs.edit().putLong(KEY_DECAYED, now).apply()
                 } else if (now - last > MONTH) {
+                    val before = keys(wordsFile)
                     w.decay(DECAY)
                     w.save(wordsFile)
+                    noteFaded(dir, before, keys(wordsFile))
                     prefs.edit().putLong(KEY_DECAYED, now).apply()
                 }
             }
@@ -95,6 +99,12 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             japaneseWords = UserDictionary().also { it.load(japaneseWordsFile) }
             japaneseWordsStamp = wordsStamp
         }
+    }
+
+    /** Forgets a word by hand (the strip's remove mark): a deletion to sync, even if it once faded. */
+    fun forget(word: String) {
+        words?.forget(word)
+        forgotByHand(dir, word)
     }
 
     /** Writes the personal words and the Japanese choices, if any were learned since the last save. */
@@ -138,6 +148,9 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         fun live(): OnDevice? = current?.get()
 
         const val WORDS = "personal-words.tsv"
+        /** The keys the monthly fade dropped, one a line: the hub app's sync doesn't send them as deletions. */
+        const val FADED = "faded-words.txt"
+        private const val MAX_FADED = 100_000
         /** The laptop's macros.txt format, so one file can serve both (feature-spec, "Shortcuts"). */
         const val SHORTCUTS = "shortcuts.txt"
         const val HIDDEN = "hidden-suggestions.txt"
@@ -147,6 +160,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         private const val KEY_JA_WORDS = "japanese-words-changed"
         private const val KEY_JA_CLEARED = "japanese-cleared"
         private const val KEY_CLEARED = "words-cleared"
+        private const val KEY_CLEAR_ALL = "words-clear-all"
         private const val KEY_DECAYED = "words-decayed"
         private const val MONTH = 30L * 24 * 3600 * 1000
         private const val DECAY = 0.9
@@ -156,8 +170,51 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             File(dir, WORDS).delete()
             File(dir, HIDDEN).delete()
             File(dir, SPOTS).delete()
+            File(dir, FADED).delete()
+            prefs.edit().putLong(KEY_CLEAR_ALL, maxOf(now, clearedAll(prefs) + 1)).commit()
             wordsChanged(prefs, now)
         }
+
+        private fun keys(file: File): Set<String> =
+            if (file.isFile) WordsTable.parse(file.readText()).keys else emptySet()
+
+        /**
+         * The keys the fade dropped from the table, kept so the hub app's sync drops them on the phone
+         * only: on the laptop, and on the server, a word typed there stays. The list keeps the newest
+         * [MAX_FADED], and loses a key that is in the table again.
+         */
+        private fun noteFaded(dir: File, before: Set<String>, after: Set<String>) {
+            val dropped = before - after
+            val old = faded(dir)
+            if (dropped.isEmpty() && old.none { it in after }) return
+            val all = LinkedHashSet<String>()
+            old.forEach { if (it !in after && it !in dropped) all += it }
+            all += dropped
+            WordsProvider.writeWhole(File(dir, FADED), all.toList().takeLast(MAX_FADED).joinToString("") { "$it\n" })
+        }
+
+        /** The keys the fade dropped (see [noteFaded]), oldest first. */
+        fun faded(dir: File): List<String> {
+            val file = File(dir, FADED)
+            if (!file.isFile) return emptyList()
+            return file.readLines().filter { it.isNotEmpty() && !it.startsWith("#") }
+        }
+
+        /**
+         * A word deleted by hand (the settings' list, the strip's remove mark) leaves the faded list,
+         * with its pairs, so the sync sends it as the deletion it is.
+         */
+        fun forgotByHand(dir: File, word: String) {
+            val old = faded(dir)
+            val kept = old.filter { key -> key.split(' ').none { it == word } }
+            if (kept.size != old.size) WordsProvider.writeWhole(File(dir, FADED), kept.joinToString("") { "$it\n" })
+        }
+
+        /**
+         * When Clear all was last used, 0 if never: the hub app's sync sends an emptied table as
+         * deletions only after it, and otherwise takes it as lost (a power cut), deleting nothing.
+         */
+        fun clearedAll(prefs: SharedPreferences) = prefs.getLong(KEY_CLEAR_ALL, 0L)
 
         /**
          * The settings screen changed the personal words' file (a word deleted): the keyboard
@@ -166,6 +223,9 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         fun wordsChanged(prefs: SharedPreferences, now: Long = System.currentTimeMillis()) {
             prefs.edit().putLong(KEY_CLEARED, maxOf(now, prefs.getLong(KEY_CLEARED, 0L) + 1)).commit()
         }
+
+        /** Moves on whenever the personal words' file is changed under the keyboard (see [wordsChanged]). */
+        fun wordsStamp(prefs: SharedPreferences) = prefs.getLong(KEY_CLEARED, 0L)
 
         /**
          * Forgets what was chosen on the Japanese keyboard (from the settings screen); or, with a

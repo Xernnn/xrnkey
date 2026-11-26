@@ -1467,12 +1467,23 @@ is off until the owner turns it on.
 - **What it offers.** `call("state")` says whether learning and sync are on, and gives the table's
   id. `openFile(.../words, "r")` hands over `personal-words.tsv` after the keyboard in use has saved
   what it learned. `call("put")` and `call("commit")` take a patch in parts (`key<TAB>count` sets a
-  count, `key<TAB>-` deletes) and apply it at once, on the keyboard's main thread: the file is
-  changed and moved into place, and the table the keyboard is typing with reads it again in place.
+  count, `key<TAB>-` deletes) and apply it at once: the new file is made on the provider's own
+  thread, and on the keyboard's main thread only moved into place and read again into the table the
+  keyboard is typing with (if the words changed meanwhile, the patch is applied there again).
 - **The table's id** is made with the words and kept beside them, so it changes only when the
   keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
   deletion to sync. A new id tells the hub app that the table lost its words rather than had them
   all deleted, so its first sync only adds.
+- **Deletions are guarded.** `call("state")` also gives `cleared`, when Clear all was last used:
+  without a newer one, an empty table deletes nothing, and no round deletes more than 20 keys and
+  a quarter of them ("Sync paused"). `call("commit")` throws, applying nothing, when the parts put
+  under its token are gone (the keyboard's process died in between) or fewer than the hub put, so
+  a lost patch is never saved as applied.
+- **The fade stays on the phone.** The keys the monthly fade drops are listed in
+  `faded-words.txt`, served as `openFile(.../faded, "r")`, and the hub app sends no deletion for
+  them: a word typed on the laptop, or kept there, doesn't go from every device because the phone
+  stopped using it. A key deleted by hand (the settings' list, the strip's remove mark) leaves the
+  list, and Clear all empties it.
 - **The merge**, on the hub's server: a word or pair is a row with a count, or a tombstone once
   deleted, so a word removed on any device goes from all of them. A device sends what changed since
   its last sync; a row nobody else wrote meanwhile takes its value (so the monthly fade goes

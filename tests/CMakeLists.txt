@@ -59,6 +59,7 @@ add_dependencies(test_bilingual test_lm_models)
 
 add_executable(test_learn test_learn.cpp)
 target_link_libraries(test_learn PRIVATE xrnkey Catch2::Catch2WithMain)
+target_include_directories(test_learn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
 target_compile_definitions(test_learn PRIVATE
     XRNKEY_TEST_LM_DIR="${CMAKE_BINARY_DIR}/data/lm"
     XRNKEY_TEST_TMP="${CMAKE_CURRENT_BINARY_DIR}")

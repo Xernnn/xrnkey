@@ -16,8 +16,9 @@
  *
  * The file is plain text, one entry per line: "word<TAB>count" (the laptop's
  * user-dict.txt has the same shape) or "word word<TAB>count" for a pair.
- * It is written whole to a temporary file and renamed, so a crash never
- * leaves half of it. */
+ * It is written whole to a temporary file, flushed to the disk, and renamed,
+ * and the folder is flushed too, so a crash or a power cut never leaves half
+ * of it, or an empty file (which a sync would read as every word deleted). */
 #include "learn.h"
 
 #include "score.h"
@@ -31,6 +32,9 @@
 #include <fstream>
 #include <string>
 #include <vector>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 namespace xrnkey {
 
@@ -58,6 +62,36 @@ void trim(std::unordered_map<std::string, double>& table, size_t cap) {
             it = it->second <= floor ? table.erase(it) : std::next(it);
         floor += 1.0;
     }
+}
+
+/* `text` as the file at `path`, whole or not at all: written beside it,
+ * flushed to the disk, renamed over it, and the folder flushed, so after a
+ * power cut the path holds the old text or the new one. */
+bool write_whole(const std::string& path, const std::string& text) {
+    const std::string tmp = path + ".part";
+    const int fd = ::open(tmp.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    if (fd < 0) return false;
+    bool ok = true;
+    for (size_t done = 0; ok && done < text.size();) {
+        const ssize_t n = ::write(fd, text.data() + done, text.size() - done);
+        if (n < 0 && errno == EINTR) continue;
+        ok = n > 0;
+        if (ok) done += static_cast<size_t>(n);
+    }
+    ok = ok && ::fsync(fd) == 0;
+    ok = ::close(fd) == 0 && ok;
+    if (!ok || std::rename(tmp.c_str(), path.c_str()) != 0) {
+        std::remove(tmp.c_str());
+        return false;
+    }
+    const size_t slash = path.rfind('/');
+    const std::string dir = slash == std::string::npos ? "." : slash == 0 ? "/" : path.substr(0, slash);
+    const int dfd = ::open(dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (dfd >= 0) {  /* best effort: the rename itself has happened */
+        ::fsync(dfd);
+        ::close(dfd);
+    }
+    return true;
 }
 
 }  // namespace
@@ -227,33 +261,22 @@ int xk_user_load(XKUser* user, const char* path) {
 int xk_user_save(const XKUser* user, const char* path) {
     if (!user || !path) return -1;
     const auto* u = reinterpret_cast<const User*>(user);
-    const std::string tmp = std::string(path) + ".part";
-    {
-        std::ofstream f(tmp, std::ios::trunc);
-        if (!f) return -1;
-        f << "# xrnkey: words and word pairs learned on this device\n";
-        auto put = [&](const std::unordered_map<std::string, double>& table) {
-            std::vector<std::pair<std::string, double>> v(table.begin(), table.end());
-            std::sort(v.begin(), v.end());
-            char buf[32];
-            for (const auto& [k, c] : v) {
-                std::snprintf(buf, sizeof(buf), "%.6g", c);
-                f << k << '\t' << buf << '\n';
-            }
-        };
-        put(u->words);
-        put(u->pairs);
-        f.flush();
-        if (!f) {
-            std::remove(tmp.c_str());
-            return -1;
+    std::string text = "# xrnkey: words and word pairs learned on this device\n";
+    auto put = [&](const std::unordered_map<std::string, double>& table) {
+        std::vector<std::pair<std::string, double>> v(table.begin(), table.end());
+        std::sort(v.begin(), v.end());
+        char buf[32];
+        for (const auto& [k, c] : v) {
+            std::snprintf(buf, sizeof(buf), "%.6g", c);
+            text += k;
+            text += '\t';
+            text += buf;
+            text += '\n';
         }
-    }
-    if (std::rename(tmp.c_str(), path) != 0) {
-        std::remove(tmp.c_str());
-        return -1;
-    }
-    return 0;
+    };
+    put(u->words);
+    put(u->pairs);
+    return xrnkey::write_whole(path, text) ? 0 : -1;
 }
 
 void xk_models_set_user(XKModels* models, XKUser* user) {

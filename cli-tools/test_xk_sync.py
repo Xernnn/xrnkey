@@ -31,9 +31,23 @@ class FakeHub:
         self.rows = {}  # key -> [count, at, seq]
         self.seq = 0
         self.pushes = []
+        self.allowed = []  # each push's clearAll, the owner's say-so past the hub's guard
+        self.purged = 0  # the newest seq a purge of old tombstones dropped
+        self.pulls = 0
 
-    def push(self, base, changes):
+    def check(self, cursor):
+        if 0 < cursor < self.purged:
+            raise xk_sync.Purged()
+
+    def purge(self):
+        """Old tombstones go, and a cursor from before them is answered 410."""
+        self.purged = self.seq
+        self.rows = {k: r for k, r in self.rows.items() if r[0] is not None}
+
+    def push(self, base, changes, allow_deletions=False):
+        self.check(base)
         self.pushes.append(changes)
+        self.allowed.append(allow_deletions)
         before = self.seq
         for key, count, at in changes:
             old = self.rows.get(key)
@@ -54,6 +68,8 @@ class FakeHub:
         return {"from": before, "seq": self.seq}
 
     def pull(self, since, limit=2):
+        self.pulls += 1
+        self.check(since)
         rows = sorted((r[2], k, r[0], r[1]) for k, r in self.rows.items() if r[2] > since)
         page = rows[:limit]
         return {"seq": self.seq, "next": page[-1][0] if page else since, "more": len(rows) > limit,
@@ -85,6 +101,11 @@ class Sync(unittest.TestCase):
 
     def read(self):
         with open(self.dict, encoding="utf-8") as f:
+            return f.read()
+
+    @staticmethod
+    def raw(path):
+        with open(path, "rb") as f:
             return f.read()
 
     def sync(self, now=NOW, **kw):
@@ -148,9 +169,123 @@ class Sync(unittest.TestCase):
         self.sync(NOW + 10)
         self.assertEqual(self.hub.live(), {"bún": 2.0})
         self.assertEqual(self.read(), "bún\t2000\n")
-        self.write("")  # emptied by hand: that is a deletion
-        self.sync(NOW + 20)
-        self.assertEqual(self.hub.live(), {})
+
+    def test_an_empty_file_is_lost_too_and_deletes_nothing(self):
+        # A power cut while the file was being rewritten leaves it empty, or with its first lines
+        # only. That used to send every word as deleted, on every device.
+        self.write("".join(f"từ{i}\t2000\n" for i in range(30)))
+        self.sync()
+        for left in ("", "\n", "# my words\ntừ mới\t9000\n"):
+            self.write(left)
+            self.hub.pushes.clear()
+            self.sync(NOW + 10)
+            self.assertEqual(self.hub.pushes, [])
+            self.assertEqual(len(self.hub.live()), 30)
+            self.assertIn("từ7\t2000\n", self.read())  # the words come back
+            self.assertTrue(self.read().startswith(left))
+        self.assertIn("--clear-all", self.said[-2])
+
+    def test_a_file_that_doesnt_read_changes_nothing(self):
+        self.write("bún\t2000\nphở\t3000\n")
+        self.sync()
+        with open(self.dict, "wb") as f:
+            f.write("bún\t2000\n".encode("latin-1") + b"ph\xe1\t3000\n")  # Latin-1, edited by hand
+        before = self.raw(self.dict)
+        self.hub.phone(("chè", 4, NOW + 5))
+        self.hub.pushes.clear()
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 10)
+        self.assertEqual((self.hub.pushes, self.raw(self.dict)), ([], before))
+        self.assertEqual(self.hub.live(), {"bún": 2.0, "phở": 3.0, "chè": 4})
+
+    def test_a_round_deleting_too_many_is_refused_unless_allowed(self):
+        self.write("".join(f"từ{i}\t2000\n" for i in range(100)))
+        self.sync()
+        state = self.raw(self.state)
+        self.write("".join(f"từ{i}\t2000\n" for i in range(74)))  # 26 gone: more than 20, more than a quarter
+        self.hub.pushes.clear()
+        self.hub.allowed.clear()
+        with self.assertRaises(xk_sync.Problem) as said:
+            self.sync(NOW + 10)
+        self.assertIn("26", str(said.exception))
+        self.assertIn("--allow-deletions", str(said.exception))
+        self.assertEqual((self.hub.pushes, self.raw(self.state), len(self.hub.live())), ([], state, 100))
+        self.assertEqual(self.read().count("\n"), 74)  # nothing written either
+        self.sync(NOW + 20, allow_deletions=True)
+        self.assertEqual((len(self.hub.live()), self.hub.allowed), (74, [True]))
+        self.write("".join(f"từ{i}\t2000\n" for i in range(54)))  # 20 of 74: a quarter is 18.5, but 20 may go
+        self.sync(NOW + 30)
+        self.assertEqual((len(self.hub.live()), self.hub.allowed[-1]), (54, False))
+        self.write("".join(f"từ{i}\t2000\n" for i in range(33)))  # 21 of 54
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 40)
+
+    def test_a_small_table_can_lose_a_few_words_by_hand(self):
+        self.write("bún\t2000\nphở\t3000\nchè\t1000\n")
+        self.sync()
+        self.write("chè\t1000\n")  # two of three
+        self.sync(NOW + 10)
+        self.assertEqual(self.hub.live(), {"chè": 1.0})
+        self.assertEqual(self.hub.allowed[-1], False)
+
+    def test_clear_all_deletes_every_synced_word_here_and_everywhere(self):
+        self.write("# my words\ntừ mới\t9000\n" + "".join(f"từ{i}\t2000\n" for i in range(40)))
+        self.sync()
+        self.hub.phone(("ăn phở", 2, 0))
+        self.write("# my words\ntừ mới\t9000\n")  # emptying the words alone doesn't clear them: the flag does
+        self.sync(NOW + 10)
+        self.assertEqual(len(self.hub.live()), 41)
+        self.sync(NOW + 20, clear_all=True)
+        self.assertEqual(self.hub.live(), {"ăn phở": 2})  # the phone's pairs aren't the laptop's
+        self.assertEqual(self.read(), "# my words\ntừ mới\t9000\n")
+        self.assertEqual(self.hub.allowed[-1], True)
+        self.hub.pushes.clear()
+        self.assertFalse(self.sync(NOW + 30))  # and after it, nothing more to say
+        self.assertEqual(self.hub.pushes, [])
+
+    def test_a_cursor_from_before_a_purge_syncs_once_as_if_for_the_first_time(self):
+        self.write("bún\t2000\nphở\t3000\n")
+        self.sync()
+        self.hub.phone(("phở", None, NOW + 5), ("chè", 4, NOW + 5))
+        self.hub.purge()  # 90 days on: the deletion of phở is gone from the hub
+        self.hub.phone(("cơm", 2, NOW + 6))
+        self.write("bún\t2000\nphở\t3000\nxôi\t1000\n")
+        self.assertTrue(self.sync(NOW + 10))
+        # Only adds, at 0: phở, deleted that long ago, comes back, as on a phone that lost its words.
+        self.assertEqual(self.hub.pushes[-1], [["bún", 2.0, 0], ["phở", 3.0, 0], ["xôi", 1.0, 0]])
+        self.assertEqual(self.read(), "bún\t2000\nphở\t3000\nxôi\t1000\nchè\t4000\ncơm\t2000\n")
+        self.assertTrue(any("first time" in line for line in self.said), self.said)
+        self.hub.pushes.clear()
+        self.assertFalse(self.sync(NOW + 20))  # and from there on, as before
+        self.assertEqual(self.hub.pushes, [])
+
+    def test_a_purge_answered_again_on_the_retry_stops_the_sync(self):
+        self.write("bún\t2000\n")
+        self.sync()
+        hub = self.hub
+        hub.check = lambda cursor: (_ for _ in ()).throw(xk_sync.Purged()) if cursor > 0 else None
+        hub.phone = None
+        for i in range(5):
+            hub.rows[f"từ{i}"] = [1.0, NOW, 10 + i]  # pages of 2: the second page asks from a seq
+        hub.seq = 20
+        pulls = hub.pulls
+        with self.assertRaises(xk_sync.Problem):
+            self.sync(NOW + 10)
+        self.assertEqual(hub.pulls - pulls, 3)  # the 410, then one first sync: its first page, and the 410
+
+    def test_the_files_reach_the_disk_before_they_replace_the_old_ones(self):
+        synced, real = [], os.fsync
+        def fsync(fd):
+            synced.append(os.readlink(f"/proc/self/fd/{fd}"))
+            real(fd)
+        xk_sync.os.fsync = fsync
+        self.addCleanup(setattr, xk_sync.os, "fsync", real)
+        self.hub.phone(("phở", 3, 0))
+        self.write("bún\t2000\n")
+        self.sync()
+        folder, state = os.path.dirname(self.dict), os.path.dirname(self.state)
+        self.assertEqual([os.path.dirname(p) if p.startswith(folder + "/.") or p.startswith(state + "/.") else p
+                          for p in synced], [folder, folder, state, state])
 
     def test_phrases_capitals_and_other_lines_stay_as_they_are(self):
         self.write("# my words\ntừ mới\t9000\nHà\t5000\n\nbún\t2000\nnot a line\n")
@@ -195,12 +330,44 @@ class Config(unittest.TestCase):
     def config(self, **doc):
         path = os.path.join(self.tmp.name, "sync.json")
         with open(path, "w") as f:
-            json.dump({"server": "https://hub.example/hub/", "user": "alex", "password_file": self.secret, **doc}, f)
+            json.dump({k: v for k, v in {"server": "https://hub.example/hub/", "user": "alex", "password_file": self.secret,
+                                         **doc}.items() if v is not None}, f)
         return xk_sync.read_config(path)
 
     def test_a_whole_config_reads(self):
-        self.assertEqual(self.config(), ("https://hub.example/hub", "alex", "made up"))
+        self.assertEqual(self.config(), ("https://hub.example/hub", {"user": "alex", "password": "made up"}, [self.secret]))
         self.assertEqual(self.config(server="http://127.0.0.1:9/hub")[0], "http://127.0.0.1:9/hub")
+
+    def test_a_device_login_is_used_when_its_file_is_there(self):
+        token = "xrndev_1a2b3c4d_" + "A" * 43  # made up
+        path = os.path.join(self.tmp.name, "token")
+        self.assertEqual(self.config(token_file=path)[1], {"user": "alex", "password": "made up"})  # not there yet
+        for text in (token + "\n", f"Authorization: Bearer {token}\n"):  # the token, or curl's header file
+            with open(path, "w") as f:
+                f.write(text)
+            self.assertEqual(self.config(token_file=path)[1:], ({"token": token}, [path]))
+        with open(path, "w") as f:
+            f.write("not a token")
+        with self.assertRaises(xk_sync.Problem):
+            self.config(token_file=path)
+        self.assertEqual(xk_sync.Hub("https://hub.example", token=token).auth, f"Bearer {token}")
+
+    def test_without_a_password_file_the_login_comes_from_the_runtime_netrc(self):
+        runtime = os.path.join(self.tmp.name, "run")
+        os.makedirs(os.path.join(runtime, "xrn-secret"))
+        with open(os.path.join(runtime, "xrn-secret", "hub.netrc"), "w") as f:
+            f.write("machine hub.example login alex password made-up\n")
+        os.chmod(os.path.join(runtime, "xrn-secret", "hub.netrc"), 0o600)
+        old = os.environ.get("XDG_RUNTIME_DIR")
+        os.environ["XDG_RUNTIME_DIR"] = runtime
+        self.addCleanup(lambda: os.environ.__setitem__("XDG_RUNTIME_DIR", old) if old else os.environ.pop("XDG_RUNTIME_DIR"))
+        self.assertEqual(self.config(password_file=None)[1], {"user": "alex", "password": "made-up"})
+        with self.assertRaises(xk_sync.Problem):
+            self.config(password_file=None, server="https://other.example/hub")  # no line for that host
+        # "$XDG_RUNTIME_DIR" in a path reads as the shell would have it.
+        with open(os.path.join(runtime, "pw"), "w") as f:
+            f.write("from runtime")
+        self.assertEqual(self.config(password_file="$XDG_RUNTIME_DIR/pw")[1]["password"], "from runtime")
 
     def test_plain_http_elsewhere_and_missing_parts_are_refused(self):
         for over in ({"server": "http://hub.example"}, {"server": ""}, {"user": ""}, {"user": "a:b"},
@@ -214,16 +381,52 @@ class Config(unittest.TestCase):
 class OverHttp(unittest.TestCase):
     """The command itself, against a stand-in hub on this machine that wants the login."""
 
+    def test_only_an_allowed_sync_asks_the_hub_past_its_guard_and_its_answers_are_told_apart(self):
+        bodies = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                self.send_response(410)  # a cursor from before the hub purged old deletions
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def do_POST(self):
+                bodies.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+                self.send_response(409 if not bodies[-1].get("clearAll") else 200)
+                body = b'{"from": 0, "seq": 1}'
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        hub = xk_sync.Hub(f"http://127.0.0.1:{srv.server_address[1]}", "alex", "made up")
+        with self.assertRaises(xk_sync.Problem) as said:
+            hub.push(3, [["bún", None, NOW]])
+        self.assertIn("--allow-deletions", str(said.exception))
+        self.assertEqual(hub.push(3, [["bún", None, NOW]], True), {"from": 0, "seq": 1})
+        with self.assertRaises(xk_sync.Purged):
+            hub.pull(3)
+        self.assertEqual(bodies, [{"base": 3, "changes": [["bún", None, NOW]]},
+                                  {"base": 3, "changes": [["bún", None, NOW]], "clearAll": True}])
+
     def test_it_signs_in_syncs_and_keeps_its_state(self):
         hub = FakeHub()
         hub.phone(("phở", 3, 0))
         login = "Basic " + base64.b64encode(b"alex:made up").decode()
+        requests = []
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *a):
                 pass
 
             def answer(self, doc):
+                requests.append(self.path)
                 if self.headers.get("Authorization") != login:
                     self.send_response(401)
                     self.end_headers()
@@ -269,6 +472,17 @@ class OverHttp(unittest.TestCase):
             refused = run()
             self.assertEqual(refused.returncode, 1)
             self.assertIn("refused the login", refused.stderr)
+            # Refused once, it doesn't ask again (each try counts toward the hub's lockout) until the
+            # login changes.
+            asked = len(requests)
+            again = run()
+            self.assertEqual((again.returncode, len(requests)), (1, asked))
+            self.assertIn("sign in again", again.stderr)
+            config["password_file"] = os.path.join(tmp, "secret")
+            with open(os.path.join(tmp, "config", "xrnkey", "sync.json"), "w") as f:
+                json.dump(config, f)
+            self.assertEqual(run().returncode, 0)
+            self.assertGreater(len(requests), asked)
 
 
 if __name__ == "__main__":

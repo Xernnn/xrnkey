@@ -99,5 +99,14 @@ class Checks(unittest.TestCase):
         })
 
 
+class Build(unittest.TestCase):
+    def test_the_build_waits_for_the_shared_gradle_lock_and_leaves_no_daemon(self):
+        # Run beside another session's Gradle build, two builds at once overran the laptop's memory.
+        lock = os.path.join(os.path.dirname(release.REPO), ".wt", ".gradle.lock")
+        self.assertEqual(release.gradle_command(":app:assembleRelease"),
+                         ["flock", lock, "./gradlew", "--no-daemon", "-Pkotlin.compiler.execution.strategy=in-process",
+                          ":app:assembleRelease"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2,24 +2,25 @@
 
 namespace xrnkey {
 
+/* One character from `s`, a NUL-terminated string. A lead byte not followed
+ * by its continuation bytes (10xxxxxx) is an error of length 1: the check
+ * stops at the first byte that isn't one, the NUL included, so a string cut
+ * in the middle of a character is never read past its end. */
 int utf8_decode(const char* s, uint32_t* cp, int* len) {
-    unsigned char c = static_cast<unsigned char>(s[0]);
+    const auto at = [s](int i) { return static_cast<unsigned char>(s[i]); };
+    const auto cont = [&at](int i) { return (at(i) & 0xC0) == 0x80; };
+    unsigned char c = at(0);
     if (c < 0x80) { *cp = c; *len = 1; return 0; }
-    if ((c & 0xE0) == 0xC0) {
-        *cp = (c & 0x1F) << 6 | (static_cast<unsigned char>(s[1]) & 0x3F);
+    if ((c & 0xE0) == 0xC0 && cont(1)) {
+        *cp = (c & 0x1F) << 6 | (at(1) & 0x3F);
         *len = 2; return 0;
     }
-    if ((c & 0xF0) == 0xE0) {
-        *cp = (c & 0x0F) << 12 |
-              (static_cast<unsigned char>(s[1]) & 0x3F) << 6 |
-              (static_cast<unsigned char>(s[2]) & 0x3F);
+    if ((c & 0xF0) == 0xE0 && cont(1) && cont(2)) {
+        *cp = (c & 0x0F) << 12 | (at(1) & 0x3F) << 6 | (at(2) & 0x3F);
         *len = 3; return 0;
     }
-    if ((c & 0xF8) == 0xF0) {
-        *cp = (c & 0x07) << 18 |
-              (static_cast<unsigned char>(s[1]) & 0x3F) << 12 |
-              (static_cast<unsigned char>(s[2]) & 0x3F) << 6 |
-              (static_cast<unsigned char>(s[3]) & 0x3F);
+    if ((c & 0xF8) == 0xF0 && cont(1) && cont(2) && cont(3)) {
+        *cp = (c & 0x07) << 18 | (at(1) & 0x3F) << 12 | (at(2) & 0x3F) << 6 | (at(3) & 0x3F);
         *len = 4; return 0;
     }
     *cp = '?'; *len = 1; return -1;

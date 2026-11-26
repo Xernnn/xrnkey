@@ -9,6 +9,7 @@ import com.xern.xrnkey.engine.PersonalWords
 import com.xern.xrnkey.ime.OnDevice
 import com.xern.xrnkey.sync.Gate
 import com.xern.xrnkey.sync.WordsProvider
+import com.xern.xrnkey.sync.WordsTable
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,6 +55,12 @@ class WordsSyncTest {
         call(WordsProvider.PUT, token, Bundle().apply { putString(WordsProvider.KEY_TEXT, patch) })
         return call(WordsProvider.COMMIT, token, null)
     }
+
+    private fun WordsProvider.faded(): List<String> =
+        ParcelFileDescriptor.AutoCloseInputStream(openFile(Uri.parse("content://${WordsProvider.AUTHORITY}/faded"), "r"))
+            .use { it.readBytes().toString(Charsets.UTF_8) }.lines().filter { it.isNotEmpty() }.sorted()
+
+    private fun lines(n: Int) = Bundle().apply { putInt(WordsProvider.KEY_LINES, n) }
 
     private fun saved(vararg learned: Pair<String?, String>) = PersonalWords().use { w ->
         learned.forEach { (prev, word) -> w.learn(prev, word) }
@@ -215,13 +222,142 @@ class WordsSyncTest {
         val p = provider()
         p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, "phở\t2") })
         p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, "bún\t3\n") })
-        assertEquals(0, p.call(WordsProvider.COMMIT, "token-b2", null).getInt("set"))
-        assertEquals(2, p.call(WordsProvider.COMMIT, "token-a1", null).getInt("set"))
-        assertEquals(0, p.call(WordsProvider.COMMIT, "token-a1", null).getInt("set")) // once only
+        assertThrows(IllegalStateException::class.java) { p.call(WordsProvider.COMMIT, "token-b2", null) }
+        val done = p.call(WordsProvider.COMMIT, "token-a1", null)
+        assertEquals(listOf(2, 2), listOf(done.getInt("set"), done.getInt(WordsProvider.KEY_LINES)))
+        assertThrows(IllegalStateException::class.java) { p.call(WordsProvider.COMMIT, "token-a1", null) } // once only
         assertThrows(IllegalArgumentException::class.java) { p.call(WordsProvider.COMMIT, "../x", null) }
         val tooLong = "x".repeat(WordsProvider.MAX_PART + 1)
         assertThrows(IllegalArgumentException::class.java) {
             p.call(WordsProvider.PUT, "token-a1", Bundle().apply { putString(WordsProvider.KEY_TEXT, tooLong) })
+        }
+    }
+
+    @Test
+    fun aPatchLostWithTheKeyboardsProcessFailsRatherThanLookingApplied() {
+        // The hub put its patch, then the keyboard's process died (an update, a low-memory kill):
+        // Android starts a new provider, which holds no parts. Its commit used to apply nothing and
+        // answer 0 set, 0 deleted, and the hub saved its base as if the phone had the hub's words,
+        // so the next round took them as deleted on the phone and deleted them everywhere.
+        saved("<s>" to "phở")
+        provider().call(WordsProvider.PUT, "token-lost", Bundle().apply { putString(WordsProvider.KEY_TEXT, "bún\t3\nphở\t-\n") })
+        val restarted = provider()
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-lost", lines(2)) }
+        // Restarted between two parts: only the second arrived, and the count of lines tells.
+        restarted.call(WordsProvider.PUT, "token-half", Bundle().apply { putString(WordsProvider.KEY_TEXT, "chè\t2\n") })
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-half", lines(3)) }
+        assertThrows(IllegalStateException::class.java) { restarted.call(WordsProvider.COMMIT, "token-half", lines(1)) } // dropped
+        PersonalWords().use {
+            it.load(wordsFile)
+            assertEquals(listOf(1.0, 0.0, 0.0), listOf(it.count(null, "phở"), it.count(null, "bún"), it.count(null, "chè")))
+        }
+        // The whole patch, with its count of lines, goes in.
+        restarted.call(WordsProvider.PUT, "token-whole", Bundle().apply { putString(WordsProvider.KEY_TEXT, "chè\t2\nphở\t-\n") })
+        val done = restarted.call(WordsProvider.COMMIT, "token-whole", lines(2))
+        assertEquals(listOf(1, 1, 0, 2), listOf("set", "deleted", "skipped", WordsProvider.KEY_LINES).map(done::getInt))
+    }
+
+    @Test
+    fun theWordsFileReachesTheDiskBeforeItReplacesTheOldOne() {
+        // A power cut right after a patch must leave the old words or the new ones, never an empty
+        // file, which the next sync would send as every word deleted.
+        val file = File(app.filesDir, "durable.tsv").apply { writeText("old\t1\n") }
+        val seen = mutableListOf<String>()
+        WordsProvider.writeWhole(file, "new\t2\n") { out ->
+            out.flush()
+            seen += file.readText() // flushed while the old file still stands
+        }
+        assertEquals(listOf("old\t1\n"), seen)
+        assertEquals("new\t2\n", file.readText())
+        assertFalse(File(app.filesDir, "durable.tsv.part").exists())
+    }
+
+    @Test
+    fun theStateSaysWhenClearAllWasUsedAndNoOtherEditMovesIt() {
+        // Clear all empties the table on purpose; an empty table is otherwise taken as lost (a
+        // power cut) and deletes nothing. The hub app tells the two apart by this time.
+        val p = provider()
+        assertEquals(0L, p.call(WordsProvider.STATE, null, null).getLong(WordsProvider.KEY_CLEAR_ALL))
+        saved("<s>" to "phở")
+        p.send("bún\t3\n") // a synced patch, and an edit in the settings, aren't a Clear all
+        OnDevice.wordsChanged(prefs, now = 5_000L)
+        assertEquals(0L, p.call(WordsProvider.STATE, null, null).getLong(WordsProvider.KEY_CLEAR_ALL))
+        OnDevice.clearWords(app.filesDir, prefs, now = 7_000L)
+        assertEquals(7_000L, p.call(WordsProvider.STATE, null, null).getLong(WordsProvider.KEY_CLEAR_ALL))
+        OnDevice.clearWords(app.filesDir, prefs, now = 6_000L) // a clock set back still moves it on
+        assertEquals(7_001L, p.call(WordsProvider.STATE, null, null).getLong(WordsProvider.KEY_CLEAR_ALL))
+    }
+
+    @Test
+    fun wordsTheMonthlyFadeDroppedAreListedSoTheyDontSyncAsDeletions() {
+        // A word added on the laptop reaches the phone with a small count, and if it isn't typed on
+        // the phone the fade drops it there after some months. Synced as a deletion, it went from
+        // the laptop too, where it was typed every day.
+        wordsFile.writeText("${'$'}{WordsTable.HEADER}\nbún\t3\nphở\t0.5\ntừ\t0.52\n<s> phở\t0.5\n<s> bún\t3\n")
+        prefs.edit().putLong("words-decayed", 1L).commit() // the last fade, long ago
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh(now = 100L * 24 * 3600 * 1000)
+        assertEquals(0.0, od.words!!.count(null, "phở"), 0.0)
+        assertEquals(2.7, od.words!!.count(null, "bún"), 1e-9)
+        val p = provider()
+        assertEquals(listOf("<s> phở", "phở", "từ"), p.faded())
+        // Typed again, it is a word again, not a faded one.
+        od.words!!.learn("<s>", "phở")
+        od.words!!.learn("<s>", "phở")
+        assertEquals(listOf("từ"), p.faded())
+        // Deleted by hand it is a deletion, though it once faded: the keyboard's strip, the settings.
+        OnDevice.forgotByHand(app.filesDir, "phở")
+        od.words!!.forget("phở")
+        od.save()
+        assertEquals(listOf("từ"), p.faded())
+        OnDevice.clearWords(app.filesDir, prefs)
+        assertEquals(emptyList<String>(), p.faded())
+    }
+
+    @Test
+    fun aPatchIsMadeReadyOffTheKeyboardsThreadAndSwappedInOnIt() {
+        // Reading, patching and writing a year's table (megabytes) on the keyboard's thread stalled
+        // the keys while a sync ran: only the swap is left there now.
+        saved("<s>" to "phở", "<s>" to "phở")
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh()
+        val table = od.words!!
+        var ready: WordsProvider.Ready? = null
+        val worker = Thread { ready = WordsProvider.prepare(app, "bún\t3\nphở\t-\n") }
+        worker.start()
+        worker.join(10_000) // done with the main looper never run
+        assertFalse(worker.isAlive)
+        assertEquals(2.0, table.count(null, "phở"), 0.0) // nothing swapped in yet
+        assertTrue(wordsFile.readText(), "phở\t2" in wordsFile.readText())
+        val done = WordsProvider.place(app, ready!!, "bún\t3\nphở\t-\n")
+        assertEquals(listOf(1, 1), listOf(done.set, done.deleted))
+        assertSame(table, od.words)
+        assertEquals(listOf(0.0, 3.0), listOf(table.count(null, "phở"), table.count(null, "bún")))
+        assertFalse(File(app.filesDir, OnDevice.WORDS + ".sync").exists())
+    }
+
+    @Test
+    fun whatChangesWhileAPatchIsMadeReadyIsKept() {
+        saved("<s>" to "phở", "<s>" to "chè")
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh()
+        // Learned while the patch was made ready: kept, and the patch applied over it.
+        var ready = WordsProvider.prepare(app, "bún\t3\n")
+        od.words!!.learn("<s>", "xôi")
+        WordsProvider.place(app, ready, "bún\t3\n")
+        assertEquals(listOf(1.0, 3.0), listOf(od.words!!.count(null, "xôi"), od.words!!.count(null, "bún")))
+        // Deleted in the settings meanwhile: still deleted.
+        ready = WordsProvider.prepare(app, "cơm\t2\n")
+        PersonalWords().use { w ->
+            w.load(wordsFile)
+            w.forget("chè")
+            w.save(wordsFile)
+        }
+        OnDevice.wordsChanged(prefs)
+        WordsProvider.place(app, ready, "cơm\t2\n")
+        PersonalWords().use { w ->
+            w.load(wordsFile)
+            assertEquals(listOf(0.0, 2.0, 3.0, 1.0), listOf("chè", "cơm", "bún", "xôi").map { w.count(null, it) })
         }
     }
 

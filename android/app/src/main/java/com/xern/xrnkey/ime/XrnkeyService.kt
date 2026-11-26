@@ -560,7 +560,7 @@ class XrnkeyService :
      */
     override fun onRemove(text: String) {
         val od = onDevice ?: return
-        if (' ' !in text) od.words?.forget(text)
+        if (' ' !in text) od.forget(text)
         od.hidden?.hide(text)
         showStrip()
     }

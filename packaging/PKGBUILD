@@ -3,7 +3,7 @@
 #   makepkg -si          build, test and install (asks for sudo)
 #   makepkg              build and test only; install later with pacman -U
 pkgname=xrnkey
-pkgver=1.1.1
+pkgver=1.2.0
 pkgrel=1
 pkgdesc="Vietnamese (Telex/VNI) input method for Fcitx5"
 arch=('x86_64' 'aarch64')
@@ -17,7 +17,7 @@ makedepends=('catch2' 'cmake' 'extra-cmake-modules' 'git' 'ninja')
 # For the test that runs fcitx5 over D-Bus; it is skipped without them.
 checkdepends=('dbus' 'python-gobject')
 optdepends=('fcitx5-configtool: settings window'
-            'python: the xk-dict and xk-macro tools'
+            'python: the xk-dict, xk-macro and xk-sync tools (xk-sync.timer runs xk-sync)'
             'fcitx5-gtk: GTK apps under X11/XWayland'
             'fcitx5-qt: Qt apps')
 source=("$pkgname::git+file://${startdir%/packaging}")

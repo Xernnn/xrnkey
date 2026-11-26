@@ -8,7 +8,24 @@
 #include <string>
 #include <vector>
 
+#include <climits>
+#include <sys/syscall.h>
+#include <unistd.h>
+
 #include "xrnkey.h"
+#include "xrnkey_internal.h"
+
+/* Every fsync the library makes, by what the descriptor names: the test's own
+ * fsync stands in for libc's (the executable's symbol wins), records the path,
+ * and does the real one. */
+static std::vector<std::string> g_synced;
+extern "C" int fsync(int fd) {
+    char link[64], target[PATH_MAX];
+    std::snprintf(link, sizeof link, "/proc/self/fd/%d", fd);
+    const ssize_t n = readlink(link, target, sizeof target - 1);
+    g_synced.emplace_back(n > 0 ? std::string(target, static_cast<size_t>(n)) : std::string());
+    return static_cast<int>(syscall(SYS_fsync, fd));
+}
 
 namespace {
 
@@ -175,4 +192,50 @@ TEST_CASE("personal words survive a save and a load, and bad lines are skipped",
     CHECK(xk_user_save(m.user, bad.c_str()) == -1);
     CHECK(std::fopen((bad + ".part").c_str(), "r") == nullptr);
     xk_user_free(back);
+}
+
+TEST_CASE("a save reaches the disk before it replaces the words, and the rename does too", "[learn]") {
+    // A phone switched off just after a save must find the old words or the
+    // new ones, never an empty file: the new file is flushed to the disk before
+    // the rename, and the folder after it (an empty table syncs as deletions).
+    Setup m;
+    for (int i = 0; i < 2; ++i) xk_user_learn(m.user, "ngắn", "tủn");
+    const std::string path = tmp("durable.txt");
+    char dir[PATH_MAX];
+    REQUIRE(realpath(XRNKEY_TEST_TMP, dir) != nullptr);
+    g_synced.clear();
+    REQUIRE(xk_user_save(m.user, path.c_str()) == 0);
+    REQUIRE(g_synced.size() == 2);
+    CHECK(g_synced[0].rfind(std::string(dir) + "/durable.txt.", 0) == 0);  // the new file, before its rename
+    CHECK(g_synced[1] == dir);                                             // then the folder
+    XKUser* back = xk_user_new();
+    CHECK(xk_user_load(back, path.c_str()) == 2);
+    xk_user_free(back);
+}
+
+TEST_CASE("broken UTF-8 is read no further than its own bytes", "[learn][utf8]") {
+    // A Latin-1 or hand-edited user-dict.txt, or surrounding text, can end a
+    // string in the middle of a character. Each test string sits in a heap
+    // block of exactly its size, so a read past its NUL is a read past the
+    // block (the memory checker reports it).
+    for (const std::string bad : {"\xc3", "\xe1", "\xe1\xbb", "\xf0\x9f", "\xf0\x9f\x98", "\xe1" "A"}) {
+        std::vector<char> heap(bad.begin(), bad.end());
+        heap.push_back('\0');
+        heap.shrink_to_fit();
+        uint32_t cp = 0;
+        int len = 0;
+        CHECK(xrnkey::utf8_decode(heap.data(), &cp, &len) == -1);
+        CHECK(len == 1);
+    }
+    uint32_t cp = 0;
+    int len = 0;
+    REQUIRE(xrnkey::utf8_decode("\xe1\xbb\x87", &cp, &len) == 0);  // ệ
+    CHECK((cp == 0x1EC7 && len == 3));
+
+    Setup m;
+    const std::string word = "ph\xe1";  // "phá" cut short
+    std::vector<char> heap(word.begin(), word.end());
+    heap.push_back('\0');
+    xk_user_learn(m.user, heap.data(), heap.data());
+    xk_user_learn(m.user, "<s>", heap.data());
 }
