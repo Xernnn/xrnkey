@@ -1467,8 +1467,9 @@ is off until the owner turns it on.
 - **What it offers.** `call("state")` says whether learning and sync are on, and gives the table's
   id. `openFile(.../words, "r")` hands over `personal-words.tsv` after the keyboard in use has saved
   what it learned. `call("put")` and `call("commit")` take a patch in parts (`key<TAB>count` sets a
-  count, `key<TAB>-` deletes) and apply it at once, on the keyboard's main thread: the file is
-  changed and moved into place, and the table the keyboard is typing with reads it again in place.
+  count, `key<TAB>-` deletes) and apply it at once: the new file is made on the provider's own
+  thread, and on the keyboard's main thread only moved into place and read again into the table the
+  keyboard is typing with (if the words changed meanwhile, the patch is applied there again).
 - **The table's id** is made with the words and kept beside them, so it changes only when the
   keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
   deletion to sync. A new id tells the hub app that the table lost its words rather than had them

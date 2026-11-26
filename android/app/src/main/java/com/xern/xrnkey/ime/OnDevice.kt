@@ -224,6 +224,9 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             prefs.edit().putLong(KEY_CLEARED, maxOf(now, prefs.getLong(KEY_CLEARED, 0L) + 1)).commit()
         }
 
+        /** Moves on whenever the personal words' file is changed under the keyboard (see [wordsChanged]). */
+        fun wordsStamp(prefs: SharedPreferences) = prefs.getLong(KEY_CLEARED, 0L)
+
         /**
          * Forgets what was chosen on the Japanese keyboard (from the settings screen); or, with a
          * changed file (a word deleted), makes the keyboard read it again at its next field.

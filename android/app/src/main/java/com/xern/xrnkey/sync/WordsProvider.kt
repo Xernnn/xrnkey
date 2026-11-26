@@ -118,7 +118,13 @@ class WordsProvider : ContentProvider() {
                 if (extras != null && extras.containsKey(KEY_LINES) && extras.getInt(KEY_LINES) != lines) {
                     throw IllegalStateException("part of the patch is missing")
                 }
-                val applied = onMain { apply(ctx(), patch) }
+                // The table is read, patched and written on this binder thread; the keyboard's thread
+                // only saves what it learned first, and swaps the new file in after.
+                val applied = synchronized(APPLYING) {
+                    onMain { OnDevice.live()?.save() }
+                    val ready = prepare(ctx(), patch)
+                    onMain { place(ctx(), ready, patch) }
+                }
                 Bundle().apply {
                     putInt(KEY_SET, applied.set)
                     putInt(KEY_DELETED, applied.deleted)
@@ -183,6 +189,12 @@ class WordsProvider : ContentProvider() {
     override fun update(uri: Uri, values: ContentValues?, selection: String?, args: Array<out String>?): Int =
         throw UnsupportedOperationException()
 
+    /** What a patch made ready came from: the file as it was read, and the settings' stamp. */
+    data class From(val length: Long, val modified: Long, val edits: Long)
+
+    /** A patch made ready ([prepare]): the new file beside the words (null: nothing changes). */
+    class Ready(val part: File?, val applied: WordsTable.Applied, val from: From)
+
     companion object {
         const val AUTHORITY = "com.xern.xrnkey.words"
         const val PERMISSION = "com.xern.xrnkey.permission.SYNC_WORDS"
@@ -218,13 +230,26 @@ class WordsProvider : ContentProvider() {
          */
         fun writeWhole(file: File, text: String, flush: (FileOutputStream) -> Unit = { it.fd.sync() }) {
             val part = File(file.parentFile, file.name + ".part")
+            writePart(part, text, flush)
+            placeWhole(part, file)
+        }
+
+        /** [text] in [part], flushed to the disk. */
+        private fun writePart(part: File, text: String, flush: (FileOutputStream) -> Unit = { it.fd.sync() }) {
             try {
                 FileOutputStream(part).use { out ->
                     out.write(text.toByteArray(Charsets.UTF_8))
                     flush(out)
                 }
-                if (!part.renameTo(file)) throw IOException("rename")
             } catch (_: IOException) {
+                part.delete()
+                throw IllegalStateException("couldn't write the personal words")
+            }
+        }
+
+        /** [part], written whole, renamed over [file], and the folder flushed. */
+        private fun placeWhole(part: File, file: File) {
+            if (!part.renameTo(file)) {
                 part.delete()
                 throw IllegalStateException("couldn't write the personal words")
             }
@@ -242,6 +267,47 @@ class WordsProvider : ContentProvider() {
             val id = UUID.randomUUID().toString()
             file.writeText(id)
             return id
+        }
+
+        /** One patch at a time: each is made ready from the file the last one left. */
+        private val APPLYING = Any()
+
+        private fun from(context: Context): From {
+            val file = File(context.filesDir, OnDevice.WORDS)
+            return From(if (file.isFile) file.length() else -1L, file.lastModified(), OnDevice.wordsStamp(Options.prefs(context)))
+        }
+
+        /**
+         * Off the keyboard's thread: the words as last saved, with [patch] applied, written beside them
+         * and flushed. The keyboard types on meanwhile; [place] swaps the file in.
+         */
+        fun prepare(context: Context, patch: String): Ready {
+            val file = File(context.filesDir, OnDevice.WORDS)
+            val from = from(context)
+            val (text, applied) = WordsTable.patch(if (file.isFile) file.readText() else "", patch)
+            if (applied.set + applied.deleted == 0) return Ready(null, applied, from)
+            val part = File(context.filesDir, OnDevice.WORDS + ".sync")
+            writePart(part, text)
+            return Ready(part, applied, from)
+        }
+
+        /**
+         * On the main thread: moves a patch made ready into place and has the keyboard read it. If the
+         * words changed since it was made (learned since the save before it, or edited in the
+         * settings), it would lose that change, so the patch is applied again here instead ([apply]).
+         */
+        fun place(context: Context, ready: Ready, patch: String): WordsTable.Applied {
+            val live = OnDevice.live()
+            if ((live?.words?.unsaved ?: 0) > 0 || from(context) != ready.from) {
+                ready.part?.delete()
+                return apply(context, patch)
+            }
+            if (ready.part != null) {
+                placeWhole(ready.part, File(context.filesDir, OnDevice.WORDS))
+                OnDevice.wordsChanged(Options.prefs(context))
+                live?.reloadWords()
+            }
+            return ready.applied
         }
 
         /**

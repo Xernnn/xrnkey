@@ -315,6 +315,53 @@ class WordsSyncTest {
     }
 
     @Test
+    fun aPatchIsMadeReadyOffTheKeyboardsThreadAndSwappedInOnIt() {
+        // Reading, patching and writing a year's table (megabytes) on the keyboard's thread stalled
+        // the keys while a sync ran: only the swap is left there now.
+        saved("<s>" to "phở", "<s>" to "phở")
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh()
+        val table = od.words!!
+        var ready: WordsProvider.Ready? = null
+        val worker = Thread { ready = WordsProvider.prepare(app, "bún\t3\nphở\t-\n") }
+        worker.start()
+        worker.join(10_000) // done with the main looper never run
+        assertFalse(worker.isAlive)
+        assertEquals(2.0, table.count(null, "phở"), 0.0) // nothing swapped in yet
+        assertTrue(wordsFile.readText(), "phở\t2" in wordsFile.readText())
+        val done = WordsProvider.place(app, ready!!, "bún\t3\nphở\t-\n")
+        assertEquals(listOf(1, 1), listOf(done.set, done.deleted))
+        assertSame(table, od.words)
+        assertEquals(listOf(0.0, 3.0), listOf(table.count(null, "phở"), table.count(null, "bún")))
+        assertFalse(File(app.filesDir, OnDevice.WORDS + ".sync").exists())
+    }
+
+    @Test
+    fun whatChangesWhileAPatchIsMadeReadyIsKept() {
+        saved("<s>" to "phở", "<s>" to "chè")
+        val od = OnDevice(app.filesDir, prefs).also { keyboard = it }
+        od.refresh()
+        // Learned while the patch was made ready: kept, and the patch applied over it.
+        var ready = WordsProvider.prepare(app, "bún\t3\n")
+        od.words!!.learn("<s>", "xôi")
+        WordsProvider.place(app, ready, "bún\t3\n")
+        assertEquals(listOf(1.0, 3.0), listOf(od.words!!.count(null, "xôi"), od.words!!.count(null, "bún")))
+        // Deleted in the settings meanwhile: still deleted.
+        ready = WordsProvider.prepare(app, "cơm\t2\n")
+        PersonalWords().use { w ->
+            w.load(wordsFile)
+            w.forget("chè")
+            w.save(wordsFile)
+        }
+        OnDevice.wordsChanged(prefs)
+        WordsProvider.place(app, ready, "cơm\t2\n")
+        PersonalWords().use { w ->
+            w.load(wordsFile)
+            assertEquals(listOf(0.0, 2.0, 3.0, 1.0), listOf("chè", "cơm", "bún", "xôi").map { w.count(null, it) })
+        }
+    }
+
+    @Test
     fun onlyTheWordsFileIsReadAndNothingIsWrittenThroughAFile() {
         val p = provider()
         assertThrows(FileNotFoundException::class.java) { p.openFile(Uri.parse("content://${WordsProvider.AUTHORITY}/../shortcuts"), "r") }
