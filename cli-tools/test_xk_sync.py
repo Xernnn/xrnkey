@@ -330,12 +330,44 @@ class Config(unittest.TestCase):
     def config(self, **doc):
         path = os.path.join(self.tmp.name, "sync.json")
         with open(path, "w") as f:
-            json.dump({"server": "https://hub.example/hub/", "user": "alex", "password_file": self.secret, **doc}, f)
+            json.dump({k: v for k, v in {"server": "https://hub.example/hub/", "user": "alex", "password_file": self.secret,
+                                         **doc}.items() if v is not None}, f)
         return xk_sync.read_config(path)
 
     def test_a_whole_config_reads(self):
-        self.assertEqual(self.config(), ("https://hub.example/hub", "alex", "made up"))
+        self.assertEqual(self.config(), ("https://hub.example/hub", {"user": "alex", "password": "made up"}, [self.secret]))
         self.assertEqual(self.config(server="http://127.0.0.1:9/hub")[0], "http://127.0.0.1:9/hub")
+
+    def test_a_device_login_is_used_when_its_file_is_there(self):
+        token = "xrndev_1a2b3c4d_" + "A" * 43  # made up
+        path = os.path.join(self.tmp.name, "token")
+        self.assertEqual(self.config(token_file=path)[1], {"user": "alex", "password": "made up"})  # not there yet
+        for text in (token + "\n", f"Authorization: Bearer {token}\n"):  # the token, or curl's header file
+            with open(path, "w") as f:
+                f.write(text)
+            self.assertEqual(self.config(token_file=path)[1:], ({"token": token}, [path]))
+        with open(path, "w") as f:
+            f.write("not a token")
+        with self.assertRaises(xk_sync.Problem):
+            self.config(token_file=path)
+        self.assertEqual(xk_sync.Hub("https://hub.example", token=token).auth, f"Bearer {token}")
+
+    def test_without_a_password_file_the_login_comes_from_the_runtime_netrc(self):
+        runtime = os.path.join(self.tmp.name, "run")
+        os.makedirs(os.path.join(runtime, "xrn-secret"))
+        with open(os.path.join(runtime, "xrn-secret", "hub.netrc"), "w") as f:
+            f.write("machine hub.example login alex password made-up\n")
+        os.chmod(os.path.join(runtime, "xrn-secret", "hub.netrc"), 0o600)
+        old = os.environ.get("XDG_RUNTIME_DIR")
+        os.environ["XDG_RUNTIME_DIR"] = runtime
+        self.addCleanup(lambda: os.environ.__setitem__("XDG_RUNTIME_DIR", old) if old else os.environ.pop("XDG_RUNTIME_DIR"))
+        self.assertEqual(self.config(password_file=None)[1], {"user": "alex", "password": "made-up"})
+        with self.assertRaises(xk_sync.Problem):
+            self.config(password_file=None, server="https://other.example/hub")  # no line for that host
+        # "$XDG_RUNTIME_DIR" in a path reads as the shell would have it.
+        with open(os.path.join(runtime, "pw"), "w") as f:
+            f.write("from runtime")
+        self.assertEqual(self.config(password_file="$XDG_RUNTIME_DIR/pw")[1]["password"], "from runtime")
 
     def test_plain_http_elsewhere_and_missing_parts_are_refused(self):
         for over in ({"server": "http://hub.example"}, {"server": ""}, {"user": ""}, {"user": "a:b"},
@@ -387,12 +419,14 @@ class OverHttp(unittest.TestCase):
         hub = FakeHub()
         hub.phone(("phở", 3, 0))
         login = "Basic " + base64.b64encode(b"alex:made up").decode()
+        requests = []
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *a):
                 pass
 
             def answer(self, doc):
+                requests.append(self.path)
                 if self.headers.get("Authorization") != login:
                     self.send_response(401)
                     self.end_headers()
@@ -438,6 +472,17 @@ class OverHttp(unittest.TestCase):
             refused = run()
             self.assertEqual(refused.returncode, 1)
             self.assertIn("refused the login", refused.stderr)
+            # Refused once, it doesn't ask again (each try counts toward the hub's lockout) until the
+            # login changes.
+            asked = len(requests)
+            again = run()
+            self.assertEqual((again.returncode, len(requests)), (1, asked))
+            self.assertIn("sign in again", again.stderr)
+            config["password_file"] = os.path.join(tmp, "secret")
+            with open(os.path.join(tmp, "config", "xrnkey", "sync.json"), "w") as f:
+                json.dump(config, f)
+            self.assertEqual(run().returncode, 0)
+            self.assertGreater(len(requests), asked)
 
 
 if __name__ == "__main__":

@@ -211,6 +211,12 @@ Write `~/.config/xrnkey/sync.json` (it never belongs in the repo):
 { "server": "https://<host>/<hub path>", "user": "<account>", "password_file": "<file holding the password>" }
 ```
 
+The login is the first of these that is there: `"token_file"`, a file holding a device login
+(`xrndev_…`, alone or as an `Authorization: Bearer xrndev_…` line); `"password_file"` with `"user"`;
+or a netrc line for the server's host, from `"netrc_file"` or by default
+`$XDG_RUNTIME_DIR/xrn-secret/hub.netrc`. Paths may start with `~` or `$XDG_RUNTIME_DIR`. After the
+hub refuses the login, `xk-sync` doesn't ask it again until one of the login's files changes.
+
 Then try it once, and let the timer that `makepkg -si` installs run it every hour:
 
 ```bash

@@ -31,11 +31,21 @@ run with --allow-deletions; --clear-all is the way to delete every word everywhe
 Reads ~/.config/xrnkey/sync.json, which never enters the repo:
 
     { "server": "https://<host>/<hub path>", "user": "<account>", "password_file": "<file with the password>" }
+
+The login, the first of these that is there:
+- "token_file": a device login (xrndev_..., made on the server with xrn-device), alone or as an
+  "Authorization: Bearer xrndev_..." line; sent as Bearer. Skipped while the file isn't there.
+- "password_file" with "user": the sync password, sent as Basic.
+- "netrc_file", by default $XDG_RUNTIME_DIR/xrn-secret/hub.netrc (xrn-secret writes it at login):
+  the netrc line for the server's host.
+Paths may start with ~ or $XDG_RUNTIME_DIR. After a refused login (401) it doesn't ask the hub again
+until one of the login's files changes: sign in again, then run it.
 """
 import argparse
 import base64
 import fcntl
 import json
+import netrc
 import os
 import re
 import subprocess
@@ -60,6 +70,10 @@ MAX_DELETIONS = 20  # a sync may always delete this many; more only while within
 
 class Problem(Exception):
     """Why this sync stopped."""
+
+
+class Refused(Problem):
+    """The hub refused the login (401)."""
 
 
 class Purged(Problem):
@@ -321,11 +335,12 @@ def save_state(path, doc):
 
 
 class Hub:
-    """The hub server's keyboard words, with the sync login."""
+    """The hub server's keyboard words, with the sync login (a password, or a device login's token)."""
 
-    def __init__(self, server, user, password):
+    def __init__(self, server, user=None, password=None, token=None):
         self.server = server
-        self.auth = "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
+        self.auth = (f"Bearer {token}" if token else
+                     "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode())
 
     def ask(self, method, path, body=None):
         data = json.dumps(body, ensure_ascii=False).encode() if body is not None else None
@@ -336,13 +351,19 @@ class Hub:
             with urllib.request.urlopen(req, timeout=TIMEOUT_S) as res:
                 return json.loads(res.read())
         except urllib.error.HTTPError as e:
+            with e:
+                detail = e.read()[:200].decode(errors="replace")
             if e.code == 410:
                 raise Purged() from None
-            said = {401: "it refused the login", 429: "too many wrong passwords; try again later",
+            if e.code == 401:
+                raise Refused(f"{self.server} refused the login: sign in again (a new password or token), "
+                              "then run xk-sync") from None
+            said = {403: "this device's login doesn't reach the hub (a token made for other services)",
+                    429: "too many wrong passwords; try again later",
                     404: "it has no keyboard words: is the hub server with them deployed?",
                     409: "it refused to delete that many words. If they were removed on purpose: "
                          "xk-sync --allow-deletions"}
-            raise Problem(f"{self.server} answered {e.code}: {said.get(e.code, e.read()[:200].decode(errors='replace'))}") from None
+            raise Problem(f"{self.server} answered {e.code}: {said.get(e.code, detail)}") from None
         except (urllib.error.URLError, OSError) as e:
             raise Problem(f"couldn't reach {self.server}: {getattr(e, 'reason', e)}") from None
 
@@ -356,7 +377,27 @@ class Hub:
         return self.ask("GET", f"{WORDS_PATH}?since={since}")
 
 
+def expand(path):
+    """A path from the config: ~ and $XDG_RUNTIME_DIR (or ${XDG_RUNTIME_DIR}) as the shell has them."""
+    runtime = os.environ.get("XDG_RUNTIME_DIR", "")
+    if runtime.startswith("/"):
+        path = path.replace("${XDG_RUNTIME_DIR}", runtime).replace("$XDG_RUNTIME_DIR", runtime)
+    return os.path.expanduser(path)
+
+
+def read_secret(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+TOKEN = re.compile(r"(?:Authorization:\s*Bearer\s+)?(xrndev_[0-9a-f]{8}_[A-Za-z0-9_-]{43})", re.IGNORECASE)
+
+
 def read_config(path):
+    """(server, Hub's keyword arguments, the login's files). Raises Problem."""
     try:
         with open(path, encoding="utf-8") as f:
             doc = json.load(f)
@@ -371,18 +412,49 @@ def read_config(path):
     parts = urlsplit(server)
     if not (parts.scheme == "https" or (parts.scheme == "http" and parts.hostname in LOOPBACK)) or not parts.hostname:
         raise Problem(f'{path} needs "server": the hub\'s https address')
-    user = doc.get("user")
-    if not isinstance(user, str) or not user or ":" in user:
-        raise Problem(f'{path} needs "user": the account to sign in as')
-    secret = os.path.expanduser(str(doc.get("password_file") or ""))
+    for key in ("token_file", "password_file", "netrc_file", "user"):
+        if doc.get(key) is not None and (not isinstance(doc[key], str) or not doc[key]):
+            raise Problem(f'{path}: "{key}" must be a non-empty string')
+
+    if doc.get("token_file"):
+        token_file = expand(doc["token_file"])
+        if os.path.exists(token_file):
+            found = TOKEN.fullmatch(read_secret(token_file) or "")
+            if not found:
+                raise Problem(f"{token_file} holds no device login (xrndev_...)")
+            return server, {"token": found.group(1)}, [token_file]
+    if doc.get("password_file"):
+        user = doc.get("user")
+        if not isinstance(user, str) or not user or ":" in user:
+            raise Problem(f'{path} needs "user": the account to sign in as')
+        secret = expand(doc["password_file"])
+        password = read_secret(secret)
+        if password is None:
+            raise Problem(f'{path} needs "password_file": a file holding the password ({secret} doesn\'t read)')
+        if not password:
+            raise Problem(f"{secret} is empty")
+        return server, {"user": user, "password": password}, [secret]
+    netrc_file = expand(doc.get("netrc_file") or "$XDG_RUNTIME_DIR/xrn-secret/hub.netrc")
     try:
-        with open(secret, encoding="utf-8") as f:
-            password = f.read().strip()
-    except OSError:
-        raise Problem(f'{path} needs "password_file": a file holding the password') from None
-    if not password:
-        raise Problem(f"{secret} is empty")
-    return server, user, password
+        found = netrc.netrc(netrc_file).authenticators(parts.hostname)
+    except (OSError, netrc.NetrcParseError):
+        found = None
+    if not found or not found[0] or not found[2] or ":" in found[0]:
+        raise Problem(f'no login for {parts.hostname}: give {path} a "token_file", a "password_file" and "user", '
+                      f"or a netrc line in {netrc_file}")
+    return server, {"user": found[0], "password": found[2]}, [netrc_file]
+
+
+def login_seen(files):
+    """What the login's files are now, to tell a login entered again from the one refused."""
+    out = []
+    for f in files:
+        try:
+            st = os.stat(f)
+            out.append([f, st.st_ino, st.st_mtime_ns, st.st_size])
+        except OSError:
+            out.append([f, None, None, None])
+    return out
 
 
 def reload_fcitx():
@@ -401,16 +473,31 @@ def main(argv=None):
     p.add_argument("--clear-all", action="store_true",
                    help="delete every word that syncs, from user-dict.txt and from every device")
     args = p.parse_args(argv)
-    server, user, password = read_config(config_file())
+    server, login, files = read_config(config_file())
     state = state_file()
     os.makedirs(os.path.dirname(state), mode=0o700, exist_ok=True)
+    refused = state + ".refused"
+    seen = login_seen(files)
+    try:
+        with open(refused, encoding="utf-8") as f:
+            if json.load(f) == seen:
+                raise Problem("the hub refused this login: sign in again (a new password or token), then run xk-sync")
+    except (OSError, ValueError):
+        pass
     with open(state + ".lock", "w") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise Problem("another xk-sync is running") from None
-        changed = sync(Hub(server, user, password), os.path.join(data_dir(), "user-dict.txt"), state,
-                       dry_run=args.dry_run, allow_deletions=args.allow_deletions, clear_all=args.clear_all)
+        try:
+            changed = sync(Hub(server, **login), os.path.join(data_dir(), "user-dict.txt"), state,
+                           dry_run=args.dry_run, allow_deletions=args.allow_deletions, clear_all=args.clear_all)
+        except Refused:
+            # Not again until the login changes: the hub counts every refused try toward its lockout.
+            write_whole(refused, json.dumps(seen), ".words-sync.")
+            raise
+    if os.path.exists(refused):
+        os.remove(refused)
     if changed:
         reload_fcitx()
 
