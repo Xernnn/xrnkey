@@ -268,6 +268,22 @@ class WordsSyncTest {
     }
 
     @Test
+    fun theStateSaysWhenClearAllWasUsedAndNoOtherEditMovesIt() {
+        // Clear all empties the table on purpose; an empty table is otherwise taken as lost (a
+        // power cut) and deletes nothing. The hub app tells the two apart by this time.
+        val p = provider()
+        assertEquals(0L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
+        saved("<s>" to "phở")
+        p.send("bún\t3\n") // a synced patch, and an edit in the settings, aren't a Clear all
+        OnDevice.wordsChanged(prefs, now = 5_000L)
+        assertEquals(0L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
+        OnDevice.clearWords(app.filesDir, prefs, now = 7_000L)
+        assertEquals(7_000L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
+        OnDevice.clearWords(app.filesDir, prefs, now = 6_000L) // a clock set back still moves it on
+        assertEquals(7_001L, p.call(WordsProvider.STATE, null, null).getLong("clearAll"))
+    }
+
+    @Test
     fun onlyTheWordsFileIsReadAndNothingIsWrittenThroughAFile() {
         val p = provider()
         assertThrows(FileNotFoundException::class.java) { p.openFile(Uri.parse("content://${WordsProvider.AUTHORITY}/../shortcuts"), "r") }

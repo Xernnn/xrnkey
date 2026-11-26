@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit
  * also be the hub's package ([Gate]). [call] isn't covered by the manifest's permission, so every
  * entry point checks for itself.
  *
- *     call("state")                 learn, sync, and the table's id
+ *     call("state")                 learn, sync, the table's id, and when Clear all was last used
  *     openFile(.../words, "r")      personal-words.tsv, after the keyboard in use saved what it learned
  *     call("put", token, {text})    part of a patch: "key<TAB>count" sets, "key<TAB>-" deletes
  *     call("commit", token, {lines}) applies the parts put under that token, at once: set, deleted,
@@ -85,6 +85,7 @@ class WordsProvider : ContentProvider() {
                     putBoolean(KEY_LEARN, o.learn)
                     putBoolean(KEY_SYNC, o.syncWords)
                     putString(KEY_ID, if (on(o)) tableId(dir()) else null)
+                    putLong(KEY_CLEAR_ALL, OnDevice.clearedAll(Options.prefs(ctx())))
                 }
             }
             PUT -> {
@@ -174,6 +175,8 @@ class WordsProvider : ContentProvider() {
         const val KEY_LEARN = "learn"
         const val KEY_SYNC = "sync"
         const val KEY_ID = "id"
+        /** When Clear all was last used (ms), 0 if never: an emptied table that is meant. */
+        const val KEY_CLEAR_ALL = "clearAll"
         const val KEY_TEXT = "text"
         const val KEY_SET = "set"
         const val KEY_DELETED = "deleted"

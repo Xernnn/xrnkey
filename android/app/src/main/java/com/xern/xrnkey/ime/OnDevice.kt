@@ -147,6 +147,7 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
         private const val KEY_JA_WORDS = "japanese-words-changed"
         private const val KEY_JA_CLEARED = "japanese-cleared"
         private const val KEY_CLEARED = "words-cleared"
+        private const val KEY_CLEAR_ALL = "words-clear-all"
         private const val KEY_DECAYED = "words-decayed"
         private const val MONTH = 30L * 24 * 3600 * 1000
         private const val DECAY = 0.9
@@ -156,8 +157,15 @@ class OnDevice(private val dir: File, private val prefs: SharedPreferences) : Au
             File(dir, WORDS).delete()
             File(dir, HIDDEN).delete()
             File(dir, SPOTS).delete()
+            prefs.edit().putLong(KEY_CLEAR_ALL, maxOf(now, clearedAll(prefs) + 1)).commit()
             wordsChanged(prefs, now)
         }
+
+        /**
+         * When Clear all was last used, 0 if never: the hub app's sync sends an emptied table as
+         * deletions only after it, and otherwise takes it as lost (a power cut), deleting nothing.
+         */
+        fun clearedAll(prefs: SharedPreferences) = prefs.getLong(KEY_CLEAR_ALL, 0L)
 
         /**
          * The settings screen changed the personal words' file (a word deleted): the keyboard
