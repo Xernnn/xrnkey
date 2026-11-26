@@ -8,7 +8,23 @@
 #include <string>
 #include <vector>
 
+#include <climits>
+#include <sys/syscall.h>
+#include <unistd.h>
+
 #include "xrnkey.h"
+
+/* Every fsync the library makes, by what the descriptor names: the test's own
+ * fsync stands in for libc's (the executable's symbol wins), records the path,
+ * and does the real one. */
+static std::vector<std::string> g_synced;
+extern "C" int fsync(int fd) {
+    char link[64], target[PATH_MAX];
+    std::snprintf(link, sizeof link, "/proc/self/fd/%d", fd);
+    const ssize_t n = readlink(link, target, sizeof target - 1);
+    g_synced.emplace_back(n > 0 ? std::string(target, static_cast<size_t>(n)) : std::string());
+    return static_cast<int>(syscall(SYS_fsync, fd));
+}
 
 namespace {
 
@@ -174,5 +190,24 @@ TEST_CASE("personal words survive a save and a load, and bad lines are skipped",
     const std::string bad = tmp("no-such-dir/learned.txt");
     CHECK(xk_user_save(m.user, bad.c_str()) == -1);
     CHECK(std::fopen((bad + ".part").c_str(), "r") == nullptr);
+    xk_user_free(back);
+}
+
+TEST_CASE("a save reaches the disk before it replaces the words, and the rename does too", "[learn]") {
+    // A phone switched off just after a save must find the old words or the
+    // new ones, never an empty file: the new file is flushed to the disk before
+    // the rename, and the folder after it (an empty table syncs as deletions).
+    Setup m;
+    for (int i = 0; i < 2; ++i) xk_user_learn(m.user, "ngắn", "tủn");
+    const std::string path = tmp("durable.txt");
+    char dir[PATH_MAX];
+    REQUIRE(realpath(XRNKEY_TEST_TMP, dir) != nullptr);
+    g_synced.clear();
+    REQUIRE(xk_user_save(m.user, path.c_str()) == 0);
+    REQUIRE(g_synced.size() == 2);
+    CHECK(g_synced[0].rfind(std::string(dir) + "/durable.txt.", 0) == 0);  // the new file, before its rename
+    CHECK(g_synced[1] == dir);                                             // then the folder
+    XKUser* back = xk_user_new();
+    CHECK(xk_user_load(back, path.c_str()) == 2);
     xk_user_free(back);
 }
