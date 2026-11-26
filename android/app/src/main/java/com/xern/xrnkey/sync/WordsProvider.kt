@@ -208,7 +208,7 @@ class WordsProvider : ContentProvider() {
         const val KEY_SYNC = "sync"
         const val KEY_ID = "id"
         /** When Clear all was last used (ms), 0 if never: an emptied table that is meant. */
-        const val KEY_CLEAR_ALL = "clearAll"
+        const val KEY_CLEAR_ALL = "cleared"
         const val KEY_TEXT = "text"
         const val KEY_SET = "set"
         const val KEY_DELETED = "deleted"

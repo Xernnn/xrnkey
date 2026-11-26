@@ -1474,7 +1474,7 @@ is off until the owner turns it on.
   keyboard's files go (its data cleared, or installed afresh). Clear all keeps it: that is a
   deletion to sync. A new id tells the hub app that the table lost its words rather than had them
   all deleted, so its first sync only adds.
-- **Deletions are guarded.** `call("state")` also gives `clearAll`, when Clear all was last used:
+- **Deletions are guarded.** `call("state")` also gives `cleared`, when Clear all was last used:
   without a newer one, an empty table deletes nothing, and no round deletes more than 20 keys and
   a quarter of them ("Sync paused"). `call("commit")` throws, applying nothing, when the parts put
   under its token are gone (the keyboard's process died in between) or fewer than the hub put, so
